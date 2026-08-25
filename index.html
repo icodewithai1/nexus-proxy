@@ -1,1583 +1,1601 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="cloaked">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Denied</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <style>
-        @property --border-angle {
-            syntax: '<angle>';
-            inherits: false;
-            initial-value: 0deg;
-        }
-
-        @keyframes borderRotate {
-            0% { --border-angle: 0deg; }
-            100% { --border-angle: 360deg; }
-        }
-
-        :root {
-            /* Strict Dark Gray & Charcoal Palette */
-            --bg-primary: #121214;
-            --bg-secondary: #1a1a1e;
-            --bg-tertiary: #24242b;
-            --bg-input: #161619;
-            --text-primary: #ededed;
-            --text-secondary: #8a8a93;
-            --text-muted: #5e5e68;
-            --border-color: #2b2b33;
-            --accent-gray: #7a7a85;
-            --accent-light: #ffffff;
-            --sidebar-width: 62px;
-            --topbar-height: 44px;
-            --tabbar-height: 38px;
-            --font-main: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-            --bg-blur: 4px;
-            --bg-opacity: 0.35;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: var(--font-main);
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            cursor: none;
-        }
-
-        /* --- Custom Cursor --- */
-        #cursor-dot {
-            position: fixed;
-            width: 5px;
-            height: 5px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99999;
-            transform: translate(-50%, -50%);
-            transition: opacity 0.15s ease;
-        }
-
-        #cursor-ring {
-            position: fixed;
-            width: 26px;
-            height: 26px;
-            border: 1.5px solid var(--accent-gray);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99998;
-            transform: translate(-50%, -50%);
-            transition: width 0.2s cubic-bezier(0.25, 1, 0.5, 1), 
-                        height 0.2s cubic-bezier(0.25, 1, 0.5, 1), 
-                        border-color 0.2s ease,
-                        background-color 0.2s ease;
-        }
-
-        body.cursor-hover #cursor-ring {
-            width: 42px;
-            height: 42px;
-            background-color: rgba(255, 255, 255, 0.08);
-            border-color: #ffffff;
-        }
-
-        /* --- Metallic Dark Gray Coursing Border --- */
-        .g-coursing {
-            position: relative;
-            border: 1px solid var(--border-color);
-            transition: border-color 0.2s ease, background 0.2s ease;
-        }
-
-        .g-coursing:hover, .g-coursing.active {
-            background: 
-                linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
-                conic-gradient(from var(--border-angle), transparent 50%, #4a4a54 80%, #ffffff 95%, #4a4a54 100%) border-box !important;
-            border: 1px solid transparent !important;
-            animation: borderRotate 2.5s linear infinite;
-        }
-
-        .g-coursing-input {
-            position: relative;
-            border: 1px solid var(--border-color);
-            transition: all 0.2s ease;
-        }
-
-        .g-coursing-input:focus-within, .g-coursing-input:hover {
-            background: 
-                linear-gradient(var(--bg-input), var(--bg-input)) padding-box,
-                conic-gradient(from var(--border-angle), transparent 50%, #4a4a54 80%, #ffffff 95%, #4a4a54 100%) border-box !important;
-            border: 1px solid transparent !important;
-            animation: borderRotate 2.5s linear infinite;
-        }
-
-        /* --- Live Background Wallpaper --- */
-        #bg-media-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        #bg-media-container img, #bg-media-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: blur(var(--bg-blur)) grayscale(40%) brightness(0.65);
-            opacity: var(--bg-opacity);
-        }
-
-        /* --- Chrome Error Page Disguise --- */
-        #cloak-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #202124;
-            color: #e8eaed;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 99990;
-            padding: 20px;
-        }
-
-        .chrome-error-box {
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .chrome-error-icon {
-            width: 56px;
-            height: 56px;
-            margin-bottom: 24px;
-            fill: #9aa0a6;
-        }
-
-        .chrome-title {
-            font-size: 24px;
-            font-weight: 500;
-            line-height: 1.3;
-            margin-bottom: 16px;
-            color: #e8eaed;
-        }
-
-        .chrome-desc {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #9aa0a6;
-            margin-bottom: 24px;
-        }
-
-        .chrome-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .chrome-btn {
-            background-color: #8ab4f8;
-            color: #202124;
-            border: none;
-            padding: 8px 18px;
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .chrome-btn-outline {
-            background: none;
-            color: #8ab4f8;
-            border: 1px solid #5f6368;
-            padding: 7px 16px;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .chrome-error-code {
-            font-size: 12px;
-            color: #9aa0a6;
-            font-family: monospace;
-        }
-
-        /* --- Nexus App Layout --- */
-        #nexus-app {
-            position: relative;
-            z-index: 1;
-            display: none;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        .app-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* --- Sidebar --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: rgba(18, 18, 20, 0.88);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px 0;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .sidebar-icon {
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            position: relative;
-            border-radius: 12px;
-            color: var(--text-secondary);
-        }
-
-        .sidebar-icon svg {
-            width: 20px;
-            height: 20px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-        }
-
-        .sidebar-icon.active {
-            color: #ffffff;
-        }
-
-        .sidebar-tooltip {
-            position: absolute;
-            left: 54px;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s ease;
-            z-index: 1000;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
-        }
-
-        .sidebar-icon:hover .sidebar-tooltip {
-            opacity: 1;
-        }
-
-        /* --- Main Area --- */
-        .main-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background-color: transparent;
-        }
-
-        /* --- Top Bar --- */
-        .top-bar {
-            background-color: rgba(26, 26, 30, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Tabs */
-        .tabs-container {
-            height: var(--tabbar-height);
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            gap: 6px;
-            overflow-x: auto;
-        }
-
-        .tabs-container::-webkit-scrollbar { display: none; }
-
-        .tab {
-            display: flex;
-            align-items: center;
-            padding: 6px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            height: 28px;
-            border-radius: 8px;
-            max-width: 180px;
-            min-width: 110px;
-            gap: 8px;
-            background: var(--bg-secondary);
-        }
-
-        .tab.active {
-            color: var(--text-primary);
-        }
-
-        .tab-title {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .tab-close {
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            opacity: 0.6;
-            transition: all 0.2s;
-        }
-
-        .tab-close:hover {
-            opacity: 1;
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .new-tab-btn {
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            background: var(--bg-secondary);
-        }
-
-        /* Address Bar */
-        .address-bar-container {
-            height: var(--topbar-height);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 8px;
-        }
-
-        .nav-btn {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            background: var(--bg-secondary);
-        }
-
-        .nav-btn svg {
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-        }
-
-        .address-bar {
-            flex: 1;
-            height: 34px;
-            padding: 0 14px;
-            display: flex;
-            align-items: center;
-            border-radius: 18px;
-            background: var(--bg-input);
-        }
-
-        .address-bar input {
-            flex: 1;
-            background: none;
-            border: none;
-            outline: none;
-            color: var(--text-primary);
-            font-size: 13px;
-            font-family: var(--font-mono);
-        }
-
-        .address-icon {
-            margin-right: 8px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-        }
-
-        /* --- Viewports --- */
-        .content-area {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tab-view {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .tab-view.active {
-            display: flex;
-        }
-
-        /* --- Minimalist Home View --- */
-        .new-tab-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100%;
-            padding: 40px 20px;
-            gap: 28px;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .home-clock {
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: -1.5px;
-            color: #ffffff;
-            text-align: center;
-        }
-
-        .home-date {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-top: -20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .central-search-container {
-            width: 100%;
-        }
-
-        .central-search {
-            width: 100%;
-            height: 52px;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            background: rgba(22, 22, 25, 0.85);
-            backdrop-filter: blur(16px);
-            border-radius: 26px;
-        }
-
-        .central-search input {
-            flex: 1;
-            background: none;
-            border: none;
-            outline: none;
-            color: var(--text-primary);
-            font-size: 15px;
-            font-weight: 500;
-        }
-
-        .central-search-icon {
-            margin-right: 12px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-        }
-
-        /* Bookmarks Grid */
-        .shortcuts-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            width: 100%;
-        }
-
-        .shortcut-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 12px;
-            background: rgba(26, 26, 30, 0.8);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            cursor: pointer;
-        }
-
-        .shortcut-icon-circle {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: var(--bg-tertiary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .shortcut-icon-circle svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        .shortcut-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-
-        /* --- Games Hub --- */
-        .games-view-container {
-            padding: 30px;
-            max-width: 1100px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .section-title {
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 20px;
-        }
-
-        .game-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-
-        .game-icon-square {
-            width: 130px;
-            height: 130px;
-            border-radius: 20px;
-            overflow: hidden;
-            background-color: var(--bg-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .game-icon-square img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .game-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-            text-align: center;
-            max-width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Game Execution Player View */
-        .game-player-wrapper {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-            background: #0d0d0f;
-        }
-
-        .game-control-header {
-            height: 44px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-        }
-
-        .game-ctrl-title {
-            font-size: 13px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .game-ctrl-btns {
-            display: flex;
-            gap: 8px;
-        }
-
-        .game-btn {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .game-frame, .browser-frame {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: #000000;
-        }
-
-        /* --- Settings View --- */
-        .settings-container {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 0 20px;
-            width: 100%;
-        }
-
-        .settings-nav {
-            display: flex;
-            gap: 8px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
-            margin-bottom: 24px;
-        }
-
-        .settings-tab-btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-
-        .settings-tab-btn.active {
-            color: var(--text-primary);
-            background: var(--bg-secondary);
-        }
-
-        .settings-section {
-            display: none;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .settings-section.active {
-            display: flex;
-        }
-
-        .settings-card {
-            background: rgba(26, 26, 30, 0.85);
-            backdrop-filter: blur(14px);
-            border-radius: 14px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .settings-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .settings-label-title {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .settings-label-desc {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-
-        .slider-input {
-            accent-color: var(--accent-gray);
-            cursor: pointer;
-        }
-
-        /* Lists */
-        .list-panel {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 0 20px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 18px;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Denied</title>
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-base: #0f0f12;
+      --bg-surface: #17171c;
+      --bg-card: #1f1f26;
+      --bg-input: #121216;
+      --border: #282832;
+      --border-hover: #3e3e4d;
+      --text-main: #f3f3f6;
+      --text-sub: #8c8c9a;
+      --text-muted: #585866;
+      --accent: #dcdce6;
+      --sidebar-w: 62px;
+      --topbar-h: 44px;
+      --tabbar-h: 38px;
+      --font-display: 'Outfit', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg-blur: 8px;
+      --bg-opacity: 0.45;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--font-body);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* --- Custom Cursor (Only visible when uncloaked) --- */
+    html:not(.cloaked) body {
+      cursor: none !important;
+    }
+
+    html.cloaked #cursor-dot,
+    html.cloaked #cursor-ring {
+      display: none !important;
+    }
+
+    #cursor-dot {
+      position: fixed;
+      width: 5px;
+      height: 5px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99999;
+      transform: translate(-50%, -50%);
+    }
+
+    #cursor-ring {
+      position: fixed;
+      width: 26px;
+      height: 26px;
+      border: 1.5px solid var(--text-sub);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99998;
+      transform: translate(-50%, -50%);
+      transition: width 0.18s ease, height 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    body.cursor-hover #cursor-ring {
+      width: 40px;
+      height: 40px;
+      border-color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    /* --- Wallpaper Layer --- */
+    #bg-wallpaper-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #bg-wallpaper-layer img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(var(--bg-blur)) brightness(0.55);
+      opacity: var(--bg-opacity);
+    }
+
+    /* --- Chrome Error Page Disguise --- */
+    #cloak-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #202124;
+      color: #e8eaed;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99990;
+      padding: 20px;
+      cursor: default;
+    }
+
+    .chrome-error-box {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .chrome-error-icon {
+      width: 52px;
+      height: 52px;
+      margin-bottom: 24px;
+      fill: #9aa0a6;
+    }
+
+    .chrome-title {
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1.3;
+      margin-bottom: 14px;
+      color: #e8eaed;
+    }
+
+    .chrome-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #9aa0a6;
+      margin-bottom: 24px;
+    }
+
+    .chrome-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .chrome-btn {
+      background-color: #8ab4f8;
+      color: #202124;
+      border: none;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .chrome-btn-outline {
+      background: none;
+      color: #8ab4f8;
+      border: 1px solid #5f6368;
+      padding: 7px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .chrome-error-code {
+      font-size: 12px;
+      color: #9aa0a6;
+      font-family: monospace;
+    }
+
+    /* --- Nexus App Layout --- */
+    #nexus-app {
+      position: relative;
+      z-index: 1;
+      display: none;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    html:not(.cloaked) #cloak-screen {
+      display: none !important;
+    }
+
+    html:not(.cloaked) #nexus-app {
+      display: flex !important;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* --- Sidebar --- */
+    .sidebar {
+      width: var(--sidebar-w);
+      background-color: rgba(18, 18, 22, 0.9);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 0;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      border-radius: 10px;
+      color: var(--text-sub);
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-icon:hover {
+      color: var(--text-main);
+      background-color: var(--bg-surface);
+      border-color: var(--border);
+    }
+
+    .sidebar-icon.active {
+      color: #ffffff;
+      background-color: var(--bg-card);
+      border-color: var(--border-hover);
+    }
+
+    .sidebar-icon svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .sidebar-tooltip {
+      position: absolute;
+      left: 50px;
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 1000;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .sidebar-icon:hover .sidebar-tooltip {
+      opacity: 1;
+    }
+
+    /* --- Workspace Section --- */
+    .main-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* --- Top Navigation Bar --- */
+    .top-bar {
+      background-color: rgba(23, 23, 28, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tabs-container {
+      height: var(--tabbar-h);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 6px;
+      overflow-x: auto;
+    }
+
+    .tabs-container::-webkit-scrollbar { display: none; }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      height: 28px;
+      border-radius: 6px;
+      max-width: 170px;
+      min-width: 100px;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+    }
+
+    .tab:hover {
+      color: var(--text-main);
+      border-color: var(--border-hover);
+    }
+
+    .tab.active {
+      color: var(--text-main);
+      background-color: var(--bg-card);
+      border-color: var(--border-hover);
+    }
+
+    .tab-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tab-close {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      opacity: 0.6;
+      transition: all 0.15s;
+    }
+
+    .tab-close:hover {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .new-tab-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-sub);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+    }
+
+    .new-tab-btn:hover {
+      color: var(--text-main);
+      border-color: var(--border-hover);
+    }
+
+    /* Address Bar Row */
+    .address-bar-container {
+      height: var(--topbar-h);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-sub);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-main);
+      border-color: var(--border-hover);
+    }
+
+    .nav-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .address-bar {
+      flex: 1;
+      height: 32px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      transition: border-color 0.15s ease;
+    }
+
+    .address-bar:focus-within, .address-bar:hover {
+      border-color: var(--border-hover);
+    }
+
+    .address-bar input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+
+    .address-icon {
+      margin-right: 8px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+    }
+
+    /* --- Viewports Container --- */
+    .content-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .tab-view.active {
+      display: flex;
+    }
+
+    /* --- Homepage Dashboard --- */
+    .new-tab-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: 40px 20px;
+      gap: 28px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .home-clock {
+      font-family: var(--font-display);
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .home-date {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sub);
+      margin-top: -20px;
+      letter-spacing: 0.5px;
+    }
+
+    .central-search-container {
+      width: 100%;
+    }
+
+    .central-search {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      background: rgba(18, 18, 22, 0.85);
+      backdrop-filter: blur(16px);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+    }
+
+    .central-search:hover, .central-search:focus-within {
+      border-color: var(--border-hover);
+      background-color: var(--bg-surface);
+    }
+
+    .central-search input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .central-search-icon {
+      margin-right: 12px;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+    }
+
+    /* Shortcuts Grid */
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+
+    .shortcut-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 10px;
+      background: rgba(23, 23, 28, 0.7);
+      backdrop-filter: blur(12px);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .shortcut-card:hover {
+      border-color: var(--border-hover);
+      background-color: var(--bg-card);
+      transform: translateY(-2px);
+    }
+
+    .shortcut-icon-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .shortcut-icon-circle svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .shortcut-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+    }
+
+    /* --- Games Hub --- */
+    .games-view-container {
+      padding: 30px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 18px;
+    }
+
+    .game-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .game-icon-square {
+      width: 130px;
+      height: 130px;
+      border-radius: 14px;
+      overflow: hidden;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .game-card:hover .game-icon-square {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .game-icon-square img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .game-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Game Execution Wrapper */
+    .game-player-wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      background: #000000;
+    }
+
+    .game-control-header {
+      height: 42px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+    }
+
+    .game-ctrl-title {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .game-ctrl-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-ui {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-ui:hover {
+      border-color: var(--border-hover);
+      background-color: var(--bg-surface);
+    }
+
+    .game-frame, .browser-frame {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000000;
+    }
+
+    /* --- Settings & Panels --- */
+    .settings-container, .list-panel {
+      max-width: 780px;
+      margin: 30px auto;
+      padding: 0 20px;
+      width: 100%;
+    }
+
+    .settings-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .settings-tab-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sub);
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .settings-tab-btn.active {
+      color: var(--text-main);
+      background: var(--bg-card);
+    }
+
+    .settings-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .settings-section.active {
+      display: flex;
+    }
+
+    .settings-card {
+      background: rgba(23, 23, 28, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-label-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .settings-label-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .slider-input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+  </style>
 </head>
 <body>
-    <!-- Custom Cursor -->
-    <div id="cursor-dot"></div>
-    <div id="cursor-ring"></div>
+  <!-- Custom Cursor -->
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
 
-    <!-- Live Dark Gray Wallpaper Layer -->
-    <div id="bg-media-container">
-        <img id="bgWallpaperImg" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2560&auto=format&fit=crop" alt="Dark Minimal Background">
+  <!-- Background Wallpaper -->
+  <div id="bg-wallpaper-layer">
+    <img id="bgWallpaperImg" src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2600&auto=format&fit=crop" alt="Dark Minimal Wallpaper">
+  </div>
+
+  <!-- Fake Chrome Error Screen (Disguise) -->
+  <div id="cloak-screen">
+    <div class="chrome-error-box">
+      <svg class="chrome-error-icon" viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <div class="chrome-title">This site can’t be reached</div>
+      <div class="chrome-desc">
+        Access to the requested URL has been restricted by network administrator policy.
+        <br><br>
+        Try contacting the system administrator or check firewall configurations.
+      </div>
+      <div class="chrome-actions">
+        <button class="chrome-btn" onclick="location.reload()">Reload</button>
+        <button class="chrome-btn-outline" onclick="document.getElementById('chromeDetails').style.display = document.getElementById('chromeDetails').style.display === 'block' ? 'none' : 'block'">Details</button>
+      </div>
+      <div id="chromeDetails" style="display: none; margin-top: 10px;" class="chrome-error-code">
+        Error Code: ERR_ACCESS_DENIED<br>
+        Host: 127.0.0.1:8080<br>
+        Security Policy: 0x80070005
+      </div>
     </div>
+  </div>
 
-    <!-- Chrome Error Page (Stealth Cloak) -->
-    <div id="cloak-screen">
-        <div class="chrome-error-box">
-            <svg class="chrome-error-icon" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
-            <div class="chrome-title">This site can’t be reached</div>
-            <div class="chrome-desc">
-                Access to the requested URL has been restricted by your administrator or network policy.
-                <br><br>
-                Try contacting the system administrator or check firewall configuration.
-            </div>
-            <div class="chrome-actions">
-                <button class="chrome-btn" onclick="location.reload()">Reload</button>
-                <button class="chrome-btn-outline" onclick="document.getElementById('chromeDetails').style.display = document.getElementById('chromeDetails').style.display === 'block' ? 'none' : 'block'">Details</button>
-            </div>
-            <div id="chromeDetails" style="display: none; margin-top: 10px;" class="chrome-error-code">
-                Error Code: ERR_ACCESS_DENIED<br>
-                Host: 127.0.0.1:8080<br>
-                Security Policy ID: 0x80070005
-            </div>
+  <!-- Nexus Browser Workspace -->
+  <div id="nexus-app">
+    <div class="app-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-icon active" data-view="home" title="Home">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <div class="sidebar-tooltip">Home</div>
         </div>
-    </div>
-
-    <!-- Nexus Workspace -->
-    <div id="nexus-app">
-        <div class="app-container">
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="sidebar-icon g-coursing active" data-view="home" title="Home">
-                    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    <div class="sidebar-tooltip">Home</div>
-                </div>
-                <div class="sidebar-icon g-coursing" data-view="games" title="Games">
-                    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m7-3a1 1 0 1 0 0 .01M17 13a1 1 0 1 0 0 .01"></path></svg>
-                    <div class="sidebar-tooltip">Games</div>
-                </div>
-                <div class="sidebar-icon g-coursing" data-view="bookmarks" title="Bookmarks">
-                    <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                    <div class="sidebar-tooltip">Bookmarks</div>
-                </div>
-                <div class="sidebar-icon g-coursing" data-view="history" title="History">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <div class="sidebar-tooltip">History</div>
-                </div>
-                <div class="sidebar-icon g-coursing" data-view="files" title="Files & Storage">
-                    <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                    <div class="sidebar-tooltip">Files</div>
-                </div>
-                <div style="flex: 1;"></div>
-                <div class="sidebar-icon g-coursing" data-view="settings" title="Settings">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <div class="sidebar-tooltip">Settings</div>
-                </div>
-            </div>
-
-            <!-- Workspace Section -->
-            <div class="main-section">
-                <!-- Top Navigation & Tabs Bar -->
-                <div class="top-bar">
-                    <!-- Tabs -->
-                    <div class="tabs-container" id="tabsList">
-                        <!-- Populated by JS -->
-                    </div>
-
-                    <!-- Address Controls -->
-                    <div class="address-bar-container">
-                        <div class="nav-btn g-coursing" id="btnBack" title="Back">
-                            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </div>
-                        <div class="nav-btn g-coursing" id="btnForward" title="Forward">
-                            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </div>
-                        <div class="nav-btn g-coursing" id="btnReload" title="Reload">
-                            <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                        </div>
-                        <div class="nav-btn g-coursing" id="btnHome" title="New Tab">
-                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-                        </div>
-                        <div class="address-bar g-coursing-input">
-                            <div class="address-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            </div>
-                            <input type="text" id="globalAddressInput" spellcheck="false" autocomplete="off" value="nexus://newtab">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Viewport Content Area -->
-                <div class="content-area" id="viewportsContainer">
-                    <!-- Tab views dynamically injected here -->
-                </div>
-            </div>
+        <div class="sidebar-icon" data-view="games" title="Games">
+          <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m7-3a1 1 0 1 0 0 .01M17 13a1 1 0 1 0 0 .01"></path></svg>
+          <div class="sidebar-tooltip">Games</div>
         </div>
+        <div class="sidebar-icon" data-view="bookmarks" title="Bookmarks">
+          <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          <div class="sidebar-tooltip">Bookmarks</div>
+        </div>
+        <div class="sidebar-icon" data-view="history" title="History">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <div class="sidebar-tooltip">History</div>
+        </div>
+        <div class="sidebar-icon" data-view="files" title="Files & Storage">
+          <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <div class="sidebar-tooltip">Files</div>
+        </div>
+        <div style="flex: 1;"></div>
+        <div class="sidebar-icon" data-view="settings" title="Settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <div class="sidebar-tooltip">Settings</div>
+        </div>
+      </div>
+
+      <!-- Main Section -->
+      <div class="main-section">
+        <!-- Top Nav & Tabs Bar -->
+        <div class="top-bar">
+          <div class="tabs-container" id="tabsList"></div>
+          
+          <div class="address-bar-container">
+            <div class="nav-btn" id="btnBack" title="Back">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </div>
+            <div class="nav-btn" id="btnForward" title="Forward">
+              <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="nav-btn" id="btnReload" title="Reload">
+              <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            </div>
+            <div class="nav-btn" id="btnHome" title="New Tab">
+              <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            </div>
+            <div class="address-bar">
+              <div class="address-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </div>
+              <input type="text" id="globalAddressInput" spellcheck="false" autocomplete="off" value="nexus://newtab">
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="viewportsContainer"></div>
+      </div>
     </div>
+  </div>
 
-    <!-- Application Script & GUST Proxy Engine -->
-    <script>
-        /* --- State Management --- */
-        const GAMES_DATABASE = [
-            {
-                id: 'fancypants',
-                title: 'Fancy Pants Adventure',
-                // Unblockable jsDelivr CDN mirror + fallback proxy bypass
-                primaryUrl: 'https://cdn.jsdelivr.net/gh/CoolDude2349/Offline-HTML-Games-Pack@master/offline/fancypantsadventure.html',
-                fallbackUrl: 'https://github.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/fancypantsadventure.html',
-                icon: 'https://play-lh.googleusercontent.com/TCx_u8NU40F6K8C7McBjI9qwi7t4HgZT9-HvwuWwmzFt5OkiU8wHrj7tj1I5f6DbqNoIVbKChqnKG8vr65--dg'
-            },
-            {
-                id: '2048',
-                title: '2048 Classic',
-                primaryUrl: 'https://cdn.jsdelivr.net/gh/gabrielecirulli/2048@master/index.html',
-                fallbackUrl: 'https://raw.githubusercontent.com/gabrielecirulli/2048/master/index.html',
-                icon: 'https://upload.wikimedia.org/wikipedia/commons/1/18/2048_logo.svg'
-            },
-            {
-                id: 'flappybird',
-                title: 'Flappy Bird',
-                primaryUrl: 'https://cdn.jsdelivr.net/gh/nebez/floppybird@master/index.html',
-                fallbackUrl: 'https://raw.githubusercontent.com/nebez/floppybird/master/index.html',
-                icon: 'https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png'
-            }
-        ];
+  <!-- Application Logic -->
+  <script>
+    const GAMES_CATALOG = [
+      {
+        id: 'fancypants',
+        title: 'Fancy Pants Adventure',
+        sources: [
+          'https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/master/offline/fancypantsadventure.html',
+          'https://cdn.jsdelivr.net/gh/CoolDude2349/Offline-HTML-Games-Pack@master/offline/fancypantsadventure.html',
+          'https://github.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/fancypantsadventure.html'
+        ],
+        icon: 'https://play-lh.googleusercontent.com/TCx_u8NU40F6K8C7McBjI9qwi7t4HgZT9-HvwuWwmzFt5OkiU8wHrj7tj1I5f6DbqNoIVbKChqnKG8vr65--dg'
+      },
+      {
+        id: '2048',
+        title: '2048 Classic',
+        sources: [
+          'https://raw.githubusercontent.com/gabrielecirulli/2048/master/index.html',
+          'https://cdn.jsdelivr.net/gh/gabrielecirulli/2048@master/index.html'
+        ],
+        icon: 'https://upload.wikimedia.org/wikipedia/commons/1/18/2048_logo.svg'
+      },
+      {
+        id: 'flappybird',
+        title: 'Flappy Bird',
+        sources: [
+          'https://raw.githubusercontent.com/nebez/floppybird/master/index.html',
+          'https://cdn.jsdelivr.net/gh/nebez/floppybird@master/index.html'
+        ],
+        icon: 'https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png'
+      }
+    ];
 
-        let state = {
-            unlocked: false,
-            activeTabId: null,
-            tabs: [],
-            history: JSON.parse(localStorage.getItem('nexus_history') || '[]'),
-            bookmarks: JSON.parse(localStorage.getItem('nexus_bookmarks') || '[]'),
-            settings: JSON.parse(localStorage.getItem('nexus_settings') || JSON.stringify({
-                theme: 'dark-gray',
-                wispServer: 'wss://wisp.mercurywork.shop/',
-                bgOpacity: 0.35,
-                bgBlur: 4,
-                bgUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2560&auto=format&fit=crop'
-            })),
-            games: GAMES_DATABASE
-        };
+    let state = {
+      unlocked: false,
+      activeTabId: null,
+      tabs: [],
+      history: JSON.parse(localStorage.getItem('nexus_history') || '[]'),
+      bookmarks: JSON.parse(localStorage.getItem('nexus_bookmarks') || '[]'),
+      settings: JSON.parse(localStorage.getItem('nexus_settings') || JSON.stringify({
+        wispServer: 'wss://wisp.mercurywork.shop/',
+        bgOpacity: 0.45,
+        bgBlur: 8,
+        bgUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2600&auto=format&fit=crop'
+      })),
+      games: GAMES_CATALOG
+    };
 
-        /* --- Custom Cursor Movement --- */
-        const cursorDot = document.getElementById('cursor-dot');
-        const cursorRing = document.getElementById('cursor-ring');
-        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
-        let ringX = mouseX, ringY = mouseY;
+    /* --- Custom Cursor Movement --- */
+    const cursorDot = document.getElementById('cursor-dot');
+    const cursorRing = document.getElementById('cursor-ring');
+    let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+    let ringX = mouseX, ringY = mouseY;
 
-        window.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            cursorDot.style.left = `${mouseX}px`;
-            cursorDot.style.top = `${mouseY}px`;
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursorDot.style.left = `${mouseX}px`;
+      cursorDot.style.top = `${mouseY}px`;
+    });
+
+    function animateCursor() {
+      ringX += (mouseX - ringX) * 0.22;
+      ringY += (mouseY - ringY) * 0.22;
+      cursorRing.style.left = `${ringX}px`;
+      cursorRing.style.top = `${ringY}px`;
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest('button, input, .tab, .sidebar-icon, .shortcut-card, .game-card, .nav-btn')) {
+        document.body.classList.add('cursor-hover');
+      } else {
+        document.body.classList.remove('cursor-hover');
+      }
+    });
+
+    /* --- Stealth Unlock to about:blank --- */
+    window.addEventListener('keydown', (e) => {
+      if (e.key === "'" || e.key === '`') {
+        e.preventDefault();
+        launchInAboutBlank();
+      }
+    });
+
+    function launchInAboutBlank() {
+      try {
+        if (window.top === window.self && !window.location.href.includes('about:blank')) {
+          const win = window.open('about:blank', '_blank');
+          if (win) {
+            const doc = win.document;
+            doc.open();
+            // Remove the disguise class so it renders directly into Nexus
+            const html = document.documentElement.outerHTML.replace('class="cloaked"', 'class=""');
+            doc.write(html);
+            doc.close();
+            // Mask old tab
+            window.location.replace('https://classroom.google.com');
+            return;
+          }
+        }
+      } catch(e) {}
+
+      // Fallback if popup blocked
+      revealNexus();
+    }
+
+    function revealNexus() {
+      document.documentElement.classList.remove('cloaked');
+      document.title = "Nexus";
+      applySettings();
+      if (state.tabs.length === 0) {
+        createNewTab('nexus://newtab', 'New Tab');
+      }
+    }
+
+    /* --- Tabs System --- */
+    function createNewTab(url = 'nexus://newtab', title = 'New Tab') {
+      const id = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const newTab = { id, title, url };
+      state.tabs.push(newTab);
+      renderTabs();
+      switchTab(id);
+      if (url !== 'nexus://newtab') {
+        navigateTab(id, url);
+      }
+    }
+
+    function closeTab(id, e) {
+      if (e) e.stopPropagation();
+      const index = state.tabs.findIndex(t => t.id === id);
+      if (index === -1) return;
+
+      const view = document.getElementById('view_' + id);
+      if (view) view.remove();
+
+      state.tabs.splice(index, 1);
+      if (state.tabs.length === 0) {
+        createNewTab();
+      } else if (state.activeTabId === id) {
+        const nextTab = state.tabs[Math.max(0, index - 1)];
+        switchTab(nextTab.id);
+      } else {
+        renderTabs();
+      }
+    }
+
+    function switchTab(id) {
+      state.activeTabId = id;
+      renderTabs();
+
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      let activeView = document.getElementById('view_' + id);
+      if (!activeView) {
+        activeView = createTabViewDOM(id);
+      }
+      activeView.classList.add('active');
+
+      const tab = state.tabs.find(t => t.id === id);
+      if (tab) {
+        document.getElementById('globalAddressInput').value = tab.url;
+      }
+    }
+
+    function renderTabs() {
+      const container = document.getElementById('tabsList');
+      container.innerHTML = '';
+
+      state.tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''}`;
+        tabEl.onclick = () => switchTab(tab.id);
+        tabEl.innerHTML = `
+          <span class="tab-title">${escapeHTML(tab.title)}</span>
+          <div class="tab-close" onclick="closeTab('${tab.id}', event)">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </div>
+        `;
+        container.appendChild(tabEl);
+      });
+
+      const newBtn = document.createElement('div');
+      newBtn.className = 'new-tab-btn';
+      newBtn.title = 'New Tab';
+      newBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+      newBtn.onclick = () => createNewTab();
+      container.appendChild(newBtn);
+    }
+
+    function createTabViewDOM(tabId) {
+      const container = document.getElementById('viewportsContainer');
+      const view = document.createElement('div');
+      view.className = 'tab-view';
+      view.id = 'view_' + tabId;
+      view.innerHTML = renderHomeContent(tabId);
+      container.appendChild(view);
+      setupHomeEvents(view, tabId);
+      return view;
+    }
+
+    /* --- Minimalist Home Template --- */
+    function renderHomeContent(tabId) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+
+      return `
+        <div class="new-tab-content">
+          <div class="home-clock">${timeStr}</div>
+          <div class="home-date">${dateStr}</div>
+
+          <div class="central-search-container">
+            <div class="central-search">
+              <div class="central-search-icon">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
+              <input type="text" class="home-search-input" placeholder="Search the web or enter URL">
+            </div>
+          </div>
+
+          <div class="shortcuts-grid">
+            <div class="shortcut-card" data-url="https://google.com">
+              <div class="shortcut-icon-circle">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#f3f3f6" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#8c8c9a" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#585866" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#dcdce6" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </div>
+              <div class="shortcut-label">Google</div>
+            </div>
+            <div class="shortcut-card" data-url="https://youtube.com">
+              <div class="shortcut-icon-circle">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#f3f3f6"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </div>
+              <div class="shortcut-label">YouTube</div>
+            </div>
+            <div class="shortcut-card" data-url="https://discord.com">
+              <div class="shortcut-icon-circle">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#f3f3f6"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.071.071 0 0 0-.031-.027zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              </div>
+              <div class="shortcut-label">Discord</div>
+            </div>
+            <div class="shortcut-card" data-url="https://reddit.com">
+              <div class="shortcut-icon-circle">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#f3f3f6"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688-.551 1.697-.439 2.247.249.55.688.439 1.697-.249 2.247-.688.55-1.697.439-2.247-.249-.55-.688-.439-1.697.249-2.247zm-5.01 1.439c1.518 0 2.9.515 4.013 1.377l-1.203 1.203c-.78-.547-1.735-.873-2.81-.873-2.61 0-4.74 2.13-4.74 4.74 0 1.075.326 2.03.873 2.81l-1.203 1.203c-.862-1.113-1.377-2.495-1.377-4.013 0-3.59 2.91-6.5 6.5-6.5zm0 11c-1.518 0-2.9-.515-4.013-1.377l1.203-1.203c.78.547 1.735.873 2.81.873 2.61 0 4.74 2.13 4.74 4.74 0 1.075-.326 2.03-.873 2.81l1.203-1.203c.862 1.113 1.377 2.495 1.377 4.013 0 3.59-2.91 6.5-6.5 6.5zm5.01-1.439c.688-.551 1.697-.439 2.247.249.55.688.439 1.697-.249 2.247-.688.55-1.697.439-2.247-.249-.55-.688-.439-1.697.249-2.247z"/></svg>
+              </div>
+              <div class="shortcut-label">Reddit</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setupHomeEvents(view, tabId) {
+      const input = view.querySelector('.home-search-input');
+      if (input) {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            navigateTab(tabId, input.value.trim());
+          }
         });
+      }
 
-        function animateCursor() {
-            ringX += (mouseX - ringX) * 0.2;
-            ringY += (mouseY - ringY) * 0.2;
-            cursorRing.style.left = `${ringX}px`;
-            cursorRing.style.top = `${ringY}px`;
-            requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
-
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.closest('button, input, .tab, .sidebar-icon, .shortcut-card, .game-card, .nav-btn')) {
-                document.body.classList.add('cursor-hover');
-            } else {
-                document.body.classList.remove('cursor-hover');
-            }
+      view.querySelectorAll('.shortcut-card').forEach(card => {
+        card.addEventListener('click', () => {
+          navigateTab(tabId, card.dataset.url);
         });
+      });
+    }
 
-        /* --- Stealth Unlock Keybinding --- */
-        window.addEventListener('keydown', (e) => {
-            if (e.key === "'" || e.key === '`') {
-                e.preventDefault();
-                unlockNexus();
-            }
-        });
+    /* --- Universal Fetch & Render Engine --- */
+    async function navigateTab(tabId, query) {
+      if (!query) return;
+      const tab = state.tabs.find(t => t.id === tabId);
+      if (!tab) return;
 
-        function unlockNexus() {
-            state.unlocked = true;
-            document.getElementById('cloak-screen').style.display = 'none';
-            document.getElementById('nexus-app').style.display = 'block';
-            document.title = 'Nexus';
-
-            try {
-                if (window.top === window.self && !window.location.href.includes('about:blank')) {
-                    const win = window.open('about:blank', '_blank');
-                    if (win) {
-                        const doc = win.document;
-                        doc.open();
-                        doc.write(document.documentElement.outerHTML);
-                        doc.close();
-                        window.location.replace('https://classroom.google.com');
-                        return;
-                    }
-                }
-            } catch(err) {}
-
-            applySettings();
-            if (state.tabs.length === 0) {
-                createNewTab('nexus://newtab', 'New Tab');
-            }
+      let finalUrl = query;
+      if (!query.startsWith('http://') && !query.startsWith('https://') && !query.startsWith('nexus://')) {
+        if (query.includes('.') && !query.includes(' ')) {
+          finalUrl = 'https://' + query;
+        } else {
+          finalUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
         }
+      }
 
-        /* --- Tabs Logic --- */
-        function createNewTab(url = 'nexus://newtab', title = 'New Tab') {
-            const id = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-            const newTab = { id, title, url };
-            state.tabs.push(newTab);
-            renderTabs();
-            switchTab(id);
-            if (url !== 'nexus://newtab') {
-                navigateTab(id, url);
+      tab.url = finalUrl;
+      tab.title = finalUrl.replace(/^https?:\/\//, '').split('/')[0] || finalUrl;
+      renderTabs();
+
+      if (state.activeTabId === tabId) {
+        document.getElementById('globalAddressInput').value = finalUrl;
+      }
+
+      state.history.unshift({ url: finalUrl, title: tab.title, timestamp: Date.now() });
+      localStorage.setItem('nexus_history', JSON.stringify(state.history.slice(0, 100)));
+
+      const view = document.getElementById('view_' + tabId);
+      if (!view) return;
+
+      if (finalUrl === 'nexus://newtab') {
+        view.innerHTML = renderHomeContent(tabId);
+        setupHomeEvents(view, tabId);
+        return;
+      }
+
+      view.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100%; font-size:13px; color:var(--text-sub);">Fetching content...</div>`;
+
+      try {
+        const html = await fetchRawHTML([
+          finalUrl,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(finalUrl)}`,
+          `https://corsproxy.io/?${encodeURIComponent(finalUrl)}`
+        ]);
+        renderSandboxedFrame(view, html, finalUrl);
+      } catch (err) {
+        view.innerHTML = `<iframe class="browser-frame" src="${finalUrl}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>`;
+      }
+    }
+
+    async function fetchRawHTML(sources) {
+      for (const url of sources) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const html = await res.text();
+            if (html && html.trim().length > 0) {
+              return html;
             }
-        }
+          }
+        } catch(e) {}
+      }
+      throw new Error("Failed to load through mirrors.");
+    }
 
-        function closeTab(id, e) {
-            if (e) e.stopPropagation();
-            const index = state.tabs.findIndex(t => t.id === id);
-            if (index === -1) return;
+    function renderSandboxedFrame(container, html, originUrl) {
+      container.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.className = 'browser-frame';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-modals');
+      iframe.setAttribute('allowfullscreen', 'true');
+      container.appendChild(iframe);
+      
+      // Inject base tag for relative stylesheets/scripts
+      if (originUrl && originUrl.startsWith('http')) {
+        html = `<base href="${originUrl}">` + html;
+      }
+      iframe.srcdoc = html;
+    }
 
-            const view = document.getElementById('view_' + id);
-            if (view) view.remove();
+    /* --- Games Hub --- */
+    function loadGameInTab(game) {
+      const id = 'game_' + Date.now();
+      const newTab = { id, title: game.title, url: `nexus://game/${game.id}` };
+      state.tabs.push(newTab);
+      renderTabs();
+      switchTab(id);
 
-            state.tabs.splice(index, 1);
-            if (state.tabs.length === 0) {
-                createNewTab();
-            } else if (state.activeTabId === id) {
-                const nextTab = state.tabs[Math.max(0, index - 1)];
-                switchTab(nextTab.id);
-            } else {
-                renderTabs();
-            }
-        }
+      const view = document.getElementById('view_' + id);
+      view.innerHTML = `
+        <div class="game-player-wrapper" id="player_${id}">
+          <div class="game-control-header">
+            <div class="game-ctrl-title">
+              <img src="${game.icon}" style="width:18px; height:18px; border-radius:4px; object-fit:cover;">
+              <span>${escapeHTML(game.title)}</span>
+            </div>
+            <div class="game-ctrl-btns">
+              <button class="btn-ui" onclick="reloadGame('${id}', ${JSON.stringify(game.sources).replace(/"/g, '&quot;')})">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                Reload
+              </button>
+              <button class="btn-ui" onclick="toggleFullscreen('player_${id}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                Fullscreen
+              </button>
+            </div>
+          </div>
+          <iframe class="game-frame" id="frame_${id}" allowfullscreen="true" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups allow-modals"></iframe>
+        </div>
+      `;
 
-        function switchTab(id) {
-            state.activeTabId = id;
-            renderTabs();
+      reloadGame(id, game.sources);
+    }
 
-            document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
-            let activeView = document.getElementById('view_' + id);
-            if (!activeView) {
-                activeView = createTabViewDOM(id);
-            }
-            activeView.classList.add('active');
+    async function reloadGame(tabId, sources) {
+      const frame = document.getElementById('frame_' + tabId);
+      if (!frame) return;
 
-            const tab = state.tabs.find(t => t.id === id);
-            if (tab) {
-                document.getElementById('globalAddressInput').value = tab.url;
-            }
-        }
+      try {
+        const html = await fetchRawHTML(sources);
+        frame.srcdoc = html;
+      } catch(e) {
+        frame.src = sources[0];
+      }
+    }
 
-        function renderTabs() {
-            const container = document.getElementById('tabsList');
-            container.innerHTML = '';
+    function toggleFullscreen(elemId) {
+      const elem = document.getElementById(elemId);
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        document.exitFullscreen();
+      }
+    }
 
-            state.tabs.forEach(tab => {
-                const tabEl = document.createElement('div');
-                tabEl.className = `tab g-coursing ${tab.id === state.activeTabId ? 'active' : ''}`;
-                tabEl.onclick = () => switchTab(tab.id);
-                tabEl.innerHTML = `
-                    <span class="tab-title">${escapeHTML(tab.title)}</span>
-                    <div class="tab-close" onclick="closeTab('${tab.id}', event)">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </div>
-                `;
-                container.appendChild(tabEl);
-            });
+    /* --- Sidebar Views --- */
+    document.querySelectorAll('.sidebar-icon[data-view]').forEach(icon => {
+      icon.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+        icon.classList.add('active');
+        openStaticView(icon.dataset.view);
+      });
+    });
 
-            const newBtn = document.createElement('div');
-            newBtn.className = 'new-tab-btn g-coursing';
-            newBtn.title = 'New Tab';
-            newBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
-            newBtn.onclick = () => createNewTab();
-            container.appendChild(newBtn);
-        }
+    function openStaticView(type) {
+      const id = 'view_static_' + type;
+      let existingTab = state.tabs.find(t => t.id === id);
+      if (!existingTab) {
+        const titles = { games: 'Games Hub', bookmarks: 'Bookmarks', history: 'History', files: 'Files & Storage', settings: 'Settings' };
+        state.tabs.push({ id, title: titles[type] || 'Nexus', url: `nexus://${type}` });
+      }
+      renderTabs();
+      switchTab(id);
 
-        function createTabViewDOM(tabId) {
-            const container = document.getElementById('viewportsContainer');
-            const view = document.createElement('div');
-            view.className = 'tab-view';
-            view.id = 'view_' + tabId;
-            view.innerHTML = renderHomeContent(tabId);
-            container.appendChild(view);
-            setupHomeEvents(view, tabId);
-            return view;
-        }
+      const view = document.getElementById('view_' + id);
+      if (type === 'games') renderGamesHub(view);
+      if (type === 'settings') renderSettingsView(view);
+      if (type === 'history') renderHistoryView(view);
+      if (type === 'bookmarks') renderBookmarksView(view);
+      if (type === 'files') renderFilesView(view);
+      if (type === 'home') navigateTab(id, 'nexus://newtab');
+    }
 
-        /* --- Minimalist Home Template --- */
-        function renderHomeContent(tabId) {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const dateStr = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-
-            return `
-                <div class="new-tab-content">
-                    <div class="home-clock">${timeStr}</div>
-                    <div class="home-date">${dateStr}</div>
-
-                    <div class="central-search-container">
-                        <div class="central-search g-coursing-input">
-                            <div class="central-search-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            </div>
-                            <input type="text" class="home-search-input" placeholder="Search with Gust or enter URL">
-                        </div>
-                    </div>
-
-                    <div class="shortcuts-grid">
-                        <div class="shortcut-card g-coursing" data-url="https://google.com">
-                            <div class="shortcut-icon-circle">
-                                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="#e0e0e0" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#8a8a93" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#5e5e68" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#e0e0e0" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                            </div>
-                            <div class="shortcut-label">Google</div>
-                        </div>
-                        <div class="shortcut-card g-coursing" data-url="https://youtube.com">
-                            <div class="shortcut-icon-circle">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="#ededed"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                            </div>
-                            <div class="shortcut-label">YouTube</div>
-                        </div>
-                        <div class="shortcut-card g-coursing" data-url="https://discord.com">
-                            <div class="shortcut-icon-circle">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="#ededed"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.071.071 0 0 0-.031-.027zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                            </div>
-                            <div class="shortcut-label">Discord</div>
-                        </div>
-                        <div class="shortcut-card g-coursing" data-url="https://reddit.com">
-                            <div class="shortcut-icon-circle">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="#ededed"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688-.551 1.697-.439 2.247.249.55.688.439 1.697-.249 2.247-.688.55-1.697.439-2.247-.249-.55-.688-.439-1.697.249-2.247zm-5.01 1.439c1.518 0 2.9.515 4.013 1.377l-1.203 1.203c-.78-.547-1.735-.873-2.81-.873-2.61 0-4.74 2.13-4.74 4.74 0 1.075.326 2.03.873 2.81l-1.203 1.203c-.862-1.113-1.377-2.495-1.377-4.013 0-3.59 2.91-6.5 6.5-6.5zm0 11c-1.518 0-2.9-.515-4.013-1.377l1.203-1.203c.78.547 1.735.873 2.81.873 2.61 0 4.74 2.13 4.74 4.74 0 1.075-.326 2.03-.873 2.81l1.203-1.203c.862 1.113 1.377 2.495 1.377 4.013 0 3.59-2.91 6.5-6.5 6.5zm5.01-1.439c.688-.551 1.697-.439 2.247.249.55.688.439 1.697-.249 2.247-.688.55-1.697.439-2.247-.249-.55-.688-.439-1.697.249-2.247z"/></svg>
-                            </div>
-                            <div class="shortcut-label">Reddit</div>
-                        </div>
-                    </div>
+    function renderGamesHub(container) {
+      container.innerHTML = `
+        <div class="games-view-container">
+          <div class="section-header">
+            <div class="section-title">Games Hub</div>
+          </div>
+          <div class="games-grid">
+            ${state.games.map(g => `
+              <div class="game-card" onclick='loadGameInTab(${JSON.stringify(g)})'>
+                <div class="game-icon-square">
+                  <img src="${g.icon}" alt="${escapeHTML(g.title)}">
                 </div>
-            `;
-        }
+                <div class="game-label">${escapeHTML(g.title)}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
 
-        function setupHomeEvents(view, tabId) {
-            const input = view.querySelector('.home-search-input');
-            if (input) {
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        navigateTab(tabId, input.value.trim());
-                    }
-                });
-            }
+    function renderHistoryView(container) {
+      container.innerHTML = `
+        <div class="list-panel">
+          <div class="section-header">
+            <div class="section-title">History</div>
+            <button class="btn-ui" onclick="clearHistory()">Clear</button>
+          </div>
+          ${state.history.length === 0 ? '<div style="color:var(--text-sub)">No history logged yet.</div>' : ''}
+          ${state.history.map(item => `
+            <div class="list-item">
+              <div>
+                <div style="font-weight:600; font-size:13px;">${escapeHTML(item.title)}</div>
+                <div style="font-size:11px; color:var(--text-sub);">${escapeHTML(item.url)}</div>
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">${new Date(item.timestamp).toLocaleTimeString()}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
 
-            view.querySelectorAll('.shortcut-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    navigateTab(tabId, card.dataset.url);
-                });
-            });
-        }
+    function clearHistory() {
+      state.history = [];
+      localStorage.removeItem('nexus_history');
+      openStaticView('history');
+    }
 
-        /* --- GUST Proxy & Dynamic Request Engine --- */
-        async function navigateTab(tabId, query) {
-            if (!query) return;
-            const tab = state.tabs.find(t => t.id === tabId);
-            if (!tab) return;
+    function renderBookmarksView(container) {
+      container.innerHTML = `
+        <div class="list-panel">
+          <div class="section-header">
+            <div class="section-title">Bookmarks</div>
+          </div>
+          <div class="list-item" style="cursor:pointer;" onclick="navigateTab(state.activeTabId, 'https://github.com')">
+            <div>
+              <div style="font-weight:600; font-size:13px;">GitHub</div>
+              <div style="font-size:11px; color:var(--text-sub);">https://github.com</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-            let finalUrl = query;
-            if (!query.startsWith('http://') && !query.startsWith('https://') && !query.startsWith('nexus://')) {
-                if (query.includes('.') && !query.includes(' ')) {
-                    finalUrl = 'https://' + query;
-                } else {
-                    finalUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
-                }
-            }
+    function renderFilesView(container) {
+      container.innerHTML = `
+        <div class="list-panel">
+          <div class="section-header">
+            <div class="section-title">Local HTML App Runner</div>
+          </div>
+          <div class="settings-card">
+            <div class="settings-label-title">Run Offline File</div>
+            <div class="settings-label-desc">Select an offline HTML bundle to launch isolated inside Nexus.</div>
+            <input type="file" id="localFileInput" accept=".html,.htm" style="margin-top:8px; color:var(--text-sub);">
+          </div>
+        </div>
+      `;
 
-            tab.url = finalUrl;
-            tab.title = finalUrl.replace(/^https?:\/\//, '').split('/')[0] || finalUrl;
-            renderTabs();
-
-            if (state.activeTabId === tabId) {
-                document.getElementById('globalAddressInput').value = finalUrl;
-            }
-
-            state.history.unshift({ url: finalUrl, title: tab.title, timestamp: Date.now() });
-            localStorage.setItem('nexus_history', JSON.stringify(state.history.slice(0, 100)));
-
-            const view = document.getElementById('view_' + tabId);
-            if (!view) return;
-
-            if (finalUrl === 'nexus://newtab') {
-                view.innerHTML = renderHomeContent(tabId);
-                setupHomeEvents(view, tabId);
-                return;
-            }
-
-            view.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100%; font-size:13px; color:var(--text-secondary);">Connecting via GUST Engine...</div>`;
-
-            // Execute GUST fetch pipeline
-            try {
-                const htmlContent = await fetchViaGustEngine(finalUrl);
-                renderSandboxedHTML(view, htmlContent, finalUrl);
-            } catch (err) {
-                view.innerHTML = `<div style="padding: 40px; text-align:center; color: var(--text-secondary);"><div style="font-size:16px; font-weight:700; margin-bottom:8px;">Load Failed</div>${escapeHTML(err.message)}</div>`;
-            }
-        }
-
-        async function fetchViaGustEngine(targetUrl) {
-            // Multi-tier unblockable proxy chain (bypasses GoGuardian & network firewalls)
-            const proxySources = [
-                targetUrl, // Direct
-                `https://cdn.jsdelivr.net/gh/${targetUrl.replace('https://github.com/', '').replace('/raw/refs/heads/', '@').replace('/raw/', '@')}`, // jsDelivr edge
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
-            ];
-
-            for (const url of proxySources) {
-                try {
-                    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                    if (res.ok) {
-                        let text = await res.text();
-                        if (text && text.trim().length > 0) {
-                            // Inject base URL to correctly rewrite all relative assets & styles
-                            return `<base href="${targetUrl}">` + text;
-                        }
-                    }
-                } catch(e) {
-                    continue;
-                }
-            }
-            throw new Error('All GUST proxy tunnels were unreachable.');
-        }
-
-        function renderSandboxedHTML(container, html, originUrl) {
-            container.innerHTML = '';
-            const iframe = document.createElement('iframe');
-            iframe.className = 'browser-frame';
-            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups');
-            iframe.setAttribute('allowfullscreen', 'true');
-            container.appendChild(iframe);
-            iframe.srcdoc = html;
-        }
-
-        /* --- Games Hub Execution --- */
-        function loadGameInTab(game) {
-            const id = 'game_' + Date.now();
-            const newTab = { id, title: game.title, url: `nexus://game/${game.id}` };
-            state.tabs.push(newTab);
-            renderTabs();
-            switchTab(id);
-
-            const view = document.getElementById('view_' + id);
-            view.innerHTML = `
-                <div class="game-player-wrapper" id="player_${id}">
-                    <div class="game-control-header">
-                        <div class="game-ctrl-title">
-                            <img src="${game.icon}" style="width:18px; height:18px; border-radius:4px; object-fit:cover;">
-                            <span>${escapeHTML(game.title)}</span>
-                        </div>
-                        <div class="game-ctrl-btns">
-                            <button class="game-btn g-coursing" onclick="reloadGameFrame('${id}', '${game.primaryUrl}', '${game.fallbackUrl}')">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                                Reload
-                            </button>
-                            <button class="game-btn g-coursing" onclick="toggleFullscreen('player_${id}')">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                                Fullscreen
-                            </button>
-                        </div>
-                    </div>
-                    <iframe class="game-frame" id="frame_${id}" allowfullscreen="true" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms"></iframe>
-                </div>
-            `;
-
-            reloadGameFrame(id, game.primaryUrl, game.fallbackUrl);
-        }
-
-        async function reloadGameFrame(tabId, primaryUrl, fallbackUrl) {
-            const frame = document.getElementById('frame_' + tabId);
-            if (!frame) return;
-
-            // Fetch via unblockable edge CDN first (bypasses GoGuardian completely)
-            try {
-                const res = await fetch(primaryUrl);
-                if (res.ok) {
-                    const html = await res.text();
-                    frame.srcdoc = html;
-                    return;
-                }
-            } catch(e) {}
-
-            // Fallback via GUST fetcher
-            try {
-                const html = await fetchViaGustEngine(fallbackUrl || primaryUrl);
-                frame.srcdoc = html;
-            } catch(e) {
-                frame.src = primaryUrl;
-            }
-        }
-
-        function toggleFullscreen(elemId) {
-            const elem = document.getElementById(elemId);
-            if (!document.fullscreenElement) {
-                elem.requestFullscreen().catch(err => alert(err.message));
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        /* --- Sidebar Navigation --- */
-        document.querySelectorAll('.sidebar-icon[data-view]').forEach(icon => {
-            icon.addEventListener('click', () => {
-                document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
-                icon.classList.add('active');
-
-                const viewType = icon.dataset.view;
-                openStaticView(viewType);
-            });
-        });
-
-        function openStaticView(type) {
-            const id = 'view_static_' + type;
-            let existingTab = state.tabs.find(t => t.id === id);
-            if (!existingTab) {
-                const titles = { games: 'Games Hub', bookmarks: 'Bookmarks', history: 'History', files: 'Files & Storage', settings: 'Settings' };
-                state.tabs.push({ id, title: titles[type] || 'Nexus', url: `nexus://${type}` });
-            }
-            renderTabs();
-            switchTab(id);
-
-            const view = document.getElementById('view_' + id);
-            if (type === 'games') renderGamesHub(view);
-            if (type === 'settings') renderSettingsView(view);
-            if (type === 'history') renderHistoryView(view);
-            if (type === 'bookmarks') renderBookmarksView(view);
-            if (type === 'files') renderFilesView(view);
-            if (type === 'home') navigateTab(id, 'nexus://newtab');
-        }
-
-        function renderGamesHub(container) {
-            container.innerHTML = `
-                <div class="games-view-container">
-                    <div class="section-header">
-                        <div class="section-title">Games Hub</div>
-                    </div>
-                    <div class="games-grid">
-                        ${state.games.map(g => `
-                            <div class="game-card" onclick='loadGameInTab(${JSON.stringify(g)})'>
-                                <div class="game-icon-square g-coursing">
-                                    <img src="${g.icon}" alt="${escapeHTML(g.title)}">
-                                </div>
-                                <div class="game-label">${escapeHTML(g.title)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderHistoryView(container) {
-            container.innerHTML = `
-                <div class="list-panel">
-                    <div class="section-header">
-                        <div class="section-title">History</div>
-                        <button class="game-btn g-coursing" onclick="clearHistory()">Clear</button>
-                    </div>
-                    ${state.history.length === 0 ? '<div style="color:var(--text-secondary)">No history logged yet.</div>' : ''}
-                    ${state.history.map(item => `
-                        <div class="list-item g-coursing">
-                            <div>
-                                <div style="font-weight:600; font-size:13px;">${escapeHTML(item.title)}</div>
-                                <div style="font-size:11px; color:var(--text-secondary);">${escapeHTML(item.url)}</div>
-                            </div>
-                            <div style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">${new Date(item.timestamp).toLocaleTimeString()}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        function clearHistory() {
-            state.history = [];
-            localStorage.removeItem('nexus_history');
-            openStaticView('history');
-        }
-
-        function renderBookmarksView(container) {
-            container.innerHTML = `
-                <div class="list-panel">
-                    <div class="section-header">
-                        <div class="section-title">Saved Bookmarks</div>
-                    </div>
-                    <div class="list-item g-coursing" style="cursor:pointer;" onclick="navigateTab(state.activeTabId, 'https://github.com')">
-                        <div>
-                            <div style="font-weight:600; font-size:13px;">GitHub</div>
-                            <div style="font-size:11px; color:var(--text-secondary);">https://github.com</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderFilesView(container) {
-            container.innerHTML = `
-                <div class="list-panel">
-                    <div class="section-header">
-                        <div class="section-title">Offline File Runner</div>
-                    </div>
-                    <div class="settings-card g-coursing">
-                        <div class="settings-label-title">Launch Local HTML App</div>
-                        <div class="settings-label-desc">Select an offline game or page from your device to run isolated in Nexus.</div>
-                        <input type="file" id="localFileInput" accept=".html,.htm" style="margin-top:10px; color:var(--text-secondary);">
-                    </div>
-                </div>
-            `;
-
-            setTimeout(() => {
-                const fileInput = document.getElementById('localFileInput');
-                if (fileInput) {
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                                const newId = 'local_' + Date.now();
-                                state.tabs.push({ id: newId, title: file.name, url: `nexus://file/${file.name}` });
-                                renderTabs();
-                                switchTab(newId);
-                                const view = document.getElementById('view_' + newId);
-                                renderSandboxedHTML(view, event.target.result, 'local');
-                            };
-                            reader.readAsText(file);
-                        }
-                    });
-                }
-            }, 100);
-        }
-
-        /* --- Settings View --- */
-        function renderSettingsView(container) {
-            container.innerHTML = `
-                <div class="settings-container">
-                    <div class="settings-nav">
-                        <button class="settings-tab-btn active" onclick="switchSettingsSection('general', this)">General & Engine</button>
-                        <button class="settings-tab-btn" onclick="switchSettingsSection('wallpaper', this)">Wallpaper</button>
-                        <button class="settings-tab-btn" onclick="switchSettingsSection('data', this)">Data & Storage</button>
-                    </div>
-
-                    <!-- General & Engine -->
-                    <div class="settings-section active" id="sec_general">
-                        <div class="settings-card g-coursing">
-                            <div class="settings-label-title">GUST Proxy Protocol Configuration</div>
-                            <div class="settings-label-desc">Configure static WISP WebSocket relay for untracked tunneling.</div>
-                            <input type="text" id="wispServerInput" class="slider-input" value="${escapeHTML(state.settings.wispServer)}" style="width:100%; padding:8px 12px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-family:var(--font-mono); font-size:12px; margin-top:8px;">
-                            <button class="game-btn g-coursing" style="align-self:flex-start;" onclick="saveWispConfig()">Save Server</button>
-                        </div>
-                    </div>
-
-                    <!-- Wallpaper -->
-                    <div class="settings-section" id="sec_wallpaper">
-                        <div class="settings-card g-coursing">
-                            <div class="settings-label-title">Background Image URL</div>
-                            <div class="settings-label-desc">Set custom wallpaper image or upload a local file.</div>
-                            <input type="text" id="bgUrlInput" value="${escapeHTML(state.settings.bgUrl)}" placeholder="https://..." style="width:100%; padding:8px 12px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-size:12px; margin-top:8px;">
-                            <button class="game-btn g-coursing" style="align-self:flex-start; margin-top:6px;" onclick="saveBgUrl()">Apply URL</button>
-
-                            <div class="settings-row" style="margin-top:14px;">
-                                <div>
-                                    <div class="settings-label-title">Wallpaper Blur</div>
-                                    <div class="settings-label-desc">Control homepage background blur radius.</div>
-                                </div>
-                                <input type="range" min="0" max="20" value="${state.settings.bgBlur}" class="slider-input" oninput="updateBgBlur(this.value)">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Data Storage -->
-                    <div class="settings-section" id="sec_data">
-                        <div class="settings-card g-coursing">
-                            <div class="settings-row">
-                                <div>
-                                    <div class="settings-label-title">Export Nexus Data</div>
-                                    <div class="settings-label-desc">Backup bookmarks, history, and configuration to JSON.</div>
-                                </div>
-                                <button class="game-btn g-coursing" onclick="exportNexusData()">Export JSON</button>
-                            </div>
-                            <div class="settings-row" style="border-top: 1px solid var(--border-color); padding-top: 14px;">
-                                <div>
-                                    <div class="settings-label-title">Import Nexus Data</div>
-                                    <div class="settings-label-desc">Restore state from a previously saved JSON file.</div>
-                                </div>
-                                <input type="file" id="importDataInput" accept=".json" style="display:none;" onchange="importNexusData(event)">
-                                <button class="game-btn g-coursing" onclick="document.getElementById('importDataInput').click()">Import JSON</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function switchSettingsSection(secId, btn) {
-            document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('sec_' + secId).classList.add('active');
-        }
-
-        function saveWispConfig() {
-            const input = document.getElementById('wispServerInput');
-            if (input) {
-                state.settings.wispServer = input.value.trim();
-                saveSettings();
-                alert('GUST server updated!');
-            }
-        }
-
-        function saveBgUrl() {
-            const input = document.getElementById('bgUrlInput');
-            if (input) {
-                state.settings.bgUrl = input.value.trim();
-                saveSettings();
-                applySettings();
-            }
-        }
-
-        function updateBgBlur(val) {
-            state.settings.bgBlur = val;
-            saveSettings();
-            applySettings();
-        }
-
-        function saveSettings() {
-            localStorage.setItem('nexus_settings', JSON.stringify(state.settings));
-        }
-
-        function applySettings() {
-            document.documentElement.style.setProperty('--bg-blur', state.settings.bgBlur + 'px');
-            const img = document.getElementById('bgWallpaperImg');
-            if (img && state.settings.bgUrl) {
-                img.src = state.settings.bgUrl;
-            }
-        }
-
-        function exportNexusData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "nexus_data.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function importNexusData(e) {
+      setTimeout(() => {
+        const fileInput = document.getElementById('localFileInput');
+        if (fileInput) {
+          fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const parsed = JSON.parse(event.target.result);
-                    if (parsed.settings) state.settings = parsed.settings;
-                    if (parsed.history) state.history = parsed.history;
-                    if (parsed.bookmarks) state.bookmarks = parsed.bookmarks;
-                    saveSettings();
-                    localStorage.setItem('nexus_history', JSON.stringify(state.history));
-                    applySettings();
-                    alert('Nexus data restored!');
-                } catch(err) {
-                    alert('Invalid JSON file.');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        /* --- Navigation Listeners --- */
-        document.getElementById('globalAddressInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                navigateTab(state.activeTabId, e.target.value.trim());
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const newId = 'local_' + Date.now();
+                state.tabs.push({ id: newId, title: file.name, url: `nexus://file/${file.name}` });
+                renderTabs();
+                switchTab(newId);
+                const view = document.getElementById('view_' + newId);
+                renderSandboxedFrame(view, event.target.result, 'local');
+              };
+              reader.readAsText(file);
             }
-        });
-
-        document.getElementById('btnHome').addEventListener('click', () => {
-            navigateTab(state.activeTabId, 'nexus://newtab');
-        });
-
-        document.getElementById('btnReload').addEventListener('click', () => {
-            const tab = state.tabs.find(t => t.id === state.activeTabId);
-            if (tab) navigateTab(tab.id, tab.url);
-        });
-
-        function escapeHTML(str) {
-            return String(str || '').replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
+          });
         }
+      }, 100);
+    }
 
-        // Initialize Settings on load
+    function renderSettingsView(container) {
+      container.innerHTML = `
+        <div class="settings-container">
+          <div class="settings-nav">
+            <button class="settings-tab-btn active" onclick="switchSettingsTab('general', this)">General</button>
+            <button class="settings-tab-btn" onclick="switchSettingsTab('wallpaper', this)">Wallpaper</button>
+            <button class="settings-tab-btn" onclick="switchSettingsTab('data', this)">Data & Storage</button>
+          </div>
+
+          <!-- General -->
+          <div class="settings-section active" id="sec_general">
+            <div class="settings-card">
+              <div class="settings-label-title">WISP Relay Configuration</div>
+              <div class="settings-label-desc">WebSocket endpoint for proxy tunneling.</div>
+              <input type="text" id="wispServerInput" value="${escapeHTML(state.settings.wispServer)}" style="width:100%; padding:8px 12px; background:var(--bg-input); border:1px solid var(--border); color:var(--text-main); border-radius:6px; font-family:var(--font-mono); font-size:12px; margin-top:6px;">
+              <button class="btn-ui" style="align-self:flex-start;" onclick="saveWispConfig()">Save</button>
+            </div>
+          </div>
+
+          <!-- Wallpaper -->
+          <div class="settings-section" id="sec_wallpaper">
+            <div class="settings-card">
+              <div class="settings-label-title">Wallpaper URL</div>
+              <div class="settings-label-desc">Set background image URL.</div>
+              <input type="text" id="bgUrlInput" value="${escapeHTML(state.settings.bgUrl)}" placeholder="https://..." style="width:100%; padding:8px 12px; background:var(--bg-input); border:1px solid var(--border); color:var(--text-main); border-radius:6px; font-size:12px; margin-top:6px;">
+              <button class="btn-ui" style="align-self:flex-start;" onclick="saveBgUrl()">Apply</button>
+
+              <div class="settings-row" style="margin-top:10px;">
+                <div>
+                  <div class="settings-label-title">Blur Amount</div>
+                  <div class="settings-label-desc">Adjust background blur.</div>
+                </div>
+                <input type="range" min="0" max="25" value="${state.settings.bgBlur}" class="slider-input" oninput="updateBgBlur(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Data -->
+          <div class="settings-section" id="sec_data">
+            <div class="settings-card">
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label-title">Export Nexus Data</div>
+                  <div class="settings-label-desc">Save bookmarks and history as JSON.</div>
+                </div>
+                <button class="btn-ui" onclick="exportNexusData()">Export JSON</button>
+              </div>
+              <div class="settings-row" style="border-top: 1px solid var(--border); padding-top: 12px;">
+                <div>
+                  <div class="settings-label-title">Import Nexus Data</div>
+                  <div class="settings-label-desc">Restore state from a JSON backup.</div>
+                </div>
+                <input type="file" id="importDataInput" accept=".json" style="display:none;" onchange="importNexusData(event)">
+                <button class="btn-ui" onclick="document.getElementById('importDataInput').click()">Import JSON</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function switchSettingsTab(secId, btn) {
+      document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('sec_' + secId).classList.add('active');
+    }
+
+    function saveWispConfig() {
+      const input = document.getElementById('wispServerInput');
+      if (input) {
+        state.settings.wispServer = input.value.trim();
+        saveSettings();
+        alert('WISP Relay Saved!');
+      }
+    }
+
+    function saveBgUrl() {
+      const input = document.getElementById('bgUrlInput');
+      if (input) {
+        state.settings.bgUrl = input.value.trim();
+        saveSettings();
         applySettings();
-    </script>
+      }
+    }
+
+    function updateBgBlur(val) {
+      state.settings.bgBlur = val;
+      saveSettings();
+      applySettings();
+    }
+
+    function saveSettings() {
+      localStorage.setItem('nexus_settings', JSON.stringify(state.settings));
+    }
+
+    function applySettings() {
+      document.documentElement.style.setProperty('--bg-blur', state.settings.bgBlur + 'px');
+      const img = document.getElementById('bgWallpaperImg');
+      if (img && state.settings.bgUrl) {
+        img.src = state.settings.bgUrl;
+      }
+    }
+
+    function exportNexusData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "nexus_browser_data.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importNexusData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed.settings) state.settings = parsed.settings;
+          if (parsed.history) state.history = parsed.history;
+          if (parsed.bookmarks) state.bookmarks = parsed.bookmarks;
+          saveSettings();
+          localStorage.setItem('nexus_history', JSON.stringify(state.history));
+          applySettings();
+          alert('Data restored!');
+        } catch(err) {
+          alert('Invalid JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* --- Navigation Listeners --- */
+    document.getElementById('globalAddressInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        navigateTab(state.activeTabId, e.target.value.trim());
+      }
+    });
+
+    document.getElementById('btnHome').addEventListener('click', () => {
+      navigateTab(state.activeTabId, 'nexus://newtab');
+    });
+
+    document.getElementById('btnReload').addEventListener('click', () => {
+      const tab = state.tabs.find(t => t.id === state.activeTabId);
+      if (tab) navigateTab(tab.id, tab.url);
+    });
+
+    function escapeHTML(str) {
+      return String(str || '').replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // Initialize Settings on startup
+    applySettings();
+  </script>
 </body>
 </html>
