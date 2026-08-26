@@ -3,363 +3,257 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexus — quiet gateway</title>
+<title>Nexus</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* ---------- foundation ---------- */
-* { margin:0; padding:0; box-sizing:border-box; }
+/* ============ foundation ============ */
+*{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --bg:#141517; --panel:#1a1c1e; --panel2:#1e2123; --raise:#24272a;
-  --line:#2a2d31; --line2:#35393d;
-  --txt:#f2f3f4; --dim:#a4abb1; --faint:#686f75;
-  --ok:#84cf8f; --warn:#dfb863; --err:#e07d6e;
-  --sans:"Space Grotesk",sans-serif; --mono:"JetBrains Mono",monospace;
-  --side-w:178px;
+  --bg:#141414;         /* app surface */
+  --deep:#0d0d0d;       /* backdrop */
+  --panel:#1b1b1b;      /* bars / cards */
+  --raise:#222222;      /* hover */
+  --edge:#2d2d2d;       /* borders */
+  --edge2:#3a3a3a;
+  --txt:#f5f5f5;
+  --dim:#a3a3a3;
+  --faint:#666666;
+  --sans:"Space Grotesk",sans-serif;
 }
 html,body{height:100%;}
 body{
-  background:var(--bg); color:var(--txt);
-  font-family:var(--sans); font-size:13.5px; line-height:1.55;
-  overflow:hidden; -webkit-font-smoothing:antialiased;
+  background:var(--deep);color:var(--txt);
+  font-family:var(--sans);font-size:13.5px;line-height:1.55;
+  overflow:hidden;-webkit-font-smoothing:antialiased;padding:16px;
 }
 ::-webkit-scrollbar{width:9px;height:9px;}
-::-webkit-scrollbar-thumb{background:#2d3134;border-radius:5px;border:2px solid var(--bg);}
+::-webkit-scrollbar-thumb{background:#303030;border-radius:99px;border:2px solid var(--bg);}
 ::-webkit-scrollbar-track{background:transparent;}
-::selection{background:#3a3f43;color:#fff;}
-.mono{font-family:var(--mono);} .dim{color:var(--dim);} .grow{flex:1;}
-a{color:var(--txt);text-decoration:none;border-bottom:1px solid var(--line2);}
-a:hover{border-bottom-color:var(--dim);}
+::selection{background:#3d3d3d;color:#fff;}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
 svg{display:block;}
-
-#app{height:100vh;display:grid;grid-template-rows:auto 1fr auto;transition:opacity .2s;}
-#app.gone{opacity:0;pointer-events:none;}
-
-/* ---------- titlebar ---------- */
-.titlebar{
-  height:36px;background:var(--panel);border-bottom:1px solid var(--line);
-  display:flex;align-items:center;gap:10px;padding:0 8px 0 12px;user-select:none;
-}
-.titlebar.shake{animation:shake .28s;}
-@keyframes shake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
-.tb-left{display:flex;align-items:center;gap:9px;}
-.brandmark{
-  width:17px;height:17px;border:1.5px solid var(--txt);position:relative;border-radius:3px;
-}
-.brandmark::after{
-  content:"";position:absolute;left:7px;top:-2px;width:1.5px;height:19px;
-  background:var(--txt);transform:rotate(24deg);
-}
-.brand{font-weight:700;letter-spacing:.04em;font-size:13.5px;}
-.brand-tag{font-size:10px;color:var(--faint);letter-spacing:.06em;}
-.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
-#clock{font-size:11px;color:var(--dim);letter-spacing:.05em;margin-right:4px;}
-.tb-sep{width:1px;height:14px;background:var(--line2);}
-.wbtn{
-  width:26px;height:22px;border-radius:4px;display:grid;place-items:center;color:var(--dim);
-}
-.wbtn:hover{background:var(--raise);color:var(--txt);}
-.wbtn.close:hover{background:#5a2e28;color:var(--err);}
-.wbtn svg{width:13px;height:13px;}
-
-/* ---------- shell ---------- */
-.shell{display:flex;min-height:0;}
-
-/* sidebar */
-.sidebar{
-  width:var(--side-w);background:var(--panel);border-right:1px solid var(--line);
-  display:flex;flex-direction:column;transition:width .18s ease;overflow:hidden;flex-shrink:0;
-}
-#app.folded .sidebar{width:50px;}
-.sidebar nav{padding:8px 6px;display:flex;flex-direction:column;gap:2px;}
-.nav-it{
-  display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;
-  color:var(--dim);position:relative;font-weight:500;text-align:left;
-  border-left:2px solid transparent;border-radius:0 6px 6px 0;
-}
-.nav-it:hover{background:var(--panel2);color:var(--txt);}
-.nav-it.active{background:var(--raise);color:var(--txt);border-left-color:var(--txt);}
-.nav-it svg{width:15px;height:15px;flex-shrink:0;}
-.nav-it .lbl{white-space:nowrap;font-size:13px;}
-.nav-gap{flex:1;min-height:14px;}
-.side-bottom{padding:8px 6px 10px;border-top:1px solid var(--line);}
-.linkbox{
-  display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);
-  border-radius:6px;background:var(--bg);margin-bottom:8px;
-}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex-shrink:0;}
-.dot.ok{background:var(--ok);box-shadow:0 0 0 2px rgba(132,207,143,.15);}
-.dot.warn{background:var(--warn);}
-.dot.err{background:var(--err);}
-.lb-txt{font-size:10.5px;line-height:1.35;display:flex;flex-direction:column;white-space:nowrap;overflow:hidden;}
-.lb-txt .dim{color:var(--faint);font-size:10px;}
-#app.folded .lbl,#app.folded .lb-txt,#app.folded .linkbox{display:none;}
-#app.folded .collapse{justify-content:center;}
-.collapse{color:var(--faint);border-radius:5px;padding:5px;display:flex;}
-.collapse:hover{color:var(--txt);background:var(--panel2);}
-.collapse svg{width:14px;height:14px;transition:transform .18s;}
-#app.folded .collapse svg{transform:rotate(180deg);}
-
-/* main column */
-.main{flex:1;display:flex;flex-direction:column;min-width:0;}
-
-/* ---------- chrome (omnibox row) ---------- */
-.chrome{
-  height:40px;background:var(--panel);border-bottom:1px solid var(--line);
-  display:flex;align-items:center;gap:6px;padding:0 10px;
-}
-.cbtn{
-  width:26px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--dim);flex-shrink:0;
-}
-.cbtn:hover{background:var(--raise);color:var(--txt);}
-.cbtn:disabled{opacity:.35;cursor:default;background:none;color:var(--dim);}
-.cbtn svg{width:14px;height:14px;}
-.omni{
-  flex:1;display:flex;align-items:center;gap:0;height:26px;
-  border:1px solid var(--line);border-radius:6px;background:var(--bg);overflow:hidden;
-}
-.omni:focus-within{border-color:var(--line2);}
-.omni-scheme{
-  font-size:10.5px;color:var(--faint);letter-spacing:.04em;padding:0 8px;
-  border-right:1px solid var(--line);align-self:stretch;display:flex;align-items:center;
-  white-space:nowrap;
-}
-#omni{
-  flex:1;background:none;border:0;outline:0;color:var(--txt);
-  font-family:var(--mono);font-size:11.5px;padding:0 10px;caret-color:var(--txt);
-}
-#omni::placeholder{color:var(--faint);}
-.chrome-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;white-space:nowrap;padding:0 4px;}
-
-/* ---------- views ---------- */
-.views{position:relative;flex:1;min-height:0;background:var(--bg);}
-.view{
-  position:absolute;inset:0;overflow:auto;padding:26px 30px 40px;
-  animation:viewin .18s ease;
-}
-@keyframes viewin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.wrap{max-width:1040px;}
-.wrap.narrow{max-width:620px;}
+svg.ic{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.92em;}
 [hidden]{display:none!important;}
 
-.kicker{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);letter-spacing:.09em;margin-bottom:10px;}
-h1.big{font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1.02;}
-.lede{color:var(--dim);max-width:520px;margin-top:12px;font-size:13.5px;}
-
-.statrow{
-  display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line);margin:26px 0 28px;
+/* ============ floating rounded shell ============ */
+#app{
+  height:calc(100vh - 32px);border-radius:20px;overflow:hidden;
+  background:var(--bg);border:1px solid var(--edge);
+  box-shadow:0 24px 70px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;transition:opacity .2s;
 }
-.stat{padding:13px 4px 13px 16px;border-left:1px solid var(--line);}
-.stat:first-child{border-left:0;padding-left:0;}
-.stat em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.12em;display:block;}
-.stat b{font-weight:600;font-size:19px;letter-spacing:-.01em;}
+#app.gone{opacity:0;pointer-events:none;}
 
-.home-cols{display:grid;grid-template-columns:1fr 330px;gap:26px;align-items:start;}
-.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;}
-.sec-head h2{font-size:14px;font-weight:600;letter-spacing:.01em;}
-.sec-head .rule{flex:1;border-top:1px solid var(--line);transform:translateY(-3px);}
-.mini-link{font-family:var(--mono);font-size:10.5px;color:var(--dim);display:inline-flex;align-items:center;gap:2px;}
-.mini-link:hover{color:var(--txt);}
-.mini-link svg{width:12px;height:12px;}
-
-.card{border:1px solid var(--line);border-radius:9px;background:var(--panel);}
-.pad{padding:14px;}
-.card h3.mono{font-size:10px;letter-spacing:.14em;color:var(--dim);}
-
-/* quick-launch lines */
-.qlist{border-top:1px solid var(--line);}
-.qline{
-  display:flex;align-items:center;gap:14px;padding:11px 4px;border-bottom:1px solid var(--line);
+/* ============ titlebar ============ */
+.titlebar{
+  height:42px;flex-shrink:0;display:flex;align-items:center;gap:10px;
+  padding:0 10px 0 18px;background:var(--panel);border-bottom:1px solid var(--edge);
+  user-select:none;
 }
-.qline .idx{font-family:var(--mono);font-size:10.5px;color:var(--faint);}
-.qline .qt{font-weight:600;}
-.qline .qm{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-left:auto;}
-.qgo{
-  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:6px;
-  padding:4px 11px;font-family:var(--mono);font-size:10.5px;color:var(--txt);
-}
-.qgo:hover{background:var(--txt);color:#111;border-color:var(--txt);}
-.qgo svg{width:11px;height:11px;}
+.mark{width:16px;height:16px;border:1.5px solid var(--txt);border-radius:50%;position:relative;}
+.mark::after{content:"";position:absolute;left:7px;top:-2px;width:1.5px;height:17px;background:var(--txt);transform:rotate(22deg);}
+.brand{font-weight:700;letter-spacing:.03em;}
+.brand small{font-weight:400;color:var(--faint);margin-left:8px;font-size:10.5px;letter-spacing:.08em;}
+#clock{margin-left:auto;color:var(--dim);}
+.tb-sep{width:1px;height:14px;background:var(--edge2);}
+.winbtn{width:28px;height:24px;border-radius:99px;display:grid;place-items:center;color:var(--dim);}
+.winbtn:hover{background:var(--raise);color:var(--txt);}
+.winbtn svg.ic{width:13px;height:13px;}
 
-/* diagnostics */
-.diag-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-#spark{width:100%;height:56px;display:block;}
-.diag-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
-.diag-stats em{font-style:normal;display:block;font-size:9px;color:var(--faint);letter-spacing:.1em;}
-.diag-stats b{font-size:12.5px;font-weight:600;}
-.recent-list{list-style:none;margin-top:10px;}
+/* ============ body split ============ */
+.shell{flex:1;display:flex;min-height:0;}
+
+.sidebar{
+  width:158px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--edge);
+  display:flex;flex-direction:column;padding:10px 8px;
+}
+.navbtn{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:11px;
+  color:var(--dim);text-align:left;font-weight:500;margin-bottom:2px;
+}
+.navbtn:hover{background:var(--raise);color:var(--txt);}
+.navbtn.active{background:var(--raise);color:#fff;}
+.navgap{flex:1;}
+.linkbox{
+  display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:11px;
+  background:var(--bg);border:1px solid var(--edge);cursor:pointer;
+}
+.dot{width:7px;height:7px;border-radius:99px;background:var(--faint);flex-shrink:0;}
+.dot.on{background:#eaeaea;box-shadow:0 0 0 2px rgba(255,255,255,.09);}
+.lb-txt{display:flex;flex-direction:column;line-height:1.25;overflow:hidden;}
+.lb-txt b{font-size:11px;font-weight:600;}
+.lb-txt span{font-size:9.5px;color:var(--faint);}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+
+/* ============ omnibox row ============ */
+.chrome{height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--edge);}
+.rbtn{width:30px;height:28px;border-radius:99px;display:grid;place-items:center;color:var(--dim);flex-shrink:0;}
+.rbtn:hover{background:var(--raise);color:var(--txt);}
+.omni{
+  flex:1;display:flex;align-items:center;gap:8px;height:31px;padding:0 6px 0 14px;
+  background:var(--bg);border:1px solid var(--edge);border-radius:99px;
+}
+.omni:focus-within{border-color:#4a4a4a;}
+.omni .scheme{color:var(--faint);white-space:nowrap;}
+#omni{flex:1;min-width:60px;background:none;border:0;outline:0;color:var(--txt);caret-color:#fff;}
+#omni::placeholder{color:var(--faint);}
+.omni .go{width:21px;height:21px;border-radius:99px;background:var(--txt);color:#141414;display:grid;place-items:center;flex-shrink:0;}
+.omni .go:hover{background:#fff;}
+.omni .go svg.ic{width:12px;height:12px;stroke-width:2.4;}
+.hintkey{color:var(--faint);white-space:nowrap;padding:0 4px;}
+
+/* ============ views ============ */
+.views{position:relative;flex:1;min-height:0;}
+.view{position:absolute;inset:0;overflow:auto;padding:30px 34px;animation:vin .18s ease;}
+@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.wrap{max-width:720px;}
+
+h1.hero{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1.05;}
+.lede{color:var(--dim);max-width:480px;margin-top:10px;}
+
+.pagehead h1{font-size:26px;font-weight:700;letter-spacing:-.02em;}
+.pagehead p{color:var(--dim);margin-top:3px;}
+.chip-count{
+  display:inline-block;margin-top:12px;color:var(--dim);border:1px solid var(--edge2);
+  border-radius:99px;padding:2px 11px;font-size:10.5px;letter-spacing:.06em;
+}
+
+.sechead{display:flex;align-items:baseline;gap:12px;margin:34px 0 10px;}
+.sechead h2{font-size:13.5px;font-weight:600;}
+.sechead .rule{flex:1;border-top:1px solid var(--edge);}
+
+/* cards — extra round */
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:16px;}
+.card.pad{padding:18px;}
+
+/* quick launch rows */
+.qrow{
+  display:flex;align-items:center;gap:12px;padding:13px 6px;
+  border-bottom:1px dashed var(--edge2);
+}
+.qrow:last-child{border-bottom:0;padding-bottom:2px;}
+.qrow .qm{margin-left:auto;color:var(--faint);}
+.btnround{
+  display:inline-flex;align-items:center;gap:7px;border-radius:99px;
+  padding:6px 15px;font-weight:600;font-size:12.5px;border:1px solid var(--edge2);
+  color:var(--txt);transition:all .12s;
+}
+.btnround.solid{background:var(--txt);border-color:var(--txt);color:#141414;}
+.btnround.solid:hover{background:#fff;}
+.btnround.soft:hover{background:var(--raise);}
+.btnround svg.ic{width:12px;height:12px;}
+
+/* recents */
+.recent-list{list-style:none;}
 .recent-list li{
-  display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);
-  font-size:11px;
+  display:flex;gap:10px;align-items:baseline;padding:8px 4px;border-bottom:1px dashed var(--edge2);
+  cursor:pointer;font-size:12px;
 }
 .recent-list li:last-child{border-bottom:0;}
-.recent-list .rt{color:var(--faint);font-family:var(--mono);font-size:10px;flex-shrink:0;}
-.recent-list .rn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
-.empty-line{font-family:var(--mono);font-size:11px;color:var(--faint);padding:10px 0;}
+.recent-list li:hover .rn{color:#fff;}
+.recent-list .rt{color:var(--faint);flex-shrink:0;}
+.recent-list .rn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);font-weight:500;}
+.clear-mini{color:var(--faint);}
+.clear-mini:hover{color:var(--txt);}
 
-/* page heads */
-.page-head{margin-bottom:20px;}
-.page-head h1{font-size:27px;font-weight:700;letter-spacing:-.02em;}
-.page-head p{color:var(--dim);margin-top:4px;max-width:560px;}
-.count-chip{
-  display:inline-block;font-size:10px;color:var(--dim);border:1px solid var(--line2);
-  border-radius:4px;padding:1px 7px;letter-spacing:.06em;margin-top:10px;
-}
-
-/* game rows */
-.lib{display:flex;flex-direction:column;gap:14px;}
-.g-row{
-  display:grid;grid-template-columns:92px 1fr;gap:18px;border:1px solid var(--line);
-  border-radius:10px;background:var(--panel);padding:16px;transition:border-color .15s,background .15s;
-}
-.g-row:hover{border-color:var(--line2);background:var(--panel2);}
+/* games tab */
+.gamecard{padding:18px;display:flex;gap:18px;margin-top:22px;transition:border-color .15s;}
+.gamecard:hover{border-color:var(--edge2);}
 .art{
-  width:92px;height:92px;border:1px dashed var(--line2);border-radius:8px;
-  display:grid;place-items:center;font-size:9.5px;color:var(--faint);text-align:center;line-height:1.5;
-  background:repeating-linear-gradient(-45deg,transparent 0 7px,rgba(255,255,255,.022) 7px 8px);
+  width:96px;height:96px;flex-shrink:0;border:1.5px dashed var(--edge2);border-radius:16px;
+  display:grid;place-items:center;color:var(--faint);text-align:center;line-height:1.5;
+  background:repeating-linear-gradient(-45deg,transparent 0 8px,rgba(255,255,255,.02) 8px 9px);
 }
-.g-title-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
-.g-title-row h3{font-size:16.5px;font-weight:600;letter-spacing:-.01em;}
-.chip{font-size:9.5px;color:var(--dim);border:1px solid var(--line2);border-radius:4px;padding:1px 7px;letter-spacing:.05em;}
-.g-desc{color:var(--dim);margin-top:6px;font-size:13px;max-width:520px;}
-.g-metarow{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:9px;letter-spacing:.02em;}
-.g-actions{display:flex;gap:8px;margin-top:12px;}
-.btn{
-  display:inline-flex;align-items:center;gap:7px;border-radius:6px;padding:6px 14px;
-  font-weight:600;font-size:12.5px;border:1px solid var(--line2);transition:all .12s;
-}
-.btn svg{width:13px;height:13px;}
-.btn.primary{background:var(--txt);color:#131415;border-color:var(--txt);}
-.btn.primary:hover{background:#fff;}
-.btn.ghost{color:var(--dim);}
-.btn.ghost:hover{color:var(--txt);background:var(--raise);}
-.btn.danger{color:var(--err);border-color:#4a322d;}
-.btn.danger:hover{background:#3a2622;}
-.btn.arm{background:#3a2622;border-color:var(--err);color:#fff;}
-.foot-note{font-size:11px;color:var(--faint);margin-top:18px;}
+.art span{font-size:10px;}
+.gt{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.gt h3{font-size:17px;font-weight:700;letter-spacing:-.01em;}
+.tagpill{color:var(--dim);border:1px solid var(--edge2);border-radius:99px;padding:1px 9px;font-size:10px;}
+.gdesc{color:var(--dim);margin-top:6px;font-size:13px;}
+.gmeta{color:var(--faint);margin-top:8px;}
+.gact{display:flex;gap:8px;margin-top:14px;}
+.gamecard .gbody{min-width:0;}
 
-/* history */
-.h-scroll{overflow-x:auto;}
-.h-list{min-width:660px;border-top:1px solid var(--line);}
-.h-row{
-  display:grid;grid-template-columns:118px 1fr 92px 74px 74px 40px;gap:12px;align-items:center;
-  padding:9px 4px;border-bottom:1px solid var(--line);font-size:11px;
-}
-.h-row.head{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.12em;}
-.h-row .ht{color:var(--dim);}
-.h-row .hn{font-weight:600;font-size:12px;}
-.h-row .hs{font-family:var(--mono);font-size:10px;}
-.st-ok{color:var(--ok);} .st-fail{color:var(--err);} .st-pend{color:var(--warn);}
-.h-relaunch{width:26px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--faint);}
-.h-relaunch:hover{background:var(--raise);color:var(--txt);}
-.h-relaunch svg{width:12px;height:12px;}
-.empty-box{
-  border:1px dashed var(--line2);border-radius:9px;padding:38px 20px;text-align:center;
-  color:var(--faint);font-family:var(--mono);font-size:11.5px;
-}
-.hist-tools{display:flex;gap:8px;margin-left:auto;}
-
-/* settings */
-.field{margin-bottom:22px;}
-.flabel{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim);display:block;margin-bottom:9px;}
-.seg{display:inline-flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden;}
-.seg button{
-  padding:8px 15px;font-weight:600;font-size:12.5px;color:var(--dim);display:flex;flex-direction:column;gap:1px;
-}
-.seg button small{font-family:var(--mono);font-size:9px;color:var(--faint);font-weight:400;}
-.seg button+button{border-left:1px solid var(--line2);}
-.seg button.on{background:var(--txt);color:#131415;}
-.seg button.on small{color:#444;}
-.hint{font-size:11.5px;color:var(--faint);margin-top:8px;max-width:480px;}
-.tglrow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line);}
-.tglrow:last-of-type{border-bottom:1px solid var(--line);}
-.tglrow .tt{font-weight:600;}
-.tglrow .td{font-size:11.5px;color:var(--faint);}
-.tgl{margin-left:auto;width:34px;height:19px;border-radius:10px;border:1px solid var(--line2);position:relative;transition:.15s;flex-shrink:0;}
-.tgl::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--faint);transition:.15s;}
-.tgl.on{background:var(--txt);border-color:var(--txt);}
-.tgl.on::after{left:17px;background:#131415;}
-.about-mini{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.9;}
-
-/* ---------- player ---------- */
+/* ============ player ============ */
 .view.player{padding:0;display:flex;flex-direction:column;overflow:hidden;}
-.pl-status{
-  height:32px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 10px;
-  background:var(--panel);border-bottom:1px solid var(--line);font-size:10.5px;color:var(--dim);
-  letter-spacing:.04em;
+.pl-bar{
+  height:42px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 12px;
+  background:var(--panel);border-bottom:1px solid var(--edge);color:var(--dim);
 }
-.pl-progress{height:2px;background:var(--panel);flex-shrink:0;position:relative;overflow:hidden;}
-.pl-progress i{display:block;height:100%;width:0;background:var(--txt);transition:width .18s ease;}
-.pl-progress.ind i{width:32%;animation:sweep .9s ease-in-out infinite alternate;}
-@keyframes sweep{from{transform:translateX(-40%)}to{transform:translateX(330%)}}
-.pl-stage{position:relative;flex:1;min-height:0;}
-#frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#101113;display:block;}
-.pl-boot{
-  position:absolute;inset:0;background:var(--bg);z-index:3;display:flex;align-items:center;justify-content:center;
-  transition:opacity .3s;padding:20px;
-}
-.pl-boot.away{opacity:0;pointer-events:none;}
-.boot-core{width:min(560px,92%);}
-.boot-title{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--faint);margin-bottom:16px;}
-.boot-name{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:18px;}
-.stages{list-style:none;border-top:1px solid var(--line);}
-.stage{
-  display:flex;align-items:baseline;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line);
-  font-family:var(--mono);font-size:11px;color:var(--faint);
-}
-.stage .s-n{color:var(--faint);}
-.stage .s-fill{flex:1;border-bottom:1px dotted #34383c;transform:translateY(-3px);}
-.stage.done{color:var(--dim);}
-.stage.done .s-mark{color:var(--ok);}
-.stage.err .s-mark{color:var(--err);}
-.stage.run{color:var(--txt);}
-.s-mark{min-width:24px;text-align:right;letter-spacing:.1em;}
-.errcard{margin-top:18px;border:1px solid #4a322d;border-left-width:3px;border-radius:8px;padding:14px 16px;background:var(--panel);}
-.errcard b{font-size:13.5px;}
-.errcard p{color:var(--dim);font-size:12px;margin:5px 0 12px;}
-.err-actions{display:flex;gap:8px;flex-wrap:wrap;}
+#pl-msg{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spacer{flex:1;}
+#pl-info{white-space:nowrap;}
+.pill-sq{width:28px;height:28px;border-radius:99px;display:grid;place-items:center;color:var(--dim);flex-shrink:0;}
+.pill-sq:hover{background:var(--raise);color:var(--txt);}
+.pl-track{height:3px;flex-shrink:0;background:var(--panel);position:relative;overflow:hidden;}
+.pl-track i{display:block;height:100%;width:0;background:#eaeaea;transition:width .2s;}
+.pl-track.ind i{width:34%;animation:sweep 1s ease-in-out infinite alternate;}
+@keyframes sweep{from{transform:translateX(-30%)}to{transform:translateX(340%)}}
 
-/* ---------- statusbar ---------- */
-.statusbar{
-  height:26px;background:var(--panel);border-top:1px solid var(--line);
-  display:flex;align-items:center;gap:14px;padding:0 12px;font-size:10px;color:var(--faint);
-  letter-spacing:.05em;user-select:none;
+.stage-area{position:relative;flex:1;min-height:0;}
+#frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#101010;}
+.bootveil{
+  position:absolute;inset:0;z-index:3;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  transition:opacity .35s;
 }
-.statusbar #sb-route{color:var(--dim);}
+.bootveil.away{opacity:0;pointer-events:none;}
+.boot-core{width:min(420px,94%);}
+.boot-kicker{color:var(--faint);letter-spacing:.16em;margin-bottom:14px;}
+.boot-name{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:16px;}
+.steps{list-style:none;border-top:1px solid var(--edge);}
+.step{
+  display:flex;align-items:baseline;gap:12px;padding:9px 2px;
+  border-bottom:1px solid var(--edge);color:var(--faint);
+}
+.step.run{color:#fff;}
+.step.done{color:var(--dim);}
+.step.bad{color:var(--txt);}
+.step .fill{flex:1;border-bottom:1px dotted #3a3a3a;transform:translateY(-3px);}
+.step .mk{min-width:22px;text-align:right;}
+.step .val{min-width:90px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.errcard{
+  margin-top:18px;background:var(--panel);border:1px solid var(--edge2);
+  border-left:3px solid #888;border-radius:14px;padding:15px 17px;
+}
+.errcard b{font-size:14px;}
+.errcard p{color:var(--dim);font-size:12.5px;margin:5px 0 13px;}
+.errcard .gact{margin-top:0;}
 
-/* ---------- toasts ---------- */
-#toasts{position:fixed;right:16px;bottom:38px;display:flex;flex-direction:column;gap:8px;z-index:60;}
+/* ============ toast & pill ============ */
+#toasts{position:fixed;right:18px;bottom:52px;display:flex;flex-direction:column;gap:8px;z-index:90;}
 .toast{
-  display:flex;align-items:center;gap:9px;background:var(--raise);border:1px solid var(--line2);
-  border-radius:8px;padding:9px 13px;font-family:var(--mono);font-size:11px;color:var(--txt);
-  max-width:340px;opacity:0;transform:translateY(8px);transition:.22s;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:10px;background:var(--panel);
+  border:1px solid var(--edge2);border-radius:14px;padding:10px 15px;
+  font-size:12px;color:var(--txt);max-width:320px;opacity:0;transform:translateY(8px);
+  transition:.22s;box-shadow:0 10px 30px rgba(0,0,0,.45);
 }
 .toast.in{opacity:1;transform:none;}
 .toast.out{opacity:0;transform:translateY(-6px);}
-.toast .tk{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.toast.ok .tk{background:var(--ok);} .toast.warn .tk{background:var(--warn);} .toast.info .tk{background:var(--dim);}
-
-/* ---------- minimized pill ---------- */
+.toast .dot{background:var(--dim);}
 #pill{
-  position:fixed;right:14px;bottom:14px;z-index:70;display:flex;align-items:center;gap:8px;
-  background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:6px 14px 6px 8px;
-  font-weight:600;font-size:12px;color:var(--dim);box-shadow:0 8px 24px rgba(0,0,0,.45);
+  position:fixed;right:16px;bottom:16px;z-index:95;display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--edge2);border-radius:99px;
+  padding:8px 16px 8px 11px;font-weight:600;color:var(--dim);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
 }
-#pill:hover{color:var(--txt);border-color:var(--dim);}
-.p-mark{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;position:relative;}
-.p-mark::after{content:"";position:absolute;left:6px;top:-1px;width:1.5px;height:15px;background:currentColor;transform:rotate(24deg);}
+#pill:hover{color:#fff;}
 
-@media (max-width:900px){
-  .home-cols{grid-template-columns:1fr;}
-  .statrow{grid-template-columns:repeat(2,1fr);}
-  .stat:nth-child(odd){border-left:0;padding-left:0;}
-  h1.big{font-size:40px;}
+@media (max-width:720px){
+  body{padding:0;} #app{height:100vh;border-radius:0;}
+  .sidebar{width:56px;padding:10px 6px;}
+  .sidebar .lbl,.linkbox .lb-txt{display:none;}
+  .navbtn{justify-content:center;padding:9px;}
+  .linkbox{justify-content:center;padding:8px;}
+  .hintkey{display:none;}
+  .gamecard{flex-direction:column;}
+  .art{width:100%;height:110px;}
+  h1.hero{font-size:34px;}
 }
 </style>
 </head>
@@ -367,747 +261,433 @@ h1.big{font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1.02;}
 
 <div id="app">
 
-  <!-- ======= titlebar ======= -->
-  <header class="titlebar" id="titlebar">
-    <div class="tb-left">
-      <div class="brandmark"></div>
-      <span class="brand">Nexus</span>
-      <span class="brand-tag mono">v0.9.2 · local gateway</span>
-    </div>
-    <div class="tb-right">
-      <span id="clock" class="mono">--:--:--</span>
-      <span class="tb-sep"></span>
-      <button class="wbtn" id="win-min" title="Duck out — Nexus shrinks to a corner pill"><i data-lucide="minus"></i></button>
-      <button class="wbtn" id="win-max" title="Toggle fullscreen"><i data-lucide="square"></i></button>
-      <button class="wbtn close" id="win-close" title="Close"><i data-lucide="x"></i></button>
-    </div>
+  <!-- titlebar -->
+  <header class="titlebar">
+    <span class="mark"></span>
+    <span class="brand">Nexus<small>school gateway</small></span>
+    <span id="clock" class="mono">--:--</span>
+    <span class="tb-sep"></span>
+    <button class="winbtn" id="w-min" title="Hide"><i data-i="minus"></i></button>
+    <button class="winbtn" id="w-max" title="Fullscreen"><i data-i="square"></i></button>
+    <button class="winbtn" id="w-close" title="Close"><i data-i="x"></i></button>
   </header>
 
-  <!-- ======= shell ======= -->
   <div class="shell">
 
+    <!-- sidebar -->
     <aside class="sidebar">
-      <nav>
-        <button class="nav-it active" data-go="home" title="Home"><i data-lucide="home"></i><span class="lbl">Home</span></button>
-        <button class="nav-it" data-go="games" title="Games"><i data-lucide="gamepad-2"></i><span class="lbl">Games</span></button>
-        <button class="nav-it" data-go="history" title="History"><i data-lucide="history"></i><span class="lbl">History</span></button>
-        <div class="nav-gap"></div>
-        <button class="nav-it" data-go="settings" title="Settings"><i data-lucide="sliders-horizontal"></i><span class="lbl">Settings</span></button>
-      </nav>
-      <div class="side-bottom">
-        <div class="linkbox" title="Live link to the target host">
-          <span class="dot" id="link-dot"></span>
-          <div class="lb-txt mono">
-            <span id="link-state">probing…</span>
-            <span id="link-lat">— ms · idle</span>
-          </div>
-        </div>
-        <button class="collapse" id="collapse" title="Collapse sidebar"><i data-lucide="chevrons-left"></i></button>
+      <button class="navbtn active" data-go="home"><i data-i="home"></i><span class="lbl">Home</span></button>
+      <button class="navbtn" data-go="games"><i data-i="pad"></i><span class="lbl">Games</span></button>
+      <div class="navgap"></div>
+      <div class="linkbox" id="linkbox" title="Connection status — click to re-check">
+        <span class="dot" id="ldot"></span>
+        <div class="lb-txt"><b id="lst">checking…</b><span id="lsub">tap to retry</span></div>
       </div>
     </aside>
 
     <div class="main">
 
-      <!-- chrome / omnibox -->
+      <!-- omnibox -->
       <div class="chrome">
-        <button class="cbtn" id="c-back" title="Back (or Esc)"><i data-lucide="arrow-left"></i></button>
-        <button class="cbtn" id="c-reload" title="Reload current view"><i data-lucide="rotate-cw"></i></button>
-        <form class="omni" id="omni-form">
-          <span class="omni-scheme mono" id="omni-scheme">nexus://</span>
-          <input id="omni" spellcheck="false" autocomplete="off" placeholder="type nexus://… or paste a URL and hit enter">
-          <button type="submit" class="cbtn" title="Go"><i data-lucide="arrow-right"></i></button>
+        <button class="rbtn" id="back" title="Back (Esc)"><i data-i="left"></i></button>
+        <form class="omni" id="omniform">
+          <span class="scheme mono" id="scheme">nexus://</span>
+          <input id="omni" spellcheck="false" autocomplete="off" placeholder="type a site or nexus://home">
+          <button type="submit" class="go" title="Go"><i data-i="right"></i></button>
         </form>
-        <span class="chrome-hint mono" id="chrome-hint">press / to jump here</span>
+        <span class="hintkey mono">press / · Esc backs out</span>
       </div>
 
-      <!-- views -->
       <div class="views">
 
         <!-- HOME -->
         <section class="view" id="view-home">
           <div class="wrap">
-            <div class="kicker mono"><span class="dot ok"></span><span id="hero-line">gateway online</span></div>
-            <h1 class="big">Nexus.</h1>
-            <p class="lede">One small gray doorway between you and the wider web. It fetches pages raw, rebuilds them right here, and never phones home — mostly because there is nowhere to phone.</p>
+            <h1 class="hero">Nexus.</h1>
+            <p class="lede">A quiet little doorway. It grabs pages, rebuilds them right here in the frame, and moves on.</p>
 
-            <div class="statrow">
-              <div class="stat"><em>SESSION</em><b id="st-session">0:00</b></div>
-              <div class="stat"><em>LINK</em><b id="st-link">—</b></div>
-              <div class="stat"><em>TARGETS</em><b id="st-targets">1</b></div>
-              <div class="stat"><em>ENTRIES</em><b id="st-entries">0</b></div>
-            </div>
+            <div class="sechead"><h2>Quick launch</h2><span class="rule"></span></div>
+            <div class="card pad" id="qlist"></div>
 
-            <div class="home-cols">
-              <div>
-                <div class="sec-head">
-                  <h2>Quick launch</h2><span class="rule"></span>
-                  <button class="mini-link" data-go="games">all games <i data-lucide="chevron-right"></i></button>
-                </div>
-                <div class="qlist" id="quick-list"></div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:16px;">
-                <div class="card pad">
-                  <div class="diag-top">
-                    <h3 class="mono">LINK DIAGNOSTICS</h3>
-                    <button class="cbtn" id="ping-run" title="Ping now"><i data-lucide="activity"></i></button>
-                  </div>
-                  <canvas id="spark" height="56"></canvas>
-                  <div class="diag-stats mono">
-                    <div><em>LAST</em><b id="dg-last">—</b></div>
-                    <div><em>AVG</em><b id="dg-avg">—</b></div>
-                    <div><em>JITTER</em><b id="dg-jit">—</b></div>
-                    <div><em>PINGS</em><b id="dg-n">0</b></div>
-                  </div>
-                </div>
-                <div class="card pad">
-                  <h3 class="mono">RECENT</h3>
-                  <ul class="recent-list" id="recent-list"></ul>
-                </div>
-              </div>
+            <div class="sechead">
+              <h2>Recently launched</h2><span class="rule"></span>
+              <button class="clear-mini" id="rclear" title="Clear recents"><i data-i="trash"></i></button>
             </div>
+            <ul class="recent-list" id="rlist"></ul>
           </div>
         </section>
 
         <!-- GAMES -->
         <section class="view" id="view-games" hidden>
           <div class="wrap">
-            <div class="page-head">
+            <div class="pagehead">
               <h1>Games</h1>
-              <p>The local shelf. Builds stream straight from their source repos over HTTPS — nothing installs, nothing lingers after the tab dies.</p>
-              <span class="count-chip mono" id="games-count">1 ENTRY</span>
+              <p>Pulled fresh from their source on every launch — nothing installs.</p>
+              <span class="chip-count mono" id="gcount">1 ENTRY</span>
             </div>
-            <div class="lib" id="game-list"></div>
-            <p class="foot-note">Source bundle: <a href="https://github.com/CoolDude2349/Offline-HTML-Games-Pack" target="_blank" rel="noopener">CoolDude2349/Offline-HTML-Games-Pack</a> · art slots stay empty on purpose — images come later.</p>
-          </div>
-        </section>
-
-        <!-- HISTORY -->
-        <section class="view" id="view-history" hidden>
-          <div class="wrap">
-            <div class="page-head" style="display:flex;align-items:flex-end;gap:16px;">
-              <div style="flex:1;">
-                <h1>History</h1>
-                <p>Every launch Nexus has made this lifetime, timed and weighed.</p>
-              </div>
-              <div class="hist-tools">
-                <button class="btn ghost" id="h-export"><i data-lucide="download"></i>Export</button>
-                <button class="btn danger" id="h-clear"><i data-lucide="trash-2"></i>Wipe</button>
-              </div>
-            </div>
-            <div class="h-scroll">
-              <div class="h-list" id="hist-list">
-                <div class="h-row head"><span>WHEN</span><span>TARGET</span><span>VIA</span><span>WEIGHT</span><span>PLAYED</span><span></span></div>
-              </div>
-            </div>
-            <div class="empty-box" id="hist-empty" hidden>No launches yet. The shelf is waiting.</div>
-          </div>
-        </section>
-
-        <!-- SETTINGS -->
-        <section class="view" id="view-settings" hidden>
-          <div class="wrap narrow">
-            <div class="page-head">
-              <h1>Settings</h1>
-              <p>Six switches, zero telemetry.</p>
-            </div>
-
-            <div class="field">
-              <span class="flabel">RENDER ENGINE</span>
-              <div class="seg" id="seg-mode">
-                <button data-val="fetch" class="on">Fetch &amp; rebuild <small>srcdoc</small></button>
-                <button data-val="direct">Direct embed <small>iframe src</small></button>
-              </div>
-              <p class="hint">Rebuild downloads the page, injects an asset base URL and paints it locally — chatty but forgiving. Direct embed simply hands the URL to a plain frame and hopes the site allows framing.</p>
-            </div>
-
-            <div class="tglrow">
-              <div><div class="tt">Inject asset base</div><div class="td">Rewrites &lt;base&gt; so relative files (sprites, audio) resolve against the source folder.</div></div>
-              <button class="tgl on" id="tg-base" role="switch" aria-checked="true"></button>
-            </div>
-            <div class="tglrow">
-              <div><div class="tt">Background link checks</div><div class="td">Quietly HEAD-pings the host every 12s to feed the diagnostics sparkline.</div></div>
-              <button class="tgl on" id="tg-ping" role="switch" aria-checked="true"></button>
-            </div>
-
-            <div style="display:flex;gap:8px;margin-top:22px;">
-              <button class="btn ghost" id="s-export"><i data-lucide="download"></i>Export history JSON</button>
-              <button class="btn danger" id="s-wipe"><i data-lucide="trash-2"></i>Erase everything</button>
-            </div>
-
-            <div class="about-mini">
-              nexus.build&nbsp;&nbsp;2024.11-gry<br>
-              engine&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vanilla, one file, no servers<br>
-              storage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="about-storage">checking…</span><br>
-              whisper&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ask before you launch during class
-            </div>
+            <div id="gcards"></div>
           </div>
         </section>
 
         <!-- PLAYER -->
         <section class="view player" id="view-player" hidden>
-          <div class="pl-status mono">
-            <span id="pl-msg">idle</span>
-            <span class="grow"></span>
-            <span id="pl-info"></span>
-            <button class="cbtn" id="pl-fs" title="Frame fullscreen"><i data-lucide="maximize"></i></button>
-            <button class="cbtn" id="pl-ext" title="Open outside Nexus"><i data-lucide="external-link"></i></button>
+          <div class="pl-bar">
+            <span class="mono" id="pl-msg">idle</span>
+            <span class="spacer"></span>
+            <span class="mono" id="pl-info"></span>
+            <button class="pill-sq" id="pl-big" title="Fullscreen game"><i data-i="max"></i></button>
+            <button class="pill-sq" id="pl-out" title="Open in a new tab"><i data-i="ext"></i></button>
           </div>
-          <div class="pl-progress" id="pl-progress"><i id="pl-bar"></i></div>
-          <div class="pl-stage">
-            <iframe id="frame" title="nexus viewport"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-orientation-lock"
+          <div class="pl-track" id="ptrack"><i id="pbar"></i></div>
+          <div class="stage-area">
+            <iframe id="frame" title="viewport"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox"
               allowfullscreen referrerpolicy="no-referrer"></iframe>
-            <div class="pl-boot" id="pl-boot">
-              <div class="boot-core" id="boot-core"></div>
+            <div class="bootveil" id="bootveil">
+              <div class="boot-core" id="bootcore"></div>
             </div>
           </div>
         </section>
 
-      </div><!-- /views -->
-    </div><!-- /main -->
-  </div><!-- /shell -->
-
-  <!-- ======= statusbar ======= -->
-  <footer class="statusbar mono">
-    <span id="sb-route">nexus://home</span>
-    <span class="grow"></span>
-    <span id="sb-right">engine rebuild · 0 pings · avg —</span>
-  </footer>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="toasts"></div>
-<button id="pill" hidden><span class="p-mark"></span><span>Nexus</span></button>
+<button id="pill" hidden><span class="mark"></span>Nexus</button>
 
 <script>
 (()=>{
 "use strict";
 
-/* ============================== data ============================== */
-const GH_DIR  = "https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/";
-const GAMES = [{
+/* ---------------- tiny inline icon set (no CDN needed) ---------------- */
+const P={
+  left :'<path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>',
+  right:'<path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>',
+  minus:'<path d="M5 12h14"/>',
+  square:'<rect x="6" y="6" width="12" height="12" rx="2"/>',
+  max  :'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+  ext  :'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/>',
+  x    :'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
+  home :'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  pad  :'<rect x="3" y="7" width="18" height="11" rx="5.5"/><path d="M8 11v3"/><path d="M6.5 12.5h3"/><circle cx="16" cy="11.5" r=".8" fill="currentColor"/><circle cx="18" cy="13.5" r=".8" fill="currentColor"/>',
+  play :'<path d="M7 4.5l12 7.5-12 7.5z" fill="currentColor" stroke="none"/>',
+  trash:'<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/>',
+};
+function paintIcons(root){
+  (root||document).querySelectorAll("i[data-i]").forEach(el=>{
+    el.outerHTML=`<svg class="ic" viewBox="0 0 24 24">${P[el.dataset.i]||""}</svg>`;
+  });
+}
+
+/* ---------------- catalog ---------------- */
+const LINK="https://github.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/fancypantsadventure.html";
+const GAMES=[{
   id:"fpa",
   title:"Fancy Pants Adventure",
-  desc:"The classic stick-figure sprinter in the world's baggiest pants — run, vault, wall-jump and spin-kick squiggly spiders across hand-drawn hills.",
-  url:GH_DIR+"fancypantsadventure.html",
-  tags:["HTML5","single-file"],
+  desc:"The famous stick figure with the fanciest pants. Run, slide, wall-jump and spin through hand-drawn hills.",
+  link:LINK,
 }];
 
-class HttpError extends Error{ constructor(code){ super("http "+code); this.code=code; } }
-
-/* ============================== state ============================== */
-const S = {
-  route:"home", stack:[],
-  settings:{ mode:"fetch", injectBase:true, autoping:true },
-  hist:[], pings:[],
-  busy:false, ctrl:null, active:null,
-  bootedAt:Date.now(), lastViewBeforePlayer:"home",
-  storageWarned:false,
-};
-
-/* ============================== dom ============================== */
-const $  = s=>document.querySelector(s);
-const $$ = s=>Array.from(document.querySelectorAll(s));
-const app=$("#app"), frame=$("#frame"), omni=$("#omni"),
-      omniScheme=$("#omni-scheme"), boot=$("#pl-boot"), bootCore=$("#boot-core"),
-      plMsg=$("#pl-msg"), plInfo=$("#pl-info"), plProg=$("#pl-progress"), plBar=$("#pl-bar");
-
-/* ============================== storage ============================== */
-function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ memNote(); return null; } }
-function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ memNote(); } }
-let memStore = {};
-function memNote(){
-  $("#about-storage").textContent = "memory only (storage blocked)";
-  if(S.storageWarned) return;
-  S.storageWarned = true;
-  toast("Browser storage unavailable — session only.","warn");
+/* expand a github raw-style link into fetch-friendly mirrors, best first */
+function mirrors(url){
+  const m=url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/raw\/(?:refs\/heads\/)?([^/]+)\/(.+)$/);
+  const out=[];
+  if(m){
+    const[,u,r,b,p]=m;
+    out.push(`https://raw.githubusercontent.com/${u}/${r}/${b}/${p}`);
+    out.push(`https://cdn.jsdelivr.net/gh/${u}/${r}@${b}/${p}`);
+    out.push(url); /* original, last resort */
+  }else out.push(url);
+  return out;
 }
 
-/* ============================== utils ============================== */
-const icons = ()=>{ if(window.lucide) lucide.createIcons(); };
-const pad2 = n=>String(n).padStart(2,"0");
-function nowStamp(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
-function shortStamp(ts){ const d=new Date(ts); return `${pad2(d.getMonth()+1)}/${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; }
-function fmtBytes(b){ if(b==null) return "—"; if(b<1024) return b+" B"; if(b<1048576) return (b/1024).toFixed(1)+" KB"; return (b/1048576).toFixed(2)+" MB"; }
-function fmtDur(s){ if(s==null) return "—"; if(s<60) return s+"s"; const m=(s/60)|0; return m+"m "+pad2(s%60)+"s"; }
-function hostOf(u){ try{ return new URL(u).host; }catch(e){ return "?"; } }
+/* ---------------- state ---------------- */
+const S={route:"home",stack:[],recent:[],ctrl:null,target:null,LID:0};
+try{ S.recent=JSON.parse(localStorage.getItem("nx.rec")||"[]"); }catch(e){}
+const saveRecent=()=>{ try{localStorage.setItem("nx.rec",JSON.stringify(S.recent));}catch(e){} };
 
-function toast(msg,kind="info"){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const frame=$("#frame"), omni=$("#omni"), scheme=$("#scheme"),
+      veil=$("#bootveil"), bootcore=$("#bootcore"), track=$("#ptrack"), bar=$("#pbar"),
+      plmsg=$("#pl-msg"), plinfo=$("#pl-info");
+
+/* ---------------- helpers ---------------- */
+function toast(msg){
   const t=document.createElement("div");
-  t.className="toast "+kind;
-  t.innerHTML='<span class="tk"></span><span></span>';
-  t.lastChild.textContent=msg;
-  $("#toasts").appendChild(t);
+  t.className="toast";
+  t.innerHTML='<span class="dot"></span>';
+  t.append(msg);
+  $("#toasts").append(t);
   requestAnimationFrame(()=>t.classList.add("in"));
-  setTimeout(()=>{ t.classList.add("out"); setTimeout(()=>t.remove(),260); },3400);
+  setTimeout(()=>{t.classList.add("out");setTimeout(()=>t.remove(),240);},3200);
 }
+const host=u=>{try{return new URL(u).host}catch(e){return "?"}};
+const kb=n=>n==null?"—":n<1024?n+" B":(n/1024).toFixed(1)+" KB";
 
-/* ============================== router ============================== */
-const VIEWS=["home","games","history","settings","player"];
-
+/* ---------------- router ---------------- */
+const ROUTES=["home","games","player"];
 function applyRoute(){
-  VIEWS.forEach(v=>$("#view-"+v).hidden = v!==S.route);
-  $$(".nav-it").forEach(b=>b.classList.toggle("active", b.dataset.go===S.route));
+  ROUTES.forEach(v=>$("#view-"+v).hidden=v!==S.route);
+  $$(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.go===S.route));
   if(S.route==="player"){
-    const t=S.playerTarget;
-    if(t){ omni.value=t.url; omniScheme.textContent = /^https:\/\/raw\.githubusercontent\.com/.test(t.url) ? "gh·raw" : "https://"; }
-    $("#chrome-hint").textContent="esc leaves the frame";
+    omni.value=S.target?S.target.link:"";
+    scheme.textContent="raw://";
   }else{
     omni.value="nexus://"+S.route;
-    omniScheme.textContent="nexus://";
-    $("#chrome-hint").textContent="press / to jump here";
+    scheme.textContent="nexus://";
   }
-  $("#sb-route").textContent="nexus://"+S.route;
 }
-
-function go(route,{push=true}={}){
-  if(!VIEWS.includes(route)) route="home";
-  if(route===S.route) { applyRoute(); return; }
-  if(S.route==="player"){ sealActiveEntry(); S.lastViewBeforePlayer = "home"; }
-  if(push) S.stack.push(S.route);
-  S.route=route; applyRoute();
+function go(r,push=true){
+  if(!ROUTES.includes(r))r="home";
+  if(push&&r!==S.route)S.stack.push(S.route);
+  S.route=r;applyRoute();
 }
 function goBack(){
-  if(S.route==="player"){ sealActiveEntry(); S.route=S.stack.length?S.stack.pop():"home"; }
-  else S.route=S.stack.pop()||"home";
+  S.route=S.stack.pop()||"home";
+  if(S.route==="player")S.route="home";
   applyRoute();
 }
+ $$("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+ $("#back").onclick=goBack;
 
-/* ============================== boot choreography ============================== */
-let bootRows=[], bootVals=[];
-function bootStart(name,url){
-  boot.classList.remove("away");
-  bootCore.innerHTML =
-    `<div class="boot-title">LAUNCH SEQUENCE</div>`+
-    `<div class="boot-name">${name}</div>`+
-    `<ol class="stages">${["TARGET","HANDSHAKE","TRANSFER","REBUILD"].map((s,i)=>
-      `<li class="stage" data-i="${i}"><span class="s-n">0${i}</span><span>${s}</span>`+
-      `<span class="s-fill"></span><span class="s-mark">··</span><span class="s-val" style="min-width:64px;text-align:right;"></span></li>`).join("")}</ol>`;
-  bootRows=$$("#boot-core .stage");
-  bootRows.forEach(r=>{ r.querySelector(".s-val").textContent=""; });
-}
-function stageMark(i,state,text,val){
-  const r=bootRows[i]; if(!r) return;
-  r.className="stage "+state;
-  r.querySelector(".s-mark").textContent = state==="done"?"ok":state==="err"?"!!":"▸";
-  r.querySelector(".s-val").textContent=val||"";
-}
-function bootAway(){ boot.classList.add("away"); }
+/* ---------------- clock ---------------- */
+setInterval(()=>{const d=new Date();
+  $("#clock").textContent=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+},1000);
 
-/* ============================== launcher ============================== */
-function frameLoadOnce(){
+/* ---------------- renderer prep ---------------- */
+function buildDoc(raw,baseDir){
+  let out=raw.replace(/<base\s[^>]*>/gi,"");                 // kill old base
+  const inject=`<meta charset="utf-8"><base href="${baseDir}">`;
+  const hm=out.match(/<head[^>]*>/i);
+  out=hm?out.replace(hm[0],hm[0]+inject):inject+out;
+  return out;
+}
+
+/* ---------------- launch pipeline ---------------- */
+let stepEls=[];
+function drawBoot(name){
+  veil.classList.remove("away");
+  bootcore.innerHTML=
+    `<div class="boot-kicker mono">LAUNCHING</div>
+     <div class="boot-name">${name}</div>
+     <ol class="steps">${["CONNECT","DOWNLOAD","RENDER"].map((n,i)=>
+       `<li class="step"><span>0${i+1}</span><span>${n}</span><span class="fill"></span>
+        <span class="val mono"></span><span class="mk mono">··</span></li>`).join("")}</ol>`;
+  stepEls=[...bootcore.querySelectorAll(".step")];
+}
+function mark(i,state,val){
+  const s=stepEls[i];if(!s)return;
+  s.className="step "+state;
+  s.querySelector(".mk").textContent=state==="done"?"ok":state==="bad"?"!!":"▸";
+  if(val!=null)s.querySelector(".val").textContent=val;
+}
+function loadedOnce(id){
   return new Promise(res=>{
-    const h=()=>{ frame.removeEventListener("load",h); res(); };
-    frame.addEventListener("load",h);
+    frame.addEventListener("load",()=>{ if(id===S.LID)res(); },{once:true});
   });
 }
 
-function rebuild(html,targetUrl){
-  const notes=[]; let out=html;
-  if(/<base\s[^>]*>/i.test(out)||/<base>/i.test(out)){
-    out=out.replace(/<base\s[^>]*\/?>/gi,""); notes.push("stripped old <base>");
-  }
-  const baseHref=targetUrl.replace(/[^/]*$/,"");
-  const tag=`<base href="${baseHref}">`;
-  const hm=out.match(/<head[^>]*>/i);
-  if(hm) out=out.replace(hm[0],hm[0]+tag);
-  else out=tag+out;
-  notes.push("base → "+hostOf(baseHref));
-  if(!/<meta[^>]+charset/i.test(out.slice(0,2500))){
-    const cm='<meta charset="utf-8">';
-    const m2=out.match(/<head[^>]*>/i);
-    if(m2) out=out.replace(m2[0],m2[0]+cm); else out=cm+out;
-    notes.push("utf-8 enforced");
-  }
-  return {html:out,notes};
-}
+async function launch(g){
+  if(S.ctrl)S.ctrl.abort();
+  const id=++S.LID;
+  S.target=g;
 
-function explainErr(e){
-  if(e && e.name==="AbortError") return ["Cancelled","The transfer was cut loose mid-flight. Nothing broke; it just stopped being interesting."];
-  if(e instanceof HttpError)     return ["HTTP "+e.code,"The host answered, then said no. The file may have moved or gone private."];
-  if(e instanceof TypeError)     return ["Unreachable","Network down — or the host refuses cross-origin reads (CORS). Direct embed usually survives that."];
-  return ["Something snapped",(e&&e.message)||"Unknown failure. The logs are as confused as you are."];
-}
+  if(S.route!=="player"){S.stack.push(S.route);}
+  go("player",false);
 
-async function launch(target,{forceMode=null}={}){
-  if(S.ctrl) S.ctrl.abort();
-  if(S.route!=="player"){ if(pushStackSafe()) ; }
-  const prevView = S.route==="player" ? S.lastViewBeforePlayer : S.route;
+  plmsg.textContent="connecting…";plinfo.textContent="";
+  track.classList.add("ind");
+  drawBoot(g.title);
 
-  // fresh history entry
-  const entry={ ts:Date.now(), title:target.title, url:target.url,
-                host:hostOf(target.url), via:S.settings.mode,
-                bytes:null, status:"pend", dur:null };
-  S.hist.unshift(entry); if(S.hist.length>60) S.hist.pop();
-  lsSet("nx.hist",JSON.stringify(S.hist));
-  S.active={entry,startTs:Date.now()};
-  renderHistory(); renderRecents(); bumpStats();
-
-  S.route="player"; S.stack=prevView!=="player"?[prevView]:["home"];
-  S.lastViewBeforePlayer=prevView; S.playerTarget=target;
-  applyRoute();
-
-  const mode = forceMode || S.settings.mode;
-  entry.via=mode;
-
-  // ui reset
-  plMsg.textContent="resolving "+target.host+" …";
-  plInfo.textContent="";
-  plProg.classList.remove("ind"); plBar.style.width="0%";
-  bootStart(target.title,target.url);
-
-  S.busy=true;
-  const ctrl=new AbortController(); S.ctrl=ctrl;
+  const cands=mirrors(g.link);
+  let html=null,used=null,tried=cands.length,netErr=false,lastCode=null;
   const T0=performance.now();
 
-  try{
-    stageMark(0,"run"); 
-    const U=new URL(target.url);
-    stageMark(0,"done",null,U.host+(U.pathname.split("/").pop()||""));
-    plMsg.textContent="connecting…";
-
-    if(mode==="direct"){
-      stageMark(1,"run");
-      frame.removeAttribute("srcdoc");
-      frame.src=target.url;
-      const loadP=frameLoadOnce();
-      const watch=setTimeout(()=>{ plMsg.textContent="frame quiet for 15s — still listening…"; },15000);
-      await loadP; clearTimeout(watch);
-      const ms=Math.round(performance.now()-T0);
-      stageMark(1,"done",null,ms+" ms");
-      stageMark(2,"done",null,"first paint");
-      stageMark(3,"done",null,"as-is");
-      entry.status="ok"; plMsg.textContent="live · direct embed"; 
-    }else{
-      const res=await fetch(target.url,{signal:ctrl.signal,credentials:"omit"});
-      const hMs=Math.round(performance.now()-T0);
-      if(!res.ok) throw new HttpError(res.status);
-      stageMark(1,"done",null,`HTTP ${res.status} · ${hMs} ms`);
-
-      const len=+res.headers.get("content-length");
-      if(len) { plProg.classList.remove("ind"); } else plProg.classList.add("ind");
-      stageMark(2,"run"); plMsg.textContent="streaming bytes…";
-
-      let bufParts=[],got=0;
-      if(res.body && res.body.getReader){
-        const rd=res.body.getReader(), dec=new TextDecoder("utf-8");
-        for(;;){
-          const {done,value}=await rd.read();
-          if(done) break;
-          bufParts.push(value); got+=value.length;
-          plInfo.textContent=fmtBytes(got)+(len?" / "+fmtBytes(len):"");
-          if(len) plBar.style.width=Math.min(100,got/len*100).toFixed(1)+"%";
-        }
-        var html=dec.decode(concatBuf(bufParts,got));
-      }else{
-        html=await res.text(); got=new Blob([html]).size;
-      }
-      const tMs=Math.round(performance.now()-T0);
-      stageMark(2,"done",null,fmtBytes(got)+" · "+tMs+" ms");
-      entry.bytes=got;
-
-      stageMark(3,"run"); plMsg.textContent="rebuilding locally…";
-      await tick();
-      const c0=performance.now();
-      const built=rebuild(html,target.url);
-      stageMark(3,"done",null,built.notes.join(" · "));
-      plProg.classList.remove("ind"); plBar.style.width="100%";
-      frame.src=built.html;
-      entry.status="ok";
-      plMsg.textContent="live · rebuilt from "+target.host;
-    }
-    bootAwaySoon();
-    bumpStats(); persistHist();
-  }catch(e){
-    const [h,p]=explainErr(e);
-    entry.status="fail";
-    stageMark(3,"err"); stageMark(2,"err"); stageMark(1,"err");
-    stageMark(0,"done");
-    plMsg.textContent=h.toLowerCase();
-    plProg.classList.remove("ind"); plBar.style.width="0%";
-    bootCore.insertAdjacentHTML("beforeend",
-      `<div class="errcard"><b>${h}</b><p>${p}</p>
-       <div class="err-actions">
-         <button class="btn primary" id="er-retry"><i data-lucide="rotate-cw"></i>Retry</button>
-         ${S.settings.mode!=="direct"?`<button class="btn ghost" id="er-direct"><i data-lucide="external-link"></i>Fallback to direct embed</button>`:""}
-         <button class="btn ghost" id="er-drop">Abandon</button>
-       </div></div>`);
-    icons();
-    $("#er-retry").onclick=()=>launch(target,{forceMode});
-    const ed=$("#er-direct"); if(ed) ed.onclick=()=>launch(target,{forceMode:"direct"});
-    $("#er-drop").onclick=()=>goBack();
-    persistHist(); bumpStats();
-  }finally{
-    S.busy=false; S.ctrl=null;
+  mark(0,"run");mark(1,"run");
+  for(const c of cands){
+    try{
+      const res=await fetch(c,{cache:"no-store"});
+      if(!res.ok){lastCode=res.status;continue;}
+      mark(0,"done",res.status+" · "+Math.round(performance.now()-T0)+"ms");
+      plmsg.textContent="downloading…";
+      html=await res.text();
+      used=c;break;
+    }catch(e){netErr=true;}
   }
-}
-function pushStackSafe(){}
-const tick=()=>new Promise(r=>setTimeout(r,30));
-function concatBuf(parts,total){ const o=new Uint8Array(total); let f=0; for(const p of parts){ o.set(p,f); f+=p.length; } return o; }
-function bootAwaySoon(){ setTimeout(bootAway,420); }
-function persistHist(){ lsSet("nx.hist",JSON.stringify(S.hist)); }
-function sealActiveEntry(){
-  if(!S.active) return;
-  S.active.entry.dur=Math.max(1,Math.round((Date.now()-S.active.startTs)/1000));
-  S.active=null; persistHist(); renderHistory(); renderRecents();
+
+  if(id!==S.LID)return;
+
+  if(html==null){
+    track.classList.remove("ind");bar.style.width="0%";
+    mark(1,"bad");mark(2,"bad",lastCode?("http "+lastCode):(netErr?"unreachable":""));
+    plmsg.textContent="couldn't fetch";
+    const why=lastCode
+      ?`Every mirror answered, but refused the file (last code: ${lastCode}). It may have moved or gone private.`
+      :(location.protocol==="file:"
+        ?`No mirror could be reached. You're running from file:// — some setups block those reads. Direct embed below skips fetching entirely.`
+        :`No mirror could be reached (offline, DNS, or the network blocks it). Direct embed below skips fetching.`);
+    bootcore.insertAdjacentHTML("beforeend",
+      `<div class="errcard"><b>Fetch said no (${tried} mirror${tried>1?"s":""})</b><p>${why}</p>
+        <div class="gact">
+          <button class="btnround soft" id="er-retry">Retry</button>
+          <button class="btnround solid" id="er-direct">Direct embed<i data-i="right"></i></button>
+          <button class="btnround soft" id="er-open"><i data-i="ext"></i>New tab</button>
+        </div></div>`);
+    paintIcons(bootcore);
+    $("#er-retry").onclick=()=>launch(g);
+    $("#er-direct").onclick=()=>directEmbed(g,id);
+    $("#er-open").onclick=()=>window.open(mirrors(g.link)[0],"_blank","noopener");
+    pushRecent(g,true);
+    S.ctrl=null;
+    return;
+  }
+
+  mark(1,"done",kb(html.length)+" · "+((performance.now()-T0)/1000).toFixed(1)+"s");
+  plinfo.textContent=kb(html.length);
+  plmsg.textContent="rendering…";
+
+  await new Promise(r=>setTimeout(r,40));           // let the step paint
+  frame.removeAttribute("src");
+  frame.srcdoc=buildDoc(html,used.replace(/[^/]*$/,""));
+  mark(2,"run");
+
+  await loadedOnce(id);
+  if(id!==S.LID)return;
+
+  track.classList.remove("ind");bar.style.width="100%";
+  mark(2,"done",Math.round(performance.now()-T0)+"ms total");
+  plmsg.textContent="live · "+host(used);
+  setTimeout(()=>{if(id===S.LID)veil.classList.add("away");},450);
+  pushRecent(g,false);
+  S.ctrl=null;
 }
 
-/* ============================== history render ============================== */
-function renderHistory(){
-  const holder=$("#hist-list");
-  holder.querySelectorAll(".h-row:not(.head)").forEach(r=>r.remove());
-  $("#hist-empty").hidden=S.hist.length>0;
-  S.hist.forEach(h=>{
-    const st=h.status==="ok"?'<span class="hs st-ok">● ok</span>'
-           : h.status==="fail"?'<span class="hs st-fail">● fail</span>'
-           : '<span class="hs st-pend">◌ live</span>';
-    const row=document.createElement("div");
-    row.className="h-row";
-    row.innerHTML=`<span class="ht mono">${shortStamp(h.ts)}</span>
-      <span class="hn">${h.title}<br><span class="mono" style="font-weight:400;font-size:9.5px;color:var(--faint)">${h.host}</span></span>
-      <span class="hs" style="color:var(--dim)">${h.via==="direct"?"direct":"rebuild"}</span>
-      <span class="hs">${fmtBytes(h.bytes)}</span>
-      <span class="hs">${fmtDur(h.dur)}</span>
-      <button class="h-relaunch" title="Launch again"><i data-lucide="rotate-cw"></i></button>`;
-    row.querySelector(".h-relaunch").onclick=()=>launch({title:h.title,url:h.url});
-    holder.appendChild(row);
-  });
-  icons();
+/* CORS-proof fallback: plain iframe, no fetching at all */
+async function directEmbed(g,id){
+  if(S.ctrl)S.ctrl.abort();S.ctrl=null;
+  plmsg.textContent="live · direct embed (no fetch)";
+  plinfo.textContent="";
+  track.classList.remove("ind");bar.style.width="100%";
+  stepEls.forEach((s,i)=>mark(i,i===0?"done":"done","embed"));
+  const durl=mirrors(g.link)[0];
+  frame.srcdoc="";frame.src=durl;
+  await loadedOnce(id);
+  if(id===S.LID)setTimeout(()=>veil.classList.add("away"),200);
+  pushRecent(g,false);
+}
+
+/* ---------------- recents ---------------- */
+function pushRecent(g,failed){
+  if(S.recent[0]&&S.recent[0].link===g.link&&!failed)S.recent.shift();
+  if(!failed){
+    S.recent.unshift({title:g.title,link:g.link,at:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});
+    S.recent=S.recent.slice(0,4);
+    saveRecent();
+  }
+  renderRecents();
 }
 function renderRecents(){
-  const ul=$("#recent-list"); ul.innerHTML="";
-  if(!S.hist.length){ ul.innerHTML='<li><span class="empty-line">nothing yet — the log starts with your first launch.</span></li>'; return; }
-  S.hist.slice(0,5).forEach(h=>{
+  const ul=$("#rlist");ul.innerHTML="";
+  if(!S.recent.length){
+    ul.innerHTML='<li style="cursor:default;color:var(--faint)">nothing yet — launch something first.</li>';
+    return;
+  }
+  S.recent.forEach(r=>{
     const li=document.createElement("li");
-    li.innerHTML=`<span class="rt">${shortStamp(h.ts).slice(6)}</span><span class="rn">${h.title}</span>`;
-    li.style.cursor="pointer";
-    li.onclick=()=>launch({title:h.title,url:h.url});
+    li.innerHTML=`<span class="rt mono">${r.at}</span><span class="rn">${r.title}</span>`;
+    li.onclick=()=>launch({title:r.title,link:r.link});
     ul.appendChild(li);
   });
 }
+ $("#rclear").onclick=()=>{
+  S.recent=[];saveRecent();renderRecents();
+  try{localStorage.removeItem("nx.rec")}catch(e){}
+  toast("Recents cleared.");
+};
 
-/* ============================== game lib render ============================== */
-function renderGames(){
-  const wrap=$("#game-list"); wrap.innerHTML="";
+/* ---------------- cards ---------------- */
+function renderCards(){
+  const q=$("#qlist");q.innerHTML="";
   GAMES.forEach(g=>{
-    const last=S.hist.find(h=>h.url===g.url);
-    const el=document.createElement("article");
-    el.className="g-row";
-    el.innerHTML=
-      `<div class="art mono">art slot<br>(empty)</div>
-       <div class="g-body">
-         <div class="g-title-row"><h3>${g.title}</h3>${g.tags.map(t=>`<span class="chip mono">${t}</span>`).join("")}</div>
-         <p class="g-desc">${g.desc}</p>
-         <div class="g-metarow">${hostOf(g.url)} · streamed on launch${last?` · last run ${shortStamp(last.ts).slice(0,5)} ${shortStamp(last.ts).slice(11,16)}`:" · never run"}</div>
-         <div class="g-actions">
-           <button class="btn primary go"><i data-lucide="play"></i>Launch</button>
-           <button class="btn ghost raw"><i data-lucide="external-link"></i>Open raw file</button>
+    const row=document.createElement("div");row.className="qrow";
+    row.innerHTML=`<b>${g.title}</b><span class="qm mono">${host(g.link)}</span>
+      <button class="btnround solid">Play<i data-i="play"></i></button>`;
+    row.querySelector("button").onclick=()=>launch(g);
+    q.appendChild(row);
+  });
+
+  const gc=$("#gcards");gc.innerHTML="";
+  GAMES.forEach(g=>{
+    const card=document.createElement("article");card.className="card gamecard";
+    card.innerHTML=
+      `<div class="art mono"><span>icon<br>slot</span></div>
+       <div class="gbody">
+         <div class="gt"><h3>${g.title}</h3><span class="tagpill mono">HTML5</span></div>
+         <p class="gdesc">${g.desc}</p>
+         <div class="gmeta mono">${host(g.link)}</div>
+         <div class="gact">
+           <button class="btnround solid">Launch<i data-i="play"></i></button>
+           <button class="btnround soft">Source<i data-i="ext"></i></button>
          </div>
        </div>`;
-    el.querySelector(".go").onclick=()=>launch({title:g.title,url:g.url});
-    el.querySelector(".raw").onclick=()=>window.open(g.url,"_blank","noopener");
-    wrap.appendChild(el);
+    const[b,s]=[...card.querySelectorAll(".btnround")];
+    b.onclick=()=>launch(g);
+    s.onclick=()=>window.open(mirrors(g.link)[0],"_blank","noopener");
+    gc.appendChild(card);
   });
-
-  // quick launch lines
-  const q=$("#quick-list"); q.innerHTML="";
-  GAMES.forEach((g,i)=>{
-    const line=document.createElement("div");
-    line.className="qline";
-    line.innerHTML=`<span class="idx">${pad2(i+1)}</span><span class="qt">${g.title}</span>
-      <span class="qm">${hostOf(g.url)}</span>
-      <button class="qgo">RUN<i data-lucide="play"></i></button>`;
-    line.querySelector(".qgo").onclick=()=>launch({title:g.title,url:g.url});
-    q.appendChild(line);
-  });
-  $("#games-count").textContent=GAMES.length+" ENTR"+(GAMES.length===1?"Y":"IES");
-  $("#st-targets").textContent=GAMES.length;
-  icons();
+  $("#gcount").textContent=GAMES.length+(GAMES.length===1?" ENTRY":" ENTRIES");
 }
 
-/* ============================== diagnostics ============================== */
-function dotClass(){ const p=S.pings.filter(x=>x!=null); const last=S.pings[S.pings.length-1];
-  if(last==null) return "err"; if(last>=800) return "warn"; return "ok"; }
-function updNet(){
-  const pings=S.pings.filter(x=>x!=null);
-  const last=pings[pings.length-1];
-  $("#link-lat").textContent=(last?Math.round(last)+" ms":"— ms")+" · "+(pings.length?pings.length+" samples":"idle");
-  $("#link-state").textContent = last==null ? (pings.length?"offline":"probing…") : (last>=800?"laggy":"online");
-  $("#link-dot").className="dot "+(pings.length?dotClass():"");
-  const avg=pings.length?pings.reduce((a,b)=>a+b,0)/pings.length:null;
-  $("#dg-last").textContent=last?Math.round(last)+"ms":"—";
-  $("#dg-avg").textContent=avg?Math.round(avg)+"ms":"—";
-  $("#dg-jit").textContent=pings.length>1?Math.round(std(pings))+"ms":"—";
-  $("#dg-n").textContent=S.pings.length;
-  $("#st-link").textContent=last?(Math.round(last)<1000?Math.round(last)+"ms":"slow"):"—";
-  $("#sb-right").textContent=`engine ${S.settings.mode==="direct"?"direct":"rebuild"} · ${S.pings.length} pings · avg ${avg?Math.round(avg)+"ms":"—"}`;
-  drawSpark();
-}
-function std(a){ const m=a.reduce((x,y)=>x+y,0)/a.length; return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length); }
-function drawSpark(){
-  const cv=$("#spark"); if(!cv) return;
-  const r=cv.getBoundingClientRect(); if(!r.width) return;
-  const dpr=window.devicePixelRatio||1;
-  cv.width=r.width*dpr; cv.height=r.height*dpr;
-  const ctx=cv.getContext("2d"); ctx.scale(dpr,dpr);
-  const W=r.width,H=r.height,pad=5;
-  ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle="#24272a"; ctx.lineWidth=1;
-  [0.25,0.5,0.75].forEach(f=>{ ctx.beginPath(); ctx.moveTo(0,H*f); ctx.lineTo(W,H*f); ctx.stroke(); });
-  const vals=S.pings.filter(x=>x!=null);
-  if(vals.length<2){
-    ctx.fillStyle="#686f75"; ctx.font="9px JetBrains Mono";
-    ctx.fillText(vals.length?"acquiring…":"no signal yet",6,H/2+3); return;
-  }
-  const max=Math.max(...vals)*1.15;
-  const xs=i=>pad+i/(S.pings.length-1)*(W-pad*2);
-  const ys=v=>H-pad-(v/max)*(H-pad*2);
-  ctx.strokeStyle="#e9eaeb"; ctx.lineWidth=1.2; ctx.beginPath();
-  let pen=false;
-  S.pings.forEach((v,i)=>{ if(v==null){pen=false;return;} const x=xs(i),y=ys(v); pen?ctx.lineTo(x,y):(ctx.moveTo(x,y),pen=true); });
-  ctx.stroke();
-  // endpoint
-  for(let i=S.pings.length-1;i>=0;i--) if(S.pings[i]!=null){
-    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(xs(i),ys(S.pings[i]),2,0,7); ctx.fill(); break;
-  }
-}
-async function pingOnce(){
-  const ctrl=new AbortController(); const kill=setTimeout(()=>ctrl.abort(),6000);
-  const t0=performance.now();
+/* ---------------- connection dot (one silent probe, no noise) ---------------- */
+async function probe(){
+  const dot=$("#ldot"),st=$("#lst");
+  st.textContent="checking…";
   try{
-    await fetch(GAMES[0].url,{method:"HEAD",signal:ctrl.signal,cache:"no-store",credentials:"omit"});
-    S.pings.push(performance.now()-t0);
-  }catch(e){ S.pings.push(null); }
-  clearTimeout(kill);
-  if(S.pings.length>60) S.pings.shift();
-  updNet();
+    await fetch(mirrors(GAMES[0].link)[0],{method:"HEAD",cache:"no-store"});
+    dot.className="dot on";st.textContent="online";$("#lsub").textContent="mirrors reachable";
+  }catch(e){
+    dot.className="dot";st.textContent="offline";$("#lsub").textContent="can't reach mirrors";
+  }
 }
+ $("#linkbox").onclick=probe;
 
-/* ============================== stats / clocks ============================== */
-function bumpStats(){ $("#st-entries").textContent=S.hist.length; }
-function tickClock(){
-  const d=new Date();
-  $("#clock").textContent=`${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  const s=((Date.now()-S.bootedAt)/1000)|0;
-  const sess=(s>=3600?((s/3600)|0)+":"+pad2(((s%3600)/60)|0):((s/60)|0))+":"+pad2(s%60);
-  $("#st-session").textContent=sess;
-  $("#hero-line").textContent=`gateway online · session ${sess}`;
-}
-
-/* ============================== chrome & omnibox ============================== */
- $("#omni-form").addEventListener("submit",e=>{
+/* ---------------- omnibox ---------------- */
+ $("#omniform").addEventListener("submit",e=>{
   e.preventDefault();
   const v=omni.value.trim();
-  if(/^nexus:\/\//i.test(v)){ go(v.replace(/^nexus:\/\//i,"")||"home"); return; }
-  if(!v) return;
-  let u=v; if(!/^https?:\/\//i.test(u)) u="https://"+u;
-  try{ const U=new URL(u); launch({title:U.hostname,url:U.href}); }
-  catch(err){ toast("That doesn't parse as a URL.","warn"); }
+  if(/^nexus:\/\//i.test(v)){go(v.replace(/^nexus:\/\//i,"")||"home");return;}
+  if(!v)return;
+  const u=/^https?:\/\//i.test(v)?v:"https://"+v;
+  try{
+    const U=new URL(u);
+    launch({title:U.hostname,link:U.href});
+  }catch(err){toast("That doesn't look like a valid URL.");}
 });
 document.addEventListener("keydown",e=>{
-  if(e.key==="/" && document.activeElement!==omni && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){
-    e.preventDefault(); omni.focus(); omni.select();
-  }
-  if(e.key==="Escape" && S.route==="player" && !document.fullscreenElement){ goBack(); }
+  if(e.key==="/"&&document.activeElement!==omni){e.preventDefault();omni.focus();omni.select();}
+  if(e.key==="Escape"&&S.route==="player"&&!document.fullscreenElement)goBack();
 });
 
- $("#c-back").onclick=goBack;
- $("#c-reload").onclick=()=>{
-  if(S.route==="player" && S.playerTarget){ const t=S.playerTarget; launch(t); }
-  else { const r=S.route; renderAll(); toast("View refreshed."); void r; }
-};
+/* ---------------- window controls ---------------- */
+ $("#w-min").onclick=()=>{$("#app").classList.add("gone");$("#pill").hidden=false;};
+ $("#pill").onclick=()=>{$("#pill").hidden=true;$("#app").classList.remove("gone");};
+ $("#w-max").onclick=()=>
+  document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>toast("Fullscreen refused."));
+ $("#w-close").onclick=()=>toast("Nice try. There's nothing behind this window.");
 
-/* ============================== window controls ============================== */
- $("#win-min").onclick=()=>{
-  app.classList.add("gone");
-  const pill=$("#pill"); pill.hidden=false;
-  toast("Nexus ducked into the corner pill. Click it to resurface.","info");
-};
- $("#pill").onclick=()=>{ $("#pill").hidden=true; app.classList.remove("gone"); };
- $("#win-max").onclick=()=>{
-  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>toast("Fullscreen refused.","warn"));
-  else document.exitFullscreen();
-};
- $("#win-close").onclick=()=>{
-  $("#titlebar").classList.add("shake");
-  setTimeout(()=>$("#titlebar").classList.remove("shake"),320);
-  toast("Close rejected. Nexus grows on you.","warn");
-};
+/* player controls */
+ $("#pl-big").onclick=()=>document.fullscreenElement?document.exitFullscreen():$(".stage-area").requestFullscreen().catch(()=>{});
+ $("#pl-out").onclick=()=>S.target&&window.open(mirrors(S.target.link)[0],"_blank","noopener");
 
-/* ============================== sidebar ============================== */
- $$(".nav-it,[data-go]").forEach(b=>{
-  if(b.dataset.go) b.addEventListener("click",()=>go(b.dataset.go));
-});
- $("#collapse").onclick=()=>{
-  app.classList.toggle("folded");
-  lsSet("nx.folded",app.classList.contains("folded")?"1":"0");
-};
-
-/* ============================== player controls ============================== */
- $("#pl-fs").onclick=()=>{ const st=$(".pl-stage"); (document.fullscreenElement?document.exitFullscreen():st.requestFullscreen()).catch(()=>{}); };
- $("#pl-ext").onclick=()=>{ if(S.playerTarget) window.open(S.playerTarget.url,"_blank","noopener"); };
-
-/* ============================== settings ============================== */
-function setSeg(mode){
-  $$("#seg-mode button").forEach(b=>b.classList.toggle("on",b.dataset.val===mode));
-  S.settings.mode=mode; lsSet("nx.set",JSON.stringify(S.settings)); updNet();
-}
- $$("#seg-mode button").forEach(b=>b.onclick=()=>setSeg(b.dataset.val));
-function bindTgl(id,key){
-  const el=$(id);
-  el.onclick=()=>{
-    S.settings[key]=!S.settings[key];
-    el.classList.toggle("on",S.settings[key]);
-    el.setAttribute("aria-checked",S.settings[key]);
-    lsSet("nx.set",JSON.stringify(S.settings));
-  };
-}
-bindTgl("#tg-base","injectBase");
-bindTgl("#tg-ping","autoping");
-
-function exportHist(){
-  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),settings:S.settings,history:S.hist},null,2)],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob); a.download="nexus-log.json"; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-  toast("Log exported.","ok");
-}
- $("#h-export").onclick=exportHist; $("#s-export").onclick=exportHist;
-function armWipe(btn,label){
-  btn.addEventListener("click",()=>{
-    if(btn.classList.contains("arm")){
-      S.hist=[]; S.pings=[];
-      try{ localStorage.removeItem("nx.hist"); }catch(e){}
-      renderHistory(); renderRecents(); bumpStats(); updNet();
-      btn.classList.remove("arm"); btn.innerHTML=label; icons();
-      toast("Erased. Nexus remembers nothing, promises nothing.","ok");
-    }else{
-      btn.classList.add("arm"); btn.textContent="Sure? click again";
-      setTimeout(()=>{ btn.classList.remove("arm"); btn.innerHTML=label; icons(); },2800);
-    }
-  });
-}
-armWipe($("#h-clear"),'<i data-lucide="trash-2"></i>Wipe');
-armWipe($("#s-wipe"),'<i data-lucide="trash-2"></i>Erase everything');
-
-/* ============================== boot ============================== */
-function renderAll(){ renderGames(); renderHistory(); renderRecents(); applyRoute(); }
-(function init(){
-  try{
-    const setRaw=lsGet("nx.set"); if(setRaw) Object.assign(S.settings,JSON.parse(setRaw));
-    const hRaw=lsGet("nx.hist"); if(hRaw) S.hist=JSON.parse(hRaw);
-  }catch(e){}
-  if(lsGet("nx.folded")==="1") app.classList.add("folded");
-  try{ $("#about-storage").textContent = lsSet("nx.probe","1")===undefined ? (lsGet("nx.probe")==="1"?"persistent (localStorage)":"memory only") : "unknown"; }catch(e){}
-  setSeg(S.settings.mode);
-  $("#tg-base").classList.toggle("on",S.settings.injectBase);
-  $("#tg-ping").classList.toggle("on",S.settings.autoping);
-  renderAll(); bumpStats(); tickClock(); updNet();
-  icons();
-  setInterval(tickClock,1000);
-  setTimeout(pingOnce,600);
-  setInterval(()=>{ if(S.settings.autoping && !document.hidden && !$("#pill").offsetParent) pingOnce(); },12000);
-  window.addEventListener("resize",drawSpark);
-})();
+/* ---------------- boot ---------------- */
+paintIcons();
+renderCards();
+renderRecents();
+applyRoute();
+probe();
 })();
 </script>
 </body>
