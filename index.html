@@ -105,6 +105,7 @@
         <a href="#" class="active" onclick="showPanel('proxy',this);return false;">Proxy</a>
         <a href="#" onclick="showPanel('games',this);return false;">Games</a>
         <a href="#" onclick="showPanel('about',this);return false;">About</a>
+        <a href="#" onclick="showPanel('settings',this);return false;">Settings</a>
       </nav>
       <div class="sep"></div>
       <div class="foot">
@@ -133,7 +134,7 @@
               <span style="width:8px;height:8px;background:#555;border-radius:50%;display:inline-block;"></span>
               <span id="frameUrl">https://example.com</span>
             </div>
-            <iframe id="proxyFrame" src="about:blank" title="Proxy content"></iframe>
+            <iframe id="proxyFrame" src="" title="Proxy content"></iframe>
           </div>
         </div>
 
@@ -158,13 +159,25 @@
               <span style="width:8px;height:8px;background:#555;border-radius:50%;display:inline-block;"></span>
               <span>Rendered from GitHub raw HTML</span>
             </div>
-            <iframe id="gameFrame" src="about:blank" title="Game content"></iframe>
+            <iframe id="gameFrame" src="" title="Game content"></iframe>
           </div>
         </div>
 
         <div id="panel-about" class="panel">
           <h3>About Nexus</h3>
-          <p class="note">A minimal proxy-style interface. Fetches remote HTML and renders it securely inside an about:blank frame. Designed with a pure gray palette and small UI.</p>
+          <p class="note">A minimal proxy-style interface. Fetches remote HTML and renders it securely inside a blob:// frame. Designed with a pure gray palette and small UI.</p>
+        </div>
+
+        <div id="panel-settings" class="panel">
+          <h3>Settings</h3>
+          <div style="margin-bottom:14px;">
+            <label style="display:flex;align-items:center;gap:10px;color:#aaa;font-size:12.5px;cursor:pointer;user-select:none;">
+              <input type="checkbox" id="disableSafety" style="accent-color:#777;width:14px;height:14px;">
+              <span>Turn off safety screen</span>
+            </label>
+          </div>
+          <button onclick="openDataHtml()" style="background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;padding:8px 16px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">Open in data:text/html</button>
+          <p class="note" style="margin-top:14px;">When the safety screen is off, Nexus loads directly without the access denied page.</p>
         </div>
       </section>
     </main>
@@ -173,6 +186,37 @@
 
 <script>
   const GAME_URL = 'https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/fancypantsadventure.html';
+
+  function createEmptyBlobUrl() {
+    const blob = new Blob(['<html><head><meta charset="UTF-8"></head><body></body></html>'], {type: 'text/html'});
+    return URL.createObjectURL(blob);
+  }
+
+  let proxyBlobUrl = createEmptyBlobUrl();
+  let gameBlobUrl = createEmptyBlobUrl();
+
+  function initFrames() {
+    const pf = document.getElementById('proxyFrame');
+    const gf = document.getElementById('gameFrame');
+    if (pf && !pf.src) pf.src = proxyBlobUrl;
+    if (gf) gf.src = gameBlobUrl;
+  }
+
+  function openDataHtml() {
+    const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
+  document.getElementById('disableSafety').addEventListener('change', function() {
+    if (this.checked) {
+      document.getElementById('sysScreen').style.display = 'none';
+      document.getElementById('nexusScreen').style.display = 'block';
+      setTabContent('proxy');
+      unlocked = true;
+      initFrames();
+    }
+  });
   let unlocked = false;
   let pendingTab = 'proxy';
 
@@ -181,6 +225,7 @@
       unlocked = true;
       document.getElementById('sysScreen').style.display = 'none';
       document.getElementById('nexusScreen').style.display = 'block';
+      initFrames();
       setTabContent(pendingTab);
     } else {
       unlocked = false;
@@ -192,7 +237,7 @@
   // Hidden mechanism: click the error page heading
   document.getElementById('sysTitle').addEventListener('click', toggleUnlock);
   document.addEventListener('keydown', function(e) {
-    if (e.key === "'" || e.key === '"') {
+    if (e.key === '~') {
       e.preventDefault();
       toggleUnlock();
     }
