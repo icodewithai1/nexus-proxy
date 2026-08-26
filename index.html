@@ -303,16 +303,8 @@
     box.style.display = 'block';
     box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    try {
-      const resp = await fetch(GAME_URL);
-      const html = await resp.text();
-      const blob = new Blob([html], {type: 'text/html'});
-      const url = URL.createObjectURL(blob);
-      frame.src = url;
-    } catch (e) {
-      const blob = new Blob(['<html><head><meta charset="UTF-8"><title>Error</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body><h2>Fetch failed</h2><p>Could not load Fancy Pants Adventure.</p></body></html>'], {type: 'text/html'});
-      frame.src = URL.createObjectURL(blob);
-    }
+    // Load directly in frame so complex embedded HTML works fully
+    frame.src = GAME_URL;
   }
 </script>
 
