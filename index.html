@@ -1,312 +1,757 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Access Denied</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100vh; background: #202124; color: #e8eaed; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; overflow: hidden; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus</title>
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+    <style>
+        :root {
+            --bg-main: #121316;
+            --bg-sidebar: #18191e;
+            --bg-card: #202227;
+            --bg-card-hover: #282a32;
+            --bg-input: #1c1d22;
+            --border: #2e313b;
+            --border-focus: #4b4f5e;
+            --text-main: #f3f4f6;
+            --text-muted: #8e93a0;
+            --accent: #3b3f4d;
+            --accent-hover: #4e5366;
+            --accent-active: #63697e;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+        }
 
-  /* System-theme error page */
-  .sys { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 24px; }
-  .sys-inner { text-align: center; max-width: 540px; }
-  .sys-inner .icon { width: 72px; height: 72px; margin: 0 auto 20px; opacity: 0.75; }
-  .sys-inner h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.6px; color: #e8eaed; margin-bottom: 10px; }
-  .sys-inner .code { font-size: 12px; color: #9aa0af; letter-spacing: 0.4px; margin-bottom: 16px; font-family: monospace, monospace; }
-  .sys-inner p { font-size: 14px; color: #9aa0af; line-height: 1.55; }
-  .sys-inner .line { width: 48px; height: 2px; background: #3c4043; margin: 18px auto; border-radius: 1px; }
-  .sys-inner .small { font-size: 11.5px; color: #5f6368; margin-top: 6px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
 
-  /* Nexus interface (hidden initially) */
-  .nexus { display: none; height: 100vh; overflow: hidden; background: #181818; color: #e8e8e8; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; }
-  .nexus .app { display: flex; height: 100vh; }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 13px;
+        }
 
-  /* Sidebar */
-  .nexus .side { width: 200px; background: #1e1e1e; border-right: 1px solid #2a2a2a; padding: 18px 14px; flex-shrink: 0; display: flex; flex-direction: column; }
-  .nexus .side h1 { font-size: 18px; font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 4px; cursor: pointer; user-select: none; }
-  .nexus .side .sub { font-size: 11px; color: #777; margin-bottom: 22px; }
-  .nexus .side nav { display: flex; flex-direction: column; gap: 2px; }
-  .nexus .side nav a { display: block; padding: 7px 8px; border-radius: 6px; color: #aaa; text-decoration: none; font-size: 12.5px; font-weight: 500; border: 1px solid transparent; transition: background .1s, color .1s, border-color .1s; }
-  .nexus .side nav a:hover, .nexus .side nav a.active { background: #252525; color: #fff; border-color: #333; }
-  .nexus .side .sep { height: 1px; background: #2a2a2a; margin: 14px 0; }
-  .nexus .side .foot { margin-top: auto; font-size: 10.5px; color: #666; line-height: 1.6; }
+        /* Sidebar Styling */
+        #sidebar {
+            width: 200px;
+            min-width: 200px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px 8px;
+            user-select: none;
+        }
 
-  /* Main */
-  .nexus .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-  .nexus .top { padding: 16px 20px; border-bottom: 1px solid #2a2a2a; background: #1a1a1a; display: flex; align-items: center; gap: 14px; }
-  .nexus .top h2 { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
-  .nexus .top .tag { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.6px; }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            margin-bottom: 14px;
+        }
 
-  /* Proxy bar */
-  .nexus .proxy-wrap { display: flex; gap: 8px; align-items: center; flex: 1; max-width: 520px; }
-  .nexus .proxy-wrap input { flex: 1; background: #222; border: 1px solid #333; border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 12.5px; outline: none; font-family: monospace, monospace; }
-  .nexus .proxy-wrap input:focus { border-color: #555; }
-  .nexus .proxy-wrap button { background: #333; border: 1px solid #444; border-radius: 6px; padding: 8px 16px; color: #fff; font-size: 11.5px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px; }
-  .nexus .proxy-wrap button:hover { background: #3a3a3a; border-color: #555; }
-  .nexus .proxy-wrap button:active { background: #2a2a2a; }
+        .brand-logo {
+            width: 20px;
+            height: 20px;
+            background: #ffffff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-main);
+            font-weight: 900;
+            font-size: 11px;
+        }
 
-  /* Content */
-  .nexus .content { flex: 1; padding: 24px; overflow-y: auto; }
-  .nexus .content h3 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 14px; letter-spacing: -0.3px; }
-  .nexus .note { font-size: 11.5px; color: #888; line-height: 1.5; margin-bottom: 18px; max-width: 480px; }
+        .brand-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
 
-  /* Game card */
-  .nexus .card { background: #222; border: 1px solid #2e2e2e; border-radius: 10px; padding: 18px; max-width: 420px; }
-  .nexus .card .row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
-  .nexus .card .thumb { width: 56px; height: 56px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; display: grid; place-items: center; font-size: 16px; font-weight: 800; color: #ccc; flex-shrink: 0; }
-  .nexus .card h4 { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.4px; }
-  .nexus .card .meta { font-size: 10.5px; color: #777; margin-top: 3px; }
-  .nexus .card p { font-size: 12px; color: #aaa; line-height: 1.5; margin-bottom: 14px; }
-  .nexus .card .btn { display: inline-block; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 6px; padding: 7px 14px; color: #fff; text-decoration: none; font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px; }
-  .nexus .card .btn:hover { background: #333; border-color: #555; }
+        .nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            list-style: none;
+        }
 
-  /* Render box */
-  .nexus .frame-box { margin-top: 16px; border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; background: #1e1e1e; }
-  .nexus .frame-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #222; border-bottom: 1px solid #2a2a2a; }
-  .nexus .frame-bar span { font-size: 11px; color: #777; font-family: monospace, monospace; }
-  .nexus .frame-box iframe { width: 100%; height: 480px; border: none; display: block; background: #fff; }
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 7px 10px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s ease;
+        }
 
-  /* Tabs inside nexus */
-  .nexus .tabs { display: flex; gap: 6px; margin-bottom: 18px; }
-  .nexus .tabs button { background: #222; border: 1px solid #2e2e2e; border-radius: 20px; padding: 5px 14px; color: #aaa; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px; }
-  .nexus .tabs button.active, .nexus .tabs button:hover { background: #2e2e2e; color: #fff; border-color: #3a3a3a; }
+        .nav-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
 
-  .nexus .panel { display: none; }
-  .nexus .panel.active { display: block; }
-</style>
+        .nav-btn:hover {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        .nav-btn.active {
+            background-color: var(--bg-card);
+            color: #ffffff;
+            border-color: var(--border);
+        }
+
+        .sidebar-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .badge-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 4px 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+
+        /* Main View Container */
+        #main-content {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            background-color: var(--bg-main);
+        }
+
+        .tab-panel {
+            display: none;
+            padding: 24px;
+            max-width: 960px;
+            margin: 0 auto;
+            min-height: 100%;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .page-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Home / Proxy Omnibox View */
+        .proxy-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .proxy-hero {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .proxy-box {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 520px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 4px 6px 4px 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            transition: border-color 0.15s ease;
+        }
+
+        .proxy-box:focus-within {
+            border-color: var(--border-focus);
+        }
+
+        .proxy-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 13px;
+            padding: 6px 0;
+        }
+
+        .proxy-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .proxy-box button {
+            background-color: var(--accent);
+            color: #ffffff;
+            border: none;
+            outline: none;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .proxy-box button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quick-tag {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .quick-tag:hover {
+            color: #ffffff;
+            border-color: var(--border-focus);
+            background-color: var(--bg-card);
+        }
+
+        /* Games Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .game-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            background-color: var(--bg-card-hover);
+            border-color: var(--border-focus);
+            transform: translateY(-2px);
+        }
+
+        .game-thumbnail-placeholder {
+            width: 100%;
+            height: 100px;
+            background-color: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .game-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-tag {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Dedicated In-App Game Player / Frame */
+        #game-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 200px;
+            right: 0;
+            bottom: 0;
+            background-color: #000000;
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        .game-header {
+            height: 38px;
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+        }
+
+        .game-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.15s;
+        }
+
+        .control-btn:hover {
+            background-color: var(--accent);
+        }
+
+        .active-game-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .game-frame-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: calc(100% - 38px);
+        }
+
+        #game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000000;
+        }
+
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 2;
+        }
+
+        .spinner {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Settings Components */
+        .settings-group {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .setting-desc strong {
+            display: block;
+            font-size: 12.5px;
+            margin-bottom: 2px;
+        }
+
+        .setting-desc span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .select-input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 11.5px;
+            outline: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-<!-- System theme access denied -->
-<section class="sys" id="sysScreen" aria-label="Access denied screen">
-  <div class="sys-inner" id="sysInner">
-    <div class="icon" aria-hidden="true">
-      <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="36" cy="36" r="30" stroke="#5f6368" stroke-width="2.5"/>
-        <path d="M26 26l20 20M46 26l-20 20" stroke="#e8eaed" stroke-width="3.5" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <h1 id="sysTitle">Access Denied</h1>
-    <div class="code">ERR_ACCESS_DENIED / HTTP 403</div>
-    <p>You don't have authorization to view this page.<br>The resource is restricted on this device.</p>
-    <div class="line"></div>
-    <p class="small">System theme enabled &middot; Secure connection</p>
-  </div>
-</section>
-
-<!-- Nexus proxy interface -->
-<div class="nexus" id="nexusScreen" aria-label="Nexus proxy interface">
-  <div class="app">
-    <aside class="side" aria-label="Sidebar">
-      <h1 onclick="toggleUnlock()">Nexus</h1>
-      <div class="sub">School Browser Proxy</div>
-      <nav>
-        <a href="#" class="active" onclick="showPanel('proxy',this);return false;">Proxy</a>
-        <a href="#" onclick="showPanel('games',this);return false;">Games</a>
-        <a href="#" onclick="showPanel('about',this);return false;">About</a>
-        <a href="#" onclick="showPanel('settings',this);return false;">Settings</a>
-      </nav>
-      <div class="sep"></div>
-      <div class="foot">
-        Nexus v1.0<br>
-        Gray / Dark Gray<br>
-        Small UI
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="top">
-        <h2 id="title">Nexus Proxy</h2>
-        <span class="tag" id="tag">Private browsing</span>
-        <div class="proxy-wrap">
-          <input id="urlInput" type="text" value="https://example.com" placeholder="https://example.com" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter'){goUrl();}">
-          <button onclick="goUrl()">Go</button>
-        </div>
-      </header>
-
-      <section class="content">
-        <div id="panel-proxy" class="panel active">
-          <h3>Quick Access</h3>
-          <p class="note">Enter a URL above and click Go. The site loads inside the frame below. Some sites block framing.</p>
-          <div class="frame-box">
-            <div class="frame-bar">
-              <span style="width:8px;height:8px;background:#555;border-radius:50%;display:inline-block;"></span>
-              <span id="frameUrl">https://example.com</span>
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div>
+            <div class="brand">
+                <div class="brand-logo">N</div>
+                <div class="brand-text">NEXUS</div>
             </div>
-            <iframe id="proxyFrame" src="" title="Proxy content"></iframe>
-          </div>
+            <ul class="nav-list">
+                <li>
+                    <button class="nav-btn active" onclick="switchTab('home')">
+                        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                        Proxy
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" onclick="switchTab('games')">
+                        <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                        Games
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-btn" onclick="switchTab('settings')">
+                        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                        Settings
+                    </button>
+                </li>
+            </ul>
         </div>
 
-        <div id="panel-games" class="panel">
-          <div class="tabs">
-            <button class="active" onclick="filterGames('all',this)">All</button>
-          </div>
-          <h3>Games Library</h3>
-          <div class="card" style="margin-top:10px;">
-            <div class="row">
-              <div class="thumb">FP</div>
-              <div>
-                <h4>Fancy Pants Adventure</h4>
-                <div class="meta">Platformer / Action</div>
-              </div>
+        <div class="sidebar-footer">
+            <div class="badge-status">
+                <div class="status-dot"></div>
+                <span>Nexus v2.1 • Ready</span>
             </div>
-            <p>A fast platformer with smooth physics and colorful levels. Click Play to fetch and render the HTML directly inside Nexus.</p>
-            <a href="#" class="btn" onclick="loadGame();return false;">Play in Nexus</a>
-          </div>
-          <div id="gameFrameBox" class="frame-box" style="display:none;margin-top:16px;">
-            <div class="frame-bar">
-              <span style="width:8px;height:8px;background:#555;border-radius:50%;display:inline-block;"></span>
-              <span>Rendered from GitHub raw HTML</span>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+        <!-- Tab: Home / Proxy -->
+        <section id="tab-home" class="tab-panel active">
+            <div class="proxy-container">
+                <h1 class="proxy-hero">Explore without limits.</h1>
+                <div class="proxy-box">
+                    <input type="text" id="proxy-input" placeholder="Search the web or type a URL..." onkeydown="handleProxyEnter(event)">
+                    <button onclick="simulateProxy()">Launch</button>
+                </div>
+                <div class="quick-links">
+                    <span class="quick-tag" onclick="quickSearch('Google')">Google</span>
+                    <span class="quick-tag" onclick="quickSearch('DuckDuckGo')">DuckDuckGo</span>
+                    <span class="quick-tag" onclick="quickSearch('Wikipedia')">Wikipedia</span>
+                </div>
             </div>
-            <iframe id="gameFrame" src="" title="Game content"></iframe>
-          </div>
-        </div>
+        </section>
 
-        <div id="panel-about" class="panel">
-          <h3>About Nexus</h3>
-          <p class="note">A minimal proxy-style interface. Fetches remote HTML and renders it securely inside a blob:// frame. Designed with a pure gray palette and small UI.</p>
-        </div>
+        <!-- Tab: Games -->
+        <section id="tab-games" class="tab-panel">
+            <div class="page-header">
+                <h2 class="page-title">Games Library</h2>
+                <p class="page-subtitle">Select an offline game package to render inside Nexus.</p>
+            </div>
 
-        <div id="panel-settings" class="panel">
-          <h3>Settings</h3>
-          <div style="margin-bottom:14px;">
-            <label style="display:flex;align-items:center;gap:10px;color:#aaa;font-size:12.5px;cursor:pointer;user-select:none;">
-              <input type="checkbox" id="disableSafety" style="accent-color:#777;width:14px;height:14px;">
-              <span>Turn off safety screen</span>
-            </label>
-          </div>
-          <button onclick="openDataHtml()" style="background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;padding:8px 16px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">Open in blob</button>
-          <p class="note" style="margin-top:14px;">When the safety screen is off, Nexus loads directly without the access denied page.</p>
-        </div>
-      </section>
+            <div class="cards-grid">
+                <!-- Fancy Pants Adventure Card -->
+                <div class="game-card" onclick="fetchAndLaunchGame('Fancy Pants Adventure', 'https://github.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/fancypantsadventure.html')">
+                    <div class="game-thumbnail-placeholder">
+                        <span>No Icon</span>
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title">Fancy Pants Adventure</div>
+                        <div class="game-tag">Platformer • HTML/SWF</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Settings -->
+        <section id="tab-settings" class="tab-panel">
+            <div class="page-header">
+                <h2 class="page-title">Settings</h2>
+                <p class="page-subtitle">Configure tab disguise, cloak title, and panic controls.</p>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-item">
+                    <div class="setting-desc">
+                        <strong>Tab Cloak</strong>
+                        <span>Disguise this tab as an educational or standard site.</span>
+                    </div>
+                    <select class="select-input" onchange="setTabCloak(this.value)">
+                        <option value="default">Nexus (Default)</option>
+                        <option value="drive">Google Drive</option>
+                        <option value="classroom">Google Classroom</option>
+                        <option value="canvas">Canvas LMS</option>
+                        <option value="desmos">Desmos Graphing Calculator</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-item">
+                    <div class="setting-desc">
+                        <strong>Panic Key</strong>
+                        <span>Press <kbd style="background:#111; padding:2px 4px; border-radius:3px; border:1px solid #333;">Esc</kbd> anytime to immediately redirect to Google Classroom.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
-  </div>
-</div>
 
-<script>
-  const GAME_URL = 'https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/fancypantsadventure.html';
+    <!-- Embedded Game Player -->
+    <div id="game-view">
+        <div class="game-header">
+            <div class="game-header-left">
+                <button class="control-btn" onclick="closeGame()">
+                    <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    Back
+                </button>
+                <span class="active-game-title" id="active-game-title">Game Title</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="control-btn" onclick="reloadGame()">Reload</button>
+                <button class="control-btn" onclick="toggleFullscreen()">Fullscreen</button>
+            </div>
+        </div>
+        <div class="game-frame-container">
+            <div id="frame-loader" class="loader-overlay">
+                <div class="spinner"></div>
+                <div style="color:var(--text-muted);font-size:12px;">Fetching & rendering HTML payload...</div>
+            </div>
+            <iframe id="game-frame" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms" allowfullscreen></iframe>
+        </div>
+    </div>
 
-  function createEmptyBlobUrl() {
-    const blob = new Blob(['<html><head><meta charset="UTF-8"></head><body></body></html>'], {type: 'text/html'});
-    return URL.createObjectURL(blob);
-  }
+    <script>
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-  let proxyBlobUrl = createEmptyBlobUrl();
-  let gameBlobUrl = createEmptyBlobUrl();
+            const targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) targetTab.classList.add('active');
 
-  function initFrames() {
-    const pf = document.getElementById('proxyFrame');
-    const gf = document.getElementById('gameFrame');
-    if (pf && !pf.src) pf.src = proxyBlobUrl;
-    if (gf) gf.src = gameBlobUrl;
-  }
+            const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.innerText.toLowerCase().includes(tabId));
+            if (activeBtn) activeBtn.classList.add('active');
+        }
 
-  function openDataHtml() {
-    const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-  }
+        // Proxy Simulation / Search
+        function simulateProxy() {
+            const input = document.getElementById('proxy-input').value.trim();
+            if (!input) return;
+            let url = input;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                if (url.includes('.') && !url.includes(' ')) {
+                    url = 'https://' + url;
+                } else {
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+                }
+            }
+            window.open(url, '_blank');
+        }
 
-  document.getElementById('disableSafety').addEventListener('change', function() {
-    if (this.checked) {
-      document.getElementById('sysScreen').style.display = 'none';
-      document.getElementById('nexusScreen').style.display = 'block';
-      setTabContent('proxy');
-      unlocked = true;
-      initFrames();
-    }
-  });
-  let unlocked = false;
-  let pendingTab = 'proxy';
+        function handleProxyEnter(e) {
+            if (e.key === 'Enter') simulateProxy();
+        }
 
-  function toggleUnlock() {
-    if (!unlocked) {
-      unlocked = true;
-      document.getElementById('sysScreen').style.display = 'none';
-      document.getElementById('nexusScreen').style.display = 'block';
-      initFrames();
-      setTabContent(pendingTab);
-    } else {
-      unlocked = false;
-      document.getElementById('sysScreen').style.display = 'flex';
-      document.getElementById('nexusScreen').style.display = 'none';
-    }
-  }
+        function quickSearch(engine) {
+            const input = document.getElementById('proxy-input');
+            if (engine === 'Google') input.value = 'https://www.google.com';
+            if (engine === 'DuckDuckGo') input.value = 'https://duckduckgo.com';
+            if (engine === 'Wikipedia') input.value = 'https://www.wikipedia.org';
+            simulateProxy();
+        }
 
-  // Hidden mechanism: click the error page heading
-  document.getElementById('sysTitle').addEventListener('click', toggleUnlock);
-  document.addEventListener('keydown', function(e) {
-    if (e.key === '~') {
-      e.preventDefault();
-      toggleUnlock();
-    }
-  });
+        // Fetch and Render Offline Game
+        let currentGamePayload = '';
 
-  function showPanel(id, el) {
-    if (el) {
-      document.querySelectorAll('.nexus .side nav a').forEach(a => a.classList.remove('active'));
-      el.classList.add('active');
-    }
-    pendingTab = id;
-    if (!unlocked) {
-      unlocked = true;
-      document.getElementById('sysScreen').style.display = 'none';
-      document.getElementById('nexusScreen').style.display = 'block';
-      initFrames();
-    }
-    setTabContent(id);
-  }
+        async function fetchAndLaunchGame(title, rawUrl) {
+            const gameView = document.getElementById('game-view');
+            const gameFrame = document.getElementById('game-frame');
+            const loader = document.getElementById('frame-loader');
+            const titleElement = document.getElementById('active-game-title');
 
-  function setTabContent(id) {
-    document.querySelectorAll('.nexus .panel').forEach(p => p.classList.remove('active'));
-    const p = document.getElementById('panel-' + id);
-    if (p) p.classList.add('active');
-    document.querySelectorAll('.nexus .side nav a').forEach(a => a.classList.remove('active'));
-    const link = document.querySelector('.nexus .side nav a[onclick*="' + id + '"]');
-    if (link) link.classList.add('active');
+            titleElement.innerText = title;
+            gameView.style.display = 'flex';
+            loader.style.display = 'flex';
+            gameFrame.srcdoc = '';
 
-    const titles = {proxy: 'Nexus Proxy', games: 'Games', about: 'About'};
-    const subs = {proxy: 'Private browsing', games: 'Play', about: 'Info'};
-    const t = document.getElementById('title');
-    const s = document.getElementById('tag');
-    if (t) t.textContent = titles[id] || 'Nexus';
-    if (s) s.textContent = subs[id] || '';
-  }
+            // Convert github raw links to direct raw CDN if required
+            let targetUrl = rawUrl;
+            if (targetUrl.includes('github.com') && targetUrl.includes('/raw/')) {
+                targetUrl = targetUrl
+                    .replace('github.com', 'raw.githubusercontent.com')
+                    .replace('/raw/refs/heads/', '/')
+                    .replace('/raw/', '/');
+            }
 
-  function filterGames(cat, btn) {
-    if (btn) document.querySelectorAll('.nexus .tabs button').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-  }
+            try {
+                const response = await fetch(targetUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                const htmlContent = await response.text();
+                currentGamePayload = htmlContent;
+                
+                // Render HTML directly inside iframe
+                gameFrame.srcdoc = htmlContent;
+                
+                // Hide loader once the iframe document loads
+                gameFrame.onload = () => {
+                    loader.style.display = 'none';
+                };
+            } catch (err) {
+                console.error('Failed to fetch game code:', err);
+                loader.innerHTML = `
+                    <div style="color:#ef4444;font-size:12.5px;">Failed to fetch HTML content.</div>
+                    <div style="color:var(--text-muted);font-size:11px;">CORS or network error. Loading direct URL in frame...</div>
+                `;
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    gameFrame.src = rawUrl;
+                }, 1200);
+            }
+        }
 
-  function goUrl() {
-    const url = document.getElementById('urlInput').value.trim();
-    if (!url) return;
-    const label = document.getElementById('frameUrl');
-    if (label) label.textContent = url;
-    const frame = document.getElementById('proxyFrame');
-    if (frame) {
-      const d = frame.contentDocument || frame.contentWindow.document;
-      if (d) {
-        d.open();
-        d.write('<html><head><meta charset="UTF-8"><title>Loading</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body>Loading ' + url + ' ...</body></html>');
-        d.close();
-      }
-      frame.src = url;
-    }
-  }
+        function reloadGame() {
+            const gameFrame = document.getElementById('game-frame');
+            if (currentGamePayload) {
+                gameFrame.srcdoc = currentGamePayload;
+            } else {
+                gameFrame.src = gameFrame.src;
+            }
+        }
 
-  async function loadGame() {
-    const box = document.getElementById('gameFrameBox');
-    const frame = document.getElementById('gameFrame');
-    if (!box || !frame) return;
-    box.style.display = 'block';
-    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        function closeGame() {
+            const gameView = document.getElementById('game-view');
+            const gameFrame = document.getElementById('game-frame');
+            gameView.style.display = 'none';
+            gameFrame.srcdoc = '';
+            gameFrame.src = 'about:blank';
+        }
 
-    // Load directly in frame so complex embedded HTML works fully
-    frame.src = GAME_URL;
-  }
-</script>
+        function toggleFullscreen() {
+            const frameContainer = document.querySelector('.game-frame-container');
+            if (!document.fullscreenElement) {
+                frameContainer.requestFullscreen().catch(err => alert(err.message));
+            } else {
+                document.exitFullscreen();
+            }
+        }
 
+        // Tab Cloaking
+        function setTabCloak(type) {
+            const favicon = document.getElementById('favicon');
+            if (type === 'drive') {
+                document.title = 'My Drive - Google Drive';
+                favicon.href = 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png';
+            } else if (type === 'classroom') {
+                document.title = 'Home - Google Classroom';
+                favicon.href = 'https://ssl.gstatic.com/classroom/favicon.png';
+            } else if (type === 'canvas') {
+                document.title = 'Dashboard - Canvas LMS';
+                favicon.href = 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico';
+            } else if (type === 'desmos') {
+                document.title = 'Desmos | Graphing Calculator';
+                favicon.href = 'https://www.desmos.com/favicon.ico';
+            } else {
+                document.title = 'Nexus';
+                favicon.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>";
+            }
+        }
+
+        // Panic key listener (Escape)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.location.replace('https://classroom.google.com');
+            }
+        });
+    </script>
 </body>
 </html>
