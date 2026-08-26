@@ -1,30 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fancy Pants Adventure Launcher</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100vh; background: #181818; color: #e8e8e8; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; }
+
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  .side { width: 200px; background: #1e1e1e; border-right: 1px solid #2a2a2a; padding: 18px 14px; flex-shrink: 0; display: flex; flex-direction: column; }
+  .side h1 { font-size: 18px; font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 4px; }
+  .side .sub { font-size: 11px; color: #888; margin-bottom: 22px; }
+  .side nav { display: flex; flex-direction: column; gap: 2px; }
+  .side nav a { display: block; padding: 7px 8px; border-radius: 6px; color: #aaa; text-decoration: none; font-size: 12.5px; font-weight: 500; border: 1px solid transparent; transition: background .1s, color .1s, border-color .1s; }
+  .side nav a:hover, .side nav a.active { background: #252525; color: #fff; border-color: #333; }
+  .side .sep { height: 1px; background: #2a2a2a; margin: 14px 0; }
+  .side .foot { margin-top: auto; font-size: 10.5px; color: #666; line-height: 1.6; }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .top { padding: 16px 20px; border-bottom: 1px solid #2a2a2a; background: #1a1a1a; display: flex; align-items: center; gap: 14px; }
+  .top h2 { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; color: #fff; }
+  .top .tag { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.6px; }
+
+  /* Proxy bar */
+  .proxy-wrap { display: flex; gap: 8px; align-items: center; flex: 1; max-width: 520px; }
+  .proxy-wrap input { flex: 1; background: #222; border: 1px solid #333; border-radius: 6px; padding: 8px 12px; color: #fff; font-size: 12.5px; outline: none; font-family: monospace, monospace; }
+  .proxy-wrap input:focus { border-color: #555; }
+  .proxy-wrap button { background: #333; border: 1px solid #444; border-radius: 6px; padding: 8px 16px; color: #fff; font-size: 11.5px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px; }
+  .proxy-wrap button:hover { background: #3a3a3a; border-color: #555; }
+  .proxy-wrap button:active { background: #2a2a2a; }
+
+  /* Content */
+  .content { flex: 1; padding: 24px; overflow-y: auto; }
+  .content h3 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 14px; letter-spacing: -0.3px; }
+  .note { font-size: 11.5px; color: #888; line-height: 1.5; margin-bottom: 18px; max-width: 480px; }
+
+  /* Game card */
+  .card { background: #222; border: 1px solid #2e2e2e; border-radius: 10px; padding: 18px; max-width: 420px; }
+  .card .row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+  .card .thumb { width: 56px; height: 56px; background: #2a2a2a; border: 1px solid #333; border-radius: 8px; display: grid; place-items: center; font-size: 16px; font-weight: 800; color: #ccc; flex-shrink: 0; }
+  .card h4 { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.4px; }
+  .card .meta { font-size: 10.5px; color: #777; margin-top: 3px; }
+  .card p { font-size: 12px; color: #aaa; line-height: 1.5; margin-bottom: 14px; }
+  .card .btn { display: inline-block; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 6px; padding: 7px 14px; color: #fff; text-decoration: none; font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px; }
+  .card .btn:hover { background: #333; border-color: #555; }
+
+  /* Render box */
+  .frame-box { margin-top: 16px; border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; background: #1e1e1e; }
+  .frame-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #222; border-bottom: 1px solid #2a2a2a; }
+  .frame-bar span { font-size: 11px; color: #777; font-family: monospace, monospace; }
+  .frame-box iframe { width: 100%; height: 480px; border: none; display: block; background: #fff; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+  .tabs button { background: #222; border: 1px solid #2e2e2e; border-radius: 20px; padding: 5px 14px; color: #aaa; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px; }
+  .tabs button.active, .tabs button:hover { background: #2e2e2e; color: #fff; border-color: #3a3a3a; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+</style>
 </head>
 <body>
-    <iframe 
-        src="https://github.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/fancypantsadventure.html" 
-        sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
-        allow="autoplay; fullscreen">
-    </iframe>
+
+<div class="app">
+  <aside class="side" aria-label="Sidebar">
+    <h1>Nexus</h1>
+    <div class="sub">School Browser Proxy</div>
+    <nav>
+      <a href="#" class="active" onclick="showPanel('proxy',this);return false;">Proxy</a>
+      <a href="#" onclick="showPanel('games',this);return false;">Games</a>
+      <a href="#" onclick="showPanel('about',this);return false;">About</a>
+    </nav>
+    <div class="sep"></div>
+    <div class="foot">
+      Nexus v1.0<br>
+      Gray / Dark Gray<br>
+      Small UI
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <h2 id="title">Nexus Proxy</h2>
+      <span class="tag" id="tag">Private browsing</span>
+      <div class="proxy-wrap">
+        <input id="urlInput" type="text" value="https://example.com" placeholder="https://example.com" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter') goUrl();">
+        <button onclick="goUrl()">Go</button>
+      </div>
+    </header>
+
+    <section class="content">
+
+      <!-- Proxy -->
+      <div id="panel-proxy" class="panel active">
+        <h3>Quick Access</h3>
+        <p class="note">Enter a URL above and click Go. The site loads inside the frame below. Some sites block framing; if nothing appears, try opening the link directly.</p>
+        <div class="frame-box">
+          <div class="frame-bar">
+            <span style="width:8px;height:8px;background:#555;border-radius:50%;display:inline-block;"></span>
+            <span id="frameUrl">https://example.com</span>
+          </div>
+          <iframe id="proxyFrame" src="about:blank" title="Proxy content"></iframe>
+        </div>
+      </div>
+
+      <!-- Games -->
+      <div id="panel-games" class="panel">
+        <div class="tabs">
+          <button class="active" onclick="filterGames('all',this)">All</button>
+        </div>
+        <h3>Games Library</h3>
+        <div class="card" style="margin-top:10px;">
+          <div class="row">
+            <div class="thumb">FP</div>
+            <div>
+              <h4>Fancy Pants Adventure</h4>
+              <div class="meta">Platformer / Action</div>
+            </div>
+          </div>
+          <p>A fast platformer with smooth physics and colorful levels. Click Play to fetch and render the HTML directly inside Nexus.</p>
+          <a href="#" class="btn" onclick="loadGame();return false;">Play in Nexus</a>
+        </div>
+        <div id="gameFrameBox" class="frame-box" style="display:none;margin-top:16px;">
+          <div class="frame-bar">
+            <span style="width:8px;height:8px;background:#555;border-radius:50%;display:inline-block;"></span>
+            <span>Rendered from GitHub raw HTML</span>
+          </div>
+          <iframe id="gameFrame" src="about:blank" title="Game content"></iframe>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div id="panel-about" class="panel">
+        <h3>About Nexus</h3>
+        <p class="note">A minimal proxy-style interface. It tries to fetch remote HTML and render it securely inside the page. Designed with a pure gray palette and small UI.</p>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<script>
+  const GAME_URL = 'https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/fancypantsadventure.html';
+
+  function showPanel(id, el) {
+    if (el) {
+      document.querySelectorAll('.side nav a').forEach(a => a.classList.remove('active'));
+      el.classList.add('active');
+    }
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById('panel-' + id);
+    if (p) p.classList.add('active');
+    document.getElementById('title').textContent = id === 'proxy' ? 'Nexus Proxy' : id === 'games' ? 'Games' : 'About';
+    document.getElementById('tag').textContent = id === 'proxy' ? 'Private browsing' : id === 'games' ? 'Play' : 'Info';
+  }
+
+  function filterGames(cat, btn) {
+    if (btn) document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+
+  function goUrl() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+    document.getElementById('frameUrl').textContent = url;
+    document.getElementById('proxyFrame').src = url;
+  }
+
+  async function loadGame() {
+    const box = document.getElementById('gameFrameBox');
+    const frame = document.getElementById('gameFrame');
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Show loading state inside frame
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open();
+    doc.write('<html><head><meta charset="UTF-8"><title>Loading</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body>Fetching HTML source...</body></html>');
+    doc.close();
+
+    try {
+      const resp = await fetch(GAME_URL);
+      if (!resp.ok) throw new Error('Status ' + resp.status);
+      const html = await resp.text();
+      const d = frame.contentDocument || frame.contentWindow.document;
+      d.open();
+      d.write(html);
+      d.close();
+    } catch (e) {
+      // Fallback: load directly via src
+      frame.src = GAME_URL;
+      // Try to write a simple message after a short delay
+      setTimeout(() => {
+        try {
+          const d2 = frame.contentDocument || frame.contentWindow.document;
+          if (d2 && d2.body && d2.body.innerHTML === '') {
+            d2.open();
+            d2.write('<html><head><meta charset="UTF-8"><title>Blocked</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body><h2>Fetch failed</h2><p>The HTML could not be fetched directly. The game loads via iframe source.</p></body></html>');
+            d2.close();
+          }
+        } catch (err) { /* ignore */ }
+      }, 600);
+    }
+  }
+</script>
+
 </body>
 </html>
