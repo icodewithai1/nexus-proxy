@@ -2,590 +2,1112 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M12 2.5l8.7 5v9l-8.7 5-8.7-5v-9z'/%3E%3Cpath d='M9.4 15.2V8.8l5.2 6.4V8.8'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexus — quiet gateway</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+
 <style>
-  :root{
-    --bg:#151515; --bg-top:#191919; --bg-side:#1c1c1c;
-    --card:#222222; --card-h:#262626;
-    --bd:#2b2b2b; --bd-h:#464646;
-    --tx:#ffffff; --tx2:#b9b9b9; --tx3:#7c7c7c;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
-    background:#131313;color:var(--tx);overflow:hidden;font-size:14px;
-    -webkit-font-smoothing:antialiased;
-  }
-  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-  input{font:inherit}
-  .app{display:flex;height:100vh}
+/* ---------- foundation ---------- */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root{
+  --bg:#141517; --panel:#1a1c1e; --panel2:#1e2123; --raise:#24272a;
+  --line:#2a2d31; --line2:#35393d;
+  --txt:#f2f3f4; --dim:#a4abb1; --faint:#686f75;
+  --ok:#84cf8f; --warn:#dfb863; --err:#e07d6e;
+  --sans:"Space Grotesk",sans-serif; --mono:"JetBrains Mono",monospace;
+  --side-w:178px;
+}
+html,body{height:100%;}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:var(--sans); font-size:13.5px; line-height:1.55;
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:#2d3134;border-radius:5px;border:2px solid var(--bg);}
+::-webkit-scrollbar-track{background:transparent;}
+::selection{background:#3a3f43;color:#fff;}
+.mono{font-family:var(--mono);} .dim{color:var(--dim);} .grow{flex:1;}
+a{color:var(--txt);text-decoration:none;border-bottom:1px solid var(--line2);}
+a:hover{border-bottom-color:var(--dim);}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+svg{display:block;}
 
-  /* ───────── Sidebar ───────── */
-  .sidebar{width:192px;flex-shrink:0;background:var(--bg-side);border-right:1px solid var(--bd);display:flex;flex-direction:column}
-  .logo{display:flex;align-items:center;gap:10px;padding:16px 16px 15px;border-bottom:1px solid var(--bd);color:#fff}
-  .logo svg{width:20px;height:20px;flex-shrink:0}
-  .logo b{font-size:14px;font-weight:800;letter-spacing:.24em}
-  .nav{flex:1;padding:10px 10px;overflow-y:auto}
-  .nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border-radius:7px;color:var(--tx3);font-size:13px;font-weight:500;margin-bottom:2px;transition:background .12s,color .12s;text-align:left}
-  .nav-item svg{width:16px;height:16px;flex-shrink:0}
-  .nav-item:hover{background:rgba(255,255,255,.05);color:var(--tx2)}
-  .nav-item.active{background:rgba(255,255,255,.09);color:#fff}
-  .side-foot{padding:12px 16px;border-top:1px solid var(--bd);font-size:10.5px;color:var(--tx3);letter-spacing:.03em}
+#app{height:100vh;display:grid;grid-template-rows:auto 1fr auto;transition:opacity .2s;}
+#app.gone{opacity:0;pointer-events:none;}
 
-  /* ───────── Main / topbar ───────── */
-  .main{flex:1;display:flex;flex-direction:column;min-width:0}
-  .topbar{height:44px;flex-shrink:0;background:var(--bg-top);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px;padding:0 10px}
-  .tbtn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--tx3);transition:background .12s,color .12s;flex-shrink:0}
-  .tbtn svg{width:15px;height:15px}
-  .tbtn:hover:not(:disabled){background:rgba(255,255,255,.07);color:#fff}
-  .tbtn:disabled{opacity:.28;cursor:default}
-  .tbtn.spin svg{animation:spin .55s ease}
-  .omni{flex:1;display:flex;align-items:center;gap:9px;height:30px;background:#222;border:1px solid var(--bd);border-radius:7px;padding:0 12px;transition:border-color .12s,background .12s;min-width:0}
-  .omni:focus-within{border-color:var(--bd-h);background:#242424}
-  .omni svg{width:13px;height:13px;color:var(--tx3);flex-shrink:0}
-  .omni input{flex:1;min-width:0;background:none;border:none;outline:none;color:#e9e9e9;font-size:12.5px}
-  .omni input::placeholder{color:#5f5f5f}
+/* ---------- titlebar ---------- */
+.titlebar{
+  height:36px;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;padding:0 8px 0 12px;user-select:none;
+}
+.titlebar.shake{animation:shake .28s;}
+@keyframes shake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.tb-left{display:flex;align-items:center;gap:9px;}
+.brandmark{
+  width:17px;height:17px;border:1.5px solid var(--txt);position:relative;border-radius:3px;
+}
+.brandmark::after{
+  content:"";position:absolute;left:7px;top:-2px;width:1.5px;height:19px;
+  background:var(--txt);transform:rotate(24deg);
+}
+.brand{font-weight:700;letter-spacing:.04em;font-size:13.5px;}
+.brand-tag{font-size:10px;color:var(--faint);letter-spacing:.06em;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+#clock{font-size:11px;color:var(--dim);letter-spacing:.05em;margin-right:4px;}
+.tb-sep{width:1px;height:14px;background:var(--line2);}
+.wbtn{
+  width:26px;height:22px;border-radius:4px;display:grid;place-items:center;color:var(--dim);
+}
+.wbtn:hover{background:var(--raise);color:var(--txt);}
+.wbtn.close:hover{background:#5a2e28;color:var(--err);}
+.wbtn svg{width:13px;height:13px;}
 
-  /* ───────── Content / views ───────── */
-  .content{flex:1;overflow-y:auto;padding:24px 26px;background:var(--bg)}
-  .content.home{padding:0;overflow:hidden;display:flex}
-  .content.full{padding:0;overflow:hidden;display:flex}
-  .view{display:none}
-  .view.active{display:block}
-  #view-home.active{display:flex;flex:1;position:relative;flex-direction:column;align-items:center;justify-content:center}
-  .content.full>#view-proxy.active,
-  .content.full>#view-player.active{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:0;}
 
-  .view-title{font-size:20px;font-weight:700;margin-bottom:4px}
-  .view-sub{font-size:12.5px;color:var(--tx3);margin-bottom:20px}
-  .view-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-  .empty{color:var(--tx3);font-size:12.5px}
+/* sidebar */
+.sidebar{
+  width:var(--side-w);background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;transition:width .18s ease;overflow:hidden;flex-shrink:0;
+}
+#app.folded .sidebar{width:50px;}
+.sidebar nav{padding:8px 6px;display:flex;flex-direction:column;gap:2px;}
+.nav-it{
+  display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;
+  color:var(--dim);position:relative;font-weight:500;text-align:left;
+  border-left:2px solid transparent;border-radius:0 6px 6px 0;
+}
+.nav-it:hover{background:var(--panel2);color:var(--txt);}
+.nav-it.active{background:var(--raise);color:var(--txt);border-left-color:var(--txt);}
+.nav-it svg{width:15px;height:15px;flex-shrink:0;}
+.nav-it .lbl{white-space:nowrap;font-size:13px;}
+.nav-gap{flex:1;min-height:14px;}
+.side-bottom{padding:8px 6px 10px;border-top:1px solid var(--line);}
+.linkbox{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);
+  border-radius:6px;background:var(--bg);margin-bottom:8px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex-shrink:0;}
+.dot.ok{background:var(--ok);box-shadow:0 0 0 2px rgba(132,207,143,.15);}
+.dot.warn{background:var(--warn);}
+.dot.err{background:var(--err);}
+.lb-txt{font-size:10.5px;line-height:1.35;display:flex;flex-direction:column;white-space:nowrap;overflow:hidden;}
+.lb-txt .dim{color:var(--faint);font-size:10px;}
+#app.folded .lbl,#app.folded .lb-txt,#app.folded .linkbox{display:none;}
+#app.folded .collapse{justify-content:center;}
+.collapse{color:var(--faint);border-radius:5px;padding:5px;display:flex;}
+.collapse:hover{color:var(--txt);background:var(--panel2);}
+.collapse svg{width:14px;height:14px;transition:transform .18s;}
+#app.folded .collapse svg{transform:rotate(180deg);}
 
-  /* ───────── Home ───────── */
-  #view-home{
-    background:
-      radial-gradient(1000px 620px at 50% -18%, rgba(255,255,255,.07), transparent 62%),
-      radial-gradient(720px 520px at 92% 112%, rgba(255,255,255,.045), transparent 58%),
-      radial-gradient(560px 420px at 4% 104%, rgba(255,255,255,.03), transparent 60%),
-      #141414;
-    overflow:hidden;
-  }
-  #view-home::after{ /* fading grid */
-    content:"";position:absolute;inset:0;pointer-events:none;
-    background-image:
-      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
-    background-size:46px 46px;
-    -webkit-mask-image:radial-gradient(ellipse 72% 62% at 50% 42%, #000 18%, transparent 78%);
-    mask-image:radial-gradient(ellipse 72% 62% at 50% 42%, #000 18%, transparent 78%);
-  }
-  .home-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;max-width:92%}
-  .home-brand{display:flex;align-items:center;gap:16px;color:#fff}
-  .home-brand svg{width:46px;height:46px;stroke-width:1.5}
-  .home-brand span{font-size:38px;font-weight:800;letter-spacing:.3em;margin-right:-.3em}
-  .home-tag{margin-top:12px;font-size:11px;color:var(--tx3);letter-spacing:.22em;text-transform:uppercase}
-  .home-search{display:flex;align-items:center;gap:10px;width:min(560px,90vw);height:46px;background:#1e1e1e;border:1px solid var(--bd);border-radius:10px;padding:0 16px;margin:30px 0 34px;box-shadow:0 10px 34px rgba(0,0,0,.4);transition:border-color .12s,background .12s}
-  .home-search:focus-within{border-color:var(--bd-h);background:#212121}
-  .home-search svg{width:15px;height:15px;color:var(--tx3);flex-shrink:0}
-  .home-search input{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;font-size:13.5px}
-  .home-search input::placeholder{color:#5f5f5f}
-  .home-shortcuts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-  .hscut{display:flex;align-items:center;gap:9px;padding:10px 18px;background:rgba(255,255,255,.045);border:1px solid var(--bd);border-radius:999px;color:var(--tx2);font-size:12.5px;font-weight:500;transition:background .12s,color .12s,transform .14s,border-color .12s}
-  .hscut svg{width:14px;height:14px}
-  .hscut:hover{background:rgba(255,255,255,.09);color:#fff;border-color:var(--bd-h);transform:translateY(-2px)}
+/* main column */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
 
-  /* ───────── Games ───────── */
-  .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;max-width:780px}
-  .game-card{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;transition:transform .14s,border-color .14s,background .14s;display:block}
-  .game-card:hover{transform:translateY(-2px);border-color:var(--bd-h);background:var(--card-h)}
-  .game-thumb{height:130px;display:flex;align-items:center;justify-content:center;color:#565656;background:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0/14px 14px,#1b1b1b;border-bottom:1px solid var(--bd)}
-  .game-thumb svg{width:34px;height:34px}
-  .game-body{padding:12px 14px}
-  .game-name{font-size:13.5px;font-weight:600;margin-bottom:3px;color:#fff}
-  .game-desc{font-size:11.5px;color:var(--tx3)}
+/* ---------- chrome (omnibox row) ---------- */
+.chrome{
+  height:40px;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:6px;padding:0 10px;
+}
+.cbtn{
+  width:26px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--dim);flex-shrink:0;
+}
+.cbtn:hover{background:var(--raise);color:var(--txt);}
+.cbtn:disabled{opacity:.35;cursor:default;background:none;color:var(--dim);}
+.cbtn svg{width:14px;height:14px;}
+.omni{
+  flex:1;display:flex;align-items:center;gap:0;height:26px;
+  border:1px solid var(--line);border-radius:6px;background:var(--bg);overflow:hidden;
+}
+.omni:focus-within{border-color:var(--line2);}
+.omni-scheme{
+  font-size:10.5px;color:var(--faint);letter-spacing:.04em;padding:0 8px;
+  border-right:1px solid var(--line);align-self:stretch;display:flex;align-items:center;
+  white-space:nowrap;
+}
+#omni{
+  flex:1;background:none;border:0;outline:0;color:var(--txt);
+  font-family:var(--mono);font-size:11.5px;padding:0 10px;caret-color:var(--txt);
+}
+#omni::placeholder{color:var(--faint);}
+.chrome-hint{font-size:10px;color:var(--faint);letter-spacing:.05em;white-space:nowrap;padding:0 4px;}
 
-  /* ───────── Proxy + Player (full-bleed) ───────── */
-  .player-bar{height:40px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--bg-top);border-bottom:1px solid var(--bd)}
-  .player-title{font-size:12.5px;font-weight:600;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .player-stage{flex:1;position:relative;background:#000;min-height:0}
-  .proxy-stage{flex:1;position:relative;background:#161616;min-height:0}
-  .fill-frame{width:100%;height:100%;border:0;display:block}
-  .stage-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#141414;z-index:2;padding:20px;text-align:center}
-  .stage-msg.hidden{display:none}
-  .spinner{width:22px;height:22px;border:2px solid #3a3a3a;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
-  .msg-text{font-size:13px;color:var(--tx2)}
-  .msg-sub{font-size:11.5px;color:var(--tx3)}
-  @keyframes spin{to{transform:rotate(360deg)}}
+/* ---------- views ---------- */
+.views{position:relative;flex:1;min-height:0;background:var(--bg);}
+.view{
+  position:absolute;inset:0;overflow:auto;padding:26px 30px 40px;
+  animation:viewin .18s ease;
+}
+@keyframes viewin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.wrap{max-width:1040px;}
+.wrap.narrow{max-width:620px;}
+[hidden]{display:none!important;}
 
-  /* ───────── History ───────── */
-  .hist-list{display:flex;flex-direction:column;gap:2px;max-width:640px}
-  .hist-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:var(--tx2);text-align:left;transition:background .12s,color .12s}
-  .hist-item:hover{background:rgba(255,255,255,.05);color:#fff}
-  .hist-item svg{width:14px;height:14px;color:var(--tx3);flex-shrink:0}
-  .hist-title{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hist-time{font-size:11px;color:var(--tx3);font-variant-numeric:tabular-nums;flex-shrink:0}
+.kicker{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);letter-spacing:.09em;margin-bottom:10px;}
+h1.big{font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1.02;}
+.lede{color:var(--dim);max-width:520px;margin-top:12px;font-size:13.5px;}
 
-  /* ───────── Settings ───────── */
-  .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;max-width:620px;margin-bottom:14px}
-  .card h3{font-size:13px;font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:8px;color:#fff}
-  .card h3 svg{width:14px;height:14px;color:var(--tx3)}
-  .card p{font-size:12px;color:var(--tx3);line-height:1.65}
-  .mono{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--tx2);background:#1a1a1a;border:1px solid var(--bd);border-radius:6px;padding:8px 10px;word-break:break-all;margin-top:10px}
-  .field{display:flex;gap:8px;margin-top:12px}
-  .field input{flex:1;min-width:0;height:32px;background:#1c1c1c;border:1px solid var(--bd);border-radius:7px;color:#eee;padding:0 12px;font-size:12px;outline:none}
-  .field input:focus{border-color:var(--bd-h)}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .chip{padding:6px 13px;border-radius:999px;background:#282828;border:1px solid var(--bd);color:var(--tx2);font-size:11.5px;transition:background .12s,color .12s,border-color .12s}
-  .chip:hover{background:#303030;color:#fff;border-color:var(--bd-h)}
-  .btn{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:7px;background:#2a2a2a;border:1px solid var(--bd);color:var(--tx2);font-size:12px;transition:background .12s,color .12s}
-  .btn:hover{background:#323232;color:#fff}
-  .btn svg{width:13px;height:13px}
+.statrow{
+  display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);margin:26px 0 28px;
+}
+.stat{padding:13px 4px 13px 16px;border-left:1px solid var(--line);}
+.stat:first-child{border-left:0;padding-left:0;}
+.stat em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.12em;display:block;}
+.stat b{font-weight:600;font-size:19px;letter-spacing:-.01em;}
 
-  /* ───────── Scrollbar ───────── */
-  ::-webkit-scrollbar{width:9px;height:9px}
-  ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:#2d2d2d;border-radius:5px}
-  ::-webkit-scrollbar-thumb:hover{background:#3c3c3c}
+.home-cols{display:grid;grid-template-columns:1fr 330px;gap:26px;align-items:start;}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;}
+.sec-head h2{font-size:14px;font-weight:600;letter-spacing:.01em;}
+.sec-head .rule{flex:1;border-top:1px solid var(--line);transform:translateY(-3px);}
+.mini-link{font-family:var(--mono);font-size:10.5px;color:var(--dim);display:inline-flex;align-items:center;gap:2px;}
+.mini-link:hover{color:var(--txt);}
+.mini-link svg{width:12px;height:12px;}
+
+.card{border:1px solid var(--line);border-radius:9px;background:var(--panel);}
+.pad{padding:14px;}
+.card h3.mono{font-size:10px;letter-spacing:.14em;color:var(--dim);}
+
+/* quick-launch lines */
+.qlist{border-top:1px solid var(--line);}
+.qline{
+  display:flex;align-items:center;gap:14px;padding:11px 4px;border-bottom:1px solid var(--line);
+}
+.qline .idx{font-family:var(--mono);font-size:10.5px;color:var(--faint);}
+.qline .qt{font-weight:600;}
+.qline .qm{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-left:auto;}
+.qgo{
+  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:6px;
+  padding:4px 11px;font-family:var(--mono);font-size:10.5px;color:var(--txt);
+}
+.qgo:hover{background:var(--txt);color:#111;border-color:var(--txt);}
+.qgo svg{width:11px;height:11px;}
+
+/* diagnostics */
+.diag-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+#spark{width:100%;height:56px;display:block;}
+.diag-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+.diag-stats em{font-style:normal;display:block;font-size:9px;color:var(--faint);letter-spacing:.1em;}
+.diag-stats b{font-size:12.5px;font-weight:600;}
+.recent-list{list-style:none;margin-top:10px;}
+.recent-list li{
+  display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);
+  font-size:11px;
+}
+.recent-list li:last-child{border-bottom:0;}
+.recent-list .rt{color:var(--faint);font-family:var(--mono);font-size:10px;flex-shrink:0;}
+.recent-list .rn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
+.empty-line{font-family:var(--mono);font-size:11px;color:var(--faint);padding:10px 0;}
+
+/* page heads */
+.page-head{margin-bottom:20px;}
+.page-head h1{font-size:27px;font-weight:700;letter-spacing:-.02em;}
+.page-head p{color:var(--dim);margin-top:4px;max-width:560px;}
+.count-chip{
+  display:inline-block;font-size:10px;color:var(--dim);border:1px solid var(--line2);
+  border-radius:4px;padding:1px 7px;letter-spacing:.06em;margin-top:10px;
+}
+
+/* game rows */
+.lib{display:flex;flex-direction:column;gap:14px;}
+.g-row{
+  display:grid;grid-template-columns:92px 1fr;gap:18px;border:1px solid var(--line);
+  border-radius:10px;background:var(--panel);padding:16px;transition:border-color .15s,background .15s;
+}
+.g-row:hover{border-color:var(--line2);background:var(--panel2);}
+.art{
+  width:92px;height:92px;border:1px dashed var(--line2);border-radius:8px;
+  display:grid;place-items:center;font-size:9.5px;color:var(--faint);text-align:center;line-height:1.5;
+  background:repeating-linear-gradient(-45deg,transparent 0 7px,rgba(255,255,255,.022) 7px 8px);
+}
+.g-title-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.g-title-row h3{font-size:16.5px;font-weight:600;letter-spacing:-.01em;}
+.chip{font-size:9.5px;color:var(--dim);border:1px solid var(--line2);border-radius:4px;padding:1px 7px;letter-spacing:.05em;}
+.g-desc{color:var(--dim);margin-top:6px;font-size:13px;max-width:520px;}
+.g-metarow{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:9px;letter-spacing:.02em;}
+.g-actions{display:flex;gap:8px;margin-top:12px;}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;border-radius:6px;padding:6px 14px;
+  font-weight:600;font-size:12.5px;border:1px solid var(--line2);transition:all .12s;
+}
+.btn svg{width:13px;height:13px;}
+.btn.primary{background:var(--txt);color:#131415;border-color:var(--txt);}
+.btn.primary:hover{background:#fff;}
+.btn.ghost{color:var(--dim);}
+.btn.ghost:hover{color:var(--txt);background:var(--raise);}
+.btn.danger{color:var(--err);border-color:#4a322d;}
+.btn.danger:hover{background:#3a2622;}
+.btn.arm{background:#3a2622;border-color:var(--err);color:#fff;}
+.foot-note{font-size:11px;color:var(--faint);margin-top:18px;}
+
+/* history */
+.h-scroll{overflow-x:auto;}
+.h-list{min-width:660px;border-top:1px solid var(--line);}
+.h-row{
+  display:grid;grid-template-columns:118px 1fr 92px 74px 74px 40px;gap:12px;align-items:center;
+  padding:9px 4px;border-bottom:1px solid var(--line);font-size:11px;
+}
+.h-row.head{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.12em;}
+.h-row .ht{color:var(--dim);}
+.h-row .hn{font-weight:600;font-size:12px;}
+.h-row .hs{font-family:var(--mono);font-size:10px;}
+.st-ok{color:var(--ok);} .st-fail{color:var(--err);} .st-pend{color:var(--warn);}
+.h-relaunch{width:26px;height:24px;border-radius:5px;display:grid;place-items:center;color:var(--faint);}
+.h-relaunch:hover{background:var(--raise);color:var(--txt);}
+.h-relaunch svg{width:12px;height:12px;}
+.empty-box{
+  border:1px dashed var(--line2);border-radius:9px;padding:38px 20px;text-align:center;
+  color:var(--faint);font-family:var(--mono);font-size:11.5px;
+}
+.hist-tools{display:flex;gap:8px;margin-left:auto;}
+
+/* settings */
+.field{margin-bottom:22px;}
+.flabel{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim);display:block;margin-bottom:9px;}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden;}
+.seg button{
+  padding:8px 15px;font-weight:600;font-size:12.5px;color:var(--dim);display:flex;flex-direction:column;gap:1px;
+}
+.seg button small{font-family:var(--mono);font-size:9px;color:var(--faint);font-weight:400;}
+.seg button+button{border-left:1px solid var(--line2);}
+.seg button.on{background:var(--txt);color:#131415;}
+.seg button.on small{color:#444;}
+.hint{font-size:11.5px;color:var(--faint);margin-top:8px;max-width:480px;}
+.tglrow{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line);}
+.tglrow:last-of-type{border-bottom:1px solid var(--line);}
+.tglrow .tt{font-weight:600;}
+.tglrow .td{font-size:11.5px;color:var(--faint);}
+.tgl{margin-left:auto;width:34px;height:19px;border-radius:10px;border:1px solid var(--line2);position:relative;transition:.15s;flex-shrink:0;}
+.tgl::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--faint);transition:.15s;}
+.tgl.on{background:var(--txt);border-color:var(--txt);}
+.tgl.on::after{left:17px;background:#131415;}
+.about-mini{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.9;}
+
+/* ---------- player ---------- */
+.view.player{padding:0;display:flex;flex-direction:column;overflow:hidden;}
+.pl-status{
+  height:32px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 10px;
+  background:var(--panel);border-bottom:1px solid var(--line);font-size:10.5px;color:var(--dim);
+  letter-spacing:.04em;
+}
+.pl-progress{height:2px;background:var(--panel);flex-shrink:0;position:relative;overflow:hidden;}
+.pl-progress i{display:block;height:100%;width:0;background:var(--txt);transition:width .18s ease;}
+.pl-progress.ind i{width:32%;animation:sweep .9s ease-in-out infinite alternate;}
+@keyframes sweep{from{transform:translateX(-40%)}to{transform:translateX(330%)}}
+.pl-stage{position:relative;flex:1;min-height:0;}
+#frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#101113;display:block;}
+.pl-boot{
+  position:absolute;inset:0;background:var(--bg);z-index:3;display:flex;align-items:center;justify-content:center;
+  transition:opacity .3s;padding:20px;
+}
+.pl-boot.away{opacity:0;pointer-events:none;}
+.boot-core{width:min(560px,92%);}
+.boot-title{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--faint);margin-bottom:16px;}
+.boot-name{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-bottom:18px;}
+.stages{list-style:none;border-top:1px solid var(--line);}
+.stage{
+  display:flex;align-items:baseline;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--faint);
+}
+.stage .s-n{color:var(--faint);}
+.stage .s-fill{flex:1;border-bottom:1px dotted #34383c;transform:translateY(-3px);}
+.stage.done{color:var(--dim);}
+.stage.done .s-mark{color:var(--ok);}
+.stage.err .s-mark{color:var(--err);}
+.stage.run{color:var(--txt);}
+.s-mark{min-width:24px;text-align:right;letter-spacing:.1em;}
+.errcard{margin-top:18px;border:1px solid #4a322d;border-left-width:3px;border-radius:8px;padding:14px 16px;background:var(--panel);}
+.errcard b{font-size:13.5px;}
+.errcard p{color:var(--dim);font-size:12px;margin:5px 0 12px;}
+.err-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ---------- statusbar ---------- */
+.statusbar{
+  height:26px;background:var(--panel);border-top:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;padding:0 12px;font-size:10px;color:var(--faint);
+  letter-spacing:.05em;user-select:none;
+}
+.statusbar #sb-route{color:var(--dim);}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed;right:16px;bottom:38px;display:flex;flex-direction:column;gap:8px;z-index:60;}
+.toast{
+  display:flex;align-items:center;gap:9px;background:var(--raise);border:1px solid var(--line2);
+  border-radius:8px;padding:9px 13px;font-family:var(--mono);font-size:11px;color:var(--txt);
+  max-width:340px;opacity:0;transform:translateY(8px);transition:.22s;box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.toast.in{opacity:1;transform:none;}
+.toast.out{opacity:0;transform:translateY(-6px);}
+.toast .tk{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.toast.ok .tk{background:var(--ok);} .toast.warn .tk{background:var(--warn);} .toast.info .tk{background:var(--dim);}
+
+/* ---------- minimized pill ---------- */
+#pill{
+  position:fixed;right:14px;bottom:14px;z-index:70;display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:6px 14px 6px 8px;
+  font-weight:600;font-size:12px;color:var(--dim);box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+#pill:hover{color:var(--txt);border-color:var(--dim);}
+.p-mark{width:14px;height:14px;border:1.5px solid currentColor;border-radius:3px;position:relative;}
+.p-mark::after{content:"";position:absolute;left:6px;top:-1px;width:1.5px;height:15px;background:currentColor;transform:rotate(24deg);}
+
+@media (max-width:900px){
+  .home-cols{grid-template-columns:1fr;}
+  .statrow{grid-template-columns:repeat(2,1fr);}
+  .stat:nth-child(odd){border-left:0;padding-left:0;}
+  h1.big{font-size:40px;}
+}
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- ══════════ Sidebar ══════════ -->
-  <aside class="sidebar">
-    <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l8.7 5v9l-8.7 5-8.7-5v-9l8.7-5z"/><path d="M9.4 15.2V8.8l5.2 6.4V8.8"/></svg>
-      <b>NEXUS</b>
+<div id="app">
+
+  <!-- ======= titlebar ======= -->
+  <header class="titlebar" id="titlebar">
+    <div class="tb-left">
+      <div class="brandmark"></div>
+      <span class="brand">Nexus</span>
+      <span class="brand-tag mono">v0.9.2 · local gateway</span>
     </div>
-    <nav class="nav">
-      <button class="nav-item active" data-view="home">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span>Home</span>
-      </button>
-      <button class="nav-item" data-view="games">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
-        <span>Games</span>
-      </button>
-      <button class="nav-item" data-view="proxy">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        <span>Proxy</span>
-      </button>
-      <button class="nav-item" data-view="history">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>History</span>
-      </button>
-      <button class="nav-item" data-view="settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-        <span>Settings</span>
-      </button>
-    </nav>
-    <div class="side-foot">Nexus v1.1 · single file</div>
-  </aside>
+    <div class="tb-right">
+      <span id="clock" class="mono">--:--:--</span>
+      <span class="tb-sep"></span>
+      <button class="wbtn" id="win-min" title="Duck out — Nexus shrinks to a corner pill"><i data-lucide="minus"></i></button>
+      <button class="wbtn" id="win-max" title="Toggle fullscreen"><i data-lucide="square"></i></button>
+      <button class="wbtn close" id="win-close" title="Close"><i data-lucide="x"></i></button>
+    </div>
+  </header>
 
-  <!-- ══════════ Main ══════════ -->
-  <main class="main">
-    <div class="topbar">
-      <button class="tbtn" id="backBtn" title="Back">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button class="tbtn" id="fwdBtn" title="Forward">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-      <button class="tbtn" id="refreshBtn" title="Reload">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      </button>
-      <div class="omni">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="urlBar" placeholder="Search or enter address" spellcheck="false">
+  <!-- ======= shell ======= -->
+  <div class="shell">
+
+    <aside class="sidebar">
+      <nav>
+        <button class="nav-it active" data-go="home" title="Home"><i data-lucide="home"></i><span class="lbl">Home</span></button>
+        <button class="nav-it" data-go="games" title="Games"><i data-lucide="gamepad-2"></i><span class="lbl">Games</span></button>
+        <button class="nav-it" data-go="history" title="History"><i data-lucide="history"></i><span class="lbl">History</span></button>
+        <div class="nav-gap"></div>
+        <button class="nav-it" data-go="settings" title="Settings"><i data-lucide="sliders-horizontal"></i><span class="lbl">Settings</span></button>
+      </nav>
+      <div class="side-bottom">
+        <div class="linkbox" title="Live link to the target host">
+          <span class="dot" id="link-dot"></span>
+          <div class="lb-txt mono">
+            <span id="link-state">probing…</span>
+            <span id="link-lat">— ms · idle</span>
+          </div>
+        </div>
+        <button class="collapse" id="collapse" title="Collapse sidebar"><i data-lucide="chevrons-left"></i></button>
       </div>
-    </div>
+    </aside>
 
-    <div class="content home" id="content">
+    <div class="main">
 
-      <!-- ══════ Home ══════ -->
-      <section class="view active" id="view-home">
-        <div class="home-inner">
-          <div class="home-brand">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l8.7 5v9l-8.7 5-8.7-5v-9l8.7-5z"/><path d="M9.4 15.2V8.8l5.2 6.4V8.8"/></svg>
-            <span>NEXUS</span>
-          </div>
-          <div class="home-tag">Fast · Private · Yours</div>
-          <div class="home-search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="homeSearch" placeholder="Search the web" spellcheck="false">
-          </div>
-          <div class="home-shortcuts">
-            <button class="hscut" data-link="games">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
-              <span>Games</span>
-            </button>
-            <button class="hscut" data-link="proxy">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              <span>Proxy</span>
-            </button>
-            <button class="hscut" data-link="history">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span>History</span>
-            </button>
-            <button class="hscut" data-link="settings">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-              <span>Settings</span>
-            </button>
-          </div>
-        </div>
-      </section>
+      <!-- chrome / omnibox -->
+      <div class="chrome">
+        <button class="cbtn" id="c-back" title="Back (or Esc)"><i data-lucide="arrow-left"></i></button>
+        <button class="cbtn" id="c-reload" title="Reload current view"><i data-lucide="rotate-cw"></i></button>
+        <form class="omni" id="omni-form">
+          <span class="omni-scheme mono" id="omni-scheme">nexus://</span>
+          <input id="omni" spellcheck="false" autocomplete="off" placeholder="type nexus://… or paste a URL and hit enter">
+          <button type="submit" class="cbtn" title="Go"><i data-lucide="arrow-right"></i></button>
+        </form>
+        <span class="chrome-hint mono" id="chrome-hint">press / to jump here</span>
+      </div>
 
-      <!-- ══════ Games ══════ -->
-      <section class="view" id="view-games">
-        <h1 class="view-title">Games</h1>
-        <p class="view-sub">Fetched raw from GitHub and rendered right here — no installs.</p>
-        <div class="games-grid">
-          <button class="game-card" data-game="fancypants">
-            <div class="game-thumb">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
+      <!-- views -->
+      <div class="views">
+
+        <!-- HOME -->
+        <section class="view" id="view-home">
+          <div class="wrap">
+            <div class="kicker mono"><span class="dot ok"></span><span id="hero-line">gateway online</span></div>
+            <h1 class="big">Nexus.</h1>
+            <p class="lede">One small gray doorway between you and the wider web. It fetches pages raw, rebuilds them right here, and never phones home — mostly because there is nowhere to phone.</p>
+
+            <div class="statrow">
+              <div class="stat"><em>SESSION</em><b id="st-session">0:00</b></div>
+              <div class="stat"><em>LINK</em><b id="st-link">—</b></div>
+              <div class="stat"><em>TARGETS</em><b id="st-targets">1</b></div>
+              <div class="stat"><em>ENTRIES</em><b id="st-entries">0</b></div>
             </div>
-            <div class="game-body">
-              <div class="game-name">Fancy Pants Adventure</div>
-              <div class="game-desc">Stick-figure platformer · single file</div>
+
+            <div class="home-cols">
+              <div>
+                <div class="sec-head">
+                  <h2>Quick launch</h2><span class="rule"></span>
+                  <button class="mini-link" data-go="games">all games <i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="qlist" id="quick-list"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:16px;">
+                <div class="card pad">
+                  <div class="diag-top">
+                    <h3 class="mono">LINK DIAGNOSTICS</h3>
+                    <button class="cbtn" id="ping-run" title="Ping now"><i data-lucide="activity"></i></button>
+                  </div>
+                  <canvas id="spark" height="56"></canvas>
+                  <div class="diag-stats mono">
+                    <div><em>LAST</em><b id="dg-last">—</b></div>
+                    <div><em>AVG</em><b id="dg-avg">—</b></div>
+                    <div><em>JITTER</em><b id="dg-jit">—</b></div>
+                    <div><em>PINGS</em><b id="dg-n">0</b></div>
+                  </div>
+                </div>
+                <div class="card pad">
+                  <h3 class="mono">RECENT</h3>
+                  <ul class="recent-list" id="recent-list"></ul>
+                </div>
+              </div>
             </div>
-          </button>
-        </div>
-      </section>
-
-      <!-- ══════ Proxy (GUST engine) ══════ -->
-      <section class="view" id="view-proxy">
-        <div class="proxy-stage">
-          <iframe id="proxyFrame" class="fill-frame"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-pointer-lock"
-            allow="autoplay; fullscreen; gamepad; clipboard-write"
-            allowfullscreen></iframe>
-          <div class="stage-msg" id="proxyMsg">
-            <div class="spinner"></div>
-            <div class="msg-text" id="proxyMsgText">Starting proxy engine…</div>
-            <div class="msg-sub" id="proxyMsgSub">Fetching GUST from GitHub</div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- ══════ Game runner ══════ -->
-      <section class="view" id="view-player">
-        <div class="player-bar">
-          <button class="tbtn" id="playerBack" title="Back to Games">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          </button>
-          <div class="player-title" id="playerTitle">Game</div>
-          <div style="flex:1"></div>
-          <button class="tbtn" id="playerFs" title="Fullscreen">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-          </button>
-        </div>
-        <div class="player-stage" id="playerStage">
-          <iframe id="playerFrame" class="fill-frame"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"
-            allow="autoplay; fullscreen; gamepad"
-            allowfullscreen></iframe>
-          <div class="stage-msg" id="playerMsg">
-            <div class="spinner"></div>
-            <div class="msg-text" id="playerMsgText">Loading…</div>
-            <div class="msg-sub" id="playerMsgSub"></div>
+        <!-- GAMES -->
+        <section class="view" id="view-games" hidden>
+          <div class="wrap">
+            <div class="page-head">
+              <h1>Games</h1>
+              <p>The local shelf. Builds stream straight from their source repos over HTTPS — nothing installs, nothing lingers after the tab dies.</p>
+              <span class="count-chip mono" id="games-count">1 ENTRY</span>
+            </div>
+            <div class="lib" id="game-list"></div>
+            <p class="foot-note">Source bundle: <a href="https://github.com/CoolDude2349/Offline-HTML-Games-Pack" target="_blank" rel="noopener">CoolDude2349/Offline-HTML-Games-Pack</a> · art slots stay empty on purpose — images come later.</p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- ══════ History ══════ -->
-      <section class="view" id="view-history">
-        <div class="view-head-row">
-          <div>
-            <h1 class="view-title">History</h1>
-            <p class="view-sub">Recent activity in this session.</p>
+        <!-- HISTORY -->
+        <section class="view" id="view-history" hidden>
+          <div class="wrap">
+            <div class="page-head" style="display:flex;align-items:flex-end;gap:16px;">
+              <div style="flex:1;">
+                <h1>History</h1>
+                <p>Every launch Nexus has made this lifetime, timed and weighed.</p>
+              </div>
+              <div class="hist-tools">
+                <button class="btn ghost" id="h-export"><i data-lucide="download"></i>Export</button>
+                <button class="btn danger" id="h-clear"><i data-lucide="trash-2"></i>Wipe</button>
+              </div>
+            </div>
+            <div class="h-scroll">
+              <div class="h-list" id="hist-list">
+                <div class="h-row head"><span>WHEN</span><span>TARGET</span><span>VIA</span><span>WEIGHT</span><span>PLAYED</span><span></span></div>
+              </div>
+            </div>
+            <div class="empty-box" id="hist-empty" hidden>No launches yet. The shelf is waiting.</div>
           </div>
-          <button class="btn" id="clearHist">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            <span>Clear</span>
-          </button>
-        </div>
-        <div class="hist-list" id="histList"><div class="empty">Nothing here yet.</div></div>
-      </section>
+        </section>
 
-      <!-- ══════ Settings ══════ -->
-      <section class="view" id="view-settings">
-        <h1 class="view-title">Settings</h1>
-        <p class="view-sub">Tune Nexus.</p>
+        <!-- SETTINGS -->
+        <section class="view" id="view-settings" hidden>
+          <div class="wrap narrow">
+            <div class="page-head">
+              <h1>Settings</h1>
+              <p>Six switches, zero telemetry.</p>
+            </div>
 
-        <div class="card">
-          <h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Proxy Engine</span>
-          </h3>
-          <p>Nexus runs <strong>GUST</strong> — a single-file proxy browser — inside an isolated frame. The engine is fetched raw from GitHub the moment you open the Proxy tab, with a mirror fallback.</p>
-          <div class="mono" id="engineSrc">Not loaded yet</div>
-          <div style="margin-top:12px">
-            <button class="btn" id="reloadEngine">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              <span>Reload engine</span>
-            </button>
+            <div class="field">
+              <span class="flabel">RENDER ENGINE</span>
+              <div class="seg" id="seg-mode">
+                <button data-val="fetch" class="on">Fetch &amp; rebuild <small>srcdoc</small></button>
+                <button data-val="direct">Direct embed <small>iframe src</small></button>
+              </div>
+              <p class="hint">Rebuild downloads the page, injects an asset base URL and paints it locally — chatty but forgiving. Direct embed simply hands the URL to a plain frame and hopes the site allows framing.</p>
+            </div>
+
+            <div class="tglrow">
+              <div><div class="tt">Inject asset base</div><div class="td">Rewrites &lt;base&gt; so relative files (sprites, audio) resolve against the source folder.</div></div>
+              <button class="tgl on" id="tg-base" role="switch" aria-checked="true"></button>
+            </div>
+            <div class="tglrow">
+              <div><div class="tt">Background link checks</div><div class="td">Quietly HEAD-pings the host every 12s to feed the diagnostics sparkline.</div></div>
+              <button class="tgl on" id="tg-ping" role="switch" aria-checked="true"></button>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:22px;">
+              <button class="btn ghost" id="s-export"><i data-lucide="download"></i>Export history JSON</button>
+              <button class="btn danger" id="s-wipe"><i data-lucide="trash-2"></i>Erase everything</button>
+            </div>
+
+            <div class="about-mini">
+              nexus.build&nbsp;&nbsp;2024.11-gry<br>
+              engine&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vanilla, one file, no servers<br>
+              storage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="about-storage">checking…</span><br>
+              whisper&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ask before you launch during class
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
-          <h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-            <span>Tab Cloak</span>
-          </h3>
-          <p>Disguise the tab title if you don't want it screaming "browser".</p>
-          <div class="field">
-            <input id="cloakInput" placeholder="New tab title" spellcheck="false">
-            <button class="btn" id="cloakApply"><span>Apply</span></button>
+        <!-- PLAYER -->
+        <section class="view player" id="view-player" hidden>
+          <div class="pl-status mono">
+            <span id="pl-msg">idle</span>
+            <span class="grow"></span>
+            <span id="pl-info"></span>
+            <button class="cbtn" id="pl-fs" title="Frame fullscreen"><i data-lucide="maximize"></i></button>
+            <button class="cbtn" id="pl-ext" title="Open outside Nexus"><i data-lucide="external-link"></i></button>
           </div>
-          <div class="chips">
-            <button class="chip" data-title="Home">Home</button>
-            <button class="chip" data-title="Docs">Docs</button>
-            <button class="chip" data-title="Drive">Drive</button>
-            <button class="chip" data-title="Classroom">Classroom</button>
-            <button class="chip" data-title="Canvas">Canvas</button>
+          <div class="pl-progress" id="pl-progress"><i id="pl-bar"></i></div>
+          <div class="pl-stage">
+            <iframe id="frame" title="nexus viewport"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-orientation-lock"
+              allowfullscreen referrerpolicy="no-referrer"></iframe>
+            <div class="pl-boot" id="pl-boot">
+              <div class="boot-core" id="boot-core"></div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
-          <h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>About</span>
-          </h3>
-          <p>Nexus v1.1 — one HTML file. Gray theme, sidebar nav, GitHub-powered game runner, GUST proxy engine.</p>
-        </div>
-      </section>
+      </div><!-- /views -->
+    </div><!-- /main -->
+  </div><!-- /shell -->
 
-    </div>
-  </main>
+  <!-- ======= statusbar ======= -->
+  <footer class="statusbar mono">
+    <span id="sb-route">nexus://home</span>
+    <span class="grow"></span>
+    <span id="sb-right">engine rebuild · 0 pings · avg —</span>
+  </footer>
 </div>
 
+<div id="toasts"></div>
+<button id="pill" hidden><span class="p-mark"></span><span>Nexus</span></button>
+
 <script>
-(function(){
-'use strict';
-const $ = id => document.getElementById(id);
-const urlBar = $('urlBar'), content = $('content');
-const proxyFrame = $('proxyFrame'), playerFrame = $('playerFrame');
+(()=>{
+"use strict";
 
-/* ══════════ Config ══════════ */
+/* ============================== data ============================== */
+const GH_DIR  = "https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/";
+const GAMES = [{
+  id:"fpa",
+  title:"Fancy Pants Adventure",
+  desc:"The classic stick-figure sprinter in the world's baggiest pants — run, vault, wall-jump and spin-kick squiggly spiders across hand-drawn hills.",
+  url:GH_DIR+"fancypantsadventure.html",
+  tags:["HTML5","single-file"],
+}];
 
-// Games — raw GitHub files, fetched and dropped straight into the runner.
-const GAMES = {
-  fancypants: {
-    name: 'Fancy Pants Adventure',
-    url: 'https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/fancypantsadventure.html'
+class HttpError extends Error{ constructor(code){ super("http "+code); this.code=code; } }
+
+/* ============================== state ============================== */
+const S = {
+  route:"home", stack:[],
+  settings:{ mode:"fetch", injectBase:true, autoping:true },
+  hist:[], pings:[],
+  busy:false, ctrl:null, active:null,
+  bootedAt:Date.now(), lastViewBeforePlayer:"home",
+  storageWarned:false,
+};
+
+/* ============================== dom ============================== */
+const $  = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+const app=$("#app"), frame=$("#frame"), omni=$("#omni"),
+      omniScheme=$("#omni-scheme"), boot=$("#pl-boot"), bootCore=$("#boot-core"),
+      plMsg=$("#pl-msg"), plInfo=$("#pl-info"), plProg=$("#pl-progress"), plBar=$("#pl-bar");
+
+/* ============================== storage ============================== */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ memNote(); return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ memNote(); } }
+let memStore = {};
+function memNote(){
+  $("#about-storage").textContent = "memory only (storage blocked)";
+  if(S.storageWarned) return;
+  S.storageWarned = true;
+  toast("Browser storage unavailable — session only.","warn");
+}
+
+/* ============================== utils ============================== */
+const icons = ()=>{ if(window.lucide) lucide.createIcons(); };
+const pad2 = n=>String(n).padStart(2,"0");
+function nowStamp(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function shortStamp(ts){ const d=new Date(ts); return `${pad2(d.getMonth()+1)}/${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; }
+function fmtBytes(b){ if(b==null) return "—"; if(b<1024) return b+" B"; if(b<1048576) return (b/1024).toFixed(1)+" KB"; return (b/1048576).toFixed(2)+" MB"; }
+function fmtDur(s){ if(s==null) return "—"; if(s<60) return s+"s"; const m=(s/60)|0; return m+"m "+pad2(s%60)+"s"; }
+function hostOf(u){ try{ return new URL(u).host; }catch(e){ return "?"; } }
+
+function toast(msg,kind="info"){
+  const t=document.createElement("div");
+  t.className="toast "+kind;
+  t.innerHTML='<span class="tk"></span><span></span>';
+  t.lastChild.textContent=msg;
+  $("#toasts").appendChild(t);
+  requestAnimationFrame(()=>t.classList.add("in"));
+  setTimeout(()=>{ t.classList.add("out"); setTimeout(()=>t.remove(),260); },3400);
+}
+
+/* ============================== router ============================== */
+const VIEWS=["home","games","history","settings","player"];
+
+function applyRoute(){
+  VIEWS.forEach(v=>$("#view-"+v).hidden = v!==S.route);
+  $$(".nav-it").forEach(b=>b.classList.toggle("active", b.dataset.go===S.route));
+  if(S.route==="player"){
+    const t=S.playerTarget;
+    if(t){ omni.value=t.url; omniScheme.textContent = /^https:\/\/raw\.githubusercontent\.com/.test(t.url) ? "gh·raw" : "https://"; }
+    $("#chrome-hint").textContent="esc leaves the frame";
+  }else{
+    omni.value="nexus://"+S.route;
+    omniScheme.textContent="nexus://";
+    $("#chrome-hint").textContent="press / to jump here";
   }
-};
-
-// Proxy engine — GUST. Raw HTML fetched from GitHub and rendered in an
-// isolated iframe (same technique as your Access Denied loader).
-// First URL that returns valid HTML wins — swap/reorder these freely.
-const PROXY_SOURCES = [
-  'https://raw.githubusercontent.com/nautilus-os/GUST/refs/heads/main/index.html',          // official GUST
-  'https://raw.githubusercontent.com/icodewithai1/nexus-proxy/refs/heads/main/index.html'  // verified mirror
-];
-
-/* ══════════ View switching ══════════ */
-const stack = ['home'];
-let idx = 0;
-const LAYOUT = { home:'home', proxy:'full', player:'full' };
-const URLS = { home:'', games:'nexus://games', proxy:'nexus://proxy', history:'nexus://history', settings:'nexus://settings' };
-
-function switchView(name, skipStack){
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  $('view-' + name).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === name));
-  content.className = 'content' + (LAYOUT[name] ? ' ' + LAYOUT[name] : '');
-  if (URLS[name] !== undefined) urlBar.value = URLS[name];
-  if (!skipStack){ stack.splice(idx + 1); stack.push(name); idx = stack.length - 1; }
-  if (name === 'proxy') loadProxy();
-  updateBtns();
-}
-function updateBtns(){
-  $('backBtn').disabled = idx <= 0;
-  $('fwdBtn').disabled  = idx >= stack.length - 1;
+  $("#sb-route").textContent="nexus://"+S.route;
 }
 
-document.querySelectorAll('.nav-item').forEach(n =>
-  n.addEventListener('click', () => switchView(n.dataset.view)));
-document.querySelectorAll('[data-link]').forEach(b =>
-  b.addEventListener('click', () => switchView(b.dataset.link)));
-
-/* ══════════ History ══════════ */
-const SVG = (p) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
-const ICONS = {
-  game:  SVG('<rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/>'),
-  web:   SVG('<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'),
-  proxy: SVG('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>')
-};
-const entries = [];
-const fmtTime = d => d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-
-function addHistory(title, type){
-  entries.unshift({ title, type, time: new Date() });
-  renderHistory();
+function go(route,{push=true}={}){
+  if(!VIEWS.includes(route)) route="home";
+  if(route===S.route) { applyRoute(); return; }
+  if(S.route==="player"){ sealActiveEntry(); S.lastViewBeforePlayer = "home"; }
+  if(push) S.stack.push(S.route);
+  S.route=route; applyRoute();
 }
-function renderHistory(){
-  const list = $('histList');
-  list.innerHTML = '';
-  if (!entries.length){ list.innerHTML = '<div class="empty">Nothing here yet.</div>'; return; }
-  entries.forEach(e => {
-    const el = document.createElement('button');
-    el.className = 'hist-item';
-    el.innerHTML = (ICONS[e.type] || ICONS.web) +
-      '<span class="hist-title"></span><span class="hist-time">' + fmtTime(e.time) + '</span>';
-    el.querySelector('.hist-title').textContent = e.title;
-    el.addEventListener('click', () => {
-      if (e.type === 'game'){
-        const g = Object.values(GAMES).find(g => g.name === e.title);
-        if (g) launchGame(g);
-      }
-    });
-    list.appendChild(el);
+function goBack(){
+  if(S.route==="player"){ sealActiveEntry(); S.route=S.stack.length?S.stack.pop():"home"; }
+  else S.route=S.stack.pop()||"home";
+  applyRoute();
+}
+
+/* ============================== boot choreography ============================== */
+let bootRows=[], bootVals=[];
+function bootStart(name,url){
+  boot.classList.remove("away");
+  bootCore.innerHTML =
+    `<div class="boot-title">LAUNCH SEQUENCE</div>`+
+    `<div class="boot-name">${name}</div>`+
+    `<ol class="stages">${["TARGET","HANDSHAKE","TRANSFER","REBUILD"].map((s,i)=>
+      `<li class="stage" data-i="${i}"><span class="s-n">0${i}</span><span>${s}</span>`+
+      `<span class="s-fill"></span><span class="s-mark">··</span><span class="s-val" style="min-width:64px;text-align:right;"></span></li>`).join("")}</ol>`;
+  bootRows=$$("#boot-core .stage");
+  bootRows.forEach(r=>{ r.querySelector(".s-val").textContent=""; });
+}
+function stageMark(i,state,text,val){
+  const r=bootRows[i]; if(!r) return;
+  r.className="stage "+state;
+  r.querySelector(".s-mark").textContent = state==="done"?"ok":state==="err"?"!!":"▸";
+  r.querySelector(".s-val").textContent=val||"";
+}
+function bootAway(){ boot.classList.add("away"); }
+
+/* ============================== launcher ============================== */
+function frameLoadOnce(){
+  return new Promise(res=>{
+    const h=()=>{ frame.removeEventListener("load",h); res(); };
+    frame.addEventListener("load",h);
   });
 }
- $('clearHist').addEventListener('click', () => { entries.length = 0; renderHistory(); });
 
-/* ══════════ Game runner ══════════
-   Exactly your method: fetch the raw GitHub file, drop it in the frame. */
-let currentGame = null;
-
-function launchGame(g){
-  currentGame = g;
-  $('playerTitle').textContent = g.name;
-  switchView('player');
-  urlBar.value = 'nexus://games/' + g.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  addHistory(g.name, 'game');
-
-  playerFrame.removeAttribute('srcdoc');
-  const msg = $('playerMsg');
-  msg.classList.remove('hidden');
-  $('playerMsgText').textContent = 'Loading ' + g.name + '…';
-  $('playerMsgSub').textContent = 'Fetching raw file from GitHub';
-
-  fetch(g.url)
-    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
-    .then(html => { playerFrame.srcdoc = html; /* Boom. Rendered. */ })
-    .catch(err => {
-      msg.classList.remove('hidden');
-      $('playerMsgText').textContent = 'Could not load game';
-      $('playerMsgSub').textContent = err.message + ' — check your connection';
-    });
-}
-
-// Hide the loading veil only when a real document finished loading
-playerFrame.addEventListener('load', () => {
-  if (playerFrame.srcdoc && playerFrame.srcdoc.length > 0) $('playerMsg').classList.add('hidden');
-});
-
-document.querySelectorAll('.game-card').forEach(c =>
-  c.addEventListener('click', () => { const g = GAMES[c.dataset.game]; if (g) launchGame(g); }));
-
- $('playerBack').addEventListener('click', () => switchView('games'));
- $('playerFs').addEventListener('click', () => {
-  const stage = $('playerStage');
-  if (document.fullscreenElement) document.exitFullscreen();
-  else if (stage.requestFullscreen) stage.requestFullscreen();
-});
-
-/* ══════════ Proxy engine (GUST) ══════════
-   Fetched raw from GitHub → rendered in the isolated frame.
-   Tries each source in order until one returns real HTML. */
-let proxyState = 'idle'; // idle | loading | ready
-let activeSource = null;
-
-function loadProxy(){
-  if (proxyState !== 'idle') return;
-  proxyState = 'loading';
-  $('proxyMsg').classList.remove('hidden');
-  $('proxyMsgText').textContent = 'Starting proxy engine…';
-  $('proxyMsgSub').textContent = 'Fetching GUST from GitHub';
-
-  (async () => {
-    for (const url of PROXY_SOURCES){
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const html = await res.text();
-        if (!html || html.length < 500) continue; // skip error/empty bodies
-        activeSource = url;
-        proxyFrame.srcdoc = html;
-        updateEngineCard();
-        return;
-      } catch (e) { /* try the next mirror */ }
-    }
-    // Last resort: embed the first source directly.
-    activeSource = PROXY_SOURCES[0] + '  (direct embed)';
-    proxyFrame.removeAttribute('srcdoc');
-    proxyFrame.src = PROXY_SOURCES[0];
-    updateEngineCard();
-  })();
-}
-
-proxyFrame.addEventListener('load', () => {
-  const hasContent = (proxyFrame.srcdoc && proxyFrame.srcdoc.length > 0) || proxyFrame.getAttribute('src');
-  if (proxyState === 'loading' && hasContent){
-    proxyState = 'ready';
-    $('proxyMsg').classList.add('hidden');
-    addHistory('Proxy session', 'proxy');
-    updateEngineCard();
+function rebuild(html,targetUrl){
+  const notes=[]; let out=html;
+  if(/<base\s[^>]*>/i.test(out)||/<base>/i.test(out)){
+    out=out.replace(/<base\s[^>]*\/?>/gi,""); notes.push("stripped old <base>");
   }
+  const baseHref=targetUrl.replace(/[^/]*$/,"");
+  const tag=`<base href="${baseHref}">`;
+  const hm=out.match(/<head[^>]*>/i);
+  if(hm) out=out.replace(hm[0],hm[0]+tag);
+  else out=tag+out;
+  notes.push("base → "+hostOf(baseHref));
+  if(!/<meta[^>]+charset/i.test(out.slice(0,2500))){
+    const cm='<meta charset="utf-8">';
+    const m2=out.match(/<head[^>]*>/i);
+    if(m2) out=out.replace(m2[0],m2[0]+cm); else out=cm+out;
+    notes.push("utf-8 enforced");
+  }
+  return {html:out,notes};
+}
+
+function explainErr(e){
+  if(e && e.name==="AbortError") return ["Cancelled","The transfer was cut loose mid-flight. Nothing broke; it just stopped being interesting."];
+  if(e instanceof HttpError)     return ["HTTP "+e.code,"The host answered, then said no. The file may have moved or gone private."];
+  if(e instanceof TypeError)     return ["Unreachable","Network down — or the host refuses cross-origin reads (CORS). Direct embed usually survives that."];
+  return ["Something snapped",(e&&e.message)||"Unknown failure. The logs are as confused as you are."];
+}
+
+async function launch(target,{forceMode=null}={}){
+  if(S.ctrl) S.ctrl.abort();
+  if(S.route!=="player"){ if(pushStackSafe()) ; }
+  const prevView = S.route==="player" ? S.lastViewBeforePlayer : S.route;
+
+  // fresh history entry
+  const entry={ ts:Date.now(), title:target.title, url:target.url,
+                host:hostOf(target.url), via:S.settings.mode,
+                bytes:null, status:"pend", dur:null };
+  S.hist.unshift(entry); if(S.hist.length>60) S.hist.pop();
+  lsSet("nx.hist",JSON.stringify(S.hist));
+  S.active={entry,startTs:Date.now()};
+  renderHistory(); renderRecents(); bumpStats();
+
+  S.route="player"; S.stack=prevView!=="player"?[prevView]:["home"];
+  S.lastViewBeforePlayer=prevView; S.playerTarget=target;
+  applyRoute();
+
+  const mode = forceMode || S.settings.mode;
+  entry.via=mode;
+
+  // ui reset
+  plMsg.textContent="resolving "+target.host+" …";
+  plInfo.textContent="";
+  plProg.classList.remove("ind"); plBar.style.width="0%";
+  bootStart(target.title,target.url);
+
+  S.busy=true;
+  const ctrl=new AbortController(); S.ctrl=ctrl;
+  const T0=performance.now();
+
+  try{
+    stageMark(0,"run"); 
+    const U=new URL(target.url);
+    stageMark(0,"done",null,U.host+(U.pathname.split("/").pop()||""));
+    plMsg.textContent="connecting…";
+
+    if(mode==="direct"){
+      stageMark(1,"run");
+      frame.removeAttribute("srcdoc");
+      frame.src=target.url;
+      const loadP=frameLoadOnce();
+      const watch=setTimeout(()=>{ plMsg.textContent="frame quiet for 15s — still listening…"; },15000);
+      await loadP; clearTimeout(watch);
+      const ms=Math.round(performance.now()-T0);
+      stageMark(1,"done",null,ms+" ms");
+      stageMark(2,"done",null,"first paint");
+      stageMark(3,"done",null,"as-is");
+      entry.status="ok"; plMsg.textContent="live · direct embed"; 
+    }else{
+      const res=await fetch(target.url,{signal:ctrl.signal,credentials:"omit"});
+      const hMs=Math.round(performance.now()-T0);
+      if(!res.ok) throw new HttpError(res.status);
+      stageMark(1,"done",null,`HTTP ${res.status} · ${hMs} ms`);
+
+      const len=+res.headers.get("content-length");
+      if(len) { plProg.classList.remove("ind"); } else plProg.classList.add("ind");
+      stageMark(2,"run"); plMsg.textContent="streaming bytes…";
+
+      let bufParts=[],got=0;
+      if(res.body && res.body.getReader){
+        const rd=res.body.getReader(), dec=new TextDecoder("utf-8");
+        for(;;){
+          const {done,value}=await rd.read();
+          if(done) break;
+          bufParts.push(value); got+=value.length;
+          plInfo.textContent=fmtBytes(got)+(len?" / "+fmtBytes(len):"");
+          if(len) plBar.style.width=Math.min(100,got/len*100).toFixed(1)+"%";
+        }
+        var html=dec.decode(concatBuf(bufParts,got));
+      }else{
+        html=await res.text(); got=new Blob([html]).size;
+      }
+      const tMs=Math.round(performance.now()-T0);
+      stageMark(2,"done",null,fmtBytes(got)+" · "+tMs+" ms");
+      entry.bytes=got;
+
+      stageMark(3,"run"); plMsg.textContent="rebuilding locally…";
+      await tick();
+      const c0=performance.now();
+      const built=rebuild(html,target.url);
+      stageMark(3,"done",null,built.notes.join(" · "));
+      plProg.classList.remove("ind"); plBar.style.width="100%";
+      frame.src=built.html;
+      entry.status="ok";
+      plMsg.textContent="live · rebuilt from "+target.host;
+    }
+    bootAwaySoon();
+    bumpStats(); persistHist();
+  }catch(e){
+    const [h,p]=explainErr(e);
+    entry.status="fail";
+    stageMark(3,"err"); stageMark(2,"err"); stageMark(1,"err");
+    stageMark(0,"done");
+    plMsg.textContent=h.toLowerCase();
+    plProg.classList.remove("ind"); plBar.style.width="0%";
+    bootCore.insertAdjacentHTML("beforeend",
+      `<div class="errcard"><b>${h}</b><p>${p}</p>
+       <div class="err-actions">
+         <button class="btn primary" id="er-retry"><i data-lucide="rotate-cw"></i>Retry</button>
+         ${S.settings.mode!=="direct"?`<button class="btn ghost" id="er-direct"><i data-lucide="external-link"></i>Fallback to direct embed</button>`:""}
+         <button class="btn ghost" id="er-drop">Abandon</button>
+       </div></div>`);
+    icons();
+    $("#er-retry").onclick=()=>launch(target,{forceMode});
+    const ed=$("#er-direct"); if(ed) ed.onclick=()=>launch(target,{forceMode:"direct"});
+    $("#er-drop").onclick=()=>goBack();
+    persistHist(); bumpStats();
+  }finally{
+    S.busy=false; S.ctrl=null;
+  }
+}
+function pushStackSafe(){}
+const tick=()=>new Promise(r=>setTimeout(r,30));
+function concatBuf(parts,total){ const o=new Uint8Array(total); let f=0; for(const p of parts){ o.set(p,f); f+=p.length; } return o; }
+function bootAwaySoon(){ setTimeout(bootAway,420); }
+function persistHist(){ lsSet("nx.hist",JSON.stringify(S.hist)); }
+function sealActiveEntry(){
+  if(!S.active) return;
+  S.active.entry.dur=Math.max(1,Math.round((Date.now()-S.active.startTs)/1000));
+  S.active=null; persistHist(); renderHistory(); renderRecents();
+}
+
+/* ============================== history render ============================== */
+function renderHistory(){
+  const holder=$("#hist-list");
+  holder.querySelectorAll(".h-row:not(.head)").forEach(r=>r.remove());
+  $("#hist-empty").hidden=S.hist.length>0;
+  S.hist.forEach(h=>{
+    const st=h.status==="ok"?'<span class="hs st-ok">● ok</span>'
+           : h.status==="fail"?'<span class="hs st-fail">● fail</span>'
+           : '<span class="hs st-pend">◌ live</span>';
+    const row=document.createElement("div");
+    row.className="h-row";
+    row.innerHTML=`<span class="ht mono">${shortStamp(h.ts)}</span>
+      <span class="hn">${h.title}<br><span class="mono" style="font-weight:400;font-size:9.5px;color:var(--faint)">${h.host}</span></span>
+      <span class="hs" style="color:var(--dim)">${h.via==="direct"?"direct":"rebuild"}</span>
+      <span class="hs">${fmtBytes(h.bytes)}</span>
+      <span class="hs">${fmtDur(h.dur)}</span>
+      <button class="h-relaunch" title="Launch again"><i data-lucide="rotate-cw"></i></button>`;
+    row.querySelector(".h-relaunch").onclick=()=>launch({title:h.title,url:h.url});
+    holder.appendChild(row);
+  });
+  icons();
+}
+function renderRecents(){
+  const ul=$("#recent-list"); ul.innerHTML="";
+  if(!S.hist.length){ ul.innerHTML='<li><span class="empty-line">nothing yet — the log starts with your first launch.</span></li>'; return; }
+  S.hist.slice(0,5).forEach(h=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<span class="rt">${shortStamp(h.ts).slice(6)}</span><span class="rn">${h.title}</span>`;
+    li.style.cursor="pointer";
+    li.onclick=()=>launch({title:h.title,url:h.url});
+    ul.appendChild(li);
+  });
+}
+
+/* ============================== game lib render ============================== */
+function renderGames(){
+  const wrap=$("#game-list"); wrap.innerHTML="";
+  GAMES.forEach(g=>{
+    const last=S.hist.find(h=>h.url===g.url);
+    const el=document.createElement("article");
+    el.className="g-row";
+    el.innerHTML=
+      `<div class="art mono">art slot<br>(empty)</div>
+       <div class="g-body">
+         <div class="g-title-row"><h3>${g.title}</h3>${g.tags.map(t=>`<span class="chip mono">${t}</span>`).join("")}</div>
+         <p class="g-desc">${g.desc}</p>
+         <div class="g-metarow">${hostOf(g.url)} · streamed on launch${last?` · last run ${shortStamp(last.ts).slice(0,5)} ${shortStamp(last.ts).slice(11,16)}`:" · never run"}</div>
+         <div class="g-actions">
+           <button class="btn primary go"><i data-lucide="play"></i>Launch</button>
+           <button class="btn ghost raw"><i data-lucide="external-link"></i>Open raw file</button>
+         </div>
+       </div>`;
+    el.querySelector(".go").onclick=()=>launch({title:g.title,url:g.url});
+    el.querySelector(".raw").onclick=()=>window.open(g.url,"_blank","noopener");
+    wrap.appendChild(el);
+  });
+
+  // quick launch lines
+  const q=$("#quick-list"); q.innerHTML="";
+  GAMES.forEach((g,i)=>{
+    const line=document.createElement("div");
+    line.className="qline";
+    line.innerHTML=`<span class="idx">${pad2(i+1)}</span><span class="qt">${g.title}</span>
+      <span class="qm">${hostOf(g.url)}</span>
+      <button class="qgo">RUN<i data-lucide="play"></i></button>`;
+    line.querySelector(".qgo").onclick=()=>launch({title:g.title,url:g.url});
+    q.appendChild(line);
+  });
+  $("#games-count").textContent=GAMES.length+" ENTR"+(GAMES.length===1?"Y":"IES");
+  $("#st-targets").textContent=GAMES.length;
+  icons();
+}
+
+/* ============================== diagnostics ============================== */
+function dotClass(){ const p=S.pings.filter(x=>x!=null); const last=S.pings[S.pings.length-1];
+  if(last==null) return "err"; if(last>=800) return "warn"; return "ok"; }
+function updNet(){
+  const pings=S.pings.filter(x=>x!=null);
+  const last=pings[pings.length-1];
+  $("#link-lat").textContent=(last?Math.round(last)+" ms":"— ms")+" · "+(pings.length?pings.length+" samples":"idle");
+  $("#link-state").textContent = last==null ? (pings.length?"offline":"probing…") : (last>=800?"laggy":"online");
+  $("#link-dot").className="dot "+(pings.length?dotClass():"");
+  const avg=pings.length?pings.reduce((a,b)=>a+b,0)/pings.length:null;
+  $("#dg-last").textContent=last?Math.round(last)+"ms":"—";
+  $("#dg-avg").textContent=avg?Math.round(avg)+"ms":"—";
+  $("#dg-jit").textContent=pings.length>1?Math.round(std(pings))+"ms":"—";
+  $("#dg-n").textContent=S.pings.length;
+  $("#st-link").textContent=last?(Math.round(last)<1000?Math.round(last)+"ms":"slow"):"—";
+  $("#sb-right").textContent=`engine ${S.settings.mode==="direct"?"direct":"rebuild"} · ${S.pings.length} pings · avg ${avg?Math.round(avg)+"ms":"—"}`;
+  drawSpark();
+}
+function std(a){ const m=a.reduce((x,y)=>x+y,0)/a.length; return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length); }
+function drawSpark(){
+  const cv=$("#spark"); if(!cv) return;
+  const r=cv.getBoundingClientRect(); if(!r.width) return;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const ctx=cv.getContext("2d"); ctx.scale(dpr,dpr);
+  const W=r.width,H=r.height,pad=5;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle="#24272a"; ctx.lineWidth=1;
+  [0.25,0.5,0.75].forEach(f=>{ ctx.beginPath(); ctx.moveTo(0,H*f); ctx.lineTo(W,H*f); ctx.stroke(); });
+  const vals=S.pings.filter(x=>x!=null);
+  if(vals.length<2){
+    ctx.fillStyle="#686f75"; ctx.font="9px JetBrains Mono";
+    ctx.fillText(vals.length?"acquiring…":"no signal yet",6,H/2+3); return;
+  }
+  const max=Math.max(...vals)*1.15;
+  const xs=i=>pad+i/(S.pings.length-1)*(W-pad*2);
+  const ys=v=>H-pad-(v/max)*(H-pad*2);
+  ctx.strokeStyle="#e9eaeb"; ctx.lineWidth=1.2; ctx.beginPath();
+  let pen=false;
+  S.pings.forEach((v,i)=>{ if(v==null){pen=false;return;} const x=xs(i),y=ys(v); pen?ctx.lineTo(x,y):(ctx.moveTo(x,y),pen=true); });
+  ctx.stroke();
+  // endpoint
+  for(let i=S.pings.length-1;i>=0;i--) if(S.pings[i]!=null){
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(xs(i),ys(S.pings[i]),2,0,7); ctx.fill(); break;
+  }
+}
+async function pingOnce(){
+  const ctrl=new AbortController(); const kill=setTimeout(()=>ctrl.abort(),6000);
+  const t0=performance.now();
+  try{
+    await fetch(GAMES[0].url,{method:"HEAD",signal:ctrl.signal,cache:"no-store",credentials:"omit"});
+    S.pings.push(performance.now()-t0);
+  }catch(e){ S.pings.push(null); }
+  clearTimeout(kill);
+  if(S.pings.length>60) S.pings.shift();
+  updNet();
+}
+
+/* ============================== stats / clocks ============================== */
+function bumpStats(){ $("#st-entries").textContent=S.hist.length; }
+function tickClock(){
+  const d=new Date();
+  $("#clock").textContent=`${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  const s=((Date.now()-S.bootedAt)/1000)|0;
+  const sess=(s>=3600?((s/3600)|0)+":"+pad2(((s%3600)/60)|0):((s/60)|0))+":"+pad2(s%60);
+  $("#st-session").textContent=sess;
+  $("#hero-line").textContent=`gateway online · session ${sess}`;
+}
+
+/* ============================== chrome & omnibox ============================== */
+ $("#omni-form").addEventListener("submit",e=>{
+  e.preventDefault();
+  const v=omni.value.trim();
+  if(/^nexus:\/\//i.test(v)){ go(v.replace(/^nexus:\/\//i,"")||"home"); return; }
+  if(!v) return;
+  let u=v; if(!/^https?:\/\//i.test(u)) u="https://"+u;
+  try{ const U=new URL(u); launch({title:U.hostname,url:U.href}); }
+  catch(err){ toast("That doesn't parse as a URL.","warn"); }
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="/" && document.activeElement!==omni && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){
+    e.preventDefault(); omni.focus(); omni.select();
+  }
+  if(e.key==="Escape" && S.route==="player" && !document.fullscreenElement){ goBack(); }
 });
 
-function reloadProxy(){
-  proxyState = 'idle';
-  activeSource = null;
-  proxyFrame.removeAttribute('srcdoc');
-  proxyFrame.removeAttribute('src');
-  loadProxy();
-}
-function updateEngineCard(){
-  $('engineSrc').textContent = activeSource || 'Not loaded yet';
-}
- $('reloadEngine').addEventListener('click', reloadProxy);
+ $("#c-back").onclick=goBack;
+ $("#c-reload").onclick=()=>{
+  if(S.route==="player" && S.playerTarget){ const t=S.playerTarget; launch(t); }
+  else { const r=S.route; renderAll(); toast("View refreshed."); void r; }
+};
 
-/* ══════════ Top bar ══════════ */
- $('backBtn').addEventListener('click', () => { if (idx > 0){ idx--; switchView(stack[idx], true); } });
- $('fwdBtn').addEventListener('click',  () => { if (idx < stack.length - 1){ idx++; switchView(stack[idx], true); } });
+/* ============================== window controls ============================== */
+ $("#win-min").onclick=()=>{
+  app.classList.add("gone");
+  const pill=$("#pill"); pill.hidden=false;
+  toast("Nexus ducked into the corner pill. Click it to resurface.","info");
+};
+ $("#pill").onclick=()=>{ $("#pill").hidden=true; app.classList.remove("gone"); };
+ $("#win-max").onclick=()=>{
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>toast("Fullscreen refused.","warn"));
+  else document.exitFullscreen();
+};
+ $("#win-close").onclick=()=>{
+  $("#titlebar").classList.add("shake");
+  setTimeout(()=>$("#titlebar").classList.remove("shake"),320);
+  toast("Close rejected. Nexus grows on you.","warn");
+};
 
- $('refreshBtn').addEventListener('click', () => {
-  const btn = $('refreshBtn');
-  btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin');
-  const active = document.querySelector('.view.active');
-  if (!active) return;
-  if (active.id === 'view-player' && currentGame) launchGame(currentGame);
-  else if (active.id === 'view-proxy') reloadProxy();
-  else { active.style.opacity = '.35'; setTimeout(() => active.style.opacity = '1', 140); }
+/* ============================== sidebar ============================== */
+ $$(".nav-it,[data-go]").forEach(b=>{
+  if(b.dataset.go) b.addEventListener("click",()=>go(b.dataset.go));
 });
+ $("#collapse").onclick=()=>{
+  app.classList.toggle("folded");
+  lsSet("nx.folded",app.classList.contains("folded")?"1":"0");
+};
 
-function handleUrl(val){
-  val = val.trim();
-  if (!val || val.startsWith('nexus://')) return;
-  let target;
-  if (/^https?:\/\//i.test(val)) target = val;
-  else if (/^[\w-]+(\.[\w-]+)+/.test(val)) target = 'https://' + val;
-  else target = 'https://www.google.com/search?q=' + encodeURIComponent(val);
-  addHistory(val.length > 46 ? val.slice(0, 46) + '…' : val, 'web');
-  window.open(target, '_blank', 'noopener');
+/* ============================== player controls ============================== */
+ $("#pl-fs").onclick=()=>{ const st=$(".pl-stage"); (document.fullscreenElement?document.exitFullscreen():st.requestFullscreen()).catch(()=>{}); };
+ $("#pl-ext").onclick=()=>{ if(S.playerTarget) window.open(S.playerTarget.url,"_blank","noopener"); };
+
+/* ============================== settings ============================== */
+function setSeg(mode){
+  $$("#seg-mode button").forEach(b=>b.classList.toggle("on",b.dataset.val===mode));
+  S.settings.mode=mode; lsSet("nx.set",JSON.stringify(S.settings)); updNet();
 }
-urlBar.addEventListener('keydown', e => { if (e.key === 'Enter') handleUrl(urlBar.value); });
- $('homeSearch').addEventListener('keydown', e => { if (e.key === 'Enter') handleUrl(e.target.value); });
+ $$("#seg-mode button").forEach(b=>b.onclick=()=>setSeg(b.dataset.val));
+function bindTgl(id,key){
+  const el=$(id);
+  el.onclick=()=>{
+    S.settings[key]=!S.settings[key];
+    el.classList.toggle("on",S.settings[key]);
+    el.setAttribute("aria-checked",S.settings[key]);
+    lsSet("nx.set",JSON.stringify(S.settings));
+  };
+}
+bindTgl("#tg-base","injectBase");
+bindTgl("#tg-ping","autoping");
 
-/* ══════════ Tab cloak ══════════ */
-function applyCloak(t){ document.title = t || 'Nexus'; }
- $('cloakApply').addEventListener('click', () => applyCloak($('cloakInput').value.trim()));
- $('cloakInput').addEventListener('keydown', e => { if (e.key === 'Enter') applyCloak(e.target.value.trim()); });
-document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
-  $('cloakInput').value = c.dataset.title;
-  applyCloak(c.dataset.title);
-}));
+function exportHist(){
+  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),settings:S.settings,history:S.hist},null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="nexus-log.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  toast("Log exported.","ok");
+}
+ $("#h-export").onclick=exportHist; $("#s-export").onclick=exportHist;
+function armWipe(btn,label){
+  btn.addEventListener("click",()=>{
+    if(btn.classList.contains("arm")){
+      S.hist=[]; S.pings=[];
+      try{ localStorage.removeItem("nx.hist"); }catch(e){}
+      renderHistory(); renderRecents(); bumpStats(); updNet();
+      btn.classList.remove("arm"); btn.innerHTML=label; icons();
+      toast("Erased. Nexus remembers nothing, promises nothing.","ok");
+    }else{
+      btn.classList.add("arm"); btn.textContent="Sure? click again";
+      setTimeout(()=>{ btn.classList.remove("arm"); btn.innerHTML=label; icons(); },2800);
+    }
+  });
+}
+armWipe($("#h-clear"),'<i data-lucide="trash-2"></i>Wipe');
+armWipe($("#s-wipe"),'<i data-lucide="trash-2"></i>Erase everything');
 
-/* ══════════ Init ══════════ */
-renderHistory();
-updateEngineCard();
-updateBtns();
+/* ============================== boot ============================== */
+function renderAll(){ renderGames(); renderHistory(); renderRecents(); applyRoute(); }
+(function init(){
+  try{
+    const setRaw=lsGet("nx.set"); if(setRaw) Object.assign(S.settings,JSON.parse(setRaw));
+    const hRaw=lsGet("nx.hist"); if(hRaw) S.hist=JSON.parse(hRaw);
+  }catch(e){}
+  if(lsGet("nx.folded")==="1") app.classList.add("folded");
+  try{ $("#about-storage").textContent = lsSet("nx.probe","1")===undefined ? (lsGet("nx.probe")==="1"?"persistent (localStorage)":"memory only") : "unknown"; }catch(e){}
+  setSeg(S.settings.mode);
+  $("#tg-base").classList.toggle("on",S.settings.injectBase);
+  $("#tg-ping").classList.toggle("on",S.settings.autoping);
+  renderAll(); bumpStats(); tickClock(); updNet();
+  icons();
+  setInterval(tickClock,1000);
+  setTimeout(pingOnce,600);
+  setInterval(()=>{ if(S.settings.autoping && !document.hidden && !$("#pill").offsetParent) pingOnce(); },12000);
+  window.addEventListener("resize",drawSpark);
+})();
 })();
 </script>
 </body>
