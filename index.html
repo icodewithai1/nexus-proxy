@@ -176,7 +176,7 @@
               <span>Turn off safety screen</span>
             </label>
           </div>
-          <button onclick="openDataHtml()" style="background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;padding:8px 16px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">Open in data:text/html</button>
+          <button onclick="openDataHtml()" style="background:#2a2a2a;border:1px solid #3a3a3a;border-radius:6px;padding:8px 16px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.2px;">Open in blob</button>
           <p class="note" style="margin-top:14px;">When the safety screen is off, Nexus loads directly without the access denied page.</p>
         </div>
       </section>
@@ -249,14 +249,13 @@
       el.classList.add('active');
     }
     pendingTab = id;
-
-    if (unlocked) {
-      unlocked = false;
-      document.getElementById('sysScreen').style.display = 'flex';
-      document.getElementById('nexusScreen').style.display = 'none';
-    } else {
+    if (!unlocked) {
+      unlocked = true;
       document.getElementById('sysScreen').style.display = 'none';
+      document.getElementById('nexusScreen').style.display = 'block';
+      initFrames();
     }
+    setTabContent(id);
   }
 
   function setTabContent(id) {
@@ -304,33 +303,15 @@
     box.style.display = 'block';
     box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    const doc = frame.contentDocument || frame.contentWindow.document;
-    if (doc) {
-      doc.open();
-      doc.write('<html><head><meta charset="UTF-8"><title>Loading</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body>Fetching HTML source...</body></html>');
-      doc.close();
-    }
-
     try {
       const resp = await fetch(GAME_URL);
-      if (!resp.ok) throw new Error('Status ' + resp.status);
       const html = await resp.text();
-      const d = frame.contentDocument || frame.contentWindow.document;
-      if (d) {
-        d.open();
-        d.write(html);
-        d.close();
-      }
+      const blob = new Blob([html], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      frame.src = url;
     } catch (e) {
-      const d2 = frame.contentDocument || frame.contentWindow.document;
-      if (d2) {
-        try {
-          d2.open();
-          d2.write('<html><head><meta charset="UTF-8"><title>Blocked</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body><h2>Fetch blocked</h2><p>The game loaded via source.</p></body></html>');
-          d2.close();
-        } catch (err) {}
-      }
-      frame.src = GAME_URL;
+      const blob = new Blob(['<html><head><meta charset="UTF-8"><title>Error</title><style>body{background:#181818;color:#ccc;font-family:system-ui,sans-serif;font-size:13px;padding:24px;}</style></head><body><h2>Fetch failed</h2><p>Could not load Fancy Pants Adventure.</p></body></html>'], {type: 'text/html'});
+      frame.src = URL.createObjectURL(blob);
     }
   }
 </script>
