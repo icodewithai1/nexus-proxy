@@ -1,46 +1,592 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Access Denied</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M12 2.5l8.7 5v9l-8.7 5-8.7-5v-9z'/%3E%3Cpath d='M9.4 15.2V8.8l5.2 6.4V8.8'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#151515; --bg-top:#191919; --bg-side:#1c1c1c;
+    --card:#222222; --card-h:#262626;
+    --bd:#2b2b2b; --bd-h:#464646;
+    --tx:#ffffff; --tx2:#b9b9b9; --tx3:#7c7c7c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:#131313;color:var(--tx);overflow:hidden;font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input{font:inherit}
+  .app{display:flex;height:100vh}
+
+  /* ───────── Sidebar ───────── */
+  .sidebar{width:192px;flex-shrink:0;background:var(--bg-side);border-right:1px solid var(--bd);display:flex;flex-direction:column}
+  .logo{display:flex;align-items:center;gap:10px;padding:16px 16px 15px;border-bottom:1px solid var(--bd);color:#fff}
+  .logo svg{width:20px;height:20px;flex-shrink:0}
+  .logo b{font-size:14px;font-weight:800;letter-spacing:.24em}
+  .nav{flex:1;padding:10px 10px;overflow-y:auto}
+  .nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border-radius:7px;color:var(--tx3);font-size:13px;font-weight:500;margin-bottom:2px;transition:background .12s,color .12s;text-align:left}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:var(--tx2)}
+  .nav-item.active{background:rgba(255,255,255,.09);color:#fff}
+  .side-foot{padding:12px 16px;border-top:1px solid var(--bd);font-size:10.5px;color:var(--tx3);letter-spacing:.03em}
+
+  /* ───────── Main / topbar ───────── */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{height:44px;flex-shrink:0;background:var(--bg-top);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px;padding:0 10px}
+  .tbtn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--tx3);transition:background .12s,color .12s;flex-shrink:0}
+  .tbtn svg{width:15px;height:15px}
+  .tbtn:hover:not(:disabled){background:rgba(255,255,255,.07);color:#fff}
+  .tbtn:disabled{opacity:.28;cursor:default}
+  .tbtn.spin svg{animation:spin .55s ease}
+  .omni{flex:1;display:flex;align-items:center;gap:9px;height:30px;background:#222;border:1px solid var(--bd);border-radius:7px;padding:0 12px;transition:border-color .12s,background .12s;min-width:0}
+  .omni:focus-within{border-color:var(--bd-h);background:#242424}
+  .omni svg{width:13px;height:13px;color:var(--tx3);flex-shrink:0}
+  .omni input{flex:1;min-width:0;background:none;border:none;outline:none;color:#e9e9e9;font-size:12.5px}
+  .omni input::placeholder{color:#5f5f5f}
+
+  /* ───────── Content / views ───────── */
+  .content{flex:1;overflow-y:auto;padding:24px 26px;background:var(--bg)}
+  .content.home{padding:0;overflow:hidden;display:flex}
+  .content.full{padding:0;overflow:hidden;display:flex}
+  .view{display:none}
+  .view.active{display:block}
+  #view-home.active{display:flex;flex:1;position:relative;flex-direction:column;align-items:center;justify-content:center}
+  .content.full>#view-proxy.active,
+  .content.full>#view-player.active{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
+
+  .view-title{font-size:20px;font-weight:700;margin-bottom:4px}
+  .view-sub{font-size:12.5px;color:var(--tx3);margin-bottom:20px}
+  .view-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .empty{color:var(--tx3);font-size:12.5px}
+
+  /* ───────── Home ───────── */
+  #view-home{
+    background:
+      radial-gradient(1000px 620px at 50% -18%, rgba(255,255,255,.07), transparent 62%),
+      radial-gradient(720px 520px at 92% 112%, rgba(255,255,255,.045), transparent 58%),
+      radial-gradient(560px 420px at 4% 104%, rgba(255,255,255,.03), transparent 60%),
+      #141414;
+    overflow:hidden;
+  }
+  #view-home::after{ /* fading grid */
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(ellipse 72% 62% at 50% 42%, #000 18%, transparent 78%);
+    mask-image:radial-gradient(ellipse 72% 62% at 50% 42%, #000 18%, transparent 78%);
+  }
+  .home-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;max-width:92%}
+  .home-brand{display:flex;align-items:center;gap:16px;color:#fff}
+  .home-brand svg{width:46px;height:46px;stroke-width:1.5}
+  .home-brand span{font-size:38px;font-weight:800;letter-spacing:.3em;margin-right:-.3em}
+  .home-tag{margin-top:12px;font-size:11px;color:var(--tx3);letter-spacing:.22em;text-transform:uppercase}
+  .home-search{display:flex;align-items:center;gap:10px;width:min(560px,90vw);height:46px;background:#1e1e1e;border:1px solid var(--bd);border-radius:10px;padding:0 16px;margin:30px 0 34px;box-shadow:0 10px 34px rgba(0,0,0,.4);transition:border-color .12s,background .12s}
+  .home-search:focus-within{border-color:var(--bd-h);background:#212121}
+  .home-search svg{width:15px;height:15px;color:var(--tx3);flex-shrink:0}
+  .home-search input{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;font-size:13.5px}
+  .home-search input::placeholder{color:#5f5f5f}
+  .home-shortcuts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .hscut{display:flex;align-items:center;gap:9px;padding:10px 18px;background:rgba(255,255,255,.045);border:1px solid var(--bd);border-radius:999px;color:var(--tx2);font-size:12.5px;font-weight:500;transition:background .12s,color .12s,transform .14s,border-color .12s}
+  .hscut svg{width:14px;height:14px}
+  .hscut:hover{background:rgba(255,255,255,.09);color:#fff;border-color:var(--bd-h);transform:translateY(-2px)}
+
+  /* ───────── Games ───────── */
+  .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;max-width:780px}
+  .game-card{text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;transition:transform .14s,border-color .14s,background .14s;display:block}
+  .game-card:hover{transform:translateY(-2px);border-color:var(--bd-h);background:var(--card-h)}
+  .game-thumb{height:130px;display:flex;align-items:center;justify-content:center;color:#565656;background:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0/14px 14px,#1b1b1b;border-bottom:1px solid var(--bd)}
+  .game-thumb svg{width:34px;height:34px}
+  .game-body{padding:12px 14px}
+  .game-name{font-size:13.5px;font-weight:600;margin-bottom:3px;color:#fff}
+  .game-desc{font-size:11.5px;color:var(--tx3)}
+
+  /* ───────── Proxy + Player (full-bleed) ───────── */
+  .player-bar{height:40px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--bg-top);border-bottom:1px solid var(--bd)}
+  .player-title{font-size:12.5px;font-weight:600;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .player-stage{flex:1;position:relative;background:#000;min-height:0}
+  .proxy-stage{flex:1;position:relative;background:#161616;min-height:0}
+  .fill-frame{width:100%;height:100%;border:0;display:block}
+  .stage-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#141414;z-index:2;padding:20px;text-align:center}
+  .stage-msg.hidden{display:none}
+  .spinner{width:22px;height:22px;border:2px solid #3a3a3a;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+  .msg-text{font-size:13px;color:var(--tx2)}
+  .msg-sub{font-size:11.5px;color:var(--tx3)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ───────── History ───────── */
+  .hist-list{display:flex;flex-direction:column;gap:2px;max-width:640px}
+  .hist-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:var(--tx2);text-align:left;transition:background .12s,color .12s}
+  .hist-item:hover{background:rgba(255,255,255,.05);color:#fff}
+  .hist-item svg{width:14px;height:14px;color:var(--tx3);flex-shrink:0}
+  .hist-title{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hist-time{font-size:11px;color:var(--tx3);font-variant-numeric:tabular-nums;flex-shrink:0}
+
+  /* ───────── Settings ───────── */
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;max-width:620px;margin-bottom:14px}
+  .card h3{font-size:13px;font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:8px;color:#fff}
+  .card h3 svg{width:14px;height:14px;color:var(--tx3)}
+  .card p{font-size:12px;color:var(--tx3);line-height:1.65}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--tx2);background:#1a1a1a;border:1px solid var(--bd);border-radius:6px;padding:8px 10px;word-break:break-all;margin-top:10px}
+  .field{display:flex;gap:8px;margin-top:12px}
+  .field input{flex:1;min-width:0;height:32px;background:#1c1c1c;border:1px solid var(--bd);border-radius:7px;color:#eee;padding:0 12px;font-size:12px;outline:none}
+  .field input:focus{border-color:var(--bd-h)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{padding:6px 13px;border-radius:999px;background:#282828;border:1px solid var(--bd);color:var(--tx2);font-size:11.5px;transition:background .12s,color .12s,border-color .12s}
+  .chip:hover{background:#303030;color:#fff;border-color:var(--bd-h)}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:7px;background:#2a2a2a;border:1px solid var(--bd);color:var(--tx2);font-size:12px;transition:background .12s,color .12s}
+  .btn:hover{background:#323232;color:#fff}
+  .btn svg{width:13px;height:13px}
+
+  /* ───────── Scrollbar ───────── */
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#2d2d2d;border-radius:5px}
+  ::-webkit-scrollbar-thumb:hover{background:#3c3c3c}
+</style>
 </head>
 <body>
-  <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+<div class="app">
 
-  <script>
-    document.title = "Access Denied";
+  <!-- ══════════ Sidebar ══════════ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l8.7 5v9l-8.7 5-8.7-5v-9l8.7-5z"/><path d="M9.4 15.2V8.8l5.2 6.4V8.8"/></svg>
+      <b>NEXUS</b>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" data-view="games">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
+        <span>Games</span>
+      </button>
+      <button class="nav-item" data-view="proxy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span>Proxy</span>
+      </button>
+      <button class="nav-item" data-view="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>History</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+    <div class="side-foot">Nexus v1.1 · single file</div>
+  </aside>
 
-    fetch("https://github.com/CoolDude2349/Offline-HTML-Games-Pack/raw/refs/heads/master/offline/fancypantsadventure.html")
-      .then(res => res.text())
-      .then(html => {
-        const frame = document.getElementById('frame');
-        frame.srcdoc = html;
-        
-        // Keeps the tab name as "Access Denied" once the content loads
-        frame.onload = () => {
-          document.title = "Access Denied";
-        };
-      })
-      .catch(err => console.error("Error loading HTML:", err));
-  </script>
+  <!-- ══════════ Main ══════════ -->
+  <main class="main">
+    <div class="topbar">
+      <button class="tbtn" id="backBtn" title="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="tbtn" id="fwdBtn" title="Forward">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="tbtn" id="refreshBtn" title="Reload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+      <div class="omni">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="urlBar" placeholder="Search or enter address" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="content home" id="content">
+
+      <!-- ══════ Home ══════ -->
+      <section class="view active" id="view-home">
+        <div class="home-inner">
+          <div class="home-brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l8.7 5v9l-8.7 5-8.7-5v-9l8.7-5z"/><path d="M9.4 15.2V8.8l5.2 6.4V8.8"/></svg>
+            <span>NEXUS</span>
+          </div>
+          <div class="home-tag">Fast · Private · Yours</div>
+          <div class="home-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="homeSearch" placeholder="Search the web" spellcheck="false">
+          </div>
+          <div class="home-shortcuts">
+            <button class="hscut" data-link="games">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
+              <span>Games</span>
+            </button>
+            <button class="hscut" data-link="proxy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span>Proxy</span>
+            </button>
+            <button class="hscut" data-link="history">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>History</span>
+            </button>
+            <button class="hscut" data-link="settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+              <span>Settings</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════ Games ══════ -->
+      <section class="view" id="view-games">
+        <h1 class="view-title">Games</h1>
+        <p class="view-sub">Fetched raw from GitHub and rendered right here — no installs.</p>
+        <div class="games-grid">
+          <button class="game-card" data-game="fancypants">
+            <div class="game-thumb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
+            </div>
+            <div class="game-body">
+              <div class="game-name">Fancy Pants Adventure</div>
+              <div class="game-desc">Stick-figure platformer · single file</div>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ══════ Proxy (GUST engine) ══════ -->
+      <section class="view" id="view-proxy">
+        <div class="proxy-stage">
+          <iframe id="proxyFrame" class="fill-frame"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-pointer-lock"
+            allow="autoplay; fullscreen; gamepad; clipboard-write"
+            allowfullscreen></iframe>
+          <div class="stage-msg" id="proxyMsg">
+            <div class="spinner"></div>
+            <div class="msg-text" id="proxyMsgText">Starting proxy engine…</div>
+            <div class="msg-sub" id="proxyMsgSub">Fetching GUST from GitHub</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════ Game runner ══════ -->
+      <section class="view" id="view-player">
+        <div class="player-bar">
+          <button class="tbtn" id="playerBack" title="Back to Games">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <div class="player-title" id="playerTitle">Game</div>
+          <div style="flex:1"></div>
+          <button class="tbtn" id="playerFs" title="Fullscreen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+        </div>
+        <div class="player-stage" id="playerStage">
+          <iframe id="playerFrame" class="fill-frame"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"
+            allow="autoplay; fullscreen; gamepad"
+            allowfullscreen></iframe>
+          <div class="stage-msg" id="playerMsg">
+            <div class="spinner"></div>
+            <div class="msg-text" id="playerMsgText">Loading…</div>
+            <div class="msg-sub" id="playerMsgSub"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════ History ══════ -->
+      <section class="view" id="view-history">
+        <div class="view-head-row">
+          <div>
+            <h1 class="view-title">History</h1>
+            <p class="view-sub">Recent activity in this session.</p>
+          </div>
+          <button class="btn" id="clearHist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Clear</span>
+          </button>
+        </div>
+        <div class="hist-list" id="histList"><div class="empty">Nothing here yet.</div></div>
+      </section>
+
+      <!-- ══════ Settings ══════ -->
+      <section class="view" id="view-settings">
+        <h1 class="view-title">Settings</h1>
+        <p class="view-sub">Tune Nexus.</p>
+
+        <div class="card">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Proxy Engine</span>
+          </h3>
+          <p>Nexus runs <strong>GUST</strong> — a single-file proxy browser — inside an isolated frame. The engine is fetched raw from GitHub the moment you open the Proxy tab, with a mirror fallback.</p>
+          <div class="mono" id="engineSrc">Not loaded yet</div>
+          <div style="margin-top:12px">
+            <button class="btn" id="reloadEngine">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Reload engine</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <span>Tab Cloak</span>
+          </h3>
+          <p>Disguise the tab title if you don't want it screaming "browser".</p>
+          <div class="field">
+            <input id="cloakInput" placeholder="New tab title" spellcheck="false">
+            <button class="btn" id="cloakApply"><span>Apply</span></button>
+          </div>
+          <div class="chips">
+            <button class="chip" data-title="Home">Home</button>
+            <button class="chip" data-title="Docs">Docs</button>
+            <button class="chip" data-title="Drive">Drive</button>
+            <button class="chip" data-title="Classroom">Classroom</button>
+            <button class="chip" data-title="Canvas">Canvas</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>About</span>
+          </h3>
+          <p>Nexus v1.1 — one HTML file. Gray theme, sidebar nav, GitHub-powered game runner, GUST proxy engine.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const urlBar = $('urlBar'), content = $('content');
+const proxyFrame = $('proxyFrame'), playerFrame = $('playerFrame');
+
+/* ══════════ Config ══════════ */
+
+// Games — raw GitHub files, fetched and dropped straight into the runner.
+const GAMES = {
+  fancypants: {
+    name: 'Fancy Pants Adventure',
+    url: 'https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/fancypantsadventure.html'
+  }
+};
+
+// Proxy engine — GUST. Raw HTML fetched from GitHub and rendered in an
+// isolated iframe (same technique as your Access Denied loader).
+// First URL that returns valid HTML wins — swap/reorder these freely.
+const PROXY_SOURCES = [
+  'https://raw.githubusercontent.com/nautilus-os/GUST/refs/heads/main/index.html',          // official GUST
+  'https://raw.githubusercontent.com/icodewithai1/nexus-proxy/refs/heads/main/index.html'  // verified mirror
+];
+
+/* ══════════ View switching ══════════ */
+const stack = ['home'];
+let idx = 0;
+const LAYOUT = { home:'home', proxy:'full', player:'full' };
+const URLS = { home:'', games:'nexus://games', proxy:'nexus://proxy', history:'nexus://history', settings:'nexus://settings' };
+
+function switchView(name, skipStack){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  $('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === name));
+  content.className = 'content' + (LAYOUT[name] ? ' ' + LAYOUT[name] : '');
+  if (URLS[name] !== undefined) urlBar.value = URLS[name];
+  if (!skipStack){ stack.splice(idx + 1); stack.push(name); idx = stack.length - 1; }
+  if (name === 'proxy') loadProxy();
+  updateBtns();
+}
+function updateBtns(){
+  $('backBtn').disabled = idx <= 0;
+  $('fwdBtn').disabled  = idx >= stack.length - 1;
+}
+
+document.querySelectorAll('.nav-item').forEach(n =>
+  n.addEventListener('click', () => switchView(n.dataset.view)));
+document.querySelectorAll('[data-link]').forEach(b =>
+  b.addEventListener('click', () => switchView(b.dataset.link)));
+
+/* ══════════ History ══════════ */
+const SVG = (p) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+const ICONS = {
+  game:  SVG('<rect x="2" y="6.5" width="20" height="12" rx="6"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.8" cy="11.2" r="1" fill="currentColor" stroke="none"/><circle cx="18.6" cy="14" r="1" fill="currentColor" stroke="none"/>'),
+  web:   SVG('<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'),
+  proxy: SVG('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>')
+};
+const entries = [];
+const fmtTime = d => d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+
+function addHistory(title, type){
+  entries.unshift({ title, type, time: new Date() });
+  renderHistory();
+}
+function renderHistory(){
+  const list = $('histList');
+  list.innerHTML = '';
+  if (!entries.length){ list.innerHTML = '<div class="empty">Nothing here yet.</div>'; return; }
+  entries.forEach(e => {
+    const el = document.createElement('button');
+    el.className = 'hist-item';
+    el.innerHTML = (ICONS[e.type] || ICONS.web) +
+      '<span class="hist-title"></span><span class="hist-time">' + fmtTime(e.time) + '</span>';
+    el.querySelector('.hist-title').textContent = e.title;
+    el.addEventListener('click', () => {
+      if (e.type === 'game'){
+        const g = Object.values(GAMES).find(g => g.name === e.title);
+        if (g) launchGame(g);
+      }
+    });
+    list.appendChild(el);
+  });
+}
+ $('clearHist').addEventListener('click', () => { entries.length = 0; renderHistory(); });
+
+/* ══════════ Game runner ══════════
+   Exactly your method: fetch the raw GitHub file, drop it in the frame. */
+let currentGame = null;
+
+function launchGame(g){
+  currentGame = g;
+  $('playerTitle').textContent = g.name;
+  switchView('player');
+  urlBar.value = 'nexus://games/' + g.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  addHistory(g.name, 'game');
+
+  playerFrame.removeAttribute('srcdoc');
+  const msg = $('playerMsg');
+  msg.classList.remove('hidden');
+  $('playerMsgText').textContent = 'Loading ' + g.name + '…';
+  $('playerMsgSub').textContent = 'Fetching raw file from GitHub';
+
+  fetch(g.url)
+    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
+    .then(html => { playerFrame.srcdoc = html; /* Boom. Rendered. */ })
+    .catch(err => {
+      msg.classList.remove('hidden');
+      $('playerMsgText').textContent = 'Could not load game';
+      $('playerMsgSub').textContent = err.message + ' — check your connection';
+    });
+}
+
+// Hide the loading veil only when a real document finished loading
+playerFrame.addEventListener('load', () => {
+  if (playerFrame.srcdoc && playerFrame.srcdoc.length > 0) $('playerMsg').classList.add('hidden');
+});
+
+document.querySelectorAll('.game-card').forEach(c =>
+  c.addEventListener('click', () => { const g = GAMES[c.dataset.game]; if (g) launchGame(g); }));
+
+ $('playerBack').addEventListener('click', () => switchView('games'));
+ $('playerFs').addEventListener('click', () => {
+  const stage = $('playerStage');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (stage.requestFullscreen) stage.requestFullscreen();
+});
+
+/* ══════════ Proxy engine (GUST) ══════════
+   Fetched raw from GitHub → rendered in the isolated frame.
+   Tries each source in order until one returns real HTML. */
+let proxyState = 'idle'; // idle | loading | ready
+let activeSource = null;
+
+function loadProxy(){
+  if (proxyState !== 'idle') return;
+  proxyState = 'loading';
+  $('proxyMsg').classList.remove('hidden');
+  $('proxyMsgText').textContent = 'Starting proxy engine…';
+  $('proxyMsgSub').textContent = 'Fetching GUST from GitHub';
+
+  (async () => {
+    for (const url of PROXY_SOURCES){
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const html = await res.text();
+        if (!html || html.length < 500) continue; // skip error/empty bodies
+        activeSource = url;
+        proxyFrame.srcdoc = html;
+        updateEngineCard();
+        return;
+      } catch (e) { /* try the next mirror */ }
+    }
+    // Last resort: embed the first source directly.
+    activeSource = PROXY_SOURCES[0] + '  (direct embed)';
+    proxyFrame.removeAttribute('srcdoc');
+    proxyFrame.src = PROXY_SOURCES[0];
+    updateEngineCard();
+  })();
+}
+
+proxyFrame.addEventListener('load', () => {
+  const hasContent = (proxyFrame.srcdoc && proxyFrame.srcdoc.length > 0) || proxyFrame.getAttribute('src');
+  if (proxyState === 'loading' && hasContent){
+    proxyState = 'ready';
+    $('proxyMsg').classList.add('hidden');
+    addHistory('Proxy session', 'proxy');
+    updateEngineCard();
+  }
+});
+
+function reloadProxy(){
+  proxyState = 'idle';
+  activeSource = null;
+  proxyFrame.removeAttribute('srcdoc');
+  proxyFrame.removeAttribute('src');
+  loadProxy();
+}
+function updateEngineCard(){
+  $('engineSrc').textContent = activeSource || 'Not loaded yet';
+}
+ $('reloadEngine').addEventListener('click', reloadProxy);
+
+/* ══════════ Top bar ══════════ */
+ $('backBtn').addEventListener('click', () => { if (idx > 0){ idx--; switchView(stack[idx], true); } });
+ $('fwdBtn').addEventListener('click',  () => { if (idx < stack.length - 1){ idx++; switchView(stack[idx], true); } });
+
+ $('refreshBtn').addEventListener('click', () => {
+  const btn = $('refreshBtn');
+  btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin');
+  const active = document.querySelector('.view.active');
+  if (!active) return;
+  if (active.id === 'view-player' && currentGame) launchGame(currentGame);
+  else if (active.id === 'view-proxy') reloadProxy();
+  else { active.style.opacity = '.35'; setTimeout(() => active.style.opacity = '1', 140); }
+});
+
+function handleUrl(val){
+  val = val.trim();
+  if (!val || val.startsWith('nexus://')) return;
+  let target;
+  if (/^https?:\/\//i.test(val)) target = val;
+  else if (/^[\w-]+(\.[\w-]+)+/.test(val)) target = 'https://' + val;
+  else target = 'https://www.google.com/search?q=' + encodeURIComponent(val);
+  addHistory(val.length > 46 ? val.slice(0, 46) + '…' : val, 'web');
+  window.open(target, '_blank', 'noopener');
+}
+urlBar.addEventListener('keydown', e => { if (e.key === 'Enter') handleUrl(urlBar.value); });
+ $('homeSearch').addEventListener('keydown', e => { if (e.key === 'Enter') handleUrl(e.target.value); });
+
+/* ══════════ Tab cloak ══════════ */
+function applyCloak(t){ document.title = t || 'Nexus'; }
+ $('cloakApply').addEventListener('click', () => applyCloak($('cloakInput').value.trim()));
+ $('cloakInput').addEventListener('keydown', e => { if (e.key === 'Enter') applyCloak(e.target.value.trim()); });
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+  $('cloakInput').value = c.dataset.title;
+  applyCloak(c.dataset.title);
+}));
+
+/* ══════════ Init ══════════ */
+renderHistory();
+updateEngineCard();
+updateBtns();
+})();
+</script>
 </body>
 </html>
