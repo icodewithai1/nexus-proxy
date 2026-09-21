@@ -3,1143 +3,1569 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scarlet</title>
+<title>Nexus</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='4.5' fill='url(%23g)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 <style>
+:root{
+  --bg0:#04060d; --bg1:#0a0e1e;
+  --panel:rgba(255,255,255,.035); --panel2:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+  --txt:#e8ecf7; --mut:#8b93a9; --dim:#5d6579;
+  --vio:#8b5cf6; --cya:#22d3ee; --grn:#34d399; --red:#f43f5e; --amb:#fbbf24;
+  --grad:linear-gradient(135deg,#8b5cf6,#22d3ee);
+  --r:14px; --r-lg:20px;
+  --glow:0 0 24px rgba(139,92,246,.18);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Inter',sans-serif;background:#000;color:#fff;height:100vh;overflow:hidden;position:relative;}
-#snowCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeInScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
-@keyframes slideInLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
-@keyframes bounceIn{0%{opacity:0;transform:scale(.3)}50%{transform:scale(1.05)}70%{transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+html,body{height:100%;}
+body{
+  font-family:'Inter',sans-serif;background:var(--bg0);color:var(--txt);
+  height:100vh;overflow:hidden;position:relative;display:flex;flex-direction:column;
+  background-image:radial-gradient(1000px 520px at 12% -8%,rgba(139,92,246,.14),transparent 60%),
+                   radial-gradient(900px 500px at 88% 112%,rgba(34,211,238,.10),transparent 60%),
+                   radial-gradient(600px 400px at 55% 45%,rgba(59,130,246,.05),transparent 70%);
+}
+#fxCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+::selection{background:rgba(139,92,246,.35);}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.10);border-radius:8px;border:2px solid transparent;background-clip:padding-box;}
+::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,.35);background-clip:padding-box;}
+::-webkit-scrollbar-track{background:transparent;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes aiBounce{0%,100%{transform:translateY(0);opacity:.4;}50%{transform:translateY(-6px);opacity:1;}}
-.anim-fade-up{animation:fadeInUp .6s ease both;}.anim-scale{animation:fadeInScale .4s ease both;}
-.stagger-1{animation-delay:.05s}.stagger-2{animation-delay:.1s}.stagger-3{animation-delay:.15s}.stagger-4{animation-delay:.2s}.stagger-5{animation-delay:.25s}.stagger-6{animation-delay:.3s}.stagger-7{animation-delay:.35s}.stagger-8{animation-delay:.4s}
+@keyframes orbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes shimmer{from{background-position:-200% 0}to{background-position:200% 0}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(60px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes dots{0%,20%{content:''}40%{content:'·'}60%{content:'··'}80%,100%{content:'···'}}
 
-.status-bar{height:26px;background:#000;display:flex;align-items:center;justify-content:flex-end;padding:0 16px;gap:8px;position:relative;z-index:20;}
-.status-bar .battery{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:500;color:rgba(255,255,255,0.5);}
-.status-bar .battery iconify-icon{font-size:13px;color:rgba(255,255,255,0.5);}
-.status-bar .time{font-size:10px;font-weight:500;color:rgba(255,255,255,0.5);}
-.layout{display:flex;height:calc(100vh - 26px);position:relative;z-index:10;}
+/* ============ TOPBAR ============ */
+#topbar{
+  position:relative;z-index:20;display:flex;align-items:center;gap:14px;
+  padding:10px 18px;border-bottom:1px solid var(--line);
+  background:rgba(6,8,18,.72);backdrop-filter:blur(20px);flex-shrink:0;
+}
+.brand{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.brand-mark{
+  width:34px;height:34px;border-radius:11px;background:rgba(139,92,246,.10);
+  border:1px solid rgba(139,92,246,.35);display:grid;place-items:center;position:relative;overflow:hidden;
+  box-shadow:var(--glow);
+}
+.brand-mark iconify-icon{font-size:19px;color:#a78bfa;}
+.brand-name{font-family:'Space Grotesk';font-weight:700;font-size:19px;letter-spacing:.4px;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.nav{display:flex;gap:4px;margin-left:8px;}
+.nav-pill{
+  display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:11px;cursor:pointer;
+  font-size:12.5px;font-weight:600;color:var(--mut);border:1px solid transparent;transition:all .22s;user-select:none;
+}
+.nav-pill iconify-icon{font-size:16px;}
+.nav-pill:hover{color:var(--txt);background:var(--panel);}
+.nav-pill.active{color:#fff;background:linear-gradient(135deg,rgba(139,92,246,.20),rgba(34,211,238,.12));border-color:rgba(139,92,246,.35);box-shadow:var(--glow);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.chip{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:11.5px;font-weight:600;
+  background:var(--panel);border:1px solid var(--line);color:var(--mut);transition:all .2s;white-space:nowrap;
+}
+.chip iconify-icon{font-size:14px;}
+.chip.clickable{cursor:pointer;}
+.chip.clickable:hover{border-color:rgba(139,92,246,.4);color:var(--txt);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 8px var(--grn);animation:pulse 2.4s infinite;}
 
-.sidebar{width:56px;background:rgba(8,8,8,.92);backdrop-filter:blur(20px);border-right:1px solid #151515;display:flex;flex-direction:column;align-items:center;padding:16px 8px 14px;gap:4px;flex-shrink:0;z-index:15;border-radius:0 20px 20px 0;box-shadow:4px 0 20px rgba(0,0,0,.4);}
-.sidebar-logo{width:34px;height:34px;background:#DC2626;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:16px;box-shadow:0 0 14px rgba(220,38,38,0.35);cursor:pointer;transition:all .25s;}
-.sidebar-logo:hover{transform:scale(1.1) rotate(-5deg);box-shadow:0 0 24px rgba(220,38,38,.5);}
-.sidebar-logo iconify-icon{font-size:18px;}
-.sidebar-item{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:#2a2a2a;cursor:pointer;transition:all .2s;position:relative;}
-.sidebar-item:hover{background:rgba(220,38,38,0.08);color:#666;transform:scale(1.05);}
-.sidebar-item.active{background:rgba(220,38,38,0.12);color:#DC2626;box-shadow:0 0 12px rgba(220,38,38,.15);}
-.sidebar-item.active::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:3px;height:16px;background:#DC2626;border-radius:0 3px 3px 0;animation:fadeIn .3s ease;}
-.sidebar-item iconify-icon{font-size:19px;}
-.sidebar-spacer{flex:1;}
+/* ============ PAGES ============ */
+#stage{position:relative;z-index:5;flex:1;min-height:0;display:flex;}
+.page{display:none;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;}
+.page.active{display:flex;flex-direction:column;}
+.scroll-col{flex-direction:column !important;}
 
-.main{flex:1;overflow:hidden;position:relative;}
-.page{display:none;flex-direction:column;height:100%;overflow-y:auto;overflow-x:hidden;}
-.page.active{display:flex;animation:fadeIn .35s ease;}
-.page::-webkit-scrollbar{width:4px;} .page::-webkit-scrollbar-track{background:transparent;} .page::-webkit-scrollbar-thumb{background:#1a1a1a;border-radius:4px;}
+/* ---- HOME ---- */
+.home-inner{width:100%;max-width:1060px;margin:0 auto;padding:34px 26px 40px;}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 0 8px;animation:fadeUp .5s ease both;}
+.hero-mark{width:84px;height:84px;border-radius:26px;position:relative;display:grid;place-items:center;margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(34,211,238,.10));
+  border:1px solid rgba(139,92,246,.4);box-shadow:0 0 60px rgba(139,92,246,.28);animation:floatY 5s ease-in-out infinite;}
+.hero-mark iconify-icon{font-size:42px;color:#a78bfa;}
+.hero-orbit{position:absolute;inset:-14px;border-radius:50%;border:1px dashed rgba(139,92,246,.35);animation:orbit 14s linear infinite;}
+.hero-orbit::after{content:'';position:absolute;top:-4px;left:50%;width:8px;height:8px;border-radius:50%;background:var(--cya);box-shadow:0 0 12px var(--cya);}
+.hero h1{font-family:'Space Grotesk';font-size:52px;font-weight:700;letter-spacing:1px;line-height:1.05;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero .tag{margin-top:10px;color:var(--mut);font-size:14.5px;font-weight:400;max-width:520px;}
+.hero .tag b{color:var(--txt);font-weight:600;}
+.hero-badges{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+.hbadge{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mut);padding:5px 11px;border-radius:99px;background:var(--panel);border:1px solid var(--line);}
+.hbadge iconify-icon{font-size:13px;color:var(--cya);}
 
-#pageHome{align-items:center;padding:20px 24px 24px;}
-.home-inner{width:100%;max-width:660px;display:flex;flex-direction:column;align-items:center;}
-.logo-row{width:100%;display:flex;align-items:center;gap:10px;margin-bottom:18px;animation:slideInLeft .6s ease;}
-.logo-mark{width:32px;height:32px;background:#DC2626;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 14px rgba(220,38,38,0.3);flex-shrink:0;transition:all .3s;}
-.logo-mark:hover{transform:rotate(-10deg) scale(1.1);}
-.logo-mark iconify-icon{font-size:18px;}
-.logo-text{font-size:18px;font-weight:700;letter-spacing:-0.03em;}.logo-text span{color:#DC2626;}
+.home-search{width:100%;max-width:680px;margin:26px auto 0;animation:fadeUp .55s .06s ease both;}
+.search-pill{
+  display:flex;align-items:center;gap:11px;padding:6px 6px 6px 20px;border-radius:18px;
+  background:rgba(10,13,28,.85);border:1px solid var(--line2);
+  box-shadow:0 12px 44px rgba(0,0,0,.45),var(--glow);transition:border-color .25s;
+}
+.search-pill:focus-within{border-color:rgba(139,92,246,.55);}
+.search-pill iconify-icon.mag{font-size:20px;color:var(--dim);}
+.search-pill input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:14.5px;font-family:'Inter';min-width:0;}
+.search-pill input::placeholder{color:var(--dim);}
+.search-pill .engine-tag{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:#a78bfa;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);padding:5px 10px;border-radius:99px;white-space:nowrap;}
+.go-btn{
+  width:44px;height:44px;border-radius:13px;border:none;cursor:pointer;display:grid;place-items:center;
+  background:var(--grad);color:#fff;font-size:19px;box-shadow:0 6px 20px rgba(139,92,246,.4);transition:all .2s;flex-shrink:0;
+}
+.go-btn:hover{transform:scale(1.06);box-shadow:0 6px 26px rgba(139,92,246,.55);}
 
-.carousel-wrap{width:100%;position:relative;animation:fadeInUp .7s ease;}
-.carousel-viewport{width:100%;overflow:hidden;border-radius:18px;}
-.carousel-track{display:flex;transition:transform .5s cubic-bezier(.25,.8,.25,1);}
-.carousel-slide{min-width:100%;position:relative;border-radius:18px;overflow:hidden;cursor:pointer;}
-.slide-img{width:100%;height:280px;object-fit:cover;display:block;filter:brightness(.5);transition:filter .5s,transform .6s;}
-.carousel-slide:hover .slide-img{filter:brightness(.4);transform:scale(1.03);}
-.slide-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.08) 55%,transparent 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:22px 22px 18px;}
-.slide-tag{display:inline-flex;align-items:center;gap:4px;background:rgba(220,38,38,.9);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;width:fit-content;animation:bounceIn .4s ease .2s both;}
-.slide-tag iconify-icon{font-size:10px;}
-.slide-title{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:3px;}
-.slide-sub{font-size:12px;color:rgba(255,255,255,.5);max-width:340px;line-height:1.4;}
-.arrow-btn{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(0,0,0,.5);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:all .25s;color:rgba(255,255,255,.55);}
-.arrow-btn:hover{background:rgba(220,38,38,.5);border-color:rgba(220,38,38,.4);color:#fff;transform:translateY(-50%) scale(1.12);}
-.arrow-btn iconify-icon{font-size:16px;}
-.arrow-left{left:10px;}.arrow-right{right:10px;}
-.dots{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;}
-.dot{width:6px;height:6px;border-radius:50%;background:#1a1a1a;cursor:pointer;transition:all .3s;}
-.dot.active{background:#DC2626;width:20px;border-radius:3px;box-shadow:0 0 8px rgba(220,38,38,.3);}
+.quick-row{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:22px;animation:fadeUp .6s .1s ease both;}
+.qchip{
+  display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:13px;cursor:pointer;user-select:none;
+  background:var(--panel);border:1px solid var(--line);transition:all .22s;
+}
+.qchip img{width:19px;height:19px;border-radius:5px;}
+.qchip span{font-size:12.5px;font-weight:600;color:var(--mut);transition:color .2s;}
+.qchip:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.08);box-shadow:var(--glow);}
+.qchip:hover span{color:var(--txt);}
 
-.home-search{width:100%;margin-top:18px;animation:fadeInUp .8s ease;}
-.search-bar{display:flex;align-items:center;background:#0a0a0a;border:1px solid #141414;border-radius:12px;height:44px;padding:0 14px;transition:all .3s;}
-.search-bar:focus-within{border-color:#DC2626;box-shadow:0 0 0 3px rgba(220,38,38,.08),0 4px 16px rgba(0,0,0,.3);}
-.search-bar iconify-icon.si{font-size:16px;color:#222;margin-right:10px;flex-shrink:0;}
-.search-bar input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:13px;font-family:'Inter',sans-serif;}
-.search-bar input::placeholder{color:#222;}
-.search-bar .go-btn{width:28px;height:28px;flex-shrink:0;background:#DC2626;border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
-.search-bar .go-btn:hover{background:#ef4444;transform:scale(1.08);}
-.search-bar .go-btn iconify-icon{font-size:13px;color:#fff;}
+.sect{margin-top:38px;animation:fadeUp .6s .14s ease both;}
+.sect-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sect-head h2{font-family:'Space Grotesk';font-size:17px;font-weight:600;display:flex;align-items:center;gap:9px;}
+.sect-head h2 iconify-icon{font-size:19px;color:#a78bfa;}
+.sect-head .more{font-size:11.5px;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:4px;transition:color .2s;}
+.sect-head .more:hover{color:#a78bfa;}
 
-.quick-apps{width:100%;margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-bottom:20px;}
-.qa{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:all .25s;padding:8px 4px;border-radius:14px;}
-.qa:hover{background:rgba(220,38,38,0.04);transform:translateY(-3px);}
-.qa-icon{width:44px;height:44px;border-radius:12px;overflow:hidden;flex-shrink:0;transition:transform .3s;box-shadow:0 2px 8px rgba(0,0,0,.3);}
-.qa:hover .qa-icon{transform:scale(1.1);}
-.qa-icon img{width:100%;height:100%;object-fit:cover;}
-.qa-name{font-size:10px;font-weight:500;color:#444;text-align:center;transition:color .2s;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.qa:hover .qa-name{color:#aaa;}
+.apps-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:11px;}
+.app-card{
+  display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 8px 13px;border-radius:var(--r);cursor:pointer;
+  background:var(--panel);border:1px solid var(--line);transition:all .22s;user-select:none;
+}
+.app-card img{width:30px;height:30px;border-radius:8px;}
+.app-card span{font-size:11.5px;font-weight:600;color:var(--mut);transition:color .2s;text-align:center;}
+.app-card:hover{transform:translateY(-4px);border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.06);box-shadow:0 10px 28px rgba(0,0,0,.4);}
+.app-card:hover span{color:var(--txt);}
 
-/* SEARCH */
-#pageSearch{padding:0;}
-.search-home{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px 24px;}
-.search-home.hidden{display:none;}
-.search-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px;animation:fadeInScale .6s ease;}
-.search-logo .sl-mark{width:48px;height:48px;background:#DC2626;border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(220,38,38,0.3);}
-.search-logo .sl-mark iconify-icon{font-size:26px;color:#fff;}
-.search-logo .sl-text{font-size:32px;font-weight:800;letter-spacing:-0.04em;}.search-logo .sl-text span{color:#DC2626;}
-.search-home-bar{width:100%;max-width:560px;display:flex;align-items:center;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:14px;height:52px;padding:0 16px;transition:all .3s;margin-bottom:20px;animation:fadeInUp .7s ease;}
-.search-home-bar:focus-within{border-color:#DC2626;box-shadow:0 0 0 3px rgba(220,38,38,.08);}
-.search-home-bar iconify-icon{font-size:18px;color:#2a2a2a;margin-right:12px;flex-shrink:0;}
-.search-home-bar input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:15px;font-family:'Inter',sans-serif;}
-.search-home-bar input::placeholder{color:#2a2a2a;}
-.search-home-bar .sh-go{width:34px;height:34px;flex-shrink:0;background:#DC2626;border:none;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
-.search-home-bar .sh-go:hover{background:#ef4444;transform:scale(1.06);}
-.search-home-bar .sh-go iconify-icon{font-size:15px;color:#fff;}
-.search-home-engine{display:flex;align-items:center;gap:6px;font-size:11px;color:#333;font-weight:500;}
-.search-home-engine span{color:#6001D2;font-weight:600;}
-.search-home-shortcuts{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;justify-content:center;}
-.sh-shortcut{display:flex;align-items:center;gap:8px;background:#080808;border:1px solid #141414;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .25s;}
-.sh-shortcut:hover{background:#0e0e0e;border-color:rgba(220,38,38,.15);transform:translateY(-2px);}
-.sh-shortcut .shs-icon{width:22px;height:22px;border-radius:5px;overflow:hidden;flex-shrink:0;background:#111;}
-.sh-shortcut .shs-icon img{width:100%;height:100%;object-fit:cover;}
-.sh-shortcut .shs-name{font-size:11px;font-weight:500;color:#555;}
-.search-results{display:none;flex-direction:column;flex:1;overflow:hidden;}
-.search-results.active{display:flex;animation:fadeIn .3s ease;}
-.search-results-header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #111;background:rgba(6,6,6,.95);backdrop-filter:blur(12px);flex-shrink:0;}
-.srh-back{width:32px;height:32px;border-radius:8px;background:#0a0a0a;border:1px solid #181818;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#444;transition:all .2s;flex-shrink:0;}
-.srh-back:hover{color:#DC2626;border-color:#DC2626;}
-.srh-bar{flex:1;display:flex;align-items:center;background:#0a0a0a;border:1px solid #181818;border-radius:9px;height:36px;padding:0 12px;transition:all .2s;}
-.srh-bar:focus-within{border-color:#DC2626;}
-.srh-bar iconify-icon{font-size:14px;color:#222;margin-right:8px;flex-shrink:0;}
-.srh-bar input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:12px;font-family:'Inter',sans-serif;}
-.srh-go{width:28px;height:28px;background:#DC2626;border:none;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;}
-.srh-go:hover{background:#ef4444;}
-.srh-go iconify-icon{font-size:12px;color:#fff;}
-.search-results-body{flex:1;overflow-y:auto;padding:18px;max-width:720px;width:100%;margin:0 auto;}
-.sr-stats{font-size:10px;color:#333;margin-bottom:16px;}
-.result-card{background:#070707;border:1px solid #111;border-radius:11px;padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:all .25s;}
-.result-card:hover{background:#0d0d0d;border-color:rgba(220,38,38,.18);transform:translateX(4px);}
-.result-url{font-size:10px;color:#444;margin-bottom:4px;display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.result-url iconify-icon{font-size:11px;color:#DC2626;flex-shrink:0;}
-.result-title{font-size:14px;font-weight:600;color:#ddd;margin-bottom:3px;line-height:1.3;}
-.result-desc{font-size:11px;color:#555;line-height:1.45;}
-.sr-loading{display:flex;flex-direction:column;align-items:center;padding:60px 0;gap:14px;}
-.sr-loading .spinner{width:32px;height:32px;border:3px solid #1a1a1a;border-top-color:#DC2626;border-radius:50%;animation:spin .7s linear infinite;}
-.sr-loading p{font-size:12px;color:#333;}
+.games-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;}
+.game-card{position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;border:1px solid var(--line);aspect-ratio:16/10;background:#0d1020;transition:all .25s;user-select:none;}
+.game-card img{width:100%;height:100%;object-fit:cover;transition:transform .35s;}
+.game-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.5);box-shadow:0 14px 34px rgba(0,0,0,.5);}
+.game-card:hover img{transform:scale(1.07);}
+.gc-shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(4,6,13,.92));}
+.gc-name{position:absolute;left:11px;bottom:9px;font-size:12.5px;font-weight:600;}
+.gc-tag{position:absolute;top:9px;right:9px;font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:4px 8px;border-radius:99px;background:var(--grad);text-transform:uppercase;}
+.game-card .gc-fb{width:100%;height:100%;display:grid;place-items:center;font-family:'Space Grotesk';font-size:26px;font-weight:700;background:linear-gradient(135deg,#141a33,#1a1033);color:#a78bfa;}
 
-/* BROWSER */
-#pageBrowse{padding:0;flex-direction:column;}
-.browser-toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #111;background:rgba(6,6,6,.95);backdrop-filter:blur(12px);flex-shrink:0;}
-.browser-toolbar button{width:30px;height:30px;border-radius:8px;background:#0a0a0a;border:1px solid #181818;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#444;transition:all .2s;flex-shrink:0;}
-.browser-toolbar button:hover{color:#DC2626;border-color:#DC2626;transform:scale(1.05);}
-.browser-toolbar button iconify-icon{font-size:14px;}
-.browser-url-bar{flex:1;display:flex;align-items:center;background:#0a0a0a;border:1px solid #181818;border-radius:8px;height:32px;padding:0 10px;transition:all .2s;}
-.browser-url-bar:focus-within{border-color:#DC2626;}
-.browser-url-bar iconify-icon{font-size:12px;color:#DC2626;margin-right:6px;flex-shrink:0;}
-.browser-url-bar input{flex:1;background:none;border:none;outline:none;color:#bbb;font-size:11px;font-family:'Inter',sans-serif;}
-.browser-body{flex:1;overflow:hidden;background:#fff;position:relative;}
-.browser-body iframe{width:100%;height:100%;border:none;background:#fff;}
+.recent-row{display:flex;gap:9px;flex-wrap:wrap;}
+.recent-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);cursor:pointer;font-size:12px;font-weight:500;color:var(--mut);transition:all .2s;max-width:260px;}
+.recent-pill img{width:16px;height:16px;border-radius:4px;}
+.recent-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.recent-pill:hover{border-color:rgba(139,92,246,.4);color:var(--txt);}
+.recent-empty{font-size:12px;color:var(--dim);padding:6px 2px;}
 
-/* APPS */
-#pageApps,#pageGames,#pageSettings{align-items:center;padding:24px;}
-.page-header{width:100%;max-width:700px;display:flex;align-items:center;gap:10px;margin-bottom:24px;animation:slideInLeft .5s ease;}
-.page-header .page-back{width:32px;height:32px;border-radius:8px;background:#0a0a0a;border:1px solid #181818;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#444;transition:all .2s;flex-shrink:0;}
-.page-header .page-back:hover{color:#DC2626;border-color:#DC2626;}
-.page-header h2{font-size:18px;font-weight:700;letter-spacing:-0.02em;}.page-header h2 span{color:#DC2626;}
-.apps-grid{width:100%;max-width:700px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-bottom:24px;}
-.app-card{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:all .3s;padding:10px 6px;border-radius:16px;}
-.app-card:hover{background:rgba(220,38,38,0.04);transform:translateY(-4px);}
-.app-card .ac-icon{width:58px;height:58px;border-radius:15px;overflow:hidden;transition:all .3s;box-shadow:0 3px 12px rgba(0,0,0,.3);}
-.app-card:hover .ac-icon{transform:scale(1.08);box-shadow:0 6px 20px rgba(0,0,0,.4);}
-.app-card .ac-icon img{width:100%;height:100%;object-fit:cover;}
-.app-card .ac-name{font-size:11px;font-weight:500;color:#555;text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .2s;}
-.app-card:hover .ac-name{color:#ccc;}
+.home-foot{margin-top:40px;text-align:center;color:var(--dim);font-size:11px;line-height:2;}
+.home-foot kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:2px 6px;font-family:'Space Grotesk';font-size:10px;color:var(--mut);}
+/* ---- BROWSER ---- */
+#pageBrowse{overflow:hidden;}
+.browser-col{display:flex;flex-direction:column;height:100%;min-height:0;}
+#tabStrip{
+  display:flex;align-items:flex-end;gap:5px;padding:9px 14px 0;flex-shrink:0;overflow-x:auto;scrollbar-width:none;
+}
+#tabStrip::-webkit-scrollbar{display:none;}
+.tab{
+  display:flex;align-items:center;gap:8px;padding:8px 10px 8px 13px;border-radius:11px 11px 0 0;cursor:pointer;
+  background:transparent;border:1px solid transparent;border-bottom:none;max-width:210px;min-width:110px;position:relative;flex-shrink:1;
+  transition:background .2s;user-select:none;
+}
+.tab:hover{background:var(--panel);}
+.tab.active{background:rgba(255,255,255,.06);border-color:var(--line);}
+.tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:2px;background:var(--grad);box-shadow:0 0 8px rgba(139,92,246,.7);}
+.tab-fav{width:16px;height:16px;border-radius:4px;flex-shrink:0;display:grid;place-items:center;}
+.tab-fav img{width:16px;height:16px;border-radius:4px;}
+.tab-fav iconify-icon{font-size:13px;color:var(--dim);}
+.tab-title{flex:1;font-size:12px;font-weight:500;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.tab.active .tab-title{color:var(--txt);}
+.tab-x{width:17px;height:17px;border-radius:5px;display:grid;place-items:center;color:var(--dim);flex-shrink:0;transition:all .15s;}
+.tab-x:hover{background:rgba(244,63,94,.2);color:var(--red);}
+.tab-x iconify-icon{font-size:12px;}
+#tabAdd{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--mut);cursor:pointer;flex-shrink:0;margin-bottom:2px;
+  border:1px dashed var(--line2);transition:all .2s;
+}
+#tabAdd:hover{color:#a78bfa;border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.08);}
+#tabAdd iconify-icon{font-size:15px;}
 
-/* GAMES */
-.games-grid{width:100%;max-width:700px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding-bottom:24px;}
-.game-card{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;transition:all .3s;aspect-ratio:1/1;background:#111;}
-.game-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 12px 32px rgba(0,0,0,.5);}
-.game-card img.gc-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s,filter .4s;filter:brightness(.75);}
-.game-card:hover img.gc-img{transform:scale(1.06);filter:brightness(.6);}
-.game-card .gc-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.5) 60%,transparent 100%);padding:32px 12px 12px;z-index:2;}
-.game-card .gc-name{font-size:13px;font-weight:700;color:#fff;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7);}
-.game-card .gc-tag{position:absolute;top:8px;right:8px;z-index:3;background:rgba(220,38,38,.85);color:#fff;font-size:8px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em;animation:bounceIn .5s ease .3s both;}
+.browser-toolbar{
+  display:flex;align-items:center;gap:7px;padding:9px 14px;border-bottom:1px solid var(--line);flex-shrink:0;
+  background:rgba(8,10,22,.6);backdrop-filter:blur(14px);
+}
+.tb-btn{
+  width:33px;height:33px;border-radius:9px;display:grid;place-items:center;color:var(--mut);cursor:pointer;flex-shrink:0;
+  background:transparent;border:1px solid transparent;transition:all .18s;
+}
+.tb-btn iconify-icon{font-size:17px;}
+.tb-btn:hover{background:var(--panel2);color:var(--txt);border-color:var(--line);}
+.tb-btn.disabled{opacity:.32;pointer-events:none;}
+.tb-sep{width:1px;height:20px;background:var(--line);margin:0 3px;flex-shrink:0;}
+.urlbox{
+  flex:1;display:flex;align-items:center;gap:9px;padding:0 6px 0 14px;height:37px;border-radius:11px;min-width:0;
+  background:rgba(4,6,13,.65);border:1px solid var(--line);transition:border-color .2s;
+}
+.urlbox:focus-within{border-color:rgba(139,92,246,.55);box-shadow:var(--glow);}
+.urlbox iconify-icon{font-size:14px;color:var(--cya);flex-shrink:0;}
+.urlbox input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13px;font-family:'Inter';min-width:0;}
+.urlbox input::placeholder{color:var(--dim);}
+.mode-badge{
+  display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.5px;padding:4px 9px;border-radius:99px;
+  background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.3);color:var(--cya);white-space:nowrap;flex-shrink:0;
+}
+.mode-badge.fetch{background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.35);color:#a78bfa;}
+.mode-badge.popout{background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.35);color:var(--grn);}
 
-/* AI PAGE */
-#pageAI{padding:0;flex-direction:column;height:100%;}
-.ai-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #111;background:rgba(6,6,6,.95);backdrop-filter:blur(12px);flex-shrink:0;}
-.ai-header .ai-back{width:32px;height:32px;border-radius:8px;background:#0a0a0a;border:1px solid #181818;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#444;transition:all .2s;flex-shrink:0;}
-.ai-header .ai-back:hover{color:#DC2626;border-color:#DC2626;}
-.ai-header .ai-title{display:flex;align-items:center;gap:8px;flex:1;}
-.ai-header .ai-title .ai-av{width:28px;height:28px;background:#DC2626;border-radius:8px;display:flex;align-items:center;justify-content:center;}
-.ai-header .ai-title .ai-av iconify-icon{font-size:15px;color:#fff;}
-.ai-header .ai-title h3{font-size:14px;font-weight:600;}.ai-header .ai-title h3 span{color:#DC2626;}
-.ai-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;}
-.ai-messages::-webkit-scrollbar{width:3px;}.ai-messages::-webkit-scrollbar-thumb{background:#1a1a1a;border-radius:3px;}
-.ai-msg{display:flex;gap:10px;max-width:85%;animation:fadeInUp .4s ease;}
-.ai-msg.user{align-self:flex-end;flex-direction:row-reverse;}
-.ai-msg .msg-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.ai-msg .msg-av.av-ai{background:#DC2626;}.ai-msg .msg-av.av-user{background:#333;}
-.ai-msg .msg-av iconify-icon{font-size:14px;color:#fff;}
-.ai-msg .msg-body{background:#0a0a0a;border:1px solid #151515;border-radius:14px;padding:12px 14px;font-size:13px;color:#ccc;line-height:1.6;word-break:break-word;}
-.ai-msg.user .msg-body{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.15);color:#eee;}
-.ai-msg .msg-body p{margin-bottom:6px;}.ai-msg .msg-body p:last-child{margin-bottom:0;}
-.ai-msg .msg-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-.ai-msg .msg-file{background:#111;border:1px solid #1a1a1a;border-radius:8px;overflow:hidden;max-width:140px;}
-.ai-msg .msg-file img,.ai-msg .msg-file video{width:100%;display:block;border-radius:6px;max-height:100px;object-fit:cover;}
-.ai-msg .msg-file .mf-info{padding:4px 6px;font-size:9px;color:#555;}
-.ai-typing{display:flex;gap:4px;padding:4px 0;}
-.ai-typing span{width:6px;height:6px;background:#DC2626;border-radius:50%;animation:aiBounce .6s ease-in-out infinite;opacity:.4;}
-.ai-typing span:nth-child(2){animation-delay:.1s;}.ai-typing span:nth-child(3){animation-delay:.2s;}
-.ai-input-area{border-top:1px solid #111;padding:12px 14px;background:rgba(6,6,6,.95);backdrop-filter:blur(12px);flex-shrink:0;}
-.ai-attached{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-.ai-att{position:relative;background:#0a0a0a;border:1px solid #181818;border-radius:10px;overflow:hidden;animation:bounceIn .3s ease;}
-.ai-att img,.ai-att video{width:64px;height:64px;object-fit:cover;display:block;}
-.ai-att .att-info{padding:4px 6px;}.ai-att .att-name{font-size:9px;color:#888;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.ai-att .att-size{font-size:8px;color:#444;}
-.ai-att .att-remove{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(0,0,0,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#888;transition:color .15s;}
-.ai-att .att-remove:hover{color:#DC2626;}
-.ai-att .att-remove iconify-icon{font-size:11px;}
-.ai-bar{display:flex;align-items:center;gap:8px;}
-.ai-bar button{width:34px;height:34px;border-radius:9px;background:#0a0a0a;border:1px solid #181818;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#444;transition:all .2s;flex-shrink:0;}
-.ai-bar button:hover{color:#DC2626;border-color:#DC2626;transform:scale(1.06);}
-.ai-bar button iconify-icon{font-size:16px;}
-.ai-bar input{flex:1;background:#0a0a0a;border:1px solid #181818;border-radius:10px;height:38px;padding:0 12px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:all .2s;}
-.ai-bar input:focus{border-color:#DC2626;}
-.ai-bar .ai-send{width:38px;height:38px;background:#DC2626;border:none;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;}
-.ai-bar .ai-send:hover{background:#ef4444;transform:scale(1.06);}
-.ai-bar .ai-send iconify-icon{font-size:16px;color:#fff;}
+.browser-body{flex:1;min-height:0;position:relative;background:#07091a;}
+.frame-holder{position:absolute;inset:0;display:none;}
+.frame-holder.active{display:block;}
+.frame-holder iframe{width:100%;height:100%;border:none;background:#fff;}
+#loadOverlay{
+  position:absolute;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:rgba(4,6,13,.86);backdrop-filter:blur(8px);
+}
+#loadOverlay.show{display:flex;}
+.nx-spinner{width:44px;height:44px;border-radius:50%;border:3px solid rgba(139,92,246,.15);border-top-color:#8b5cf6;border-right-color:#22d3ee;animation:spin .8s linear infinite;}
+#loadOverlay p{font-size:12.5px;color:var(--mut);font-weight:500;}
+#loadOverlay small{font-size:10.5px;color:var(--dim);}
+#frameErr{
+  position:absolute;inset:0;z-index:25;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:30px;
+  background:var(--bg0);
+}
+#frameErr.show{display:flex;}
+#frameErr iconify-icon{font-size:44px;color:var(--red);}
+#frameErr h3{font-family:'Space Grotesk';font-size:19px;}
+#frameErr p{font-size:12.5px;color:var(--mut);max-width:440px;line-height:1.65;}
+#frameErr .err-actions{display:flex;gap:9px;margin-top:8px;flex-wrap:wrap;justify-content:center;}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;font-size:12px;font-weight:600;cursor:pointer;
+  background:var(--panel2);border:1px solid var(--line2);color:var(--txt);transition:all .2s;user-select:none;
+}
+.btn iconify-icon{font-size:15px;}
+.btn:hover{border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.10);}
+.btn.primary{background:var(--grad);border:none;color:#fff;box-shadow:0 6px 20px rgba(139,92,246,.4);}
+.btn.primary:hover{box-shadow:0 6px 28px rgba(139,92,246,.55);transform:translateY(-1px);}
+.btn.danger:hover{border-color:rgba(244,63,94,.5);background:rgba(244,63,94,.10);}
 
-.media-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.9);backdrop-filter:blur(8px);align-items:center;justify-content:center;flex-direction:column;gap:14px;animation:fadeInScale .3s ease;}
-.media-modal.active{display:flex;}
-.media-modal video{max-width:90%;max-height:70vh;border-radius:16px;border:2px solid #222;}
-.media-modal .mm-actions{display:flex;gap:10px;}
-.media-modal .mm-btn{padding:10px 20px;border-radius:10px;border:1px solid #222;background:#111;color:#ccc;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
-.media-modal .mm-btn:hover{border-color:#DC2626;color:#fff;}
-.media-modal .mm-btn.mm-capture{background:#DC2626;border-color:#DC2626;color:#fff;}
-.media-modal .mm-btn.mm-capture:hover{background:#ef4444;}
+/* ---- GENERIC PAGES (apps/games/settings/ai) ---- */
+.page-pad{width:100%;max-width:1080px;margin:0 auto;padding:26px 26px 44px;}
+.page-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;animation:fadeUp .4s ease both;}
+.page-head h1{font-family:'Space Grotesk';font-size:24px;font-weight:700;}
+.page-head h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.page-head .spacer{flex:1;}
+.filter-input{
+  display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);min-width:210px;
+}
+.filter-input iconify-icon{color:var(--dim);font-size:15px;}
+.filter-input input{background:none;border:none;outline:none;color:var(--txt);font-size:12.5px;width:100%;}
+.set-group{margin-bottom:26px;animation:fadeUp .45s ease both;}
+.set-group h3{font-family:'Space Grotesk';font-size:13px;font-weight:600;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:8px;}
+.set-group h3 iconify-icon{font-size:15px;}
+.set-card{
+  display:flex;align-items:center;gap:14px;padding:15px 17px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);margin-bottom:9px;transition:border-color .2s;
+}
+.set-card:hover{border-color:var(--line2);}
+.set-ic{width:37px;height:37px;border-radius:11px;display:grid;place-items:center;background:rgba(139,92,246,.10);border:1px solid rgba(139,92,246,.25);flex-shrink:0;}
+.set-ic iconify-icon{font-size:18px;color:#a78bfa;}
+.set-info{flex:1;min-width:0;}
+.set-info h4{font-size:13.5px;font-weight:600;}
+.set-info p{font-size:11.5px;color:var(--mut);margin-top:3px;line-height:1.5;}
+.toggle{width:42px;height:23px;border-radius:99px;background:rgba(255,255,255,.09);border:1px solid var(--line2);position:relative;cursor:pointer;flex-shrink:0;transition:background .25s;}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#697086;transition:all .25s;}
+.toggle.on{background:linear-gradient(135deg,rgba(139,92,246,.5),rgba(34,211,238,.4));border-color:transparent;}
+.toggle.on::after{left:21px;background:#fff;box-shadow:0 0 8px rgba(139,92,246,.8);}
+select.nx-select,input.nx-input{
+  background:rgba(4,6,13,.7);border:1px solid var(--line2);color:var(--txt);font-size:12px;font-family:'Inter';font-weight:500;
+  padding:8px 11px;border-radius:10px;outline:none;cursor:pointer;max-width:190px;
+}
+select.nx-select:focus,input.nx-input:focus{border-color:rgba(139,92,246,.5);}
+select.nx-select option{background:#0a0e1e;}
+input.nx-input{cursor:text;width:190px;}
 
-/* SETTINGS */
-.settings-list{width:100%;max-width:500px;display:flex;flex-direction:column;gap:2px;}
-.setting-item{display:flex;align-items:center;justify-content:space-between;padding:16px;background:#070707;border:1px solid #111;border-radius:12px;transition:all .2s;}
-.setting-item:first-child{border-radius:12px 12px 4px 4px;}.setting-item:last-child{border-radius:4px 4px 12px 12px;}
-.setting-left{display:flex;align-items:center;gap:12px;}
-.setting-left iconify-icon{font-size:20px;color:#333;}
-.setting-info h4{font-size:13px;font-weight:500;color:#ddd;margin-bottom:2px;}
-.setting-info p{font-size:11px;color:#444;}
-.toggle{width:40px;height:22px;background:#1a1a1a;border-radius:11px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
-.toggle.on{background:#DC2626;}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;}
-.toggle.on::after{transform:translateX(18px);}
-.setting-btn{padding:8px 16px;border-radius:8px;border:1px solid #181818;background:#0a0a0a;color:#888;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.setting-btn:hover{border-color:#DC2626;color:#DC2626;}
+/* ---- AI ---- */
+#pageAI{overflow:hidden;}
+.ai-col{display:flex;flex-direction:column;height:100%;min-height:0;}
+.ai-scroll{flex:1;min-height:0;overflow-y:auto;padding:24px 26px 10px;display:flex;flex-direction:column;gap:16px;}
+.ai-msg{display:flex;gap:12px;max-width:760px;width:100%;margin:0 auto;animation:fadeUp .3s ease both;}
+.ai-msg .msg-av{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;}
+.ai-msg .msg-av iconify-icon{font-size:16px;}
+.msg-av.av-ai{background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(34,211,238,.15));border:1px solid rgba(139,92,246,.4);color:#a78bfa;}
+.msg-av.av-user{background:var(--panel2);border:1px solid var(--line2);color:var(--mut);}
+.msg-body{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 15px;font-size:13px;line-height:1.7;color:#d5daea;}
+.msg-body p{margin:0 0 7px;}
+.msg-body p:last-child{margin:0;}
+.msg-body code{background:rgba(139,92,246,.12);padding:1px 6px;border-radius:5px;font-family:monospace;font-size:12px;color:#c4b5fd;}
+.ai-typing{display:flex;gap:5px;padding:4px 0;}
+.ai-typing span{width:7px;height:7px;border-radius:50%;background:#a78bfa;animation:pulse 1s infinite;}
+.ai-typing span:nth-child(2){animation-delay:.15s;}
+.ai-typing span:nth-child(3){animation-delay:.3s;}
+.ai-input-area{flex-shrink:0;padding:14px 26px 20px;}
+.ai-bar{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:16px;background:rgba(10,13,28,.85);border:1px solid var(--line2);box-shadow:0 10px 34px rgba(0,0,0,.4);}
+.ai-bar input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13.5px;min-width:0;}
+.ai-bar input::placeholder{color:var(--dim);}
+.ai-send{width:38px;height:38px;border-radius:11px;border:none;cursor:pointer;display:grid;place-items:center;background:var(--grad);color:#fff;font-size:17px;flex-shrink:0;transition:all .2s;}
+.ai-send:hover{transform:scale(1.05);}
+.ai-hint{max-width:760px;margin:9px auto 0;text-align:center;font-size:10.5px;color:var(--dim);}
 
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(70px);background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:9px 16px;display:flex;align-items:center;gap:7px;font-size:11px;color:#ccc;box-shadow:0 6px 20px rgba(0,0,0,.5);opacity:0;transition:all .35s cubic-bezier(.16,1,.3,1);z-index:100;white-space:nowrap;pointer-events:none;}
-.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
-.toast iconify-icon{color:#DC2626;font-size:15px;}
+/* ---- TOAST / MODAL ---- */
+#toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(70px);z-index:200;opacity:0;
+  display:flex;align-items:center;gap:9px;padding:11px 18px;border-radius:13px;font-size:12.5px;font-weight:500;color:var(--txt);
+  background:rgba(12,15,30,.95);border:1px solid rgba(139,92,246,.4);box-shadow:0 12px 40px rgba(0,0,0,.6),var(--glow);
+  transition:all .35s cubic-bezier(.16,1,.3,1);white-space:nowrap;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast iconify-icon{font-size:16px;color:#a78bfa;}
+#toast.ok iconify-icon{color:var(--grn);}
+#toast.err iconify-icon{color:var(--red);}
 
-@media(max-width:600px){
-.sidebar{width:46px;padding:12px 6px 10px;border-radius:0 16px 16px 0;}.sidebar-logo{width:28px;height:28px;border-radius:7px;}.sidebar-item{width:30px;height:30px;border-radius:8px;}.sidebar-item iconify-icon{font-size:15px;}
-#pageHome{padding:14px 12px 16px;}.slide-img{height:200px;}.apps-grid{grid-template-columns:repeat(3,1fr);}.games-grid{grid-template-columns:repeat(2,1fr);gap:10px;}.quick-apps{gap:6px;}.qa-icon{width:38px;height:38px;}.search-logo .sl-text{font-size:24px;}
+@media(max-width:860px){
+  .apps-grid{grid-template-columns:repeat(4,1fr);}
+  .games-grid{grid-template-columns:repeat(2,1fr);}
+  .hero h1{font-size:38px;}
+  .nav-pill span{display:none;}
+  .nav-pill{padding:8px 11px;}
+  .brand-name{display:none;}
+  .chip.hideable{display:none;}
+}
+@media(max-width:560px){
+  .apps-grid{grid-template-columns:repeat(3,1fr);}
+  .home-inner{padding:22px 14px 30px;}
+  .page-pad{padding:20px 14px 40px;}
+  .browser-toolbar{flex-wrap:wrap;}
 }
 </style>
 </head>
 <body>
-<canvas id="snowCanvas"></canvas>
-<div class="status-bar"><div class="battery"><iconify-icon icon="solar:battery-half-bold-duotone"></iconify-icon>51%</div><div class="time">07:08 PM</div></div>
-<div class="layout">
-<aside class="sidebar">
-<div class="sidebar-logo" data-page="home"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div>
-<div class="sidebar-item active" data-page="home"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></div>
-<div class="sidebar-item" data-page="search"><iconify-icon icon="solar:magnifer-bold-duotone"></iconify-icon></div>
-<div class="sidebar-item" data-page="apps"><iconify-icon icon="solar:widget-2-bold-duotone"></iconify-icon></div>
-<div class="sidebar-item" data-page="games"><iconify-icon icon="solar:gamepad-bold-duotone"></iconify-icon></div>
-<div class="sidebar-item" data-page="ai"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div>
-<div class="sidebar-spacer"></div>
-<div class="sidebar-item" data-page="settings"><iconify-icon icon="solar:settings-bold-duotone"></iconify-icon></div>
-</aside>
-<main class="main">
-<div id="pageHome" class="page active"><div class="home-inner">
-<div class="logo-row"><div class="logo-mark"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div><div class="logo-text"><span>Scarlet</span></div></div>
-<div class="carousel-wrap"><div class="carousel-viewport"><div class="carousel-track" id="track">
-<div class="carousel-slide" data-url="https://www.roblox.com"><img class="slide-img" src="https://images.rbxcdn.com/28ab48fcd5d5b19b03c126d2b6aef4b8.jpg" alt="Roblox"><div class="slide-overlay"><div class="slide-tag"><iconify-icon icon="solar:star-bold-duotone"></iconify-icon> Hot</div><div class="slide-title">Roblox is now available!</div><div class="slide-sub">Play Roblox unblocked — no download needed.</div></div></div>
-<div class="carousel-slide" data-url="https://krunker.io"><img class="slide-img" src="https://images.crazygames.com/games/krunker-io/cover_1631002819246.png" alt="Games"><div class="slide-overlay"><div class="slide-tag"><iconify-icon icon="solar:gamepad-bold-duotone"></iconify-icon> Games</div><div class="slide-title">Unblocked Games</div><div class="slide-sub">Play your favorites — all free, all unblocked.</div></div></div>
-</div></div><button class="arrow-btn arrow-left" id="prevBtn"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button><button class="arrow-btn arrow-right" id="nextBtn"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></button><div class="dots" id="dots"></div></div>
-<div class="home-search"><div class="search-bar"><iconify-icon icon="solar:magnifer-linear" class="si"></iconify-icon><input type="text" id="homeInput" placeholder="Search with Scarlet or enter URL..." autocomplete="off"><button class="go-btn" id="homeGo"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></button></div></div>
-<div class="quick-apps" id="homeQuickApps"></div>
-</div></div>
+<canvas id="fxCanvas"></canvas>
 
-<div id="pageSearch" class="page">
-<div class="search-home" id="searchHome"><div class="search-logo"><div class="sl-mark"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div><div class="sl-text"><span>Scarlet</span> Search</div></div><div class="search-home-bar"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" id="searchHomeInput" placeholder="Search the web..." autocomplete="off"><button class="sh-go" id="searchHomeGo"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></button></div><div class="search-home-engine"><iconify-icon icon="simple-icons:yahoo" style="font-size:14px;color:#6001D2"></iconify-icon> Powered by <span>Yahoo</span></div><div class="search-home-shortcuts" id="searchShortcuts"></div></div>
-<div class="search-results" id="searchResults"><div class="search-results-header"><button class="srh-back" id="srhBack"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button><div class="srh-bar"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" id="srhInput" placeholder="Search..." autocomplete="off"></div><button class="srh-go" id="srhGo"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></button></div><div class="search-results-body" id="searchResultsBody"></div></div>
-</div>
-
-<div id="pageBrowse" class="page">
-  <div class="browser-toolbar">
-    <button id="tbBack" title="Back"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button>
-    <button id="tbRefresh" title="Reload"><iconify-icon icon="solar:refresh-linear"></iconify-icon></button>
-    <button id="tbHome" title="Home"><iconify-icon icon="solar:home-2-linear"></iconify-icon></button>
-    <div class="browser-url-bar"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon><input type="text" id="browserUrlInput" placeholder="Enter a URL..."></div>
+<header id="topbar">
+  <div class="brand" data-page="home">
+    <div class="brand-mark"><iconify-icon icon="solar:orbit-bold-duotone"></iconify-icon></div>
+    <div class="brand-name">NEXUS</div>
   </div>
-  <div class="browser-body"><iframe id="browserIframe" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-storage-access-by-user-activation" referrerpolicy="no-referrer"></iframe></div>
+  <nav class="nav" id="mainNav">
+    <div class="nav-pill active" data-page="home"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon><span>Home</span></div>
+    <div class="nav-pill" data-page="apps"><iconify-icon icon="solar:widget-2-bold-duotone"></iconify-icon><span>Apps</span></div>
+    <div class="nav-pill" data-page="games"><iconify-icon icon="solar:gamepad-bold-duotone"></iconify-icon><span>Games</span></div>
+    <div class="nav-pill" data-page="ai"><iconify-icon icon="solar:stars-bold-duotone"></iconify-icon><span>Nexus AI</span></div>
+    <div class="nav-pill" data-page="settings"><iconify-icon icon="solar:settings-bold-duotone"></iconify-icon><span>Settings</span></div>
+  </nav>
+  <div class="topbar-right">
+    <div class="chip hideable" id="clockChip"><iconify-icon icon="solar:clock-circle-bold-duotone"></iconify-icon><span id="clockText">--:--</span></div>
+    <div class="chip clickable" id="cloakBtn" title="Cycle tab cloak"><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon><span id="cloakName">No cloak</span></div>
+    <div class="chip" title="Engine status"><div class="live-dot"></div><span class="hideable" style="font-weight:600;">TG Engine</span></div>
+  </div>
+</header>
+
+<div id="stage">
+
+  <!-- HOME -->
+  <section id="pageHome" class="page active">
+    <div class="home-inner">
+      <div class="hero">
+        <div class="hero-mark"><div class="hero-orbit"></div><iconify-icon icon="solar:orbit-bold-duotone"></iconify-icon></div>
+        <h1>NEXUS</h1>
+        <p class="tag">The web, <b>unblocked</b>. Nexus routes every site through Google Translate's own infrastructure — pages are fetched, reprocessed and rendered clean, so YouTube, TikTok and everything else keep working.</p>
+        <div class="hero-badges">
+          <div class="hbadge"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon> Fetch &amp; render — not blocked</div>
+          <div class="hbadge"><iconify-icon icon="solar:play-circle-bold-duotone"></iconify-icon> Media unlock layer</div>
+          <div class="hbadge"><iconify-icon icon="solar:lock-keyhole-minimalistic-bold-duotone"></iconify-icon> No keys, no logs</div>
+        </div>
+      </div>
+      <div class="home-search">
+        <div class="search-pill">
+          <iconify-icon icon="solar:magnifer-linear" class="mag"></iconify-icon>
+          <input type="text" id="homeInput" placeholder="Search DuckDuckGo or paste any URL..." autocomplete="off" spellcheck="false">
+          <span class="engine-tag"><iconify-icon icon="simple-icons:duckduckgo" style="font-size:12px;"></iconify-icon>NEXUS</span>
+          <button class="go-btn" id="homeGo"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></button>
+        </div>
+      </div>
+      <div class="quick-row" id="quickRow"></div>
+      <div class="sect" id="recentSect" style="display:none;">
+        <div class="sect-head"><h2><iconify-icon icon="solar:history-bold-duotone"></iconify-icon>Recent</h2><div class="more" id="clearRecent">Clear</div></div>
+        <div class="recent-row" id="recentRow"></div>
+      </div>
+      <div class="sect">
+        <div class="sect-head"><h2><iconify-icon icon="solar:widget-2-bold-duotone"></iconify-icon>Popular apps</h2><div class="more" data-page="apps">View all <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></div></div>
+        <div class="apps-grid" id="homeApps"></div>
+      </div>
+      <div class="sect">
+        <div class="sect-head"><h2><iconify-icon icon="solar:gamepad-bold-duotone"></iconify-icon>Trending games</h2><div class="more" data-page="games">View all <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></div></div>
+        <div class="games-grid" id="homeGames"></div>
+      </div>
+      <div class="home-foot">
+        <kbd>Esc</kbd> panic key &nbsp;·&nbsp; <kbd>Ctrl</kbd>+<kbd>M</kbd> open popout browser &nbsp;·&nbsp; Engine: Google Translate fetch &amp; render + media relay<br>
+        Nexus never stores keys or history off-device.
+      </div>
+    </div>
+  </section>
+
+  <!-- BROWSER -->
+  <section id="pageBrowse" class="page">
+    <div class="browser-col">
+      <div id="tabStrip"></div>
+      <div class="browser-toolbar">
+        <div class="tb-btn" id="btnBack" title="Back"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></div>
+        <div class="tb-btn" id="btnFwd" title="Forward"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></div>
+        <div class="tb-btn" id="btnReload" title="Reload"><iconify-icon icon="solar:refresh-linear"></iconify-icon></div>
+        <div class="tb-btn" id="btnHome" title="Home"><iconify-icon icon="solar:home-angle-linear"></iconify-icon></div>
+        <div class="tb-sep"></div>
+        <div class="urlbox">
+          <iconify-icon icon="solar:shield-check-bold-duotone" id="urlLock"></iconify-icon>
+          <input type="text" id="urlInput" placeholder="Enter URL or search..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="mode-badge fetch" id="modeBadge" title="Engine mode"><iconify-icon icon="solar:bolt-linear" style="font-size:12px;"></iconify-icon><span id="modeText">TG-FETCH</span></div>
+        <div class="tb-btn" id="btnPopout" title="Open popout browser (about:blank)"><iconify-icon icon="solar:external-drive-linear"></iconify-icon></div>
+        <div class="tb-btn" id="btnRealTab" title="Open this site in a real tab (full media + logins)"><iconify-icon icon="solar:square-arrow-right-up-linear"></iconify-icon></div>
+        <div class="tb-btn" id="btnFull" title="Fullscreen"><iconify-icon icon="solar:maximize-square-linear"></iconify-icon></div>
+      </div>
+      <div class="browser-body">
+        <div id="frameHost"></div>
+        <div id="loadOverlay"><div class="nx-spinner"></div><p id="loadText">Fetching through Google Translate...</p><small id="loadSub">fetch → process → render</small></div>
+        <div id="frameErr">
+          <iconify-icon icon="solar:cloud-cross-bold-duotone"></iconify-icon>
+          <h3>Couldn't fetch this site</h3>
+          <p id="frameErrMsg">Every route to Google Translate was blocked on this network, or the site is offline. Try a relay retry, the popout browser, or open it in a real tab.</p>
+          <div class="err-actions">
+            <div class="btn primary" id="errRetry"><iconify-icon icon="solar:refresh-linear"></iconify-icon>Retry</div>
+            <div class="btn" id="errPopout"><iconify-icon icon="solar:external-drive-linear"></iconify-icon>Popout browser</div>
+            <div class="btn" id="errTab"><iconify-icon icon="solar:square-arrow-right-up-linear"></iconify-icon>Open in tab</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPS -->
+  <section id="pageApps" class="page scroll-col">
+    <div class="page-pad">
+      <div class="page-head">
+        <h1><em>Apps</em></h1>
+        <div class="spacer"></div>
+        <div class="filter-input"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input id="appsFilter" placeholder="Filter apps..." autocomplete="off"></div>
+      </div>
+      <div class="apps-grid" id="appsGrid"></div>
+    </div>
+  </section>
+
+  <!-- GAMES -->
+  <section id="pageGames" class="page scroll-col">
+    <div class="page-pad">
+      <div class="page-head">
+        <h1><em>Games</em></h1>
+        <div class="spacer"></div>
+        <div class="filter-input"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input id="gamesFilter" placeholder="Filter games..." autocomplete="off"></div>
+      </div>
+      <div class="games-grid" id="gamesGrid"></div>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section id="pageAI" class="page">
+    <div class="ai-col">
+      <div class="ai-scroll" id="aiScroll">
+        <div class="ai-msg">
+          <div class="msg-av av-ai"><iconify-icon icon="solar:stars-bold-duotone"></iconify-icon></div>
+          <div class="msg-body"><p>Hey — I'm <b>Nexus AI</b>. I run fully keyless: no API key is stored in this file or sent anywhere. Ask me anything and I'll do my best. If your network blocks the AI endpoint, I'll tell you instead of leaking data.</p></div>
+        </div>
+      </div>
+      <div class="ai-input-area">
+        <div class="ai-bar">
+          <input type="text" id="aiInput" placeholder="Message Nexus AI..." autocomplete="off">
+          <button class="ai-send" id="aiSend"><iconify-icon icon="solar:arrow-up-linear"></iconify-icon></button>
+        </div>
+        <div class="ai-hint">Keyless endpoint — no API key exists anywhere in Nexus.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="pageSettings" class="page scroll-col">
+    <div class="page-pad">
+      <div class="page-head"><h1><em>Settings</em></h1></div>
+
+      <div class="set-group">
+        <h3><iconify-icon icon="solar:cpu-bolt-bold-duotone"></iconify-icon>Engine</h3>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:translate-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Translation language</h4><p>Google needs a real language pair (en→en returns HTTP 400). Pages are proxied via this target language — pick one you can live with.</p></div>
+          <select class="nx-select" id="setTlang">
+            <option value="es">Spanish (default)</option><option value="fr">French</option><option value="de">German</option>
+            <option value="hi">Hindi</option><option value="pt">Portuguese</option><option value="ar">Arabic</option>
+            <option value="ja">Japanese</option><option value="zh-CN">Chinese (Simplified)</option><option value="ru">Russian</option>
+          </select>
+        </div>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:play-circle-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Media relay</h4><p>Route images &amp; video streams through Google's CDN relay so thumbnails and players load even when the source CDN is blocked.</p></div>
+          <div class="toggle on" id="setMedia"></div>
+        </div>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:link-circle-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Media unlock layer</h4><p>On YouTube &amp; TikTok pages, Nexus extracts the real video streams and injects its own player — so videos actually load.</p></div>
+          <div class="toggle on" id="setUnlock"></div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <h3><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon>Stealth</h3>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:mask-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Tab cloak</h4><p>Disguise this tab's title and favicon.</p></div>
+          <select class="nx-select" id="setCloak">
+            <option value="none">No cloak</option><option value="google">Google</option><option value="classroom">Google Classroom</option>
+            <option value="drive">Google Drive</option><option value="docs">Google Docs</option><option value="gmail">Gmail</option>
+            <option value="canvas">Canvas LMS</option><option value="custom">Custom...</option>
+          </select>
+        </div>
+        <div class="set-card" id="customCloakCard" style="display:none;">
+          <div class="set-ic"><iconify-icon icon="solar:pen-new-round-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Custom cloak</h4><p>Any title + favicon image URL.</p></div>
+          <input class="nx-input" id="cloakTitleIn" placeholder="Tab title" style="width:130px;margin-right:6px;">
+          <input class="nx-input" id="cloakIconIn" placeholder="Icon URL">
+        </div>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:danger-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Panic key (Esc)</h4><p>Pressing Esc while browsing instantly redirects to a safe page.</p></div>
+          <div class="toggle" id="setPanic"></div>
+          <select class="nx-select" id="setPanicUrl">
+            <option value="https://classroom.google.com">Classroom</option><option value="https://docs.google.com">Google Docs</option>
+            <option value="https://www.google.com">Google</option><option value="https://www.khanacademy.org">Khan Academy</option>
+          </select>
+        </div>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:external-drive-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Popout browser</h4><p>Launch Nexus inside a blank about:blank window — nothing in history, nothing to block. <b>Ctrl+M</b> anywhere.</p></div>
+          <div class="btn" id="setPopout"><iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon>Launch</div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <h3><iconify-icon icon="solar:widget-4-bold-duotone"></iconify-icon>Appearance</h3>
+        <div class="set-card">
+          <div class="set-ic"><iconify-icon icon="solar:star-sparkles-bold-duotone"></iconify-icon></div>
+          <div class="set-info"><h4>Particle field</h4><p>Drifting nebula particles behind the UI.</p></div>
+          <div class="toggle on" id="setFx"></div>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <h3><iconify-icon icon="solar:database-bold-duotone"></iconify-icon>Data</h3>
+        <div class="set-card">
+          <div class="set-ic" style="background:rgba(244,63,94,.1);border-color:rgba(244,63,94,.3);"><iconify-icon icon="solar:trash-bin-trash-bold-duotone" style="color:var(--red);"></iconify-icon></div>
+          <div class="set-info"><h4>Clear all data</h4><p>Wipes recents, settings and tab state from this device.</p></div>
+          <div class="btn danger" id="setClear"><iconify-icon icon="solar:trash-bin-minimalistic-linear"></iconify-icon>Clear</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </div>
 
-<div id="pageApps" class="page"><div class="page-header"><button class="page-back" data-page="home"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button><h2><span>Apps</span></h2></div><div class="apps-grid" id="appsGrid"></div></div>
-
-<div id="pageGames" class="page"><div class="page-header"><button class="page-back" data-page="home"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button><h2><span>Games</span></h2></div><div class="games-grid" id="gamesGrid"></div></div>
-
-<div id="pageAI" class="page"><div class="ai-header"><button class="ai-back" data-page="home"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button><div class="ai-title"><div class="ai-av"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div><h3><span>Scarlet</span> AI</h3></div></div><div class="ai-messages" id="aiMessages"><div class="ai-msg"><div class="msg-av av-ai"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div><div class="msg-body"><p>Hey! I'm Scarlet AI. Ask me anything, or attach images and files.</p></div></div></div><div class="ai-input-area"><div class="ai-attached" id="aiAttached"></div><div class="ai-bar"><button id="aiAttachBtn" title="Upload files"><iconify-icon icon="solar:upload-bold-duotone"></iconify-icon></button><button id="aiCameraBtn" title="Camera"><iconify-icon icon="solar:camera-bold-duotone"></iconify-icon></button><button id="aiScreenBtn" title="Screen"><iconify-icon icon="solar:monitor-bold-duotone"></iconify-icon></button><input type="text" id="aiInput" placeholder="Message Scarlet AI..." autocomplete="off"><button class="ai-send" id="aiSend"><iconify-icon icon="solar:arrow-up-linear"></iconify-icon></button></div></div><input type="file" id="aiFileInput" multiple accept="image/*,video/*,.pdf,.txt,.doc,.docx" style="display:none"></div>
-
-<div id="pageSettings" class="page"><div class="page-header"><button class="page-back" data-page="home"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></button><h2><span>Settings</span></h2></div><div class="settings-list">
-<div class="setting-item"><div class="setting-left"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon><div class="setting-info"><h4>Google Translate Proxy</h4><p>Route pages through translate.goog</p></div></div><div class="toggle on" data-setting="proxy"></div></div>
-<div class="setting-item"><div class="setting-left"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon><div class="setting-info"><h4>Turbo / Direct Mode</h4><p>Needed for YouTube, Twitch, Netflix</p></div></div><div class="toggle on" data-setting="direct"></div></div>
-<div class="setting-item"><div class="setting-left"><iconify-icon icon="solar:snowflake-bold-duotone"></iconify-icon><div class="setting-info"><h4>Snow Effect</h4><p>Animated snowfall overlay</p></div></div><div class="toggle on" data-setting="snow"></div></div>
-<div class="setting-item"><div class="setting-left"><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon><div class="setting-info"><h4>Stealth Mode</h4><p>Hide from GoGuardian</p></div></div><div class="toggle" data-setting="stealth"></div></div>
-<div class="setting-item"><div class="setting-left"><iconify-icon icon="solar:tab-bold-duotone"></iconify-icon><div class="setting-info"><h4>Open in about:blank</h4><p>Hide page from history &amp; monitoring</p></div></div><button class="setting-btn" id="openAboutBlank"><iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon> Open</button></div>
-<div class="setting-item"><div class="setting-left"><iconify-icon icon="solar:history-bold-duotone"></iconify-icon><div class="setting-info"><h4>Clear History</h4><p>Remove all data</p></div></div><button class="setting-btn" id="clearHistory"><iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon> Clear</button></div>
-</div></div>
-</main>
-</div>
-<div class="media-modal" id="mediaModal"><video id="mediaVideo" autoplay playsinline muted></video><div class="mm-actions"><button class="mm-btn mm-capture" id="mmCapture"><iconify-icon icon="solar:camera-bold-duotone"></iconify-icon> Capture</button><button class="mm-btn" id="mmClose"><iconify-icon icon="solar:close-circle-linear"></iconify-icon> Close</button></div></div>
-<div class="toast" id="toast"><iconify-icon icon="solar:check-circle-bold-duotone"></iconify-icon><span id="toastMsg"></span></div>
-
+<div id="toast"><iconify-icon icon="solar:info-circle-bold-duotone" id="toastIcon"></iconify-icon><span id="toastMsg"></span></div>
 <script>
-/* =====================================================================
-   SCARLET  —  Google Translate proxy engine
-   ===================================================================== */
+/* ================================================================
+   NEXUS — single-file proxy browser
+   Engine: Google Translate (translate.goog) fetch → process → render
+   CSP reality check: translate.goog sends frame-ancestors *.translate.goog,
+   so the ONLY way to show proxied pages in-app is exactly this pipeline:
+   fetch the translated HTML, reprocess it, render the finished document.
+   ================================================================ */
+'use strict';
 
-/* ---------- CORS relay rotation (needed to read the translate.goog HTML) ---------- */
-const CORS_RELAYS = [
-  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-  u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
-  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
-  u => 'https://api.cors.lol/?url=' + encodeURIComponent(u)
-];
-let relayIdx = 0;
+/* ---------------- settings & persistence ---------------- */
+const S = Object.assign({
+  tlang:'es', rmedia:true, unlock:true, panic:false,
+  panicUrl:'https://classroom.google.com', cloak:'none',
+  cloakTitle:'', cloakIcon:'', fx:true
+}, JSON.parse(localStorage.getItem('nx_settings')||'{}'));
+const saveS = () => localStorage.setItem('nx_settings', JSON.stringify(S));
+let RECENTS = JSON.parse(localStorage.getItem('nx_recent')||'[]');
 
-/* ---------- translate.goog URL encoding ----------
-   www.youtube.com  ->  www-youtube-com.translate.goog
-   my-site.com      ->  my--site-com.translate.goog
---------------------------------------------------- */
-function encodeHost(host){ return host.replace(/-/g,'--').replace(/\./g,'-'); }
-function decodeHost(h){ return h.replace(/--/g,'\u0000').replace(/-/g,'.').replace(/\u0000/g,'-'); }
-
-function toTranslateUrl(rawUrl){
-  try{
-    const u = new URL(rawUrl);
-    if (u.hostname.endsWith('.translate.goog')) return rawUrl;
-    const host = encodeHost(u.hostname);
-    const p = new URLSearchParams(u.search);
-    p.set('_x_tr_sl','auto');
-    p.set('_x_tr_tl','en');
-    p.set('_x_tr_hl','en');
-    p.set('_x_tr_pto','wapp');
-    return `https://${host}.translate.goog${u.pathname}?${p.toString()}`;
-  }catch(e){ return rawUrl; }
-}
-function fromTranslateUrl(t){
-  try{
-    const u = new URL(t);
-    if (!u.hostname.endsWith('.translate.goog')) return t;
-    const host = decodeHost(u.hostname.replace(/\.translate\.goog$/,''));
-    const p = new URLSearchParams(u.search);
-    ['_x_tr_sl','_x_tr_tl','_x_tr_hl','_x_tr_pto','_x_tr_hist'].forEach(k=>p.delete(k));
-    const qs = p.toString();
-    return `https://${host}${u.pathname}${qs ? '?'+qs : ''}`;
-  }catch(e){ return t; }
-}
-
-/* ---------- Fetch HTML through the relay chain ---------- */
-async function fetchViaRelay(targetUrl, timeout = 15000){
-  let lastErr;
-  for (let i = 0; i < CORS_RELAYS.length; i++){
-    const relay = CORS_RELAYS[(relayIdx + i) % CORS_RELAYS.length];
-    try{
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), timeout);
-      const res = await fetch(relay(targetUrl), { signal: ctrl.signal, redirect: 'follow' });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const txt = await res.text();
-      if (!txt || txt.length < 60) throw new Error('Empty response');
-      relayIdx = (relayIdx + i) % CORS_RELAYS.length;
-      return txt;
-    }catch(e){ lastErr = e; }
-  }
-  throw lastErr || new Error('All relays failed');
-}
-
-/* ---------- Sites that only work in Direct (iframe src) mode ---------- */
-const HEAVY_SITES = /(youtube\.com|youtu\.be|twitch\.tv|netflix\.com|spotify\.com|discord\.com|instagram\.com|tiktok\.com|roblox\.com|hulu\.com|disneyplus\.com|soundcloud\.com|twitter\.com|x\.com|facebook\.com|reddit\.com|crunchyroll\.com|kick\.com|pinterest\.com)/i;
-
-/* ---------- Settings state ---------- */
-let useDirect = true;      // Turbo mode ON by default so video sites work
-let useProxy  = true;
-let snowEnabled = true;
-
-/* ---------- DOM refs ---------- */
-const browserIframe   = document.getElementById('browserIframe');
-const browserUrlInput = document.getElementById('browserUrlInput');
-
-/* ---------- Nav history ---------- */
-let navHistory = [];
-let navIndex   = -1;
-let suppressPush = false;
-
-/* ---------- URL helper ---------- */
-function normalizeUrl(input){
-  let v = (input || '').trim();
-  if (!v) return null;
-  if (!/^https?:\/\//i.test(v)){
-    if (/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(v) || /^localhost(:\d+)?/.test(v)) v = 'https://' + v;
-    else return null;
-  }
-  try { return new URL(v).href; } catch(e){ return null; }
-}
-
-/* =====================================================================
-   MAIN BROWSER
-   ===================================================================== */
-async function openInBrowser(rawUrl, opts){
-  opts = opts || {};
-  const url = normalizeUrl(rawUrl);
-  if (!url){ toast('❌ Invalid URL'); return; }
-
-  showPage('browse');
-  browserUrlInput.value = url;
-  currentBrowseUrl = url;
-
-  if (!opts.fromHistory){
-    navHistory = navHistory.slice(0, navIndex + 1);
-    if (navHistory[navHistory.length - 1] !== url){
-      navHistory.push(url);
-      navIndex = navHistory.length - 1;
-    }
-  }
-
-  const tUrl = useProxy ? toTranslateUrl(url) : url;
-  const direct = useDirect || HEAVY_SITES.test(url);
-
-  if (direct){
-    loadDirect(tUrl, url);
-    return;
-  }
-
-  /* ---- Dynamic mode: fetch the translate.goog HTML, patch it, render it ---- */
-  showLoadingFrame();
-  try{
-    const html = await fetchViaRelay(tUrl);
-    renderFetchedHtml(html, tUrl, url);
-  }catch(err){
-    console.warn('Dynamic render failed, falling back to direct:', err);
-    loadDirect(tUrl, url);
-  }
-}
-
-let currentBrowseUrl = '';
-
-function showLoadingFrame(){
-  browserIframe.removeAttribute('src');
-  browserIframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-    html,body{margin:0;height:100%;background:#fff;font-family:-apple-system,Inter,sans-serif;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;}
-    .spin{width:34px;height:34px;border:3px solid #eee;border-top-color:#DC2626;border-radius:50%;
-      animation:sp .7s linear infinite;margin-bottom:14px;}
-    @keyframes sp{to{transform:rotate(360deg)}}
-    p{font-size:12px;font-weight:600;margin:0}
-    small{font-size:10px;color:#999;margin-top:6px}
-  </style></head><body>
-    <div class="spin"></div>
-    <p>Routing through Google Translate…</p>
-    <small>Fetching &amp; rebuilding page</small>
-  </body></html>`;
-}
-
-function loadDirect(tUrl, realUrl){
-  browserIframe.removeAttribute('srcdoc');
-  browserIframe.src = tUrl;
-  browserUrlInput.value = realUrl;
-}
-
-function renderFetchedHtml(html, tUrl, realUrl){
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-
-  /* Strip Google Translate's own chrome so it doesn't litter the page */
-  doc.querySelectorAll(
-    '.skiptranslate, #goog-gt-tt, .goog-te-banner-frame, #goog-gt-vt, ' +
-    '.goog-te-spinner-pos, .goog-te-balloon-frame, iframe.goog-te-banner-frame'
-  ).forEach(n => n.remove());
-
-  /* Kill any X-Frame-Options / CSP meta the site shipped with */
-  doc.querySelectorAll('meta[http-equiv]').forEach(m => {
-    const eq = (m.getAttribute('http-equiv') || '').toLowerCase();
-    if (eq === 'x-frame-options' || eq === 'content-security-policy') m.remove();
-  });
-
-  /* Base tag so relative URLs resolve to the translate host */
-  let base = doc.querySelector('base');
-  if (!base){ base = doc.createElement('base'); doc.head ? doc.head.prepend(base) : doc.documentElement.prepend(base); }
-  base.setAttribute('href', tUrl);
-
-  /* Inject the in-frame interceptor */
-  const interceptor = doc.createElement('script');
-  interceptor.textContent = `
-  (function(){
-    var BASE = ${JSON.stringify(tUrl)};
-    function abs(u){
-      if (typeof u !== 'string') return u;
-      try { return new URL(u, BASE).href; } catch(e){ return u; }
-    }
-    function send(u){
-      try { parent.postMessage({ __scarletNav: 1, url: abs(u) }, '*'); } catch(e){}
-    }
-
-    /* --- clicks --- */
-    document.addEventListener('click', function(e){
-      var a = e.target && e.target.closest ? e.target.closest('a') : null;
-      if (!a) return;
-      var href = a.getAttribute('href');
-      if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      send(href);
-    }, true);
-
-    /* --- form submits --- */
-    document.addEventListener('submit', function(e){
-      var f = e.target;
-      if (!f || !f.getAttribute) return;
-      var act = f.getAttribute('action') || BASE;
-      var method = (f.getAttribute('method') || 'get').toLowerCase();
-      e.preventDefault();
-      if (method === 'get'){
-        try {
-          var fd = new FormData(f);
-          var qs = new URLSearchParams(fd).toString();
-          send(act + (act.indexOf('?') === -1 ? '?' : '&') + qs);
-        } catch(err){ send(act); }
-      } else {
-        send(act);
-      }
-    }, true);
-
-    /* --- window.open --- */
-    var _open = window.open;
-    window.open = function(u){
-      if (u) send(u);
-      return null;
-    };
-
-    /* --- keep fetch/XHR inside the translate domain --- */
-    try {
-      var _fetch = window.fetch;
-      window.fetch = function(input, init){
-        try{
-          if (typeof input === 'string') input = abs(input);
-          else if (input && input.url) input = new Request(abs(input.url), input);
-        }catch(e){}
-        return _fetch.call(this, input, init);
-      };
-    } catch(e){}
-
-    try {
-      var _openX = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function(m, u){
-        var args = Array.prototype.slice.call(arguments);
-        args[1] = abs(u);
-        return _openX.apply(this, args);
-      };
-    } catch(e){}
-  })();
-  `;
-  (doc.head || doc.documentElement).prepend(interceptor);
-
-  browserIframe.removeAttribute('src');
-  browserIframe.srcdoc = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-}
-
-/* ---------- Listen for navigation requests from inside the frame ---------- */
-window.addEventListener('message', function(e){
-  const d = e.data;
-  if (d && d.__scarletNav && d.url){
-    openInBrowser(fromTranslateUrl(d.url));
-  }
-});
-
-/* ---------- Toolbar ---------- */
-document.getElementById('tbBack').onclick = function(){
-  if (navIndex > 0){
-    navIndex--;
-    openInBrowser(navHistory[navIndex], { fromHistory: true });
-  } else {
-    showPage('home');
-  }
-};
-document.getElementById('tbRefresh').onclick = function(){
-  if (currentBrowseUrl) openInBrowser(currentBrowseUrl, { fromHistory: true });
-};
-document.getElementById('tbHome').onclick = function(){ showPage('home'); };
-browserUrlInput.addEventListener('keydown', function(e){
-  if (e.key === 'Enter'){
-    const v = browserUrlInput.value.trim();
-    if (v) openInBrowser(v);
-  }
-});
-
-/* =====================================================================
-   DATA
-   ===================================================================== */
-const APPS = [
-  {name:'YouTube',   url:'https://www.youtube.com',      icon:'https://www.google.com/s2/favicons?domain=youtube.com&sz=128'},
-  {name:'Reddit',    url:'https://www.reddit.com',       icon:'https://www.google.com/s2/favicons?domain=reddit.com&sz=128'},
-  {name:'X',         url:'https://x.com',                icon:'https://www.google.com/s2/favicons?domain=x.com&sz=128'},
-  {name:'Twitch',    url:'https://www.twitch.tv',        icon:'https://www.google.com/s2/favicons?domain=twitch.tv&sz=128'},
-  {name:'Discord',   url:'https://discord.com',          icon:'https://www.google.com/s2/favicons?domain=discord.com&sz=128'},
-  {name:'Spotify',   url:'https://open.spotify.com',     icon:'https://www.google.com/s2/favicons?domain=spotify.com&sz=128'},
-  {name:'GitHub',    url:'https://github.com',           icon:'https://www.google.com/s2/favicons?domain=github.com&sz=128'},
-  {name:'Instagram', url:'https://www.instagram.com',    icon:'https://www.google.com/s2/favicons?domain=instagram.com&sz=128'},
-  {name:'TikTok',    url:'https://www.tiktok.com',       icon:'https://www.google.com/s2/favicons?domain=tiktok.com&sz=128'},
-  {name:'Netflix',   url:'https://www.netflix.com',      icon:'https://www.google.com/s2/favicons?domain=netflix.com&sz=128'},
-  {name:'Pinterest', url:'https://www.pinterest.com',    icon:'https://www.google.com/s2/favicons?domain=pinterest.com&sz=128'},
-  {name:'Amazon',    url:'https://www.amazon.com',       icon:'https://www.google.com/s2/favicons?domain=amazon.com&sz=128'},
-  {name:'WhatsApp',  url:'https://web.whatsapp.com',     icon:'https://www.google.com/s2/favicons?domain=whatsapp.com&sz=128'},
-  {name:'Snapchat',  url:'https://www.snapchat.com',     icon:'https://www.google.com/s2/favicons?domain=snapchat.com&sz=128'},
-  {name:'LinkedIn',  url:'https://www.linkedin.com',     icon:'https://www.google.com/s2/favicons?domain=linkedin.com&sz=128'},
-  {name:'Telegram',  url:'https://web.telegram.org',     icon:'https://www.google.com/s2/favicons?domain=telegram.org&sz=128'}
-];
-
-const GAMES = [
-  {name:'Roblox',        url:'https://www.roblox.com',                    img:'https://images.rbxcdn.com/28ab48fcd5d5b19b03c126d2b6aef4b8.jpg', tag:'Popular'},
-  {name:'Krunker',       url:'https://krunker.io',                        img:'https://images.crazygames.com/games/krunker-io/cover_1631002819246.png', tag:'Hot'},
-  {name:'Slither.io',    url:'https://slither.io',                        img:'https://images.crazygames.com/games/slither-io/cover_1617767374024.png', tag:''},
-  {name:'Skribbl.io',    url:'https://skribbl.io',                        img:'https://images.crazygames.com/games/skribbl-io/cover_1583851208944.png', tag:''},
-  {name:'Agar.io',       url:'https://agar.io',                           img:'https://images.crazygames.com/games/agario/cover_1583283293624.png', tag:''},
-  {name:'Shell Shockers',url:'https://shellshock.io',                     img:'https://images.crazygames.com/games/shell-shockers/cover_1631576494273.png', tag:''},
-  {name:'Slope',         url:'https://slopegame.io',                      img:'https://images.crazygames.com/games/slope/cover_1631597015863.png', tag:''},
-  {name:'Smash Karts',   url:'https://smashkarts.io',                     img:'https://images.crazygames.com/games/smash-karts/cover_1631562970389.png', tag:''},
-  {name:'1v1.LOL',       url:'https://1v1.lol',                           img:'https://images.crazygames.com/games/1v1-lol/cover_1637444407307.png', tag:''},
-  {name:'Cookie Clicker',url:'https://orteil.dashnet.org/cookieclicker/', img:'https://images.crazygames.com/games/cookie-clicker/cover_1617765390461.png', tag:''},
-  {name:'Diep.io',       url:'https://diep.io',                           img:'https://images.crazygames.com/games/diep-io/cover_1594247573294.png', tag:''},
-  {name:'Bonk.io',       url:'https://bonk.io',                           img:'https://images.crazygames.com/games/bonk-io/cover_1591246149389.png', tag:''},
-  {name:'Zombs Royale',  url:'https://zombsroyale.io',                    img:'https://images.crazygames.com/games/zombsroyale-io/cover_1583285325196.png', tag:''},
-  {name:'Gartic Phone',  url:'https://garticphone.com',                   img:'https://images.crazygames.com/games/gartic-phone/cover_1632785332763.png', tag:'New'},
-  {name:'Tetris',        url:'https://tetris.com',                        img:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Tetris_icon.svg/240px-Tetris_icon.svg.png', tag:''},
-  {name:'Paper.io',      url:'https://paper-io.com',                      img:'https://images.crazygames.com/games/paper-io-2/cover_1582839850022.png', tag:''},
-  {name:'Hole.io',       url:'https://hole-io.com',                       img:'https://images.crazygames.com/games/hole-io/cover_1584135477572.png', tag:''},
-  {name:'Build Royale',  url:'https://buildroyale.io',                    img:'https://images.crazygames.com/games/buildroyale-io/cover_1585674337992.png', tag:''},
-  {name:'2048',          url:'https://play2048.co',                       img:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/2048_logo.svg/240px-2048_logo.svg.png', tag:''},
-  {name:'Wordle',        url:'https://www.nytimes.com/games/wordle/index.html', img:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Wordle_222_example.png/240px-Wordle_222_example.png', tag:''},
-  {name:'Run 3',         url:'https://run3.online',                       img:'https://images.crazygames.com/games/run-3/cover_1617785397454.png', tag:''},
-  {name:'Retro Bowl',    url:'https://retrobowl.io',                      img:'https://images.crazygames.com/games/retro-bowl/cover_1631720249843.png', tag:''},
-  {name:'Surviv.io',     url:'https://surviv.io',                         img:'https://images.crazygames.com/games/surviv-io/cover_1582842519032.png', tag:''},
-  {name:'Minecraft',     url:'https://www.minecraft.net',                 img:'https://upload.wikimedia.org/wikipedia/en/thumb/5/51/Minecraft_cover.png/220px-Minecraft_cover.png', tag:''}
-];
-
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function renderHomeApps(){
-  document.getElementById('homeQuickApps').innerHTML = APPS.slice(0,8).map((a,i)=>
-    `<div class="qa anim-fade-up stagger-${i+1}" data-url="${esc(a.url)}"><div class="qa-icon"><img src="${esc(a.icon)}" alt="${esc(a.name)}" loading="lazy"></div><span class="qa-name">${esc(a.name)}</span></div>`
-  ).join('');
-}
-function renderAppsPage(){
-  document.getElementById('appsGrid').innerHTML = APPS.map((a,i)=>
-    `<div class="app-card anim-fade-up stagger-${(i%8)+1}" data-url="${esc(a.url)}"><div class="ac-icon"><img src="${esc(a.icon)}" alt="${esc(a.name)}" loading="lazy"></div><span class="ac-name">${esc(a.name)}</span></div>`
-  ).join('');
-}
-function renderGamesPage(){
-  document.getElementById('gamesGrid').innerHTML = GAMES.map((g,i)=>{
-    let host = '';
-    try { host = new URL(g.url).hostname; } catch(e){}
-    const fallback = `https://www.google.com/s2/favicons?domain=${host}&sz=256`;
-    return `<div class="game-card anim-scale stagger-${(i%8)+1}" data-url="${esc(g.url)}">
-      <img class="gc-img" src="${esc(g.img)}" alt="${esc(g.name)}" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
-      ${g.tag ? `<div class="gc-tag">${esc(g.tag)}</div>` : ''}
-      <div class="gc-overlay"><div class="gc-name">${esc(g.name)}</div></div></div>`;
-  }).join('');
-}
-function renderSearchShortcuts(){
-  const list = [{q:'YouTube',d:'youtube.com'},{q:'Reddit',d:'reddit.com'},{q:'Roblox',d:'roblox.com'},{q:'Discord',d:'discord.com'},{q:'Spotify',d:'spotify.com'},{q:'Twitch',d:'twitch.tv'}];
-  document.getElementById('searchShortcuts').innerHTML = list.map(s =>
-    `<div class="sh-shortcut" data-q="${esc(s.q)}"><div class="shs-icon"><img src="https://www.google.com/s2/favicons?domain=${s.d}&sz=64" alt="" loading="lazy"></div><span class="shs-name">${esc(s.q)}</span></div>`
-  ).join('');
-}
-renderHomeApps(); renderAppsPage(); renderGamesPage(); renderSearchShortcuts();
-
-/* =====================================================================
-   SNOW
-   ===================================================================== */
-const cv = document.getElementById('snowCanvas'), cx = cv.getContext('2d');
-let W, H;
-function resizeCanvas(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
-resizeCanvas(); addEventListener('resize', resizeCanvas);
-const flakes = [];
-for (let i = 0; i < 70; i++){
-  flakes.push({
-    x: Math.random()*W, y: Math.random()*H,
-    r: Math.random()*1.6 + .4,
-    o: Math.random()*.12 + .02,
-    s: Math.random()*.35 + .08,
-    w: Math.random()*.25 - .12,
-    p: Math.random()*Math.PI*2
-  });
-}
-(function drawSnow(){
-  cx.clearRect(0,0,W,H);
-  if (snowEnabled){
-    for (const f of flakes){
-      f.y += f.s;
-      f.x += f.w + Math.sin(f.p)*.12;
-      f.p += .004;
-      if (f.y > H+4){ f.y = -4; f.x = Math.random()*W; }
-      if (f.x > W+4) f.x = -4;
-      if (f.x < -4) f.x = W+4;
-      cx.beginPath();
-      cx.arc(f.x, f.y, f.r, 0, Math.PI*2);
-      cx.fillStyle = `rgba(255,255,255,${f.o})`;
-      cx.fill();
-    }
-  }
-  requestAnimationFrame(drawSnow);
-})();
-
-/* =====================================================================
-   CAROUSEL
-   ===================================================================== */
-const track = document.getElementById('track');
-const slides = track.querySelectorAll('.carousel-slide');
-const dotsWrap = document.getElementById('dots');
-let curSlide = 0, autoplayId = null;
-
-slides.forEach((_, i) => {
-  const d = document.createElement('div');
-  d.className = 'dot' + (i === 0 ? ' active' : '');
-  d.onclick = () => goToSlide(i);
-  dotsWrap.appendChild(d);
-});
-function goToSlide(i){
-  curSlide = i;
-  track.style.transform = `translateX(-${curSlide*100}%)`;
-  dotsWrap.querySelectorAll('.dot').forEach((d,j) => d.classList.toggle('active', j === curSlide));
-}
-function nextSlide(){ goToSlide(curSlide === slides.length-1 ? 0 : curSlide+1); }
-function startAutoplay(){ stopAutoplay(); autoplayId = setInterval(nextSlide, 5000); }
-function stopAutoplay(){ if (autoplayId) clearInterval(autoplayId); autoplayId = null; }
-document.getElementById('prevBtn').onclick = () => goToSlide(curSlide === 0 ? slides.length-1 : curSlide-1);
-document.getElementById('nextBtn').onclick = nextSlide;
-const carouselWrap = document.querySelector('.carousel-wrap');
-carouselWrap.onmouseenter = stopAutoplay;
-carouselWrap.onmouseleave = startAutoplay;
-startAutoplay();
-
-/* =====================================================================
-   PAGE NAVIGATION
-   ===================================================================== */
-const pages = {
-  home:     document.getElementById('pageHome'),
-  search:   document.getElementById('pageSearch'),
-  browse:   document.getElementById('pageBrowse'),
-  apps:     document.getElementById('pageApps'),
-  games:    document.getElementById('pageGames'),
-  ai:       document.getElementById('pageAI'),
-  settings: document.getElementById('pageSettings')
-};
-function showPage(name){
-  Object.values(pages).forEach(p => p.classList.remove('active'));
-  if (pages[name]) pages[name].classList.add('active');
-  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.toggle('active', i.dataset.page === name));
-
-  if (name === 'search'){
-    document.getElementById('searchHome').classList.remove('hidden');
-    document.getElementById('searchResults').classList.remove('active');
-    setTimeout(() => document.getElementById('searchHomeInput').focus(), 100);
-  }
-  if (name === 'ai') setTimeout(() => document.getElementById('aiInput').focus(), 100);
-}
-document.querySelectorAll('[data-page]').forEach(el => { el.onclick = () => showPage(el.dataset.page); });
-
-/* =====================================================================
-   TOAST
-   ===================================================================== */
-const toastEl = document.getElementById('toast');
-const toastMsg = document.getElementById('toastMsg');
+/* ---------------- toast ---------------- */
+const IS_FILE = location.protocol === 'file:';
+const toastEl = document.getElementById('toast'), toastMsg = document.getElementById('toastMsg');
 let toastTimer = null;
-function toast(msg, dur = 2500){
+function toast(msg, kind='', ms=2600){
   toastMsg.textContent = msg;
+  toastEl.className = kind===true?'ok':kind==='err'?'err':kind;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), dur);
+  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), ms);
 }
 
-/* =====================================================================
-   SETTINGS
-   ===================================================================== */
-document.querySelectorAll('.toggle').forEach(t => {
-  t.addEventListener('click', function(){
-    this.classList.toggle('on');
-    const on = this.classList.contains('on');
-    const key = this.dataset.setting;
-    if (key === 'snow'){ snowEnabled = on; toast(on ? '❄️ Snow on' : '❄️ Snow off'); }
-    else if (key === 'proxy'){ useProxy = on; toast(on ? '🔒 Translate proxy on' : '🔓 Proxy off'); }
-    else if (key === 'direct'){ useDirect = on; toast(on ? '⚡ Turbo mode on' : '🐢 Dynamic mode'); }
-    else if (key === 'stealth'){ toast(on ? '👁️ Stealth on' : '👁️ Stealth off'); }
+/* ---------------- translate.goog URL engine ---------------- */
+const tgHostOf = h => h.replace(/-/g,'--').replace(/\./g,'-');
+const isTGHost = h => h === 'translate.goog' || h.endsWith('.translate.goog');
+function unTGHost(h){
+  // reverse google's host encoding: -- -> placeholder, - -> ., placeholder -> -
+  const bare = h.slice(0, h.length - '.translate.goog'.length);
+  return bare.replace(/--/g,'\u0001').replace(/-/g,'.').replace(/\u0001/g,'-');
+}
+function toTG(u){
+  try{
+    const x = new URL(u);
+    if(x.protocol !== 'http:' && x.protocol !== 'https:') return null;
+    if(isTGHost(x.hostname)) return x.href;
+    const path = x.pathname === '/' ? '' : x.pathname;
+    const extra = x.search ? x.search.slice(1) + '&' : '';
+    return 'https://' + tgHostOf(x.hostname) + '.translate.goog' + path +
+           '?' + extra + '_x_tr_sl=auto&_x_tr_tl=' + S.tlang + '&_x_tr_hl=en';
+  }catch(e){ return null; }
+}
+function fromTG(u){
+  try{
+    const x = new URL(u);
+    if(!isTGHost(x.hostname)) return u;
+    const real = 'https://' + unTGHost(x.hostname) + x.pathname;
+    const q = new URLSearchParams(x.search);
+    [...q.keys()].forEach(k=>{ if(k.startsWith('_x_tr_')) q.delete(k); });
+    const qs = q.toString();
+    return real + (qs ? '?' + qs : '');
+  }catch(e){ return u; }
+}
+function mediaTG(u, base){
+  // route a media asset through google's relay: <host-with-dashes>.translate.goog/<path>
+  try{
+    const x = new URL(u, base);
+    if(x.protocol !== 'http:' && x.protocol !== 'https:') return null;
+    if(isTGHost(x.hostname)) return null;
+    const EXEMPT = ['gstatic.com','googleapis.com','googleusercontent.com','ggpht.com','translate.goog'];
+    if(EXEMPT.some(d => x.hostname === d || x.hostname.endsWith('.' + d))) return null;
+    return 'https://' + tgHostOf(x.hostname) + '.translate.goog' + x.pathname + x.search;
+  }catch(e){ return null; }
+}
+function normalizeInput(v){
+  v = (v||'').trim();
+  if(!v) return null;
+  if(/^https?:\/\//i.test(v)) return v;
+  if(/^[\w-]+(\.[\w-]+)+(\/|$|:\d)/.test(v) && !v.includes(' ')) return 'https://' + v;
+  return null; // search
+}
+
+/* ---------------- relay chain (CORS relief for the fetch step) ----------------
+   Relays are RACED in parallel — first one to deliver the proxied HTML wins.
+   (allorigins raw is the workhorse; others rise/fall over time, racing absorbs that.) */
+const RELAYS = [
+  { n:'corsfix',     w:u => 'https://proxy.corsfix.com/?' + u },
+  { n:'jina-html',   w:u => 'https://r.jina.ai/' + u, hdrs:{'x-return-format':'html'} },
+  { n:'allorigins',  w:u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
+  { n:'codetabs',    w:u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
+  { n:'allorigins-json', w:u => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u), json:true },
+  { n:'cors.lol',    w:u => 'https://api.cors.lol/?url=' + encodeURIComponent(u) },
+  { n:'corsproxy',   w:u => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
+  { n:'cors.eu.org', w:u => 'https://cors.eu.org/' + u },
+  { n:'tg-direct',   w:u => u },
+];
+function fetchTO(url, ms, hdrs){
+  const c = new AbortController();
+  const id = setTimeout(()=>c.abort(), ms||30000);
+  return fetch(url, {signal:c.signal, redirect:'follow', headers:hdrs||{}}).finally(()=>clearTimeout(id));
+}
+async function fetchViaRelays(target){
+  // progressive relay race: fire the workhorse immediately, escalate in waves —
+  // avoids bandwidth contention on big pages while still failing over fast.
+  let settled = false;
+  let order = RELAYS.slice();
+  const fast = sessionStorage.getItem('nx_fast_relay');
+  if(fast){
+    order = [RELAYS[0], ...order.filter(r=>r.n===fast), ...order.filter(r=>r.n!==fast && r.n!=='tg-direct')];
+  }
+  const mk = r => (async ()=>{
+    const res = await fetchTO(r.w(target), 30000, r.hdrs);
+    if(!res.ok) throw new Error(r.n + ' HTTP ' + res.status);
+    let txt = await res.text();
+    if(r.json){ try{ txt = (JSON.parse(txt).contents) || ''; }catch(e){} }
+    if(!txt || txt.length < 40) throw new Error(r.n + ' empty');
+    sessionStorage.setItem('nx_fast_relay', r.n);
+    return { text: txt, via: r.n };
+  })();
+  return new Promise((resolve, reject)=>{
+    let alive = 0, started = 0;
+    const run = r=>{ started++; alive++; mk(r)
+      .then(v=>{ if(!settled){ settled = true; resolve(v); } })
+      .catch(()=>{ alive--; if(!settled && started>0 && alive===0 && started>=order.length) reject(new Error('all ' + started + ' relay routes failed')); }); };
+    order.slice(0,3).forEach(run);
+    setTimeout(()=>{ if(!settled) order.slice(3,5).forEach(run); }, 3000);
+    setTimeout(()=>{ if(!settled) order.slice(5).forEach(run); }, 8000);
+  });
+}
+
+/* ---------------- HTML processor ("do its thing") ---------------- */
+function walkJSON(text, marker){
+  const i = text.indexOf(marker);
+  if(i < 0) return null;
+  const start = text.indexOf('{', i);
+  if(start < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for(let j = start; j < text.length && j < start + 900000; j++){
+    const ch = text[j];
+    if(esc){ esc = false; continue; }
+    if(ch === '\\'){ esc = true; continue; }
+    if(ch === '"'){ inStr = !inStr; continue; }
+    if(inStr) continue;
+    if(ch === '{') depth++;
+    else if(ch === '}'){ depth--; if(depth === 0){ try{ return JSON.parse(text.slice(start, j+1)); }catch(e){ return null; } } }
+  }
+  return null;
+}
+function rewriteSrcset(v, base){
+  return v.split(',').map(part=>{
+    const t = part.trim(); if(!t) return t;
+    const sp = t.split(/\s+/);
+    const nx = mediaTG(sp[0], base);
+    if(nx) sp[0] = nx;
+    return sp.join(' ');
+  }).join(', ');
+}
+function processHTML(htmlText, pageUrl){
+  const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+  if(!doc.head || !doc.body) throw new Error('not a document');
+  const baseNow = (doc.querySelector('base[href]')||{}).href || pageUrl;
+
+  // strip framing/CSP/refresh constraints + integrity pins
+  doc.querySelectorAll('meta[http-equiv]').forEach(m=>{
+    const he = (m.getAttribute('http-equiv')||'').toLowerCase();
+    if(he === 'content-security-policy' || he === 'refresh' || he === 'x-frame-options') m.remove();
+  });
+  doc.querySelectorAll('[integrity]').forEach(el=>el.removeAttribute('integrity'));
+  doc.querySelectorAll('script[nonce],link[nonce],style[nonce]').forEach(el=>el.removeAttribute('nonce'));
+
+  // media relay: route media assets through google's infra (they are no-CORS loads)
+  if(S.rmedia){
+    doc.querySelectorAll('img[src],video[src],audio[src],source[src],track[src],embed[src],object[data],video[poster]').forEach(el=>{
+      const at = el.hasAttribute('data') ? 'data' : el.hasAttribute('poster') ? 'poster' : 'src';
+      const v = el.getAttribute(at);
+      if(!v || /^(data|blob):/i.test(v)) return;
+      const nx = mediaTG(v, baseNow);
+      if(nx) el.setAttribute(at, nx);
+    });
+    doc.querySelectorAll('[srcset]').forEach(el=>{
+      const v = el.getAttribute('srcset');
+      if(v && !/^data:/i.test(v)) el.setAttribute('srcset', rewriteSrcset(v, baseNow));
+    });
+  }
+
+  // anchors: keep every click inside the proxy
+  doc.querySelectorAll('a[href]').forEach(a=>{
+    const v = a.getAttribute('href')||'';
+    if(!v || /^(javascript:|mailto:|tel:|blob:|data:|about:|#)/i.test(v)) return;
+    let abs; try{ abs = new URL(v, baseNow).href; }catch(e){ return; }
+    const tg = toTG(abs);
+    if(tg){ a.setAttribute('href', tg); a.setAttribute('data-nx-real', abs); }
+    a.removeAttribute('target');
+  });
+
+  // base → translate.goog, so every relative URL resolves through the relay (200 verified)
+  doc.querySelectorAll('base').forEach(b=>b.remove());
+  const base = doc.createElement('base');
+  base.href = toTG(pageUrl) || pageUrl;
+  doc.head.insertBefore(base, doc.head.firstChild);
+
+  // youtube media unlock
+  let ytslim = false;
+  if(S.unlock && /youtube\.com|youtu\.be/.test(pageUrl)) ytslim = unlockYouTube(doc, htmlText, pageUrl);
+  // tiktok media unlock
+  let ttslim = false;
+  if(S.unlock && /tiktok\.com/.test(pageUrl)) ttslim = unlockTikTok(doc, pageUrl);
+  // slim render: when Nexus replaces the page with its own player, drop the site's
+  // megabytes of scripts (they either can't run in-frame or would freeze the tab)
+  if(ytslim || ttslim){
+    doc.querySelectorAll('script').forEach(s=>{
+      if((s.textContent||'').length > 3000) s.remove();
+    });
+    doc.body.querySelectorAll('img,video,audio,source,iframe,embed,object').forEach(el=>{
+      if(!el.closest('#nexusMedia')) el.remove();
+    });
+    doc.querySelectorAll('link[rel="preload"],link[rel="preconnect"],link[rel="prefetch"],link[rel="modulepreload"]').forEach(l=>l.remove());
+  }
+
+  // child runtime: fetch/XHR hijack + live DOM rewriting + nav reporting
+  const rt = doc.createElement('script');
+  rt.textContent = '(' + NEXUS_CHILD_RUNTIME.toString() + ')(' + JSON.stringify({
+    SRC: pageUrl, TL: S.tlang, RMEDIA: S.rmedia,
+    RELAY: 'https://proxy.corsfix.com/?', PTO: 'https://api.allorigins.win/raw?url='
+  }) + ');';
+  doc.head.insertBefore(rt, doc.head.firstChild);
+
+  return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+}
+
+/* ---------------- media unlock layers ---------------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function unlockYouTube(doc, htmlText, pageUrl){
+  const pr = walkJSON(htmlText, 'ytInitialPlayerResponse');
+  const m = pageUrl.match(/[?&]v=([\w-]{6,})/) || pageUrl.match(/youtu\.be\/([\w-]{6,})/);
+  const vid = (pr && pr.videoDetails && pr.videoDetails.videoId) || (m && m[1]);
+  const fmts = pr && pr.streamingData && (pr.streamingData.formats || []);
+  const d = pr && pr.videoDetails || {};
+  const pick = (fmts||[]).filter(f=>f && f.url).sort((a,b)=>(b.itag===22)-(a.itag===22)||(b.itag===18)-(a.itag===18))[0];
+  if(!vid && !(pick && pick.url)) return false; // homepage / non-watch page: nothing to unlock
+  injectMediaPanel(doc, {
+    kind:'yt', id:vid,
+    title: d.title || 'YouTube video',
+    by: d.author ? (d.author + (d.viewCount ? '  ·  ' + Number(d.viewCount).toLocaleString() + ' views' : '')) : '',
+    poster: vid ? ('https://i-ytimg-com.translate.goog/vi/' + vid + '/hqdefault.jpg') : null,
+    stream: pick ? pick.url : null,
+    quality: pick ? (pick.qualityLabel || pick.mimeType || '') : '',
+    open: vid ? ('https://www.youtube.com/watch?v=' + vid) : pageUrl
+  });
+  return true;
+}
+function unlockTikTok(doc, pageUrl){
+  let data = null;
+  const sc = doc.querySelector('script#__UNIVERSAL_DATA_FOR_REHYDRATION__');
+  if(sc){ try{ data = JSON.parse(sc.textContent); }catch(e){} }
+  if(!data){ // SIGI_STATE fallback
+    const s2 = doc.querySelector('script#SIGI_STATE');
+    if(s2){ try{ data = JSON.parse(s2.textContent); }catch(e){} }
+  }
+  let item = null;
+  try{
+    const scope = data && (data.__DEFAULT_SCOPE__ || {});
+    item = (scope['webapp.video-detail']||{}).itemInfo && scope['webapp.video-detail'].itemInfo.itemStruct;
+    if(!item && data && data.ItemModule) item = Object.values(data.ItemModule)[0];
+  }catch(e){}
+  if(!item || !item.video) return false;
+  const v = item.video;
+  injectMediaPanel(doc, {
+    kind:'tt', id:item.id,
+    title: (item.desc || 'TikTok video').slice(0,160),
+    by: item.author ? ('@' + item.author.uniqueId + (item.stats ? '  ·  ' + (item.stats.playCount||0).toLocaleString() + ' plays' : '')) : '',
+    poster: v.cover || v.dynamicCover || null,
+    stream: v.playAddr || v.downloadAddr || null,
+    quality: v.height ? (v.height + 'p') : '',
+    open: pageUrl
+  });
+  return true;
+}
+function injectMediaPanel(doc, m){
+  if(doc.getElementById('nexusMedia')) return;
+  const st = doc.createElement('style');
+  st.textContent = [
+    'html,body{background:#04060d !important;}',
+    '#nexusMedia{position:fixed;inset:0;z-index:2147483000;background:#04060d;color:#e8ecf7;overflow-y:auto;',
+    'font-family:Inter,Arial,sans-serif;}',
+    '#nexusMedia .nxwrap{max-width:940px;margin:0 auto;padding:30px 18px 60px;}',
+    '#nexusMedia .nxbrand{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;letter-spacing:1px;color:#8b93a9;margin-bottom:16px;}',
+    '#nexusMedia .nxbrand i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-style:normal;',
+    'background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#fff;font-size:12px;}',
+    '#nexusMedia video{width:100%;max-height:64vh;border-radius:14px;background:#000;display:block;box-shadow:0 20px 60px rgba(0,0,0,.6);}',
+    '#nexusMedia .nxm-img{max-width:280px;border-radius:14px;display:block;margin-top:14px;}',
+    '#nexusMedia h3{font-size:17px;margin:18px 0 6px;font-weight:600;line-height:1.45;}',
+    '#nexusMedia .nxsub{font-size:12.5px;color:#8b93a9;margin-bottom:14px;}',
+    '#nexusMedia .nxq{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;color:#22d3ee;border:1px solid rgba(34,211,238,.4);border-radius:99px;padding:2px 9px;margin-left:10px;vertical-align:2px;}',
+    '#nexusMedia .nxbtns{display:flex;gap:9px;margin-top:4px;flex-wrap:wrap;}',
+    '#nexusMedia .nxb{font-size:12px;font-weight:600;padding:9px 15px;border-radius:10px;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.4);color:#cfc6ff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;}',
+    '#nexusMedia .nxb:hover{background:rgba(139,92,246,.25);}',
+    '#nexusMedia .nxnote{font-size:12px;color:#fbbf24;margin-top:14px;display:none;line-height:1.6;}',
+    '#nxReopen{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:none;font-size:12px;font-weight:600;padding:10px 16px;border-radius:12px;',
+    'background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#fff;cursor:pointer;box-shadow:0 8px 30px rgba(139,92,246,.5);border:none;font-family:Inter,Arial,sans-serif;}'
+  ].join('');
+  doc.head.appendChild(st);
+  const div = doc.createElement('div');
+  div.id = 'nexusMedia';
+  div.innerHTML =
+    '<div class="nxwrap">' +
+      '<div class="nxbrand"><i>N</i> NEXUS MEDIA UNLOCK</div>' +
+      '<div class="nxv">' +
+        '<video controls playsinline preload="none" ' + (m.poster ? 'poster="' + esc(m.poster) + '"' : '') + ' src="' + esc(m.stream||'') + '"></video>' +
+        '<h3>' + esc(m.title) + (m.quality ? '<span class="nxq">' + esc(m.quality) + '</span>' : '') + '</h3>' +
+        '<div class="nxsub">' + esc(m.by) + '</div>' +
+        '<div class="nxnote" id="nxStreamNote">This stream refused to load here (signed URLs are locked to the route that fetched the page). Use &#8220;Open in real tab&#8221; &#8212; playback always works there, still through Google, still unblocked.</div>' +
+        '<div class="nxbtns">' +
+          '<a class="nxb" data-nx-open="' + esc(m.open) + '" href="#">Open in real tab &#8599;</a>' +
+          (m.stream ? '<a class="nxb" data-nx-relay="' + esc(m.stream) + '" href="#">Reload stream via CORS relay</a>' : '') +
+        '</div>' +
+        (m.kind==='tt' && m.poster ? '<img class="nxm-img" src="' + esc(m.poster) + '" alt="">' : '') +
+      '</div>' +
+    '</div>';
+  doc.body.insertBefore(div, doc.body.firstChild);
+  const v = div.querySelector('video');
+  if(v){
+    v.addEventListener('error', ()=>{ const n = div.querySelector('#nxStreamNote'); if(n) n.style.display='block'; }, true);
+  }
+  const rb = doc.createElement('button');
+  rb.id = 'nxReopen'; rb.textContent = 'Reopen Nexus player';
+  doc.body.appendChild(rb);
+  rb.addEventListener('click', ()=>{ div.style.display='block'; rb.style.display='none'; });
+  const cl = doc.createElement('button');
+  cl.style.cssText = 'position:fixed;top:12px;right:14px;z-index:2147483001;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#8b93a9;cursor:pointer;font-size:15px;line-height:1;';
+  cl.textContent = '\u2715'; cl.title = 'Hide Nexus player';
+  div.appendChild(cl);
+  cl.addEventListener('click', ()=>{ div.style.display='none'; rb.style.display='block'; });
+}
+
+/* ---------------- child runtime (runs inside rendered page) ---------------- */
+function NEXUS_CHILD_RUNTIME(CFG){
+  if(window.__nxChild) return; window.__nxChild = 1;
+  var tgH = function(h){ return h.replace(/-/g,'--').replace(/\./g,'-'); };
+  var isTG = function(h){ return h === 'translate.goog' || h.slice(-14) === '.translate.goog'; };
+  var EXEMPT = ['gstatic.com','googleapis.com','googleusercontent.com','ggpht.com'];
+  var toTG = function(u){
+    try{
+      var x = new URL(u, CFG.BASE);
+      if(x.protocol !== 'http:' && x.protocol !== 'https:') return null;
+      if(isTG(x.hostname)) return x.href;
+      var p = x.pathname === '/' ? '' : x.pathname;
+      var e = x.search ? x.search.slice(1) + '&' : '';
+      return 'https://' + tgH(x.hostname) + '.translate.goog' + p + '?' + e + '_x_tr_sl=auto&_x_tr_tl=' + CFG.TL + '&_x_tr_hl=en';
+    }catch(err){ return null; }
+  };
+  var unTG = function(u){
+    try{
+      var x = new URL(u, CFG.BASE);
+      if(!isTG(x.hostname)) return x.href;
+      var b = x.hostname.slice(0, -14);
+      b = b.split('--').join('\u0001').split('-').join('.').split('\u0001').join('-');
+      var q = new URLSearchParams(x.search);
+      Array.from(q.keys()).forEach(function(k){ if(k.indexOf('_x_tr_') === 0) q.delete(k); });
+      var qs = q.toString();
+      return 'https://' + b + x.pathname + (qs ? '?' + qs : '');
+    }catch(err){ return u; }
+  };
+  var send = function(msg){ try{ window.parent.postMessage(msg, '*'); }catch(e){} };
+  var relayWrap = function(u){
+    // in-frame JS sees CORS walls on translate.goog (no ACAO) → bounce through POST-capable relay
+    if(CFG.RELAY) return CFG.RELAY + encodeURIComponent(u);
+    return CFG.PTO + encodeURIComponent(u);
+  };
+  /* fetch hijack */
+  var oFetch = window.fetch;
+  if(oFetch){
+    window.fetch = function(input, init){
+      try{
+        var url = (typeof input === 'string') ? input : (input && input.url);
+        if(!url || /^(data|blob):/i.test(url)) return oFetch.apply(this, arguments);
+        var tg = toTG(url);
+        if(tg) return oFetch.call(this, relayWrap(tg), init);
+        return oFetch.apply(this, arguments);
+      }catch(e){ return oFetch.apply(this, arguments); }
+    };
+  }
+  /* XHR hijack */
+  try{
+    var oOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, u){
+      var args = [].slice.call(arguments);
+      try{ var tg = toTG(u); if(tg) args[1] = relayWrap(tg); }catch(e){}
+      return oOpen.apply(this, args);
+    };
+  }catch(e){}
+  /* media host routing for dynamically added nodes */
+  var mediaFix = function(el){
+    ['src','poster','data'].forEach(function(at){
+      if(!el.hasAttribute || !el.hasAttribute(at)) return;
+      var v = el.getAttribute(at);
+      if(!v || /^(data|blob):/i.test(v) || !CFG.RMEDIA) return;
+      try{
+        var x = new URL(v, CFG.BASE);
+        if(isTG(x.hostname)) return;
+        if(EXEMPT.some(function(d){ return x.hostname === d || x.hostname.slice(-(d.length+1)) === '.' + d; })) return;
+        x.hostname = tgH(x.hostname) + '.translate.goog';
+        el.setAttribute(at, x.href);
+      }catch(e){}
+    });
+    if(el.hasAttribute && el.hasAttribute('srcset')){ /* leave; rare in dynamic media */ }
+  };
+  var mo = new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      [].slice.call(m.addedNodes||[]).forEach(function(n){
+        if(n.nodeType !== 1) return;
+        var tag = n.tagName;
+        if(/^(IMG|VIDEO|AUDIO|SOURCE|TRACK|EMBED|OBJECT)$/.test(tag)) mediaFix(n);
+        if(tag === 'A' && n.getAttribute){
+          var h = n.getAttribute('href');
+          if(h && !/^(javascript:|mailto:|tel:|#|data:|blob:)/i.test(h)){
+            var tg = toTG(h);
+            if(tg && n.getAttribute('href') !== tg){ n.setAttribute('href', tg); n.setAttribute('data-nx-real', unTG(tg)); }
+            n.removeAttribute('target');
+          }
+        }
+        if(n.querySelectorAll) n.querySelectorAll('img,video,audio,source,track').forEach(mediaFix);
+      });
+      if(m.type === 'attributes' && m.target && m.target.tagName && /^(IMG|VIDEO|SOURCE)$/.test(m.target.tagName)) mediaFix(m.target);
+    });
+  });
+  try{ mo.observe(document.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['src','poster']}); }catch(e){}
+  /* click capture → report real URL to parent */
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if(!a) return;
+    var open = a.getAttribute('data-nx-open');
+    if(open){ e.preventDefault(); send({t:'nx-open', url:open}); return; }
+    var relay = a.getAttribute('data-nx-relay');
+    if(relay){
+      e.preventDefault();
+      var v = document.querySelector('#nexusMedia video');
+      if(v && relay){ v.src = CFG.RELAY + encodeURIComponent(relay); v.play && v.play().catch(function(){}); }
+      return;
+    }
+    var h = a.getAttribute('href');
+    if(!h || /^(javascript:|mailto:|tel:|#)/i.test(h)) return;
+    e.preventDefault();
+    var real = a.getAttribute('data-nx-real') || unTG(h);
+    if(/\.pdf($|\?)|\.zip($|\?)|\.mp4($|\?)/i.test(real)){ send({t:'nx-open', url:real}); return; }
+    send({t:'nx-nav', url:real, newTab: a.getAttribute('target') === '_blank'});
+  }, true);
+  /* form submit → GET-ify through engine */
+  document.addEventListener('submit', function(e){
+    var f = e.target; if(!f || !f.tagName || f.tagName !== 'FORM') return;
+    e.preventDefault();
+    try{
+      var action = f.getAttribute('action') || CFG.SRC;
+      var abs = new URL(action, CFG.BASE);
+      var u = new URL(unTG(abs.href));
+      new FormData(f).forEach(function(val, key){ if(typeof val === 'string') u.searchParams.set(key, val); });
+      send({t:'nx-nav', url:u.href});
+    }catch(err){}
+  }, true);
+  /* window.open → new app tab */
+  try{
+    var oOpen2 = window.open;
+    window.open = function(u){ if(u){ send({t:'nx-open', url:unTG(String(u))}); return null; } return oOpen2.apply(window, arguments); };
+  }catch(e){}
+  /* title + heartbeat */
+  var lastTitle = '';
+  setInterval(function(){
+    send({t:'nx-alive'});
+    try{
+      var t = document.title;
+      if(t && t !== lastTitle){ lastTitle = t; send({t:'nx-title', title:t}); }
+    }catch(e){}
+  }, 2200);
+  send({t:'nx-alive'});
+}
+/* ================================================================
+   APP LAYER
+   ================================================================ */
+
+/* ---------------- pages / nav ---------------- */
+const PAGES = { home:'pageHome', browse:'pageBrowse', apps:'pageApps', games:'pageGames', ai:'pageAI', settings:'pageSettings' };
+function showPage(n){
+  Object.values(PAGES).forEach(id=>document.getElementById(id).classList.remove('active'));
+  const el = document.getElementById(PAGES[n]); if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-pill').forEach(p=>p.classList.toggle('active', p.dataset.page===n));
+  if(n==='ai') setTimeout(()=>document.getElementById('aiInput').focus(), 80);
+}
+document.addEventListener('click', e=>{
+  const nav = e.target.closest('[data-page]');
+  if(nav){ showPage(nav.dataset.page); }
+});
+
+/* ---------------- tabs ---------------- */
+const frameHost = document.getElementById('frameHost');
+const tabStrip = document.getElementById('tabStrip');
+let TABS = [], activeTabId = null, tabSeq = 0;
+const SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-presentation';
+const ALLOW = 'autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-read; clipboard-write; camera; microphone';
+function activeTab(){ return TABS.find(t=>t.id===activeTabId) || null; }
+function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+function favOf(u){ try{ return 'https://www.google.com/s2/favicons?domain=' + hostOf(u) + '&sz=64'; }catch(e){ return ''; } }
+
+function createTab(url){
+  const id = ++tabSeq;
+  const holder = document.createElement('div');
+  holder.className = 'frame-holder';
+  const ifr = document.createElement('iframe');
+  ifr.setAttribute('sandbox', SANDBOX);
+  ifr.setAttribute('allow', ALLOW);
+  ifr.setAttribute('referrerpolicy', 'no-referrer');
+  holder.appendChild(ifr);
+  frameHost.appendChild(holder);
+  const tab = { id, url:null, title:'New tab', hist:[], hi:-1, holder, ifr, alive:false, seq:0, watchdog:null };
+  TABS.push(tab);
+  renderTabs();
+  activateTab(id);
+  if(url) navigate(tab, url);
+  return tab;
+}
+function activateTab(id){
+  activeTabId = id;
+  TABS.forEach(t=>t.holder.classList.toggle('active', t.id===id));
+  const t = activeTab();
+  document.getElementById('urlInput').value = (t && t.url) ? t.url : '';
+  document.getElementById('btnBack').classList.toggle('disabled', !t || t.hi<=0);
+  document.getElementById('btnFwd').classList.toggle('disabled', !t || t.hi>=t.hist.length-1);
+  updateModeBadge(t && t.url);
+  renderTabs();
+  showPage('browse');
+}
+function closeTab(id){
+  const i = TABS.findIndex(t=>t.id===id);
+  if(i<0) return;
+  TABS[i].holder.remove();
+  TABS.splice(i,1);
+  if(!TABS.length){ showPage('home'); renderTabs(); return; }
+  if(activeTabId===id) activateTab(TABS[Math.max(0,i-1)].id);
+  else renderTabs();
+}
+function renderTabs(){
+  tabStrip.innerHTML = '';
+  TABS.forEach(t=>{
+    const d = document.createElement('div');
+    d.className = 'tab' + (t.id===activeTabId?' active':'');
+    d.innerHTML = '<div class="tab-fav">' + (t.url
+      ? '<img src="' + favOf(t.url) + '" onerror="this.style.display=\'none\'">'
+      : '<iconify-icon icon="solar:planet-bold-duotone"></iconify-icon>') + '</div>' +
+      '<div class="tab-title">' + esc(t.title||'New tab') + '</div>' +
+      '<div class="tab-x"><iconify-icon icon="solar:close-circle-linear"></iconify-icon></div>';
+    d.addEventListener('click', e=>{ if(!e.target.closest('.tab-x')) activateTab(t.id); });
+    d.querySelector('.tab-x').addEventListener('click', ()=>closeTab(t.id));
+    tabStrip.appendChild(d);
+  });
+  const add = document.createElement('div');
+  add.id = 'tabAdd'; add.title = 'New tab';
+  add.innerHTML = '<iconify-icon icon="solar:add-circle-linear"></iconify-icon>';
+  add.addEventListener('click', ()=>{ createTab(); document.getElementById('urlInput').focus(); });
+  tabStrip.appendChild(add);
+}
+function updateModeBadge(url){
+  const b = document.getElementById('modeBadge'), tx = document.getElementById('modeText');
+  if(!url){ b.className='mode-badge fetch'; tx.textContent='READY'; return; }
+  b.className = 'mode-badge fetch';
+  tx.textContent = 'TG-FETCH · ' + hostOf(url).slice(0,14);
+}
+
+/* ---------------- the engine pipeline ---------------- */
+const loadOverlay = document.getElementById('loadOverlay');
+const loadText = document.getElementById('loadText');
+const loadSub = document.getElementById('loadSub');
+const frameErr = document.getElementById('frameErr');
+const frameErrMsg = document.getElementById('frameErrMsg');
+
+async function navigate(tab, url, push=true){
+  url = normalizeInput(url) || url;
+  if(!/^https?:\/\//i.test(url)){ url = 'https://' + url; }
+  showPage('browse');
+  frameErr.classList.remove('show');
+  loadOverlay.classList.add('show');
+  loadText.textContent = 'Fetching ' + hostOf(url) + ' through Google Translate...';
+  loadSub.textContent = 'fetch → process → render';
+  tab.alive = false;
+  const seq = ++tab.seq;
+  try{
+    const tg = toTG(url);
+    if(!tg) throw new Error('unsupported URL');
+    const { text, via } = await fetchViaRelays(tg);
+    if(seq !== tab.seq) return; // superseded
+    const done = processHTML(text, url);
+    tab.url = url;
+    tab.title = hostOf(url);
+    if(push){ tab.hist = tab.hist.slice(0, tab.hi+1); tab.hist.push(url); tab.hi = tab.hist.length-1; }
+    document.getElementById('urlInput').value = url;
+    updateModeBadge(url);
+    document.getElementById('btnBack').classList.toggle('disabled', tab.hi<=0);
+    document.getElementById('btnFwd').classList.toggle('disabled', tab.hi>=tab.hist.length-1);
+    tab.ifr.srcdoc = done;
+    tab.ifr.addEventListener('load', ()=>{
+      if(tab.seq === seq) loadOverlay.classList.remove('show');
+    }, { once:true });
+    renderTabs();
+    pushRecent(url);
+    clearTimeout(tab.watchdog);
+    tab.watchdog = setTimeout(()=>{
+      if(!tab.alive && tab.seq===seq && activeTabId===tab.id)
+        toast('Page rendered — if interactions feel dead, use Popout or Open-in-tab', '', 4200);
+    }, 9000);
+  }catch(err){
+    if(seq !== tab.seq) return;
+    loadOverlay.classList.remove('show');
+    frameErrMsg.textContent = IS_FILE
+      ? 'You opened this file locally (file://) — browsers block all cross-site fetching from local files, so the engine cannot run here. Two fixes: (1) host this file anywhere (GitHub Pages, Netlify, Vercel — it is a single static HTML) and the full engine works, or (2) click Open in tab, which still works right now.'
+      : 'Every route to Google Translate was blocked or failed (' + (err && err.message ? err.message : 'unknown') + '). Retry, use the popout browser, or open it in a real tab.';
+    frameErr.classList.add('show');
+  }
+}
+function pushRecent(url){
+  RECENTS = [{u:url, h:hostOf(url)}, ...RECENTS.filter(r=>r.u!==url)].slice(0,12);
+  localStorage.setItem('nx_recent', JSON.stringify(RECENTS));
+  renderRecents();
+}
+function renderRecents(){
+  const sect = document.getElementById('recentSect'), row = document.getElementById('recentRow');
+  if(!RECENTS.length){ sect.style.display='none'; return; }
+  sect.style.display='block';
+  row.innerHTML = RECENTS.map(r=>'<div class="recent-pill" data-url="' + esc(r.u) + '"><img src="' + favOf(r.u) + '" onerror="this.style.display=\'none\'"><span>' + esc(r.h) + '</span></div>').join('');
+}
+
+/* frame messages from child pages */
+window.addEventListener('message', e=>{
+  const d = e.data || {};
+  if(!d.t) return;
+  let tab = TABS.find(t=>t.ifr.contentWindow === e.source) || activeTab();
+  if(!tab) return;
+  if(d.t==='nx-nav' && d.url){ navigate(tab, d.url, true); }
+  else if(d.t==='nx-open' && d.url){ const nt = createTab(); navigate(nt, d.url, true); }
+  else if(d.t==='nx-alive'){ tab.alive = true; if(activeTabId===tab.id) frameErr.classList.remove('show'); }
+  else if(d.t==='nx-title' && d.title){
+    tab.title = String(d.title).slice(0,60);
+    renderTabs();
+  }
+});
+
+/* toolbar */
+document.getElementById('btnBack').onclick = ()=>{
+  const t = activeTab(); if(!t || t.hi<=0) return;
+  t.hi--; navigate(t, t.hist[t.hi], false);
+};
+document.getElementById('btnFwd').onclick = ()=>{
+  const t = activeTab(); if(!t || t.hi>=t.hist.length-1) return;
+  t.hi++; navigate(t, t.hist[t.hi], false);
+};
+document.getElementById('btnReload').onclick = ()=>{
+  const t = activeTab(); if(t && t.url) navigate(t, t.url, false);
+};
+document.getElementById('btnHome').onclick = ()=>showPage('home');
+document.getElementById('btnFull').onclick = ()=>{
+  const el = document.getElementById('pageBrowse');
+  if(document.fullscreenElement) document.exitFullscreen();
+  else if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+};
+document.getElementById('urlInput').addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  const v = e.target.value.trim(); if(!v) return;
+  const t = activeTab() || createTab();
+  const u = normalizeInput(v);
+  if(u) navigate(t, u, true);
+  else searchWeb(v, t);
+});
+
+/* popout & real tab */
+function currentTG(){ const t = activeTab(); return (t && t.url) ? toTG(t.url) : null; }
+function openRealTab(){
+  const tg = currentTG();
+  if(!tg){ toast('Nothing to open yet', 'err'); return; }
+  window.open(tg, '_blank');
+  toast('Opened in a real tab — full media & logins', true);
+}
+document.getElementById('btnRealTab').onclick = openRealTab;
+document.getElementById('errTab').onclick = openRealTab;
+document.getElementById('errRetry').onclick = ()=>{ const t = activeTab(); if(t && t.url) navigate(t, t.url, false); };
+document.getElementById('errPopout').onclick = openPopout;
+document.getElementById('btnPopout').onclick = openPopout;
+function openPopout(){
+  try{
+    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const w = window.open('about:blank','_blank');
+    if(!w){ toast('Popup blocked — allow popups for this file', 'err'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    toast('Popout browser launched (about:blank)', true);
+  }catch(e){ toast('Popout failed: ' + e.message, 'err'); }
+}
+
+/* ---------------- search ---------------- */
+async function searchWeb(q, tab){
+  if(!q) return;
+  showPage('browse');
+  loadOverlay.classList.add('show');
+  loadText.textContent = 'Searching DuckDuckGo anonymously...';
+  loadSub.textContent = 'no cookies · no history · relay chain';
+  const seq = ++tab.seq;
+  const enc = encodeURIComponent(q);
+  try{
+    const { text } = await fetchViaRelays('https://html.duckduckgo.com/html/?q=' + enc);
+    if(seq !== tab.seq) return;
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const out = [];
+    doc.querySelectorAll('div.result, div.web-result').forEach(r=>{
+      const a = r.querySelector('a.result__a');
+      if(!a) return;
+      let href = a.getAttribute('href')||'';
+      try{
+        const abs = new URL(href, 'https://duckduckgo.com');
+        const u = abs.searchParams.get('uddg');
+        href = u ? decodeURIComponent(u) : abs.href;
+      }catch(e){}
+      if(!/^https?:/i.test(href)) return;
+      const sn = r.querySelector('.result__snippet');
+      out.push({ t:(a.textContent||'').trim(), u:href, s:sn?sn.textContent.trim():'' });
+    });
+    const inner = out.length
+      ? out.map(r=>
+          '<div class="rres" data-nxurl="' + esc(r.u) + '">' +
+            '<div class="rurl">' + esc(hostOf(r.u)) + '</div>' +
+            '<div class="rtitle">' + esc(r.t) + '</div>' +
+            (r.s ? '<div class="rsnip">' + esc(r.s) + '</div>' : '') +
+          '</div>').join('')
+      : '<div class="rempty">No results parsed — opening results page through the engine instead...</div>';
+    tab.url = 'https://duckduckgo.com/?q=' + enc;
+    tab.title = q + ' — search';
+    tab.hist = tab.hist.slice(0, tab.hi+1); tab.hist.push(tab.url); tab.hi = tab.hist.length-1;
+    document.getElementById('urlInput').value = tab.url;
+    updateModeBadge(tab.url);
+    const html = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+      '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+      '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+      '<style>' +
+      'body{background:#04060d;color:#e8ecf7;font-family:Inter,sans-serif;margin:0;padding:30px 18px 60px;}' +
+      '.wrap{max-width:720px;margin:0 auto;}' +
+      '.hd{font-family:Inter;font-size:20px;font-weight:700;margin-bottom:4px;}' +
+      '.hd em{font-style:normal;background:linear-gradient(135deg,#8b5cf6,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}' +
+      '.sub{color:#8b93a9;font-size:12px;margin-bottom:26px;}' +
+      '.rres{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 17px;margin-bottom:10px;cursor:pointer;transition:all .18s;}' +
+      '.rres:hover{border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.06);}' +
+      '.rurl{font-size:10.5px;color:#22d3ee;margin-bottom:5px;word-break:break-all;}' +
+      '.rtitle{font-size:14.5px;font-weight:600;margin-bottom:6px;}' +
+      '.rsnip{font-size:12px;color:#8b93a9;line-height:1.6;}' +
+      '.rempty{color:#8b93a9;font-size:13px;padding:30px 0;text-align:center;}' +
+      '</style></head><body><div class="wrap">' +
+      '<div class="hd">NEX<em>SEARCH</em></div>' +
+      '<div class="sub">' + out.length + ' results for "' + esc(q) + '" · anonymous via DuckDuckGo · click any result to open through the Nexus engine</div>' +
+      inner + '</div>' +
+      '<script>document.addEventListener("click",function(e){var r=e.target.closest(".rres");if(r&&r.getAttribute("data-nxurl")){e.preventDefault();window.parent.postMessage({t:"nx-nav",url:r.getAttribute("data-nxurl")},"*");}});<\/script>' +
+      '</body></html>';
+    tab.ifr.srcdoc = html;
+    tab.ifr.addEventListener('load', ()=>{ if(tab.seq===seq) loadOverlay.classList.remove('show'); }, { once:true });
+    renderTabs();
+  }catch(err){
+    if(seq !== tab.seq) return;
+    loadOverlay.classList.remove('show');
+    await navigate(tab, 'https://www.bing.com/search?q=' + enc, true);
+  }
+}
+
+/* ---------------- content data ---------------- */
+const APPS = [
+  ['YouTube','https://www.youtube.com'],['TikTok','https://www.tiktok.com'],['Spotify','https://open.spotify.com'],
+  ['Discord','https://discord.com'],['Reddit','https://www.reddit.com'],['X','https://x.com'],
+  ['Instagram','https://www.instagram.com'],['Twitch','https://www.twitch.tv'],['Pinterest','https://www.pinterest.com'],
+  ['Snapchat','https://www.snapchat.com'],['WhatsApp','https://web.whatsapp.com'],['Telegram','https://web.telegram.org'],
+  ['Netflix','https://www.netflix.com'],['Amazon','https://www.amazon.com'],['GitHub','https://github.com'],['LinkedIn','https://www.linkedin.com']
+];
+const GAMES = [
+  ['Roblox','https://www.roblox.com','https://images.rbxcdn.com/28ab48fcd5d5b19b03c126d2b6aef4b8.jpg','Popular'],
+  ['Krunker','https://krunker.io','https://images.crazygames.com/games/krunker-io/cover_1631002819246.png','Hot'],
+  ['1v1.LOL','https://1v1.lol','https://images.crazygames.com/games/1v1-lol/cover_1637444407307.png',''],
+  ['Smash Karts','https://smashkarts.io','https://images.crazygames.com/games/smash-karts/cover_1631562970389.png','Hot'],
+  ['Slope','https://slopegame.io','https://images.crazygames.com/games/slope/cover_1631597015863.png',''],
+  ['Retro Bowl','https://retrobowl.io','https://images.crazygames.com/games/retro-bowl/cover_1631720249843.png',''],
+  ['Cookie Clicker','https://orteil.dashnet.org/cookieclicker/','https://images.crazygames.com/games/cookie-clicker/cover_1617765390461.png',''],
+  ['Shell Shockers','https://shellshock.io','https://images.crazygames.com/games/shell-shockers/cover_1631576494273.png',''],
+  ['Slither.io','https://slither.io','https://images.crazygames.com/games/slither-io/cover_1617767374024.png',''],
+  ['Skribbl.io','https://skribbl.io','https://images.crazygames.com/games/skribbl-io/cover_1583851208944.png',''],
+  ['Agar.io','https://agar.io','https://images.crazygames.com/games/agario/cover_1583283293624.png',''],
+  ['Bonk.io','https://bonk.io','https://images.crazygames.com/games/bonk-io/cover_1591246149389.png',''],
+  ['Diep.io','https://diep.io','https://images.crazygames.com/games/diep-io/cover_1594247573294.png',''],
+  ['Paper.io 2','https://paper-io.com','https://images.crazygames.com/games/paper-io-2/cover_1582839850022.png',''],
+  ['Hole.io','https://hole-io.com','https://images.crazygames.com/games/hole-io/cover_1584135477572.png',''],
+  ['Zombs Royale','https://zombsroyale.io','https://images.crazygames.com/games/zombsroyale-io/cover_1583285325196.png',''],
+  ['Build Royale','https://buildroyale.io','https://images.crazygames.com/games/buildroyale-io/cover_1585674337992.png',''],
+  ['Gartic Phone','https://garticphone.com','https://images.crazygames.com/games/gartic-phone/cover_1632785332763.png','New'],
+  ['2048','https://play2048.co','https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/2048_logo.svg/240px-2048_logo.svg.png',''],
+  ['Wordle','https://www.nytimes.com/games/wordle/index.html','https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Wordle_222_example.png/240px-Wordle_222_example.png',''],
+  ['Run 3','https://run3.online','https://images.crazygames.com/games/run-3/cover_1617785397454.png',''],
+  ['Surviv.io','https://surviv.io','https://images.crazygames.com/games/surviv-io/cover_1582842519032.png',''],
+  ['Tetris','https://tetris.com','https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Tetris_icon.svg/240px-Tetris_icon.svg.png','']
+];
+const fq = d => 'https://www.google.com/s2/favicons?domain=' + d + '&sz=64';
+function renderLists(){
+  const appCard = ([n,u]) =>
+    '<div class="app-card" data-url="' + u + '"><img src="' + fq(hostOf(u)) + '" onerror="this.style.visibility=\'hidden\'"><span>' + n + '</span></div>';
+  const gameCard = ([n,u,img,tag]) =>
+    '<div class="game-card" data-url="' + u + '">' +
+      '<img src="' + img + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + fq(hostOf(u)) + '\'">' +
+      '<div class="gc-shade"></div>' + (tag ? '<div class="gc-tag">' + tag + '</div>' : '') +
+      '<div class="gc-name">' + n + '</div></div>';
+  document.getElementById('homeApps').innerHTML = APPS.slice(0,8).map(appCard).join('');
+  document.getElementById('homeGames').innerHTML = GAMES.slice(0,5).map(gameCard).join('');
+  document.getElementById('appsGrid').innerHTML = APPS.map(appCard).join('');
+  document.getElementById('gamesGrid').innerHTML = GAMES.map(gameCard).join('');
+  document.getElementById('quickRow').innerHTML =
+    APPS.slice(0,8).map(([n,u])=>'<div class="qchip" data-url="' + u + '"><img src="' + fq(hostOf(u)) + '" onerror="this.style.visibility=\'hidden\'"><span>' + n + '</span></div>').join('');
+}
+document.addEventListener('click', e=>{
+  const c = e.target.closest('[data-url]');
+  if(c && c.dataset.url){
+    const t = activeTab() || createTab();
+    navigate(t, c.dataset.url, true);
+  }
+});
+document.getElementById('appsFilter').addEventListener('input', e=>{
+  const v = e.target.value.toLowerCase();
+  document.querySelectorAll('#appsGrid .app-card').forEach((el,i)=>{
+    el.style.display = APPS[i] && APPS[i][0].toLowerCase().includes(v) ? '' : 'none';
   });
 });
-document.getElementById('clearHistory').onclick = function(){
-  navHistory = []; navIndex = -1; currentBrowseUrl = '';
-  try { localStorage.clear(); sessionStorage.clear(); } catch(e){}
-  browserIframe.removeAttribute('srcdoc');
-  browserIframe.removeAttribute('src');
-  browserUrlInput.value = '';
-  toast('🗑️ History cleared');
-};
-document.getElementById('openAboutBlank').onclick = function(){
-  try{
-    const clone = document.documentElement.cloneNode(true);
-    clone.querySelectorAll('script').forEach(s => s.remove());
-    const w = window.open('about:blank', '_blank');
-    if (!w){ toast('❌ Popup blocked'); return; }
-    w.document.open();
-    w.document.write('<!DOCTYPE html>' + clone.outerHTML);
-    w.document.close();
-    toast('🚀 Opened in about:blank');
-  }catch(e){ toast('❌ Failed to open'); }
+document.getElementById('gamesFilter').addEventListener('input', e=>{
+  const v = e.target.value.toLowerCase();
+  document.querySelectorAll('#gamesGrid .game-card').forEach((el,i)=>{
+    el.style.display = GAMES[i] && GAMES[i][0].toLowerCase().includes(v) ? '' : 'none';
+  });
+});
+document.getElementById('clearRecent').onclick = ()=>{ RECENTS=[]; localStorage.removeItem('nx_recent'); renderRecents(); toast('Recents cleared', true); };
+
+/* home search */
+function homeGo(){
+  const v = document.getElementById('homeInput').value.trim(); if(!v) return;
+  const u = normalizeInput(v);
+  const t = activeTab() || createTab();
+  if(u) navigate(t, u, true); else searchWeb(v, t);
+  document.getElementById('homeInput').value = '';
+}
+document.getElementById('homeGo').onclick = homeGo;
+document.getElementById('homeInput').addEventListener('keydown', e=>{ if(e.key==='Enter') homeGo(); });
+
+/* ---------------- settings wiring ---------------- */
+function bindToggle(id, key, onChange){
+  const el = document.getElementById(id);
+  el.classList.toggle('on', !!S[key]);
+  el.addEventListener('click', ()=>{
+    S[key] = !S[key];
+    el.classList.toggle('on', S[key]);
+    saveS();
+    if(onChange) onChange(S[key]);
+  });
+}
+bindToggle('setMedia', 'rmedia', v=>toast(v?'Media relay ON — images & streams via Google CDN':'Media relay OFF', true));
+bindToggle('setUnlock', 'unlock', v=>toast(v?'Media unlock layer armed':'Media unlock layer off', true));
+bindToggle('setFx', 'fx', v=>{ fxOn = v; if(!v){ const c=document.getElementById('fxCanvas'); c.getContext('2d').clearRect(0,0,c.width,c.height);} });
+bindToggle('setPanic', 'panic', v=>toast(v?'Panic key armed (Esc)':'Panic key disabled', true));
+const tlangSel = document.getElementById('setTlang');
+tlangSel.value = S.tlang;
+tlangSel.addEventListener('change', ()=>{ S.tlang = tlangSel.value; saveS(); toast('Engine language → ' + S.tlang + '. Reload a tab to re-render.', true); });
+const panicSel = document.getElementById('setPanicUrl');
+panicSel.value = S.panicUrl;
+panicSel.addEventListener('change', ()=>{ S.panicUrl = panicSel.value; saveS(); });
+document.getElementById('setPopout').onclick = openPopout;
+document.getElementById('setClear').onclick = ()=>{
+  localStorage.removeItem('nx_settings'); localStorage.removeItem('nx_recent');
+  toast('All local data wiped — reloading...', true);
+  setTimeout(()=>location.reload(), 700);
 };
 
-/* =====================================================================
-   LINK ROUTING (clicks inside Scarlet UI)
-   ===================================================================== */
-document.addEventListener('click', function(e){
-  const qa = e.target.closest('.qa');
-  const ac = e.target.closest('.app-card');
-  const gc = e.target.closest('.game-card');
-  const sc = e.target.closest('.sh-shortcut');
-  const cs = e.target.closest('.carousel-slide');
-  const rc = e.target.closest('.result-card');
-
-  if (qa && qa.dataset.url){ e.preventDefault(); openInBrowser(qa.dataset.url); }
-  else if (ac && ac.dataset.url){ e.preventDefault(); openInBrowser(ac.dataset.url); }
-  else if (gc && gc.dataset.url){ e.preventDefault(); openInBrowser(gc.dataset.url); }
-  else if (rc && rc.dataset.url){ e.preventDefault(); openInBrowser(rc.dataset.url); }
-  else if (sc && sc.dataset.q){ e.preventDefault(); executeSearch(sc.dataset.q); }
-  else if (cs && cs.dataset.url){ e.preventDefault(); openInBrowser(cs.dataset.url); }
+/* cloak */
+const CLOAKS = {
+  none:{ t:null, i:null },
+  google:{ t:'Google', i:fq('google.com') },
+  classroom:{ t:'Classes', i:fq('classroom.google.com') },
+  drive:{ t:'My Drive - Google Drive', i:fq('drive.google.com') },
+  docs:{ t:'Untitled document - Google Docs', i:fq('docs.google.com') },
+  gmail:{ t:'Inbox', i:fq('mail.google.com') },
+  canvas:{ t:'Dashboard', i:fq('instructure.com') }
+};
+const NEXUS_ICON = document.querySelector('link[rel="icon"]').href;
+function applyCloak(){
+  const c = CLOAKS[S.cloak] || CLOAKS.none;
+  const title = S.cloak==='custom' ? (S.cloakTitle||'Google') : c.t;
+  const icon  = S.cloak==='custom' ? (S.cloakIcon||fq('google.com')) : c.i;
+  document.title = title || 'Nexus';
+  let link = document.querySelector('link[rel="icon"]');
+  link.href = icon || NEXUS_ICON;
+  document.getElementById('cloakName').textContent = S.cloak==='none' ? 'No cloak' : (title.length>14 ? title.slice(0,14)+'…' : title);
+  document.getElementById('setCloak').value = S.cloak;
+  document.getElementById('customCloakCard').style.display = S.cloak==='custom' ? 'flex' : 'none';
+}
+const cloakSel = document.getElementById('setCloak');
+cloakSel.addEventListener('change', ()=>{ S.cloak = cloakSel.value; saveS(); applyCloak(); toast('Cloak: ' + cloakSel.options[cloakSel.selectedIndex].text, true); });
+['cloakTitleIn','cloakIconIn'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.value = id==='cloakTitleIn' ? (S.cloakTitle||'') : (S.cloakIcon||'');
+  el.addEventListener('change', ()=>{
+    S.cloakTitle = document.getElementById('cloakTitleIn').value;
+    S.cloakIcon = document.getElementById('cloakIconIn').value;
+    S.cloak = 'custom'; saveS(); applyCloak();
+  });
+});
+const CLOAK_CYCLE = ['none','google','classroom','drive','docs','gmail','canvas'];
+document.getElementById('cloakBtn').addEventListener('click', ()=>{
+  const i = CLOAK_CYCLE.indexOf(S.cloak);
+  S.cloak = CLOAK_CYCLE[(i+1) % CLOAK_CYCLE.length];
+  saveS(); applyCloak();
+  toast(S.cloak==='none' ? 'Cloak off' : 'Cloak: ' + (CLOAKS[S.cloak].t||'custom'), true);
 });
 
-/* =====================================================================
-   YAHOO SEARCH  (through translate proxy, so results are reachable)
-   ===================================================================== */
-async function fetchYahoo(q){
-  const target = toTranslateUrl('https://search.yahoo.com/search?p=' + encodeURIComponent(q));
-  try{
-    const html = await fetchViaRelay(target);
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const out = [];
-    const seen = new Set();
-
-    doc.querySelectorAll('div.dd.algo, div.algo, li.dd.algo, div#web li').forEach(item => {
-      const a = item.querySelector('h3 a, .title a, a.ac-algo, h3.title a');
-      if (!a) return;
-      let href = a.getAttribute('href') || '';
-      if (href.includes('/RU=')){
-        try { const m = href.match(/RU=([^/]+)/); if (m) href = decodeURIComponent(m[1]); } catch(e){}
-      } else if (href.startsWith('/')){
-        href = 'https://search.yahoo.com' + href;
-      }
-      href = fromTranslateUrl(href);
-      if (!/^https?:\/\//i.test(href)) return;
-      if (href.includes('search.yahoo.com')) return;
-      if (seen.has(href)) return;
-      seen.add(href);
-
-      const title = (a.textContent || '').trim();
-      const descEl = item.querySelector('.compText, .aAbstract, p, .txt');
-      const desc = descEl ? descEl.textContent.trim() : '';
-      let display = href.replace(/^https?:\/\//, '').split('/')[0];
-
-      if (title && title.length > 1) out.push({ title, url: href, desc, display });
-    });
-    return out.slice(0, 20);
-  }catch(e){ return []; }
-}
-
-async function executeSearch(q){
-  q = (q || '').trim();
-  if (!q) return;
-  document.getElementById('searchHome').classList.add('hidden');
-  document.getElementById('searchResults').classList.add('active');
-  document.getElementById('srhInput').value = q;
-
-  const body = document.getElementById('searchResultsBody');
-  body.innerHTML = '<div class="sr-loading"><div class="spinner"></div><p>Searching anonymously…</p></div>';
-
-  const results = await fetchYahoo(q);
-
-  if (results.length){
-    let html = `<div class="sr-stats">${results.length} results — click one to open in Scarlet</div>`;
-    results.forEach(r => {
-      html += `<div class="result-card" data-url="${esc(r.url)}">
-        <div class="result-url"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon>${esc(r.display)}</div>
-        <div class="result-title">${esc(r.title)}</div>
-        ${r.desc ? `<div class="result-desc">${esc(r.desc)}</div>` : ''}
-      </div>`;
-    });
-    body.innerHTML = html;
-  } else {
-    openInBrowser('https://search.yahoo.com/search?p=' + encodeURIComponent(q));
+/* panic + hotkeys */
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && S.panic && !document.fullscreenElement){
+    location.replace(S.panicUrl);
+  } else if(e.ctrlKey && (e.key==='m'||e.key==='M')){
+    e.preventDefault(); openPopout();
   }
-}
+});
 
-const searchHomeInput = document.getElementById('searchHomeInput');
-document.getElementById('searchHomeGo').onclick = () => executeSearch(searchHomeInput.value);
-searchHomeInput.addEventListener('keydown', e => { if (e.key === 'Enter') executeSearch(searchHomeInput.value); });
-
-document.getElementById('srhBack').onclick = () => {
-  document.getElementById('searchHome').classList.remove('hidden');
-  document.getElementById('searchResults').classList.remove('active');
-  searchHomeInput.focus();
-};
-const srhInput = document.getElementById('srhInput');
-document.getElementById('srhGo').onclick = () => executeSearch(srhInput.value);
-srhInput.addEventListener('keydown', e => { if (e.key === 'Enter') executeSearch(srhInput.value); });
-
-/* =====================================================================
-   HOME SEARCH
-   ===================================================================== */
-const homeInput = document.getElementById('homeInput');
-function handleHomeSearch(){
-  const v = homeInput.value.trim();
-  if (!v) return;
-  if (/^https?:\/\//i.test(v) || (/^[\w-]+(\.[\w-]+)+/.test(v) && !v.includes(' '))){
-    openInBrowser(v);
-  } else {
-    showPage('search');
-    searchHomeInput.value = v;
-    executeSearch(v);
-  }
-  homeInput.value = '';
-}
-document.getElementById('homeGo').onclick = handleHomeSearch;
-homeInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleHomeSearch(); });
-
-/* =====================================================================
-   AI CHAT  (keyless — uses pollinations text API)
-   ===================================================================== */
-const aiMessages = document.getElementById('aiMessages');
-const aiInput    = document.getElementById('aiInput');
-const aiAttached = document.getElementById('aiAttached');
-const aiFileInput = document.getElementById('aiFileInput');
-let attachedFiles = [];
-let aiHistory = []; // {role, content}
-
-function formatSize(b){
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  return (b/1048576).toFixed(1) + ' MB';
-}
-
-function addAiMsg(role, content, files){
-  files = files || [];
-  const div = document.createElement('div');
-  div.className = 'ai-msg ' + (role === 'user' ? 'user' : '');
-  const av = `<div class="msg-av av-${role === 'user' ? 'user' : 'ai'}"><iconify-icon icon="${role === 'user' ? 'solar:user-bold-duotone' : 'solar:bolt-bold-duotone'}"></iconify-icon></div>`;
-
-  let fileHtml = '';
-  if (files.length){
-    fileHtml = '<div class="msg-files">' + files.map(f => {
-      if (f.type && f.type.startsWith('image/'))
-        return `<div class="msg-file"><img src="${f.dataUrl}" alt="${esc(f.name)}"><div class="mf-info">${esc(f.name)} · ${esc(f.size)}</div></div>`;
-      if (f.type && f.type.startsWith('video/'))
-        return `<div class="msg-file"><video src="${f.dataUrl}" controls muted></video><div class="mf-info">${esc(f.name)} · ${esc(f.size)}</div></div>`;
-      return `<div class="msg-file"><div class="mf-info" style="padding:10px"><iconify-icon icon="solar:file-bold-duotone" style="font-size:20px;color:#555;display:block;margin-bottom:4px"></iconify-icon>${esc(f.name)}<br>${esc(f.size)}</div></div>`;
-    }).join('') + '</div>';
-  }
-
-  const paragraphs = String(content).split('\n').map(p => `<p>${esc(p)}</p>`).join('');
-  div.innerHTML = av + `<div class="msg-body">${paragraphs}${fileHtml}</div>`;
-  aiMessages.appendChild(div);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
-}
-
-function addAiTyping(){
+/* ---------------- Nexus AI (keyless — no API key exists) ---------------- */
+const aiScroll = document.getElementById('aiScroll'), aiInput = document.getElementById('aiInput');
+function aiMsg(role, text){
   const d = document.createElement('div');
   d.className = 'ai-msg';
-  d.id = 'aiTyping';
-  d.innerHTML = `<div class="msg-av av-ai"><iconify-icon icon="solar:bolt-bold-duotone"></iconify-icon></div>
-    <div class="msg-body"><div class="ai-typing"><span></span><span></span><span></span></div></div>`;
-  aiMessages.appendChild(d);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
+  d.innerHTML = '<div class="msg-av av-' + (role==='user'?'user':'ai') + '"><iconify-icon icon="' +
+    (role==='user'?'solar:user-rounded-bold-duotone':'solar:stars-bold-duotone') + '"></iconify-icon></div>' +
+    '<div class="msg-body">' + text.split('\n').map(p=>'<p>' + esc(p) + '</p>').join('') + '</div>';
+  aiScroll.appendChild(d);
+  aiScroll.scrollTop = aiScroll.scrollHeight;
+  return d;
 }
-function removeAiTyping(){
-  const t = document.getElementById('aiTyping');
-  if (t) t.remove();
-}
-
-function renderAttached(){
-  aiAttached.innerHTML = attachedFiles.map((f, i) => {
-    const thumb = f.preview
-      ? `<${f.tag} src="${f.dataUrl}" ${f.tag === 'video' ? 'muted' : ''}></${f.tag}>`
-      : `<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:#111"><iconify-icon icon="solar:file-bold-duotone" style="font-size:24px;color:#555"></iconify-icon></div>`;
-    return `<div class="ai-att">${thumb}
-      <div class="att-info"><div class="att-name">${esc(f.name)}</div><div class="att-size">${esc(f.size)}</div></div>
-      <div class="att-remove" data-idx="${i}"><iconify-icon icon="solar:close-circle-linear"></iconify-icon></div></div>`;
-  }).join('');
-}
-
-aiAttached.addEventListener('click', e => {
-  const rm = e.target.closest('.att-remove');
-  if (rm){
-    attachedFiles.splice(parseInt(rm.dataset.idx, 10), 1);
-    renderAttached();
-  }
-});
-
-document.getElementById('aiAttachBtn').onclick = () => aiFileInput.click();
-aiFileInput.addEventListener('change', async e => {
-  for (const file of Array.from(e.target.files)){
-    const f = { name: file.name, size: formatSize(file.size), type: file.type, dataUrl: null, preview: false, tag: 'div' };
-    if (file.type.startsWith('image/') || file.type.startsWith('video/')){
-      f.dataUrl = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(file); });
-      f.preview = true;
-      f.tag = file.type.startsWith('image/') ? 'img' : 'video';
-    } else if (file.type.startsWith('text/') || file.name.endsWith('.txt')){
-      f.dataUrl = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsText(file); });
-    }
-    attachedFiles.push(f);
-  }
-  renderAttached();
-  aiFileInput.value = '';
-});
-
-/* --- camera / screen --- */
-let mediaStream = null, mediaMode = null;
-document.getElementById('aiCameraBtn').onclick = async () => {
-  try{
-    mediaMode = 'camera';
-    mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    showMediaModal();
-    toast('📸 Camera active');
-  }catch(e){ toast('❌ Camera denied'); }
-};
-document.getElementById('aiScreenBtn').onclick = async () => {
-  try{
-    mediaMode = 'screen';
-    mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    showMediaModal();
-    toast('🖥️ Screen sharing');
-  }catch(e){ toast('❌ Screen share denied'); }
-};
-function showMediaModal(){
-  const modal = document.getElementById('mediaModal');
-  const v = document.getElementById('mediaVideo');
-  v.srcObject = mediaStream;
-  modal.classList.add('active');
-}
-document.getElementById('mmCapture').onclick = () => {
-  const v = document.getElementById('mediaVideo');
-  const c = document.createElement('canvas');
-  c.width = v.videoWidth || 640;
-  c.height = v.videoHeight || 480;
-  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-  const du = c.toDataURL('image/png');
-  attachedFiles.push({
-    name: `${mediaMode}_${Date.now()}.png`,
-    size: formatSize(du.length * 0.75),
-    type: 'image/png',
-    dataUrl: du,
-    preview: true,
-    tag: 'img'
-  });
-  renderAttached();
-  closeMediaModal();
-  toast('📷 Captured!');
-};
-document.getElementById('mmClose').onclick = closeMediaModal;
-function closeMediaModal(){
-  document.getElementById('mediaModal').classList.remove('active');
-  if (mediaStream){ mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-}
-
-/* --- ask the AI (no API key) --- */
-async function askAI(prompt){
-  // Pollinations free text endpoint — no key required.
-  const url = 'https://text.pollinations.ai/' + encodeURIComponent(prompt) + '?model=openai';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('AI HTTP ' + res.status);
-  const txt = await res.text();
-  if (!txt) throw new Error('Empty AI response');
-  return txt.trim();
-}
-
-async function sendToAI(){
-  const text = aiInput.value.trim();
-  if (!text && attachedFiles.length === 0) return;
-
-  const userFiles = attachedFiles.slice();
-  let userText = text || '(uploaded files)';
-
-  // Fold text-file contents into the prompt so the model can read them
-  let extraContext = '';
-  for (const f of userFiles){
-    if (f.dataUrl && f.type && f.type.startsWith('text/')){
-      extraContext += `\n\n[File: ${f.name}]\n${String(f.dataUrl).slice(0, 3000)}`;
-    } else if (!f.type || (!f.type.startsWith('image/') && !f.type.startsWith('video/'))){
-      extraContext += `\n\n[Attached file: ${f.name} (${f.size})]`;
-    } else if (f.type.startsWith('image/')){
-      extraContext += `\n\n[Attached image: ${f.name}]`;
-    } else if (f.type.startsWith('video/')){
-      extraContext += `\n\n[Attached video: ${f.name}]`;
-    }
-  }
-
-  addAiMsg('user', userText, userFiles);
+async function sendAI(){
+  const q = aiInput.value.trim(); if(!q) return;
   aiInput.value = '';
-  attachedFiles = [];
-  renderAttached();
-
-  aiHistory.push({ role: 'user', content: userText + extraContext });
-
-  // Keep the prompt small — send the last few turns only
-  const recent = aiHistory.slice(-6).map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
-  const fullPrompt = `You are Scarlet AI, a concise, helpful assistant embedded in a browser. Answer plainly.\n\n${recent}\n\nAssistant:`;
-
-  addAiTyping();
+  aiMsg('user', q);
+  const typing = aiMsg('ai', '...'); typing.querySelector('.msg-body').innerHTML = '<div class="ai-typing"><span></span><span></span><span></span></div>';
   try{
-    const reply = await askAI(fullPrompt);
-    removeAiTyping();
-    aiHistory.push({ role: 'assistant', content: reply });
-    addAiMsg('ai', reply);
-  }catch(err){
-    removeAiTyping();
-    addAiMsg('ai', 'Sorry — I could not reach the AI service. Check your connection and try again.');
+    const r = await fetch('https://text.pollinations.ai/' + encodeURIComponent(q) + '?model=openai', { signal: AbortSignal.timeout(30000) });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const reply = (await r.text()).trim() || 'Empty response.';
+    typing.querySelector('.msg-body').innerHTML = reply.split('\n').map(p=>'<p>' + esc(p) + '</p>').join('');
+  }catch(e){
+    typing.querySelector('.msg-body').innerHTML =
+      '<p>AI endpoint unreachable from this network (it runs keyless on <code>text.pollinations.ai</code> — no API key is involved).</p>' +
+      '<p>Everything else in Nexus keeps working.</p>';
   }
+  aiScroll.scrollTop = aiScroll.scrollHeight;
 }
-document.getElementById('aiSend').onclick = sendToAI;
-aiInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendToAI(); }
-});
+document.getElementById('aiSend').onclick = sendAI;
+aiInput.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendAI(); } });
 
-/* =====================================================================
-   GLOBAL window.open hijack (anything on the Scarlet page)
-   ===================================================================== */
-const _realWindowOpen = window.open;
-window.open = function(url, target, features){
-  if (url && url !== 'about:blank'){ openInBrowser(url); return null; }
-  return _realWindowOpen.apply(this, arguments);
-};
+/* ---------------- particle field ---------------- */
+const fxc = document.getElementById('fxCanvas'), fxx = fxc.getContext('2d');
+let fxOn = S.fx, PARTS = [];
+function fxResize(){
+  fxc.width = innerWidth; fxc.height = innerHeight;
+  PARTS = Array.from({length:64}, ()=>({
+    x:Math.random()*fxc.width, y:Math.random()*fxc.height,
+    r:Math.random()*1.5+.4, s:Math.random()*.28+.06,
+    o:Math.random()*.16+.04, hue:Math.random()<.5?'139,92,246':'34,211,238',
+    w:Math.random()*.2-.1, p:Math.random()*Math.PI*2
+  }));
+}
+fxResize(); addEventListener('resize', fxResize);
+(function fxLoop(){
+  fxx.clearRect(0,0,fxc.width,fxc.height);
+  if(fxOn){
+    for(const f of PARTS){
+      f.y -= f.s; f.x += f.w + Math.sin(f.p)*.1; f.p += .004;
+      if(f.y < -4){ f.y = fxc.height+4; f.x = Math.random()*fxc.width; }
+      if(f.x > fxc.width+4) f.x = -4; if(f.x < -4) f.x = fxc.width+4;
+      fxx.beginPath(); fxx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+      fxx.fillStyle = 'rgba(' + f.hue + ',' + f.o + ')'; fxx.fill();
+    }
+  }
+  requestAnimationFrame(fxLoop);
+})();
 
-/* =====================================================================
-   BOOT
-   ===================================================================== */
-showPage('home');
+/* ---------------- clock ---------------- */
+function tick(){
+  const d = new Date();
+  let h = d.getHours(); const ap = h>=12?'PM':'AM'; h = h%12||12;
+  document.getElementById('clockText').textContent = h + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + ap;
+}
+tick(); setInterval(tick, 20000);
+
+/* ---------------- boot ---------------- */
+renderLists();
+renderRecents();
+applyCloak();
+if(!TABS.length) renderTabs();
+setTimeout(()=>{ if(!localStorage.getItem('nx_seen')){ localStorage.setItem('nx_seen','1'); toast('Welcome to Nexus — press Esc anytime if you need out', true, 4200); } }, 900);
+if(IS_FILE) setTimeout(()=>toast('Running from file:// — host this file (GH Pages / Netlify) for the full engine. Open-in-tab still works.', '', 6500), 4800);
 </script>
 </body>
 </html>
