@@ -216,6 +216,8 @@ table.lab th{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:
         <div class="card"><h2 data-ich="zap">Proxy quick test</h2>
           <div class="row"><button class="btn primary" id="btnPing" data-icbtn="zap">Run live proxy test</button><span class="muted">fetches TikTok through translate.goog + relay with a real timer</span></div>
           <div class="muted mono" id="pingOut" style="margin-top:10px">not run yet</div>
+          <div class="row" style="margin-top:10px"><button class="btn" id="btnDiag" data-icbtn="search">Run school diagnostics</button><span class="muted">finds what's blocked &amp; auto-picks a working relay</span></div>
+          <div id="diagOut" class="mono muted" style="margin-top:10px;font-size:11.5px;line-height:1.7">not run yet</div>
         </div>
         <div class="secTitle" data-ich="star">Favorites</div><div class="ggrid" id="favGrid"></div>
         <div class="secTitle" data-ich="history">Recent</div><div class="ggrid" id="recentGrid"></div>
@@ -233,9 +235,12 @@ table.lab th{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:
               <option value="https://www.youtube.com/">YouTube</option>
               <option value="https://duck.ai/">duck.ai</option>
               <option value="https://news.ycombinator.com/">Hacker News</option>
+              <option value="https://nowgg.fun/">nowgg.fun</option>
+              <option value="https://example.com/">example.com (tiny test)</option>
             </select>
             <select id="bLang"><option value="es">ES</option><option value="fr">FR</option><option value="de">DE</option><option value="pt">PT</option><option value="ja">JA</option><option value="en">EN</option></select>
             <button class="btn primary" id="btnRun" data-icbtn="play">Run</button>
+            <button class="btn" id="btnOpenTr" data-icbtn="external" title="open the translate.goog URL directly — no fetch, looks like Google to school filters">Open translated</button>
           </div>
           <div class="stages">
             <div class="stage" id="stFetch">fetch <b>—</b></div>
@@ -259,6 +264,7 @@ table.lab th{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:
           <div class="urlrow">
             <input type="text" id="tInput" value="dQw4w9WgXcQ" spellcheck="false" placeholder="video URL / video ID / search terms">
             <button class="btn primary" id="btnTube" data-icbtn="play">Load</button>
+            <button class="btn" id="btnOpenTrT" data-icbtn="external" title="open the translated watch page directly">Open translated</button>
           </div>
           <div class="chips" id="tubeChips" style="display:none">
             <span class="chip" data-ic="film"><b id="cTitle">—</b></span>
@@ -282,19 +288,27 @@ table.lab th{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:
           <button class="btn gfilter on" data-f="all">All</button>
           <button class="btn gfilter" data-f="fav">Favorites</button>
           <button class="btn gfilter" data-f="recent">Recent</button>
+          <button class="btn" id="btnImport" data-icbtn="plus">Import .html</button>
         </div></div>
         <div class="ggrid" id="gameGrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div>
+        <input type="file" id="filePick" accept=".html,text/html" style="display:none">
+        <div class="muted" style="margin-top:10px">downloads blocked? save the game .html to Google Drive at home, re-download at school (Drive is allowed), then Import it — it runs offline from cache.</div>
       </section>
       <!-- SETTINGS -->
       <section class="tab" id="tab-settings">
         <div class="setgrid">
           <div class="card"><h2 data-ich="palette">Theme</h2><div class="themeSw" id="themeSw"></div></div>
           <div class="card"><h2 data-ich="zap">Proxy relay</h2>
-            <div class="kv"><span>Relay</span><select id="sRelay"><option value="allorigins">allorigins (works)</option><option value="codetabs">codetabs</option><option value="corsproxy">corsproxy.io</option><option value="custom">custom</option><option value="direct">direct (usually CORS-blocked)</option></select></div>
+            <div class="kv"><span>Relay</span><select id="sRelay"><option value="allorigins">allorigins raw</option><option value="ao_get">allorigins get (json)</option><option value="corslol">cors.lol (low-profile)</option><option value="corsfix">corsfix</option><option value="codetabs">codetabs</option><option value="corsproxy">corsproxy.io</option><option value="custom">custom (your google relay ↓)</option><option value="direct">direct (usually CORS-blocked)</option></select></div>
+            <div class="kv"><span>Your own Google relay</span><button class="btn" id="btnGAS" data-icbtn="db">Copy deploy code</button></div>
+            <div class="muted">GoGuardian blocks known proxies (allorigins = "Proxy/Anonymizer" category). Fix: paste the code into <b>script.google.com</b> → Deploy → Web app → access: Anyone → paste the /exec URL into Custom relay prefix as <span class="mono">https://script.google.com/macros/s/…/exec?url=</span>. Schools always allow google.com.</div>
             <div class="kv"><span>Custom relay prefix</span><input type="text" id="sCustom" placeholder="https://my-relay/?url=" style="width:200px"></div>
+            <div class="kv"><span>Your own Google relay</span><button class="btn" id="btnGAS" data-icbtn="db">Copy deploy code</button></div>
+            <div class="muted">GoGuardian blocks known proxies (allorigins = "Proxy/Anonymizer" category). Fix: paste the code into <b>script.google.com</b> → Deploy → Web app → access: Anyone → paste the /exec URL into Custom relay prefix as <span class="mono">https://script.google.com/macros/s/…/exec?url=</span>. Schools always allow google.com.</div>
             <div class="kv"><span>Error-page gate (~ to unlock)</span><div class="switch on" id="sGate"></div></div>
             <div class="kv"><span>Current view in blob tab</span><button class="btn" id="btnBlob2" data-icbtn="external">Open blob</button></div>
           </div>
+          <div class="card"><h2 data-ich="zap">School mode (GoGuardian)</h2><div class="muted" style="line-height:1.9">1. Home → <b>Run school diagnostics</b> — auto-picks a working relay.<br>2. If all relays fail: Browser → <b>Open translated</b> (no fetch, looks like Google Translate to the filter).<br>3. Nuclear option: deploy the Google relay above (2 min, unblockable).<br>4. Games: import .html files via Google Drive.<br>WARNING: nowgg.fun cloud needs websockets — translate can't proxy those, so Roblox cloud may not load at school even wrapped. Offline games (Eagler/Superhot/GeoDash) work once imported.</div></div>
           <div class="card"><h2 data-ich="db">Data (IndexedDB)</h2>
             <div class="kv"><span>Cached games</span><b id="dCache">—</b></div>
             <div class="kv"><span>Cache size</span><b id="dSize">—</b></div>
@@ -364,6 +378,7 @@ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5
 check:'<path d="M20 6 9 17l-5-5"/>',
 db:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
 x:'<path d="M18 6 6 18M6 6l12 12"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
 keyboard:'<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>'
 };
 function svg(n,sz){sz=sz||16;return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]||P.grid}</svg>`}
@@ -392,18 +407,27 @@ keys(s){return new Promise((res,rej)=>{try{const r=DB.db.transaction(s,'readonly
 const state={settings:{theme:'midnight',relay:'allorigins',customRelay:'',gate:true},recents:[],favs:[],tab:'home',blobs:{browser:'',tube:'',game:''},runT0:0,filter:'all'};
 const RELAY_URL={
 allorigins:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+ao_get:u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),
+corslol:u=>'https://api.cors.lol/?url='+encodeURIComponent(u),
+corsfix:u=>'https://proxy.corsfix.com/?'+encodeURIComponent(u),
 codetabs:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
 corsproxy:u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
 custom:u=>(state.settings.customRelay||'')+encodeURIComponent(u),
 direct:u=>u};
-const RELAY_ORDER=()=>{const s=state.settings.relay;return [s,...['allorigins','codetabs','corsproxy','direct'].filter(x=>x!==s)];};
+const JSON_RELAYS=new Set(['ao_get']);
+const FALLBACK_RELAYS=['allorigins','ao_get','corslol','corsfix','codetabs','corsproxy','direct'];
+const RELAY_ORDER=()=>{const s=state.settings.relay;return [s,...FALLBACK_RELAYS.filter(x=>x!==s)];};
+const GAS_CODE=`function doGet(e){var u=e.parameter.url;if(!u)return ContentService.createTextOutput('nexus relay: missing ?url=');var r=UrlFetchApp.fetch(u,{followRedirects:true,muteHttpExceptions:true,headers:{'User-Agent':'Mozilla/5.0'}});return ContentService.createTextOutput(r.getContentText());}`;
+const DEFAULT_ICON='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4"/><circle cx="16" cy="12" r=".9" fill="#8b5cf6"/><circle cx="18" cy="14" r=".9" fill="#8b5cf6"/></svg>');
 const EAGLER_ICON='data:image/jpeg;base64,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';
 const GAMES=[
 {id:'roblox',name:'Roblox',type:'remote',url:'https://nowgg.fun/apps/aptoide/5874/aptoide.html?deep_link=aptoidesearch://com.roblox.client',fallback:'https://nowgg.fun/apps/roblox-corporation/5349/roblox.html',icon:'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f2/Roblox_%282025%29_%28App_Icon%29.svg/3840px-Roblox_%282025%29_%28App_Icon%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail',note:'cloud • nowgg.fun'},
 {id:'eagler',name:'Eaglercraft 1.12',type:'fetch',urls:['https://gitea.com/RedDx/1.12-U1-builds/raw/branch/main/offline_download/wasm/Eaglercraft_1.12.2_WASM_Offline_Download.html','https://raw.githubusercontent.com/tonydsas/eaglercraftoffline/main/Eaglercraft_1.12_Offline_en_US.html'],icon:EAGLER_ICON,note:'wasm-gc • offline'},
 {id:'superhot',name:'Superhot',type:'fetch',urls:['https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/superhot.html'],icon:'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/i/a6e74472-2425-4077-817c-55d42cee8697/dd2eu62-f3c6ca09-35fb-42c8-b360-1ddd7ef02fde.png/v1/fill/w_512,h_512,q_80,strp/superhot_icon_by_iconinja__by_iconinja_dd2eu62-fullview.jpg',note:'offline build'},
 {id:'geodash',name:'Geometry Dash Lite',type:'fetch',urls:['https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/geometry-dash.html'],icon:'https://geometrydash.wiki.gg/images/GeometryDashLite.png?7b9150',note:'offline build'}];
-const gameById=id=>GAMES.find(g=>g.id===id);
+let customGames=[];
+const allGames=()=>GAMES.concat(customGames);
+const gameById=id=>allGames().find(g=>g.id===id);
 /* ================= stopwatch ================= */
 let liveT0=null,lastTotal=null;
 setInterval(()=>{const w=$('watch');if(liveT0!=null){w.textContent=fmtWatch(performance.now()-liveT0);w.classList.add('live')}else{w.classList.remove('live');w.textContent=lastTotal!=null?fmtWatch(lastTotal):'00:00.0'}},100);
@@ -447,8 +471,19 @@ async function runProxyPipeline(targetURL,tl,onStage){
   for(const name of RELAY_ORDER()){
     const t0=performance.now();
     try{
+      if(name==='custom'&&!state.settings.customRelay)throw new Error('custom relay not configured');
       const rurl=RELAY_URL[name](prox);
-      const {bytes,text}=await fetchWithProgress(rurl,(g,l)=>{if(onStage)onStage('prog',0,g,l)});
+      let bytes,text;
+      if(JSON_RELAYS.has(name)){
+        const ctl=new AbortController();const to=setTimeout(()=>ctl.abort('timeout'),45000);
+        const rr=await fetch(rurl,{signal:ctl.signal,headers:{'Accept':'application/json'}});clearTimeout(to);
+        if(!rr.ok)throw new Error('HTTP '+rr.status);
+        text=((await rr.json()).contents)||'';bytes=new TextEncoder().encode(text);
+        if(onStage)onStage('prog',0,bytes.length,bytes.length);
+      }else{
+        const r=await fetchWithProgress(rurl,(g,l)=>{if(onStage)onStage('prog',0,g,l)});
+        bytes=r.bytes;text=r.text;
+      }
       const fms=performance.now()-t0;if(onStage)onStage('fetch',fms,bytes.length,name);
       if(text.length<500&&/error|blocked|denied/i.test(text.slice(0,500))&&bytes.length<2000)throw new Error('relay refused ('+bytes.length+'B)');
       const t1=performance.now();
@@ -551,17 +586,18 @@ function cardHTML(g,opts){opts=opts||{};const fav=state.favs.includes(g.id);
     <div class="hov"><div class="nm">${g.name}</div><div class="nt">${g.note}</div></div></div>`}
 function paintGames(){
   const q=($('gSearch').value||'').toLowerCase();const f=state.filter;
-  let list=GAMES.filter(g=>g.name.toLowerCase().includes(q));
+  let list=allGames().filter(g=>g.name.toLowerCase().includes(q));
   if(f==='fav')list=list.filter(g=>state.favs.includes(g.id));
   if(f==='recent')list=list.filter(g=>state.recents.find(r=>r.id===g.id));
   $('gameGrid').innerHTML=list.length?list.map(g=>cardHTML(g)).join(''):'<span class="muted">nothing here</span>';
   // fav grid
-  const fg=GAMES.filter(g=>state.favs.includes(g.id));
+  const fg=allGames().filter(g=>state.favs.includes(g.id));
   $('favGrid').innerHTML=fg.length?fg.map(g=>cardHTML(g)).join(''):'<span class="muted">star a game to pin it here</span>';
   // recents
   const rg=state.recents.map(r=>gameById(r.id)).filter(Boolean);
   $('recentGrid').innerHTML=rg.length?rg.slice(0,6).map(g=>cardHTML(g)).join(''):'<span class="muted">play something — it shows up here</span>';
   $('stFavs').textContent=state.favs.length;
+  $('stGames').textContent=allGames().length;
   // banner
   const last=state.recents[0]&&gameById(state.recents[0].id);
   if(last){$('banner').classList.add('show');$('bannerImg').src=last.icon;$('bannerName').textContent=last.name;
@@ -634,6 +670,44 @@ async function updateDataStats(){
 function openBlob(){const b=state.blobs[state.tab]||state.blobs.browser||state.blobs.tube||state.blobs.game;
   if(!b){toast('nothing to open yet — run something first');return}
   const w=window.open(b,'_blank');if(!w)toast('popup blocked — allow popups');else toast('opened blob in new tab')}
+/* ================= school-proofing: direct open, diagnostics, import ================= */
+function openTranslated(){let t=$('bUrl').value.trim();if(!/^https?:\/\//i.test(t))t='https://'+t;try{window.open(toTranslateURL(t,$('bLang').value),'_blank');toast('opened via translate.goog — no fetch, looks like Google')}catch(e){toast('bad url')}}
+function openTubeTranslated(){try{window.open(toTranslateURL(resolveTubeInput($('tInput').value),'es'),'_blank');toast('opened translated video page')}catch(e){toast('bad input')}}
+async function diagReach(url,ms){const t0=performance.now();try{await fetch(url,{mode:'no-cors',cache:'no-store',signal:AbortSignal.timeout(ms||8000)});return{ok:true,ms:performance.now()-t0}}catch(e){return{ok:false,ms:performance.now()-t0}}}
+async function runDiag(){
+  const btn=$('btnDiag');btn.disabled=true;const o=$('diagOut');o.innerHTML='probing (real timers)...';
+  const rows=[];const row=(n,r)=>rows.push('<div>'+(r.ok?'PASS':'BLOCK')+' '+n+' — '+(r.ok?fmtT(r.ms):'FAIL '+fmtT(r.ms))+'</div>');
+  row('internet (google)',await diagReach('https://www.google.com/generate_204'));
+  row('translate.goog',await diagReach('https://www-tiktok-com.translate.goog/?_x_tr_sl=auto&_x_tr_tl=es'));
+  const hosts=['api.allorigins.win/raw?url=https://example.com','api.cors.lol/?url=https://example.com','proxy.corsfix.com/?https://example.com','api.codetabs.com/v1/proxy?quest=https://example.com','raw.githubusercontent.com/','gitea.com/','nowgg.fun/','script.google.com/'];
+  for(const h of hosts)row(h.slice(0,40),await diagReach('https://'+h,7000));
+  o.innerHTML=rows.join('')+'<div>— racing relays with a REAL cors fetch...</div>';
+  const tiny='https://example.com/';const wins=[];
+  for(const name of Object.keys(RELAY_URL)){
+    if(name==='direct')continue;if(name==='custom'&&!state.settings.customRelay)continue;
+    const t0=performance.now();
+    try{let txt;const u=RELAY_URL[name](tiny);const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
+      if(JSON_RELAYS.has(name)){const r=await fetch(u,{signal:ctl.signal});if(!r.ok)throw new Error('HTTP '+r.status);txt=(await r.json()).contents||''}
+      else{const r=await fetch(u,{signal:ctl.signal});if(!r.ok)throw new Error('HTTP '+r.status);txt=await r.text()}
+      clearTimeout(to);const ms=performance.now()-t0;
+      if(txt&&txt.length>100){wins.push({name,ms});o.innerHTML+='<div>PASS '+name+': '+fmtB(txt.length)+' in '+fmtT(ms)+'</div>'}
+      else o.innerHTML+='<div>BLOCK '+name+': empty reply</div>';
+    }catch(e){o.innerHTML+='<div>BLOCK '+name+': '+(e&&e.message||'blocked').slice(0,70)+'</div>'}
+  }
+  if(wins.length){wins.sort((a,b)=>a.ms-b.ms);state.settings.relay=wins[0].name;try{await DB.set('kv','settings',state.settings)}catch(e){}$('sRelay').value=wins[0].name;$('logRelay').textContent=wins[0].name;o.innerHTML+='<div><b>--&gt; auto-switched to fastest working relay: '+wins[0].name+'</b></div>';toast('relay → '+wins[0].name)}
+  else o.innerHTML+='<div><b>--&gt; every relay blocked. Settings → deploy the Google Apps Script relay (runs on google.com, 2 min).</b></div>';
+  btn.disabled=false;
+}
+async function copyGAS(){try{await navigator.clipboard.writeText(GAS_CODE);toast('deploy code copied — paste at script.google.com')}catch(e){prompt('copy this into script.google.com:',GAS_CODE)}}
+function importGame(file){
+  if(!file)return;const rd=new FileReader();
+  rd.onload=async()=>{try{const buf=new Uint8Array(rd.result);const id='c'+Date.now();
+    const meta={id,name:(file.name.replace(/\.html?$/i,'')||'imported').slice(0,40),type:'fetch',urls:[],icon:DEFAULT_ICON,note:'imported - offline',custom:true};
+    customGames.push(meta);await DB.set('games',id,{bytes:buf,ts:Date.now(),url:'import'});await DB.set('kv','customGames',customGames);
+    paintGames();toast('imported '+meta.name+' ('+fmtB(buf.length)+') — cached, works offline');
+  }catch(e){toast('import failed: '+e.message)}};
+  rd.readAsArrayBuffer(file);
+}
 /* ================= live proxy ping ================= */
 async function pingProxy(){
   $('btnPing').disabled=true;$('pingOut').textContent='testing…';const T0=performance.now();liveT0=T0;
@@ -654,8 +728,74 @@ async function boot(){
     const s=await DB.get('kv','settings');if(s)state.settings=Object.assign(state.settings,s);
     const r=await DB.get('kv','recents');if(r)state.recents=r;
     const f=await DB.get('kv','favs');if(f)state.favs=f;
+    const cg=await DB.get('kv','customGames');if(cg)customGames=cg;
   }catch(e){}
   document.documentElement.dataset.theme=state.settings.theme;
+  $('sRelay').value=state.settings.relay;$('sCustom').value=state.settings.customRelay||'';
+  $('sGate').classList.toggle('on',!!state.settings.gate);
+  $('logRelay').textContent=state.settings.relay;
+  paintThemes();paintGames();
+  document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+  $('btnRun').onclick=runBrowser;$('bUrl').addEventListener('keydown',e=>{if(e.key==='Enter')runBrowser()});
+  $('bPreset').onchange=e=>{$('bUrl').value=e.target.value};
+  $('btnTube').onclick=()=>loadTube();$('tInput').addEventListener('keydown',e=>{if(e.key==='Enter')loadTube()});
+  $('btnPing').onclick=pingProxy;
+  $('btnDiag').onclick=runDiag;
+  $('btnOpenTr').onclick=openTranslated;
+  $('btnOpenTrT').onclick=openTubeTranslated;
+  $('btnGAS').onclick=copyGAS;
+  $('btnImport').onclick=()=>$('filePick').click();
+  $('filePick').onchange=e=>{importGame(e.target.files[0]);e.target.value=''};
+  $('btnDiag').onclick=runDiag;
+  $('btnOpenTr').onclick=openTranslated;
+  $('btnOpenTrT').onclick=openTubeTranslated;
+  $('btnGAS').onclick=copyGAS;
+  $('btnImport').onclick=()=>$('filePick').click();
+  $('filePick').onchange=e=>{importGame(e.target.files[0]);e.target.value=''};
+  $('btnBlob').onclick=openBlob;$('btnBlob2').onclick=openBlob;
+  $('gSearch').oninput=paintGames;
+  document.querySelectorAll('.gfilter').forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;document.querySelectorAll('.gfilter').forEach(x=>x.classList.toggle('on',x===b));paintGames()});
+  $('sRelay').onchange=async e=>{state.settings.relay=e.target.value;$('logRelay').textContent=e.target.value;try{await DB.set('kv','settings',state.settings)}catch(_){}toast('relay → '+e.target.value)};
+  $('sCustom').onchange=async e=>{state.settings.customRelay=e.target.value;try{await DB.set('kv','settings',state.settings)}catch(_){}};
+  $('sGate').onclick=async ()=>{state.settings.gate=!state.settings.gate;$('sGate').classList.toggle('on',state.settings.gate);try{await DB.set('kv','settings',state.settings)}catch(_){}toast('gate '+(state.settings.gate?'on — press ~ to unlock':'off'))};
+  $('btnWipeCache').onclick=async ()=>{try{await DB.clear('games')}catch(e){}paintGames();toast('game cache cleared')};
+  $('btnWipeAll').onclick=async ()=>{if(!confirm('reset nexus? clears cache, recents, favorites, settings'))return;try{await DB.clear('games');await DB.clear('kv')}catch(e){}location.reload()};
+  $('runBack').onclick=closeRunner;
+  $('runBlob').onclick=()=>{if(!state.blobs.game){toast('no game blob yet');return}window.open(state.blobs.game,'_blank')};
+  $('runFull').onclick=()=>{const f=$('runFrame');if(f.requestFullscreen)f.requestFullscreen()};
+  $('gateReload').onclick=e=>{e.preventDefault();$('gate').style.animation='shake .3s';setTimeout(()=>$('gate').style.animation='',350);toast('still unreachable — press ~')};
+  $('gateDetail').onclick=e=>{e.preventDefault();const m=$('gateMore');m.style.display=m.style.display==='none'?'block':'none'};
+  $('gateDiag').onclick=e=>{e.preventDefault();toast('diagnostics: proxy alive, press ~ to enter')};
+  window.addEventListener('online',()=>{$('netDot').style.background='var(--good)';$('netTxt').textContent='online'});
+  window.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
+  // restore last browser url
+  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
+  lock('home');
+}
+boot();
+</script>
+</body>
+</html>
+indow.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
+  // restore last browser url
+  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
+  lock('home');
+}
+boot();
+</script>
+</body>
+</html>
+ood)';$('netTxt').textContent='online'});
+  window.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
+  // restore last browser url
+  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
+  lock('home');
+}
+boot();
+</script>
+</body>
+</html>
+te.settings.theme;
   $('sRelay').value=state.settings.relay;$('sCustom').value=state.settings.customRelay||'';
   $('sGate').classList.toggle('on',!!state.settings.gate);
   $('logRelay').textContent=state.settings.relay;
