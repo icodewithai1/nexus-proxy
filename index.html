@@ -1,742 +1,771 @@
 <!DOCTYPE html>
-<!--
-  NEXUS — school-style proxy browser (client)
-  ▸ Deploy with Code.gs: create an HTML file named "index" in the same Apps Script
-    project and paste this whole file into it.
-  ▸ Also works standalone (open directly in a browser): falls back to the
-    translate.goog mirror without the server bridge.
--->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexus — private browser</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2300e5a0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M7 26V6l18 20V6' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nexus</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#050608;--sbar:#0a0c0f;--panel:#0d1014;--panel2:#11151b;--line:#1b2029;--txt:#e9ebf2;--dim:#8a93a6;--mut:#5b6373;--acc:#7c5cff;--ok:#00e5a0;--warn:#ffb454;--err:#ff5c74}
-html,body{height:100%}
-body{background:var(--bg);color:var(--txt);font:13px/1.45 system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;display:flex;overflow:hidden}
-::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#232936;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-select,input{font:inherit;color:var(--txt)}
-/* ── sidebar ── */
-#side{width:230px;min-width:230px;background:var(--sbar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:2px}
-.logo{display:flex;align-items:center;gap:9px;padding:6px 8px 14px}
-.logo svg{width:26px;height:26px}
-.logo b{font-size:15px;letter-spacing:2.5px;font-weight:700}
-.logo b i{color:var(--acc);font-style:normal}
-.ver{margin-left:auto;font-size:9px;color:var(--mut);border:1px solid var(--line);padding:1px 6px;border-radius:20px}
-.sec{font-size:9.5px;letter-spacing:1.6px;color:var(--mut);text-transform:uppercase;padding:12px 8px 5px}
-.nav{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:8px;color:var(--dim);text-align:left}
-.nav:hover{background:var(--panel2);color:var(--txt)}
-.nav svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.pin{display:flex;align-items:center;gap:9px;width:100%;padding:6px 9px;border-radius:8px;color:var(--dim);text-align:left}
-.pin:hover{background:var(--panel2);color:var(--txt)}
-.fav{width:16px;height:16px;border-radius:4px;flex:none;object-fit:contain;background:#161a22}
-.fav-letter{width:16px;height:16px;border-radius:4px;background:#1a1f29;color:var(--dim);font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-weight:700}
-.spacer{flex:1}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:11.5px}
-.card label{color:var(--mut);font-size:10px;letter-spacing:.4px}
-.card select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 7px;outline:none}
-.badge{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;background:var(--panel);border:1px solid var(--line);font-size:11px;color:var(--dim);margin-top:10px}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--warn);box-shadow:0 0 6px currentColor;flex:none}
-.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.err{background:var(--err)}
-.foot{color:var(--mut);font-size:10px;padding:10px 8px 2px;text-align:center}
-/* ── main ── */
-#main{flex:1;display:flex;flex-direction:column;min-width:0}
-#tabstrip{display:flex;align-items:flex-end;background:var(--sbar);border-bottom:1px solid var(--line);padding:6px 8px 0;gap:4px;height:40px}
-#tabs{display:flex;gap:4px;flex:1;overflow:hidden}
-.tab{display:flex;align-items:center;gap:7px;max-width:190px;min-width:110px;flex:0 1 auto;padding:7px 9px;border-radius:9px 9px 0 0;background:transparent;color:var(--dim);border:1px solid transparent;border-bottom:0}
-.tab.on{background:var(--panel);color:var(--txt);border-color:var(--line)}
-.tab .tt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
-.tab .x{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--mut);flex:none}
-.tab .x:hover{background:#232936;color:var(--txt)}
-#newtab{width:28px;height:28px;border-radius:8px;color:var(--dim);display:flex;align-items:center;justify-content:center;margin-bottom:2px;flex:none}
-#newtab:hover{background:var(--panel2);color:var(--txt)}
-#toolbar{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
-.tbtn{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--dim);flex:none}
-.tbtn:hover{background:var(--panel2);color:var(--txt)}
-.tbtn:disabled{opacity:.32;pointer-events:none}
-.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#omni{flex:1;display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:0 14px;height:32px;min-width:0}
-#omni:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
-#omni>svg{width:13px;height:13px;stroke:var(--mut);fill:none;stroke-width:2;flex:none}
-#url{flex:1;background:none;border:0;outline:none;font-size:12.5px;min-width:0}
-#modechip{font-size:10px;color:var(--mut);border:1px solid var(--line);border-radius:20px;padding:3px 9px;white-space:nowrap;flex:none}
-#modechip b{color:var(--acc);font-weight:600}
-#go{background:var(--acc);color:#fff;border-radius:20px;padding:0 15px;height:32px;font-weight:600;flex:none}
-#go:hover{filter:brightness(1.12)}
-#loadbar{height:2px;background:linear-gradient(90deg,var(--acc),var(--ok));width:0%;transition:width .25s;opacity:0}
-#loadbar.on{opacity:1}
-#content{flex:1;position:relative;background:#000;min-height:0}
-.view{position:absolute;inset:0;display:none;background:#000}
-.view.on{display:block}
-.nx-frame{width:100%;height:100%;border:0;background:#000}
-.embed-wrap{position:absolute;inset:0;display:flex;flex-direction:column}
-.embed-top{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
-.embed-top .t{color:var(--txt);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.embed-top .u{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut);font-size:11px}
-.embed-top .nx{color:var(--acc);letter-spacing:2px;font-weight:700;font-size:11px}
-.embed-wrap iframe{flex:1;border:0;background:#000;width:100%}
-/* ── home ── */
-.home{position:absolute;inset:0;overflow:auto;background:radial-gradient(1100px 480px at 50% -10%,rgba(124,92,255,.14),transparent 60%),#050608;display:flex;justify-content:center;padding:50px 20px}
-.home-in{width:100%;max-width:780px;display:flex;flex-direction:column;align-items:center;gap:20px}
-.biglogo svg{width:70px;height:70px}
-.home h1{font-size:30px;letter-spacing:7px;font-weight:700}
-.home h1 i{color:var(--acc);font-style:normal}
-.tag{color:var(--dim);font-size:13px;margin-top:-14px}
-.hsearch{display:flex;align-items:center;gap:10px;width:100%;max-width:560px;background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:0 18px;height:46px}
-.hsearch:focus-within{border-color:var(--acc);box-shadow:0 0 0 4px rgba(124,92,255,.14)}
-.hsearch svg{width:16px;height:16px;stroke:var(--mut);fill:none;stroke-width:2;flex:none}
-.hsearch input{flex:1;background:none;border:0;outline:none;font-size:14px;min-width:0}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:660px}
-.tile{display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 8px;color:var(--dim);text-align:center}
-.tile:hover{border-color:var(--acc);color:var(--txt);transform:translateY(-1px)}
-.tile b{color:var(--txt);font-size:12px;font-weight:600}
-.tile span{font-size:10px;color:var(--mut)}
-.tile .fav{width:22px;height:22px}
-.tips{width:100%;max-width:660px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-size:12px;color:var(--dim);line-height:1.7}
-.tips b{color:var(--txt)}
-.tips kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:10.5px;color:var(--txt)}
-.recents{width:100%;max-width:660px;display:flex;flex-direction:column;gap:4px}
-.recent{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;color:var(--dim);font-size:12px;width:100%;text-align:left}
-.recent:hover{background:var(--panel2);color:var(--txt)}
-.recent span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* ── toasts ── */
-#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:99}
-.toast{background:#141821;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;padding:10px 14px;font-size:12px;max-width:360px;color:var(--txt);box-shadow:0 8px 30px rgba(0,0,0,.5)}
-.toast.err{border-left-color:var(--err)}.toast.ok{border-left-color:var(--ok)}
-@media(max-width:860px){#side{display:none}}
+:root{
+  --bg:#0a0a0c; --panel:rgba(17,17,20,.82); --panel2:#131317;
+  --line:#242429; --line2:#2e2e35; --txt:#e9e9ec; --dim:#83838d;
+  --accent:#6c7bff; --accent2:#a05cff; --ok:#3ddc97; --bad:#ff5f6d;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg); color:var(--txt); overflow:hidden;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  font-size:14px; -webkit-font-smoothing:antialiased;
+}
+/* ---------- animated background ---------- */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0a0a0c}
+.bg span{position:absolute;border-radius:50%;filter:blur(130px);opacity:.15;will-change:transform}
+.bg .b1{width:65vmax;height:65vmax;background:#4f5bff;top:-25vmax;left:-15vmax;animation:float1 26s ease-in-out infinite}
+.bg .b2{width:55vmax;height:55vmax;background:#a04fff;bottom:-28vmax;right:-18vmax;animation:float2 32s ease-in-out infinite}
+.bg .b3{width:40vmax;height:40vmax;background:#00d4ff;top:35%;left:45%;opacity:.07;animation:float1 40s ease-in-out infinite reverse}
+@keyframes float1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(7vmax,5vmax) scale(1.18)}}
+@keyframes float2{0%,100%{transform:translate(0,0) scale(1.1)}50%{transform:translate(-8vmax,-6vmax) scale(.92)}}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* ---------- layout ---------- */
+.app{position:relative;z-index:2;display:flex;height:100vh;width:100vw}
+/* ---------- sidebar ---------- */
+.sidebar{
+  width:228px;flex:0 0 228px;display:flex;flex-direction:column;gap:4px;
+  background:var(--panel);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-right:1px solid var(--line);padding:14px 10px 10px;overflow-y:auto;
+}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:#26262c;border-radius:3px}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 14px}
+.brand svg{width:26px;height:26px;flex:0 0 26px}
+.brand b{font-size:16px;font-weight:700;letter-spacing:-.4px}
+.brand small{display:block;font-size:9.5px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-top:1px}
+.sect{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#5c5c66;font-weight:700;padding:14px 10px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;
+  cursor:pointer;color:#b9b9c2;transition:background .13s,color .13s;user-select:none;
+  border:1px solid transparent;
+}
+.nav-item:hover{background:#1a1a20;color:var(--txt)}
+.nav-item.on{background:#1e1e26;color:#fff;border-color:var(--line2)}
+.nav-item .ic{width:17px;height:17px;flex:0 0 17px;display:grid;place-items:center;opacity:.9}
+.nav-item .ic img{width:16px;height:16px;border-radius:4px}
+.nav-item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.dotfallback{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff;background:var(--accent)}
+/* timer card */
+.timer-card{
+  margin-top:auto;background:#101014;border:1px solid var(--line);border-radius:12px;
+  padding:12px;display:flex;flex-direction:column;gap:9px;
+}
+.timer-card .tl{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#5c5c66;font-weight:700}
+.timer-display{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-1px;text-align:center}
+.timer-display.warn{color:var(--bad)}
+.timer-btns{display:flex;gap:6px}
+.timer-btns button{
+  flex:1;background:#1b1b21;border:1px solid var(--line2);color:#c8c8d0;
+  border-radius:7px;padding:5px 0;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:.13s;
+}
+.timer-btns button:hover{background:#242430;color:#fff}
+/* ---------- main ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+/* tabs */
+.tabstrip{
+  display:flex;align-items:center;gap:4px;padding:7px 10px 0;height:39px;
+  background:rgba(13,13,16,.6);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);
+  overflow-x:auto;overflow-y:hidden;
+}
+.tabstrip::-webkit-scrollbar{height:0}
+.tab{
+  display:flex;align-items:center;gap:7px;min-width:118px;max-width:190px;
+  padding:7px 9px;border-radius:9px 9px 0 0;background:#141418;border:1px solid transparent;
+  border-bottom:none;cursor:pointer;flex:0 0 auto;color:#9a9aa4;transition:.13s;position:relative;
+}
+.tab:hover{background:#1a1a20;color:#d0d0d6}
+.tab.on{background:#1c1c22;color:#fff;border-color:var(--line2)}
+.tab.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:#1c1c22}
+.tab img,.tab .tf{width:14px;height:14px;border-radius:3px;flex:0 0 14px}
+.tab .tf{display:grid;place-items:center;font-size:8px;font-weight:800;color:#fff;background:var(--accent)}
+.tab .tt{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab .x{width:16px;height:16px;flex:0 0 16px;border-radius:4px;display:grid;place-items:center;
+  font-size:14px;line-height:1;opacity:.5;transition:.12s}
+.tab .x:hover{background:#33333d;opacity:1}
+.newtab{
+  width:28px;height:28px;flex:0 0 28px;border-radius:8px;display:grid;place-items:center;
+  background:transparent;border:1px solid transparent;color:#7c7c86;font-size:17px;cursor:pointer;transition:.13s;
+}
+.newtab:hover{background:#1c1c22;color:#fff;border-color:var(--line2)}
+/* toolbar */
+.toolbar{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;
+  background:rgba(13,13,16,.6);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);
+}
+.tbtn{
+  width:30px;height:30px;flex:0 0 30px;border-radius:8px;border:1px solid transparent;background:transparent;
+  color:#9a9aa4;display:grid;place-items:center;cursor:pointer;transition:.13s;
+}
+.tbtn:hover{background:#1c1c22;color:#fff;border-color:var(--line2)}
+.tbtn:disabled{opacity:.28;cursor:default}
+.tbtn:disabled:hover{background:transparent;border-color:transparent;color:#9a9aa4}
+.addrwrap{flex:1;display:flex;align-items:center;gap:9px;background:#101014;border:1px solid var(--line);
+  border-radius:9px;padding:0 12px;height:34px;transition:.15s}
+.addrwrap:focus-within{border-color:#3a3a48;background:#131318}
+.addrwrap .lock{width:13px;height:13px;flex:0 0 13px;opacity:.45}
+.addrwrap input{
+  flex:1;background:transparent;border:none;outline:none;color:#e9e9ec;font-size:13px;font-family:inherit;
+}
+.addrwrap input::placeholder{color:#55555e}
+.proxytag{
+  font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7f8bff;
+  background:#1a1c33;border:1px solid #2a2d55;padding:3px 7px;border-radius:6px;cursor:pointer;white-space:nowrap;
+}
+.proxytag.off{color:#8a8a93;background:#1a1a1e;border-color:var(--line2)}
+/* progress */
+.progress{height:2px;background:transparent;overflow:hidden;flex:0 0 2px}
+.progress.on::after{
+  content:'';display:block;height:100%;width:35%;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);
+  animation:slide 1.1s linear infinite;
+}
+@keyframes slide{0%{transform:translateX(-120%)}100%{transform:translateX(400%)}}
+/* viewport */
+.viewport{flex:1;position:relative;background:#0a0a0c;overflow:hidden}
+.page{position:absolute;inset:0;display:none}
+.page.on{display:block}
+.frame{width:100%;height:100%;border:none;background:#fff;display:block}
+.page.home-mode .frame{display:none}
+.page:not(.home-mode) .home{display:none}
+/* home */
+.home{position:absolute;inset:0;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:40px 24px}
+.home-inner{width:100%;max-width:620px;text-align:center}
+.home-logo svg{width:56px;height:56px}
+.home h1{font-size:38px;font-weight:800;letter-spacing:-1.6px;margin:12px 0 6px}
+.home-sub{color:var(--dim);font-size:12.5px;margin:0 0 26px}
+.home-search{display:flex;gap:8px;background:#101014;border:1px solid var(--line);border-radius:12px;padding:6px;transition:.15s}
+.home-search:focus-within{border-color:#3a3a48;box-shadow:0 0 0 4px rgba(108,123,255,.08)}
+.home-search input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;padding:9px 12px;font-family:inherit}
+.home-search input::placeholder{color:#55555e}
+.home-search button{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;font-weight:700;
+  font-size:13px;padding:0 22px;border-radius:8px;cursor:pointer;font-family:inherit;transition:.15s;
+}
+.home-search button:hover{filter:brightness(1.12)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:26px}
+.tile{
+  background:#101014;border:1px solid var(--line);border-radius:12px;padding:15px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;transition:.15s;
+}
+.tile:hover{background:#17171d;border-color:var(--line2);transform:translateY(-2px)}
+.tile img,.tile .dotfallback{width:26px;height:26px;border-radius:7px;font-size:13px}
+.tile span{font-size:11.5px;color:#b4b4bd;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+/* statusbar */
+.statusbar{
+  height:30px;flex:0 0 30px;display:flex;align-items:center;gap:12px;padding:0 14px;
+  background:rgba(13,13,16,.75);backdrop-filter:blur(20px);border-top:1px solid var(--line);
+  font-size:11px;color:#6e6e78;
+}
+.statusbar .s{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:0 0 6px;box-shadow:0 0 8px var(--ok)}
+.pulse.busy{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse .9s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.statusbar .clock{font-variant-numeric:tabular-nums;font-weight:600;color:#8b8b95}
+/* toast */
+.toast{
+  position:fixed;bottom:52px;left:50%;transform:translateX(-50%) translateY(14px);z-index:99;
+  background:#17171d;border:1px solid var(--line2);color:#e0e0e6;padding:11px 18px;border-radius:10px;
+  font-size:12.5px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;max-width:80vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
+<div class="bg"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+<div class="grain"></div>
 
-<aside id="side">
-  <div class="logo">
-    <svg viewBox="0 0 32 32"><defs><linearGradient id="nxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#00e5a0"/></linearGradient></defs><path d="M7 26V6l18 20V6" fill="none" stroke="url(#nxg)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <b>NEX<i>US</i></b><span class="ver">v1.1</span>
-  </div>
-  <button class="nav" id="btn-home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg>Home</button>
-  <button class="nav" id="btn-new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New tab</button>
-  <div class="sec">Quick launch</div>
-  <div id="pins"></div>
-  <div class="spacer"></div>
-  <div class="card">
-    <label>RELAY MODE</label>
-    <select id="mode">
-      <option value="auto">Auto (recommended)</option>
-      <option value="fetch">Server fetch + rewrite</option>
-      <option value="server">Server iFrame (js-heavy sites)</option>
-    </select>
-    <label>MIRROR LANGUAGE</label>
-    <select id="lang">
-      <option value="es">es</option><option value="pt">pt</option><option value="fr">fr</option>
-      <option value="de">de</option><option value="zh-CN">zh-CN</option><option value="ja">ja</option>
-    </select>
-  </div>
-  <div class="badge"><span class="dot" id="tdot"></span><span id="tstate">connecting…</span></div>
-  <div class="foot">NEXUS · apps script relay</div>
-</aside>
-
-<div id="main">
-  <div id="tabstrip">
-    <div id="tabs"></div>
-    <button id="newtab" title="New tab (Ctrl+T)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-  </div>
-  <div id="toolbar">
-    <button class="tbtn" id="back" title="Back (Alt+←)"><svg viewBox="0 0 24 24"><path d="M19 12H5m7-7l-7 7 7 7"/></svg></button>
-    <button class="tbtn" id="fwd" title="Forward (Alt+→)"><svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7l7 7-7 7"/></svg></button>
-    <button class="tbtn" id="reload" title="Reload"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
-    <div id="omni">
-      <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      <input id="url" placeholder="Search or type a URL   ·   try:  yt lofi   |   now.gg" spellcheck="false" autocomplete="off">
-      <span id="modechip"><b>idle</b></span>
+<div class="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" fill="none">
+        <defs>
+          <linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6c7bff"/><stop offset="1" stop-color="#a05cff"/>
+          </linearGradient>
+        </defs>
+        <path d="M16 2.6 27.6 9.3v13.4L16 29.4 4.4 22.7V9.3L16 2.6Z" stroke="url(#ng)" stroke-width="2.1" stroke-linejoin="round"/>
+        <path d="M16 9.4 22.4 13v6.6L16 23.2 9.6 19.6V13L16 9.4Z" fill="url(#ng)" opacity=".85"/>
+        <circle cx="16" cy="16.3" r="2.1" fill="#0a0a0c"/>
+      </svg>
+      <div><b>Nexus</b><small>Translate Proxy</small></div>
     </div>
-    <button id="go">Go</button>
+
+    <div class="sect">Browser</div>
+    <div class="nav-item" id="navHome">
+      <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></div>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" id="navNew">
+      <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+      <span>New Tab</span>
+    </div>
+
+    <div class="sect">Bookmarks</div>
+    <div id="bmList"></div>
+
+    <div class="timer-card">
+      <div class="tl">Session Timer</div>
+      <div class="timer-display" id="timerDisp">05:00</div>
+      <div class="timer-btns">
+        <button id="tStart">Start</button>
+        <button id="tReset">Reset</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+    <div class="tabstrip" id="tabstrip"></div>
+
+    <div class="toolbar">
+      <button class="tbtn" id="btnBack" title="Back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="tbtn" id="btnFwd" title="Forward">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      <button class="tbtn" id="btnReload" title="Reload">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+      </button>
+      <div class="addrwrap">
+        <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <input id="addr" placeholder="Search or enter a URL" autocomplete="off" spellcheck="false">
+        <div class="proxytag" id="proxyTag" title="Toggle translate proxy">PROXY ON</div>
+      </div>
+      <button class="tbtn" id="btnGo" title="Go">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="progress" id="progress"></div>
+    <div class="viewport" id="viewport"></div>
+
+    <div class="statusbar">
+      <div class="s"><span class="pulse" id="pulse"></span><span id="statusText">Ready</span></div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
   </div>
-  <div id="loadbar"></div>
-  <div id="content"></div>
 </div>
 
-<div id="toasts"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-/* ══════════════ CORE ══════════════ */
-'use strict';
-const HAS_GAS = !!(window.google && google.script && google.script.run);
-const STATE = { mode: 'auto', lang: 'es', proxy: '', tabs: [], active: null, seq: 0, recents: [] };
-const YT_RE = /(?:youtube\.com\/(?:watch\?[^#]*?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i;
-const TT_RE = /tiktok\.com\/(?:[^\/?#]+\/)?video\/(\d+)/i;
-const SKIP_RE = /^(javascript:|mailto:|tel:|data:|blob:|about:|#)/i;
-const PINS = [
-  ['YouTube', 'https://www.youtube.com/'],
-  ['TikTok', 'https://www.tiktok.com/'],
-  ['Duck.ai', 'https://duck.ai/'],
-  ['now.gg', 'https://now.gg/'],
-  ['Reddit', 'https://www.reddit.com/'],
-  ['Wikipedia', 'https://en.wikipedia.org/'],
-  ['Discord', 'https://discord.com/'],
-  ['Spotify', 'https://open.spotify.com/']
+/* ============================================================
+   NEXUS — translate.goog proxy browser
+   ============================================================ */
+
+const $ = s => document.querySelector(s);
+
+const viewport   = $('#viewport');
+const tabstrip   = $('#tabstrip');
+const addr       = $('#addr');
+const statusText = $('#statusText');
+const pulse      = $('#pulse');
+const progress   = $('#progress');
+const proxyTag   = $('#proxyTag');
+
+/* ---------------- CONFIG ---------------- */
+
+let PROXY_ON = true;
+
+const BOOKMARKS = [
+  { name:'YouTube',   url:'https://www.youtube.com' },
+  { name:'TikTok',    url:'https://www.tiktok.com' },
+  { name:'Duck.ai',   url:'https://duck.ai' },
+  { name:'now.gg',    url:'https://now.gg' },
+  { name:'Wikipedia', url:'https://en.wikipedia.org' },
+  { name:'Reddit',    url:'https://www.reddit.com' },
+  { name:'Google',    url:'https://www.google.com' },
+  { name:'Twitch',    url:'https://www.twitch.tv' },
 ];
-const $ = (id) => document.getElementById(id);
 
-function tgoog(u, lang) {
-  try {
-    const m = String(u).match(/^(https?:\/\/)([^\/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/);
-    if (!m) return u;
-    const host = m[2].toLowerCase().replace(/-/g, '--').replace(/\./g, '-');
-    const q = m[4] || '';
-    return m[1] + host + '.translate.goog' + (m[3] || '/') + q + (q ? '&' : '?') +
-      '_x_tr_sl=auto&_x_tr_tl=' + encodeURIComponent(lang || STATE.lang) + '&_x_tr_hl=en' + (m[5] || '');
-  } catch (e) { return u; }
-}
-function gasCall(fn) {
-  const args = Array.prototype.slice.call(arguments, 1);
-  return new Promise((res, rej) => {
-    try {
-      google.script.run.withSuccessHandler(res)
-        .withFailureHandler((e) => rej(new Error((e && e.message) || 'GAS bridge error')))
-        [fn].apply(null, args);
-    } catch (e) { rej(e); }
-  });
-}
-function resolveInput(raw) {
-  raw = (raw || '').trim();
-  if (!raw) return '';
-  if (/^yt\s+/i.test(raw)) return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(raw.replace(/^yt\s+/i, ''));
-  if (/^https?:\/\//i.test(raw)) return raw;
-  if (/^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(raw)) return 'https://' + raw;
-  return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(raw);
-}
-function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
-function prettyUrl(u) {
-  try { const x = new URL(u); return (x.hostname + x.pathname + x.search).replace(/\/$/, '').slice(0, 42); }
-  catch (e) { return String(u || '').slice(0, 42); }
-}
-function favHtml(host) {
-  const letter = (host || '?').charAt(0).toUpperCase();
-  return '<img class="fav" alt="" src="https://icons.duckduckgo.com/ip3/' + encodeURIComponent(host) + '.ico" ' +
-    'onerror="this.outerHTML=\'<span class=&quot;fav-letter&quot;>' + letter + '</span>\'">';
-}
-function toast(msg, kind) {
-  const d = document.createElement('div');
-  d.className = 'toast ' + (kind || '');
-  d.textContent = msg;
-  $('toasts').appendChild(d);
-  setTimeout(() => { d.style.opacity = '0'; d.style.transition = 'opacity .4s'; setTimeout(() => d.remove(), 420); }, 4200);
-}
-function loadbar(pct) {
-  const b = $('loadbar');
-  if (pct == null) { b.classList.remove('on'); b.style.width = '0%'; return; }
-  b.classList.add('on'); b.style.width = Math.max(4, pct) + '%';
-}
-function badge(text, cls) { $('tstate').textContent = text; $('tdot').className = 'dot ' + (cls || 'warn'); }
+const NEXUS_SVG = `<svg viewBox="0 0 32 32" fill="none">
+  <defs><linearGradient id="ng2" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#6c7bff"/><stop offset="1" stop-color="#a05cff"/></linearGradient></defs>
+  <path d="M16 2.6 27.6 9.3v13.4L16 29.4 4.4 22.7V9.3L16 2.6Z" stroke="url(#ng2)" stroke-width="2.1" stroke-linejoin="round"/>
+  <path d="M16 9.4 22.4 13v6.6L16 23.2 9.6 19.6V13L16 9.4Z" fill="url(#ng2)" opacity=".85"/>
+  <circle cx="16" cy="16.3" r="2.1" fill="#0a0a0c"/></svg>`;
 
-/* ══════════════ INJECTED CLIENT HOOK (runs inside proxied pages) ══════════════ */
-function NX_HOOK() {
-  const RP = window.parent;                       // real parent, captured before any site JS messes with it
-  function abs(u) { try { return new URL(u, document.baseURI).href; } catch (e) { return u; } }
-  function deT(u) {
-    try {
-      const m = String(u).match(/^https?:\/\/(.+?)\.translate\.goog(\/.*)?$/);
-      if (!m) return u;
-      const h = m[1].replace(/--/g, '\u0001').replace(/-/g, '.').replace(/\u0001/g, '-');
-      const r = (m[2] || '/').replace(/([?&])_x_tr_[^&]*&?/g, '$1').replace(/[?&]+$/, '');
-      return 'https://' + h + r;
-    } catch (e) { return u; }
-  }
-  function emit(u, kind) { try { RP.postMessage({ __nx: 'nav', url: u, via: 'fetch', kind: kind || '' }, '*'); } catch (e) {} }
-  document.addEventListener('click', function (e) {
-    const a = e.target && e.target.closest ? e.target.closest('a,area') : null;
-    if (!a) return;
-    const h = a.getAttribute('href') || '';
-    if (!h || /^(javascript:|#|mailto:|tel:|data:|blob:)/i.test(h)) { if (h === '#') e.preventDefault(); return; }
-    e.preventDefault(); e.stopPropagation();
-    emit(a.getAttribute('data-nx1') || deT(abs(h)), 'link');
-  }, true);
-  document.addEventListener('submit', function (e) {
-    const f = e.target; if (!f) return;
-    e.preventDefault(); e.stopPropagation();
-    try {
-      const method = (f.getAttribute('method') || 'get').toLowerCase();
-      let u = abs(f.getAttribute('action') || document.baseURI);
-      if (method === 'get') {
-        u = u.split('#')[0];
-        const q = new URLSearchParams(new FormData(f)).toString();
-        if (q) u += (u.indexOf('?') > -1 ? '&' : '?') + q;
+/* Script injected into every proxied page */
+const HOOK = `<script>(function(){
+  function send(u){ try{ parent.postMessage({__nexus:1,url:u},'*'); }catch(e){} }
+  document.addEventListener('click',function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if(!a) return;
+    var h = a.getAttribute('href');
+    if(!h || h.charAt(0)==='#' || h.indexOf('javascript:')===0 || h.indexOf('mailto:')===0) return;
+    var abs; try{ abs = new URL(h, document.baseURI).href; }catch(err){ return; }
+    e.preventDefault(); e.stopPropagation(); send(abs);
+  },true);
+  document.addEventListener('submit',function(e){
+    var f = e.target; if(!f || !f.action) return;
+    try{
+      var abs = new URL(f.action, document.baseURI).href;
+      var m = (f.method||'get').toLowerCase();
+      if(m==='get'){
+        var p = new URLSearchParams(new FormData(f)).toString();
+        e.preventDefault(); send(abs.split('?')[0]+'?'+p);
       }
-      emit(u, 'form');
-    } catch (err) {}
-  }, true);
-  window.open = function (u) { emit(abs(u || 'about:blank'), 'popup'); return null; };
-  /* route site-internal fetch/XHR through the server bridge when available */
-  let G = null;
-  try { if (RP.google && RP.google.script && RP.google.script.run) G = RP.google.script.run; } catch (e) {}
-  if (G) {
-    const OF = window.fetch;
-    window.fetch = function (input, init) {
-      try {
-        const u = (typeof input === 'string') ? input : (input && input.url) || '';
-        if (!u) return OF ? OF(input, init) : Promise.reject(new Error('bad fetch'));
-        const au = abs(u);
-        const target = /^https?:\/\//i.test(au) ? au : deT(au);
-        return new Promise((res, rej) => {
-          G.withSuccessHandler((r) => {
-            if (!r) return rej(new Error('empty'));
-            r.ok = r.code >= 200 && r.code < 400; r.status = r.code;
-            r.headers = { get: (h) => /content-type/i.test(h || '') ? (r.ct || '') : null };
-            r.text = () => Promise.resolve(r.body || '');
-            r.json = () => { try { return Promise.resolve(JSON.parse(r.body || '{}')); } catch (e) { return Promise.resolve({}); } };
-            res(r);
-          }).withFailureHandler(rej).api_fetch(target, { mode: 't' });
-        });
-      } catch (e) { return OF ? OF(input, init) : Promise.reject(e); }
-    };
-    const OO = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function (m, u) { this.__nxu = u; return OO.apply(this, arguments); };
-    const OS = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.send = function () {
-      const self = this;
-      try {
-        if (this.__nxu && !/^(https?:)?\/\//i.test(String(this.__nxu).trim())) {
-          const au = abs(this.__nxu);
-          const target = /^https?:\/\//i.test(au) ? au : deT(au);
-          G.withSuccessHandler((r) => {
-            try {
-              Object.defineProperty(self, 'status', { value: (r && r.code) || 0, configurable: true });
-              Object.defineProperty(self, 'responseText', { value: (r && r.body) || '', configurable: true });
-              Object.defineProperty(self, 'response', { value: (r && r.body) || '', configurable: true });
-              Object.defineProperty(self, 'readyState', { value: 4, configurable: true });
-            } catch (e) {}
-            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
-            try { self.dispatchEvent(new Event('load')); } catch (e) {}
-          }).withFailureHandler(() => { try { self.dispatchEvent(new Event('error')); } catch (e) {} })
-            .api_fetch(target, { mode: 't' });
-          return;
-        }
-      } catch (e) {}
-      return OS.apply(this, arguments);
-    };
-  }
-  try { Object.defineProperty(window, 'top', { get: () => window }); } catch (e) {}
-}
-const HOOK_SRC = '(' + NX_HOOK.toString() + ')();';
+    }catch(err){}
+  },true);
+  try{
+    var b = document.createElement('style');
+    b.textContent='::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#333;border-radius:5px}';
+    (document.head||document.documentElement).appendChild(b);
+  }catch(e){}
+})();<\/script>`;
 
-/* ══════════════ HTML REWRITER (client-side, full DOM) ══════════════ */
-function cssRewrite(css, baseUrl) {
-  return String(css || '').replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (w, q, u) => {
-    u = (u || '').trim();
-    if (!u || /^(data:|blob:|about:|#)/i.test(u)) return w;
-    return 'url("' + tgoog(absUrl(u, baseUrl)) + '")';
-  });
-}
-function absUrl(u, base) {
-  u = String(u || '').trim().replace(/^["']|["']$/g, '');
-  if (!u || SKIP_RE.test(u)) return '';
-  if (/^https?:\/\//i.test(u)) return u;
-  const m = String(base).match(/^(https?:)\/\/([^\/?#]+)([^?#]*)/i);
-  if (!m) return '';
-  const sch = m[1], origin = sch + '//' + m[2], path = m[3] || '/';
-  if (/^\/\//.test(u)) return sch + u;
-  if (u.charAt(0) === '?') return origin + path + u;
-  if (u.charAt(0) === '/') return origin + u;
-  const dir = path.substring(0, path.lastIndexOf('/') + 1);
-  const segs = dir.split('/').filter((s, i) => s !== '' || i === 0);
-  u.split('/').forEach((s) => {
-    if (!s || s === '.') return;
-    if (s === '..') { if (segs.length > 1) segs.pop(); } else segs.push(s);
-  });
-  return origin + segs.join('/');
-}
-function rewriteHtml(html, baseUrl) {
-  let doc;
-  try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch (e) { return html; }
-  if (!doc || !doc.documentElement) return html;
-  doc.querySelectorAll('meta[http-equiv]').forEach((m) => {
-    if ((m.getAttribute('http-equiv') || '').toLowerCase() === 'content-security-policy') m.remove();
-  });
-  doc.querySelectorAll('base').forEach((b) => b.remove());
-  doc.querySelectorAll('[integrity]').forEach((e) => e.removeAttribute('integrity'));
-  doc.querySelectorAll('[crossorigin]').forEach((e) => e.removeAttribute('crossorigin'));
-  doc.querySelectorAll('[target]').forEach((e) => e.removeAttribute('target'));
-  doc.querySelectorAll('a[href], area[href]').forEach((a) => {
-    const abs = absUrl(a.getAttribute('href'), baseUrl);
-    if (abs) { a.setAttribute('href', abs); a.setAttribute('data-nx1', abs); }
-  });
-  doc.querySelectorAll('form').forEach((f) => {
-    const abs = absUrl(f.getAttribute('action') || baseUrl, baseUrl);
-    if (abs) f.setAttribute('action', abs);
-  });
-  doc.querySelectorAll('meta[http-equiv="refresh" i]').forEach((m) => {
-    const c = m.getAttribute('content') || '';
-    const mm = c.match(/url=(.+)$/i);
-    if (mm) {
-      const abs = absUrl(mm[1].trim().replace(/^['"]|['"]$/g, ''), baseUrl);
-      if (abs) m.setAttribute('content', c.replace(/url=.+$/i, 'url=' + abs));
-    }
-  });
-  const subs = 'img,source,video,audio,track,embed,script';
-  doc.querySelectorAll(subs + '[src]').forEach((e) => {
-    const abs = absUrl(e.getAttribute('src'), baseUrl);
-    if (abs) e.setAttribute('src', tgoog(abs));
-  });
-  doc.querySelectorAll('[poster]').forEach((e) => {
-    const abs = absUrl(e.getAttribute('poster'), baseUrl);
-    if (abs) e.setAttribute('poster', tgoog(abs));
-  });
-  doc.querySelectorAll('[data-src]').forEach((e) => {
-    const abs = absUrl(e.getAttribute('data-src'), baseUrl);
-    if (abs) e.setAttribute('data-src', tgoog(abs));
-  });
-  doc.querySelectorAll('link[href]').forEach((l) => {
-    const rel = (l.getAttribute('rel') || '').toLowerCase();
-    if (/stylesheet|icon|shortcut|preload|prefetch|apple-touch|manifest/.test(rel)) {
-      const abs = absUrl(l.getAttribute('href'), baseUrl);
-      if (abs) l.setAttribute('href', tgoog(abs));
-    }
-  });
-  doc.querySelectorAll('iframe[src]').forEach((f) => {
-    const abs = absUrl(f.getAttribute('src'), baseUrl);
-    if (!abs) return;
-    if (/youtube(-nocookie)?\.com\/embed|tiktok\.com\/embed/i.test(abs)) { f.setAttribute('src', abs); return; }
-    f.setAttribute('src', (HAS_GAS && STATE.proxy) ? STATE.proxy + '?nx=' + encodeURIComponent(abs) : tgoog(abs));
-  });
-  doc.querySelectorAll('[srcset]').forEach((e) => {
-    const out = (e.getAttribute('srcset') || '').split(',').map((p) => {
-      const bits = p.trim().split(/\s+/);
-      if (bits[0] && !SKIP_RE.test(bits[0])) bits[0] = tgoog(absUrl(bits[0], baseUrl));
-      return bits.join(' ');
-    });
-    e.setAttribute('srcset', out.join(', '));
-  });
-  doc.querySelectorAll('style').forEach((s) => { s.textContent = cssRewrite(s.textContent, baseUrl); });
-  doc.querySelectorAll('[style]').forEach((e) => { e.setAttribute('style', cssRewrite(e.getAttribute('style'), baseUrl)); });
-  const head = doc.head || doc.documentElement;
-  const base = doc.createElement('base');
-  base.setAttribute('href', tgoog(baseUrl));
-  head.insertBefore(base, head.firstChild);
-  const hk = doc.createElement('script');
-  hk.textContent = HOOK_SRC;
-  head.insertBefore(hk, base.nextSibling);
-  return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+/* ---------------- TABS ---------------- */
+
+let tabs = [];
+let activeId = null;
+let seq = 0;
+
+function getTab(id){ return tabs.find(t => t.id === id); }
+function activeTab(){ return getTab(activeId); }
+
+function hostOf(u){ try { return new URL(u).hostname; } catch(e){ return u; } }
+
+function faviconFor(host){
+  if(!host) return '';
+  const d = host.replace(/^www\./,'');
+  return 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(d) + '&sz=64';
 }
 
-/* ══════════════ TABS ══════════════ */
-function activeTab() { return STATE.tabs.find((t) => t.id === STATE.active) || null; }
-function newTab() {
-  const id = ++STATE.seq;
-  const view = document.createElement('div');
-  view.className = 'view';
-  $('content').appendChild(view);
-  const tab = { id, view, url: '', title: 'New tab', transport: 'idle', hist: [], hi: -1, token: 0, mode: '' };
-  STATE.tabs.push(tab);
-  activateTab(id);
-  renderHome(tab);
+function newTab(url){
+  const id = ++seq;
+  const wrap = document.createElement('div');
+  wrap.className = 'page home-mode';
+
+  const frame = document.createElement('iframe');
+  frame.className = 'frame';
+  frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads');
+  frame.setAttribute('allow','autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write');
+  frame.setAttribute('referrerpolicy','no-referrer');
+
+  const home = buildHome(id);
+
+  wrap.appendChild(home);
+  wrap.appendChild(frame);
+  viewport.appendChild(wrap);
+
+  const tab = { id, url:'', title:'New Tab', fav:'', wrap, frame, home, mode:'home' };
+  tabs.push(tab);
+  activate(id);
   renderTabs();
+  if(url) navigate(id, url);
   return tab;
 }
-function closeTab(id) {
-  const i = STATE.tabs.findIndex((t) => t.id === id);
-  if (i < 0) return;
-  STATE.tabs[i].view.remove();
-  STATE.tabs.splice(i, 1);
-  if (!STATE.tabs.length) { newTab(); return; }
-  if (STATE.active === id) activateTab(STATE.tabs[Math.max(0, i - 1)].id);
+
+function activate(id){
+  activeId = id;
+  tabs.forEach(t => t.wrap.classList.toggle('on', t.id === id));
+  const t = getTab(id);
+  if(t){
+    addr.value = t.url || '';
+    addr.placeholder = t.mode === 'home' ? 'Search or enter a URL' : '';
+  }
   renderTabs();
 }
-function activateTab(id) {
-  STATE.active = id;
-  STATE.tabs.forEach((t) => t.view.classList.toggle('on', t.id === id));
-  renderTabs();
-  updateOmni();
+
+function closeTab(id){
+  const i = tabs.findIndex(t => t.id === id);
+  if(i < 0) return;
+  tabs[i].wrap.remove();
+  tabs.splice(i,1);
+  if(tabs.length === 0){ newTab(); return; }
+  if(activeId === id) activate(tabs[Math.max(0,i-1)].id);
+  else renderTabs();
 }
-function renderTabs() {
-  const wrap = $('tabs');
-  wrap.innerHTML = '';
-  STATE.tabs.forEach((t) => {
-    const b = document.createElement('button');
-    b.className = 'tab' + (t.id === STATE.active ? ' on' : '');
-    const host = hostOf(t.url);
-    b.innerHTML = (host ? favHtml(host) : '') + '<span class="tt">' + escapeHtml(t.title || 'New tab') + '</span>' +
-      '<span class="x" title="Close (Ctrl+W)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></span>';
-    b.querySelector('.x').addEventListener('click', (e) => { e.stopPropagation(); closeTab(t.id); });
-    b.addEventListener('click', () => activateTab(t.id));
-    wrap.appendChild(b);
+
+function renderTabs(){
+  tabstrip.innerHTML = '';
+  tabs.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'tab' + (t.id === activeId ? ' on' : '');
+    const icon = t.fav
+      ? `<img src="${t.fav}" onerror="this.style.display='none'">`
+      : `<div class="tf">${(t.title||'N')[0].toUpperCase()}</div>`;
+    el.innerHTML = `${icon}<div class="tt">${escapeHtml(t.title || 'New Tab')}</div><div class="x">×</div>`;
+    el.addEventListener('click', e => {
+      if(e.target.classList.contains('x')){ closeTab(t.id); return; }
+      activate(t.id);
+    });
+    tabstrip.appendChild(el);
   });
-}
-function updateOmni() {
-  const t = activeTab();
-  $('url').value = t ? (t.url || '') : '';
-  $('modechip').innerHTML = '<b>' + (t ? t.transport : 'idle') + '</b>';
-  $('back').disabled = !(t && t.hi > 0);
-  $('fwd').disabled = !(t && t.hi < t.hist.length - 1);
-}
-function escapeHtml(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-function setTabMeta(tab, url) {
-  tab.url = url;
-  const host = hostOf(url);
-  tab.title = host || prettyUrl(url) || 'New tab';
-  renderTabs(); updateOmni();
+  const plus = document.createElement('div');
+  plus.className = 'newtab';
+  plus.textContent = '+';
+  plus.title = 'New tab';
+  plus.addEventListener('click', () => newTab());
+  tabstrip.appendChild(plus);
 }
 
-/* ══════════════ VIEWS ══════════════ */
-function mkFrame(tab) {
-  const f = document.createElement('iframe');
-  f.className = 'nx-frame';
-  return f;
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function loadHome(tab) { tab.view.innerHTML = ''; renderHome(tab); updateOmni(); }
-function loadPlayerView(tab, url, kind, id) {
-  tab.view.innerHTML = '';
-  tab.transport = kind === 'yt' ? 'player' : 'clip';
-  const wrap = document.createElement('div');
-  wrap.className = 'embed-wrap';
-  wrap.innerHTML = '<div class="embed-top"><span class="dot ok"></span><span class="t">' +
-    (kind === 'yt' ? 'YouTube player' : 'TikTok player') + '</span><span class="u">' + escapeHtml(url) +
-    '</span><span class="nx">NEXUS</span></div>';
-  const f = document.createElement('iframe');
-  f.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
-  f.setAttribute('allowfullscreen', '');
-  f.src = kind === 'yt'
-    ? 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1'
-    : 'https://www.tiktok.com/embed/v2/' + id;
-  wrap.appendChild(f);
-  tab.view.appendChild(wrap);
-  tab.url = url;
-  tab.title = kind === 'yt' ? 'YouTube video' : 'TikTok video';
-  renderTabs(); updateOmni();
-}
-function loadServerView(tab, url, m) {
-  tab.view.innerHTML = '';
-  tab.transport = 'iframe';
-  const f = mkFrame(tab);
-  f.src = STATE.proxy + (STATE.proxy.indexOf('?') > -1 ? '&' : '?') + 'nx=' + encodeURIComponent(url) + '&m=' + (m || 't');
-  tab.view.appendChild(f);
-  setTabMeta(tab, url);
-}
-function loadMirrorView(tab, url) {
-  /* last-resort standalone fallback: load the google mirror directly in the frame (tag loads need no CORS) */
-  tab.view.innerHTML = '';
-  tab.transport = 'mirror-frame';
-  const f = mkFrame(tab);
-  f.src = tgoog(url);
-  tab.view.appendChild(f);
-  setTabMeta(tab, url);
-}
-function loadViewer(tab, res, url) {
-  tab.view.innerHTML = '';
-  tab.transport = 'view';
-  const wrap = document.createElement('div');
-  wrap.className = 'embed-wrap';
-  wrap.innerHTML = '<div class="embed-top"><span class="dot"></span><span class="t">' + escapeHtml((res.ct || 'file').split(';')[0]) +
-    '</span><span class="u">' + escapeHtml(url) + '</span><span class="nx">NEXUS</span></div>';
-  const pre = document.createElement('pre');
-  pre.style.cssText = 'flex:1;overflow:auto;margin:0;padding:16px;color:#9aa3b5;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#000';
-  pre.textContent = String(res.body || '').slice(0, 200000);
-  wrap.appendChild(pre);
-  tab.view.appendChild(wrap);
-}
-async function loadFetchView(tab, url, step) {
-  loadbar(12);
-  let res;
-  if (step.t === 'gas') {
-    res = await gasCall('api_fetch', url, { mode: step.m });
-    if (res.error) throw new Error(res.error);
-  } else {
-    const r = await fetch(tgoog(url), { redirect: 'follow' });
-    res = { code: r.status, ct: r.headers.get('content-type') || '', body: await r.text(), url };
-    if (!r.ok && !/<html/i.test(res.body)) throw new Error('HTTP ' + r.status);
-  }
-  loadbar(55);
-  const ct = (res.ct || '').toLowerCase();
-  const looksHtml = /html|xhtml|xml|plain|\bjson\b/.test(ct) || /<html|<!doctype/i.test(res.body || '');
-  if (!looksHtml) { loadViewer(tab, res, url); loadbar(100); setTimeout(() => loadbar(null), 300); return; }
-  if (res.code >= 400 && !/<html|<!doctype/i.test(res.body || '')) throw new Error('HTTP ' + res.code);
-  const html = rewriteHtml(res.body, url);
-  tab.view.innerHTML = '';
-  tab.transport = step.m === 'd' ? 'fetch' : 'mirror';
-  const f = mkFrame(tab);
-  f.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-modals');
-  tab.view.appendChild(f);
-  await new Promise((done) => {
-    let ok = false;
-    f.addEventListener('load', () => { if (!ok) { ok = true; done(); } });
-    setTimeout(() => { if (!ok) { ok = true; done(); } }, 12000);
-    f.srcdoc = html;
+
+/* ---------------- HOME PAGE ---------------- */
+
+function buildHome(id){
+  const d = document.createElement('div');
+  d.className = 'home';
+
+  const tiles = BOOKMARKS.map(b => `
+    <div class="tile" data-url="${b.url}">
+      <img src="${faviconFor(hostOf(b.url))}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'dotfallback',textContent:'${b.name[0]}'}))">
+      <span>${b.name}</span>
+    </div>`).join('');
+
+  d.innerHTML = `
+    <div class="home-inner">
+      <div class="home-logo">${NEXUS_SVG}</div>
+      <h1>Nexus</h1>
+      <p class="home-sub">Routed through translate.goog · rewritten on the fly</p>
+      <form class="home-search">
+        <input type="text" placeholder="Search or enter a URL" autocomplete="off" spellcheck="false">
+        <button type="submit">Go</button>
+      </form>
+      <div class="tiles">${tiles}</div>
+    </div>`;
+
+  d.querySelector('form').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = d.querySelector('input').value.trim();
+    if(v) go(id, v);
   });
-  try { const t = f.contentDocument && f.contentDocument.title; if (t) tab.title = t.slice(0, 40); } catch (e) {}
-  loadbar(100);
-  setTimeout(() => loadbar(null), 350);
-  setTabMeta(tab, url);
+  d.querySelectorAll('.tile').forEach(t => {
+    t.addEventListener('click', () => go(id, t.dataset.url));
+  });
+  return d;
 }
 
-/* ══════════════ NAVIGATION ENGINE ══════════════ */
-function pushHist(tab, url) {
-  tab.hist = tab.hist.slice(0, tab.hi + 1);
-  tab.hist.push(url);
-  tab.hi = tab.hist.length - 1;
-  updateOmni();
-}
-function addRecent(url) {
-  try {
-    STATE.recents = JSON.parse(localStorage.getItem('nx_recents') || '[]');
-  } catch (e) { STATE.recents = []; }
-  STATE.recents = STATE.recents.filter((r) => r.u !== url);
-  STATE.recents.unshift({ u: url, t: Date.now() });
-  STATE.recents = STATE.recents.slice(0, 8);
-  try { localStorage.setItem('nx_recents', JSON.stringify(STATE.recents)); } catch (e) {}
-}
-async function navigate(tab, input, opts) {
-  opts = opts || {};
-  tab = tab || activeTab();
-  if (!tab) return;
-  const url = resolveInput(input);
-  if (!url) return;
-  const token = (STATE.ntok = (STATE.ntok || 0) + 1);
-  tab.token = token;
+/* ---------------- URL / PROXY HELPERS ---------------- */
 
-  const yt = url.match(YT_RE), tt = url.match(TT_RE);
-  if (yt) { loadPlayerView(tab, url, 'yt', yt[1]); if (opts.push !== false) pushHist(tab, url); addRecent(url); return; }
-  if (tt) { loadPlayerView(tab, url, 'tt', tt[1]); if (opts.push !== false) pushHist(tab, url); addRecent(url); return; }
+function toTranslate(url){
+  try{
+    const u = new URL(url);
+    const host = u.hostname.replace(/\./g,'-') + '.translate.goog';
+    const params = new URLSearchParams(u.search);
+    params.set('_x_tr_sl','auto');
+    params.set('_x_tr_tl','en');
+    params.set('_x_tr_hl','en');
+    params.set('_x_tr_pto','wapi');
+    let path = u.pathname;
+    if(path === '/') path = '/';
+    return `https://${host}${path}?${params.toString()}`;
+  }catch(e){ return url; }
+}
 
-  const mode = opts.mode || STATE.mode;
-  let chain = [];
-  if (mode === 'server') {
-    if (HAS_GAS && STATE.proxy) chain = [{ t: 'server', m: 't' }];
-    else { toast('Server iFrame mode needs the Apps Script deployment', 'err'); return; }
-  } else if (mode === 'fetch') {
-    chain = HAS_GAS ? [{ t: 'gas', m: 'd' }, { t: 'gas', m: 't' }] : [{ t: 'cors', m: 't' }, { t: 'mirror', m: 't' }];
-  } else { // auto
-    chain = HAS_GAS
-      ? [{ t: 'gas', m: 'd' }, { t: 'gas', m: 't' }].concat(STATE.proxy ? [{ t: 'server', m: 't' }] : [])
-      : [{ t: 'cors', m: 't' }, { t: 'mirror', m: 't' }];
-  }
-  let lastErr = null;
-  for (const step of chain) {
-    if (tab.token !== token) return; // superseded
-    try {
-      if (step.t === 'server') {
-        loadServerView(tab, url, step.m);
-        loadbar(100); setTimeout(() => loadbar(null), 400);
-      } else if (step.t === 'mirror') {
-        loadMirrorView(tab, url);
-        loadbar(100); setTimeout(() => loadbar(null), 400);
-      } else {
-        await loadFetchView(tab, url, step);
+function isTranslateHost(u){
+  try{ return new URL(u).hostname.endsWith('.translate.goog'); }catch(e){ return false; }
+}
+
+function ytEmbed(url){
+  try{
+    const u = new URL(url);
+    const h = u.hostname.replace(/^www\./,'');
+    let id = null;
+    if(h === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
+    else if(h.endsWith('youtube.com')){
+      if(u.pathname === '/watch') id = u.searchParams.get('v');
+      else if(u.pathname.startsWith('/shorts/')) id = u.pathname.split('/')[2];
+      else if(u.pathname.startsWith('/embed/')) id = u.pathname.split('/')[2];
+    }
+    if(id && /^[\w-]{6,20}$/.test(id)){
+      return 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0';
+    }
+  }catch(e){}
+  return null;
+}
+
+/* ---------------- FETCH THROUGH CORS PROXIES ---------------- */
+
+const CORS_ENDPOINTS = [
+  t => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(t),
+  t => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(t),
+  t => 'https://corsproxy.io/?url=' + encodeURIComponent(t),
+  t => 'https://api.allorigins.win/get?url=' + encodeURIComponent(t),
+];
+
+async function fetchViaProxies(target, timeoutMs = 9000){
+  for(const make of CORS_ENDPOINTS){
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), timeoutMs);
+    try{
+      const res = await fetch(make(target), { signal: ctrl.signal, redirect:'follow' });
+      clearTimeout(to);
+      if(!res.ok) continue;
+      let text = await res.text();
+      // allorigins /get returns JSON
+      if(text.charAt(0) === '{' && text.indexOf('"contents"') > -1){
+        try{ text = JSON.parse(text).contents || ''; }catch(e){}
       }
-      if (opts.push !== false) pushHist(tab, url);
-      addRecent(url);
-      return;
-    } catch (e) { lastErr = e; }
+      if(text && text.length > 200) return text;
+    }catch(e){ clearTimeout(to); }
   }
-  loadbar(null);
-  tab.transport = 'error';
-  updateOmni();
-  toast('Could not load ' + prettyUrl(url) + ' — ' + ((lastErr && lastErr.message) || 'all relays failed'), 'err');
-}
-function goBack() { const t = activeTab(); if (t && t.hi > 0) { t.hi--; navigate(t, t.hist[t.hi], { push: false }); } }
-function goFwd() { const t = activeTab(); if (t && t.hi < t.hist.length - 1) { t.hi++; navigate(t, t.hist[t.hi], { push: false }); } }
-function reloadTab() {
-  const t = activeTab();
-  if (t && t.url) navigate(t, t.url, { push: false });
-  else if (t) renderHome(t);
+  return null;
 }
 
-/* ══════════════ HOME PAGE ══════════════ */
-function renderHome(tab) {
-  tab.transport = 'home';
-  const tiles = [
-    ['YouTube', 'https://www.youtube.com/', 'videos + built-in player'],
-    ['TikTok', 'https://www.tiktok.com/', 'feed + video player'],
-    ['Duck.ai', 'https://duck.ai/', 'AI chat'],
-    ['now.gg', 'https://now.gg/', 'cloud games'],
-    ['Reddit', 'https://www.reddit.com/', 'forums'],
-    ['Wikipedia', 'https://en.wikipedia.org/', 'reference'],
-    ['Discord', 'https://discord.com/', 'chat'],
-    ['Spotify', 'https://open.spotify.com/', 'music']
-  ];
-  const rec = STATE.recents.map((r) =>
-    '<button class="recent" data-u="' + escapeHtml(r.u) + '">' + favHtml(hostOf(r.u)) + '<span>' + escapeHtml(prettyUrl(r.u)) + '</span></button>').join('');
-  tab.view.innerHTML =
-    '<div class="home"><div class="home-in">' +
-    '<div class="biglogo"><svg viewBox="0 0 32 32"><defs><linearGradient id="nxg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#00e5a0"/></linearGradient></defs><path d="M7 26V6l18 20V6" fill="none" stroke="url(#nxg2)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
-    '<h1>NEX<i>US</i></h1><div class="tag">own relay · fetch rewrite · player routes — nothing else needed</div>' +
-    '<div class="hsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>' +
-    '<input id="hsearch" placeholder="Search the web or type a URL…  (  yt query  =  YouTube search )" spellcheck="false"></div>' +
-    '<div class="tiles">' + tiles.map((tl) =>
-      '<button class="tile" data-u="' + tl[1] + '"><b>' + tl[0] + '</b>' + favHtml(hostOf(tl[1])) + '<span>' + tl[2] + '</span></button>').join('') + '</div>' +
-    '<div class="tips"><b>How it works</b> — pages are fetched <b>server-side</b> by the Apps Script relay (no CORS), rewritten so every link, form and asset stays inside the proxy, then streamed into this tab. Videos on ' +
-    '<b>YouTube</b> and <b>TikTok</b> open in built-in player routes. Commands: <kbd>yt</kbd> search · <kbd>!server url</kbd> force iFrame mode · <kbd>!fetch url</kbd> force rewrite mode. Shortcuts: <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>T</kbd> <kbd>W</kbd> · <kbd>Alt</kbd>+<kbd>←→</kbd></div>' +
-    (rec ? '<div class="recents">' + rec + '</div>' : '') +
-    '</div></div>';
-  const inp = tab.view.querySelector('#hsearch');
-  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') omniGo(inp.value); });
-  tab.view.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => navigate(tab, b.dataset.u)));
-  tab.view.querySelectorAll('.recent').forEach((b) => b.addEventListener('click', () => navigate(tab, b.dataset.u)));
-  updateOmni();
+/* ---------------- HTML REWRITER ---------------- */
+
+function rewrite(html, proxiedUrl){
+  let out = html;
+
+  // kill CSP / frame busting
+  out = out.replace(/<meta[^>]+http-equiv\s*=\s*["']?Content-Security-Policy["']?[^>]*>/gi, '');
+  out = out.replace(/<meta[^>]+http-equiv\s*=\s*["']?X-Frame-Options["']?[^>]*>/gi, '');
+  // strip SRI (breaks when served from a different origin)
+  out = out.replace(/\sintegrity\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  // remove existing <base>
+  out = out.replace(/<base\b[^>]*>/gi, '');
+  // force same-frame navigation
+  out = out.replace(/\starget\s*=\s*["']_blank["']/gi, ' target="_self"');
+
+  const baseTag = '<base href="' + proxiedUrl.replace(/"/g,'&quot;') + '">';
+  const inject = baseTag + HOOK;
+
+  if(/<head[^>]*>/i.test(out)) out = out.replace(/<head[^>]*>/i, m => m + inject);
+  else if(/<html[^>]*>/i.test(out)) out = out.replace(/<html[^>]*>/i, m => m + inject);
+  else out = inject + out;
+
+  return out;
 }
 
-/* ══════════════ EVENTS ══════════════ */
-window.addEventListener('message', (ev) => {
-  const d = ev.data;
-  if (!d || d.__nx !== 'nav' || !d.url) return;
-  let tab = null;
-  for (const t of STATE.tabs) {
-    const f = t.view && t.view.querySelector('iframe');
-    if (f && f.contentWindow === ev.source) { tab = t; break; }
+function titleOf(html){
+  const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  return m ? m[1].trim().slice(0,60) : '';
+}
+
+/* ---------------- NAVIGATION ---------------- */
+
+function go(id, input){
+  let v = (input || '').trim();
+  if(!v) return;
+
+  if(v.startsWith('nexus://home')){ showHome(id); return; }
+
+  if(!/^https?:\/\//i.test(v)){
+    if(/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(v)) v = 'https://' + v;
+    else v = 'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(v);
   }
-  if (!tab) tab = activeTab();
-  if (tab) navigate(tab, d.url, { mode: d.via === 'server' ? 'server' : undefined });
+  navigate(id, v);
+}
+
+function showHome(id){
+  const t = getTab(id); if(!t) return;
+  t.mode = 'home'; t.url = ''; t.title = 'New Tab'; t.fav = '';
+  t.wrap.classList.add('home-mode');
+  t.frame.removeAttribute('srcdoc');
+  t.frame.removeAttribute('src');
+  addr.value = '';
+  renderTabs();
+  setStatus('Ready');
+}
+
+async function navigate(id, url){
+  const tab = getTab(id);
+  if(!tab) return;
+
+  url = String(url).trim();
+  if(url.startsWith('nexus://home')){ showHome(id); return; }
+
+  tab.mode = 'web';
+  tab.url = url;
+  tab.wrap.classList.remove('home-mode');
+  if(tab.id === activeId) addr.value = url;
+
+  setBusy(true);
+  setStatus('Loading ' + hostOf(url));
+
+  /* ---- YouTube fast path: real playback via embed ---- */
+  const yt = ytEmbed(url);
+  if(yt){
+    tab.frame.removeAttribute('srcdoc');
+    tab.frame.src = yt;
+    tab.title = 'YouTube';
+    tab.fav = faviconFor('youtube.com');
+    renderTabs();
+    setBusy(false);
+    setStatus('YouTube embed · direct playback');
+    return;
+  }
+
+  /* ---- Translate proxy path ---- */
+  const turl = PROXY_ON ? toTranslate(url) : url;
+
+  if(PROXY_ON && !isTranslateHost(url)){
+    try{
+      const html = await fetchViaProxies(turl);
+      if(html && html.length > 200){
+        const out = rewrite(html, turl);
+        tab.frame.removeAttribute('src');
+        tab.frame.srcdoc = out;
+        tab.title = titleOf(html) || hostOf(url);
+        tab.fav = faviconFor(hostOf(url));
+        renderTabs();
+        setBusy(false);
+        setStatus('Proxied · ' + hostOf(url) + ' via translate.goog');
+        return;
+      }
+    }catch(e){ /* fall through */ }
+  }
+
+  /* ---- Fallback: point the iframe straight at translate.goog ---- */
+  tab.frame.removeAttribute('srcdoc');
+  tab.frame.src = turl;
+  tab.title = hostOf(url);
+  tab.fav = faviconFor(hostOf(url));
+  renderTabs();
+  setBusy(false);
+  setStatus((PROXY_ON ? 'Direct frame · translate.goog · ' : 'Direct · ') + hostOf(url));
+
+  if(!PROXY_ON) toast('Proxy off — many sites will refuse to frame.');
+}
+
+/* ---------------- STATUS / UI BITS ---------------- */
+
+function setStatus(s){ statusText.textContent = s; }
+function setBusy(b){
+  pulse.classList.toggle('busy', b);
+  progress.classList.toggle('on', b);
+}
+
+let toastTimer;
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 2600);
+}
+
+/* ---------------- MESSAGE BRIDGE ---------------- */
+
+window.addEventListener('message', e => {
+  const d = e.data;
+  if(!d || !d.__nexus || !d.url) return;
+  const tab = tabs.find(t => t.frame && t.frame.contentWindow === e.source);
+  if(tab) navigate(tab.id, d.url);
 });
- $('go').addEventListener('click', () => omniGo($('url').value));
- $('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') omniGo(e.target.value); });
- $('back').addEventListener('click', goBack);
- $('fwd').addEventListener('click', goFwd);
- $('reload').addEventListener('click', reloadTab);
- $('newtab').addEventListener('click', () => newTab());
- $('btn-home').addEventListener('click', () => { const t = activeTab(); if (t) loadHome(t); });
- $('btn-new').addEventListener('click', () => newTab());
- $('mode').addEventListener('change', (e) => { STATE.mode = e.target.value; try { localStorage.setItem('nx_mode', STATE.mode); } catch (er) {} });
- $('lang').addEventListener('change', (e) => { STATE.lang = e.target.value; try { localStorage.setItem('nx_lang', STATE.lang); } catch (er) {} });
-document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key.toLowerCase() === 'l') { e.preventDefault(); $('url').focus(); $('url').select(); }
-  else if (e.ctrlKey && e.key.toLowerCase() === 't') { e.preventDefault(); newTab(); }
-  else if (e.ctrlKey && e.key.toLowerCase() === 'w') { e.preventDefault(); if (STATE.active) closeTab(STATE.active); }
-  else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); goBack(); }
-  else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); goFwd(); }
-});
-/* force-mode commands:  !server <url>  ·  !fetch <url>  ·  yt <query> */
-function omniGo(raw) {
-  raw = (raw || '').trim();
-  if (!raw) return;
-  let m;
-  if ((m = raw.match(/^!server\s+(\S+)/i))) return navigate(activeTab(), m[1], { mode: 'server' });
-  if ((m = raw.match(/^!fetch\s+(\S+)/i))) return navigate(activeTab(), m[1], { mode: 'fetch' });
-  return navigate(activeTab(), raw);
-}
 
-/* ══════════════ BOOT ══════════════ */
-(async function boot() {
-  try { STATE.mode = localStorage.getItem('nx_mode') || 'auto'; } catch (e) {}
-  try { STATE.lang = localStorage.getItem('nx_lang') || 'es'; } catch (e) {}
-  $('mode').value = STATE.mode; $('lang').value = STATE.lang;
-  $('pins').innerHTML = PINS.map((p) =>
-    '<button class="pin" data-u="' + p[1] + '">' + favHtml(hostOf(p[1])) + '<span>' + p[0] + '</span></button>').join('');
-  document.querySelectorAll('#pins .pin').forEach((b) => b.addEventListener('click', () => navigate(activeTab(), b.dataset.u)));
-  if (HAS_GAS) {
-    try {
-      const cfg = await gasCall('api_config');
-      STATE.proxy = (cfg && cfg.proxy) || '';
-      badge(STATE.proxy ? 'GAS proxy online' : 'GAS bridge ok (no url)', 'ok');
-    } catch (e) { badge('GAS bridge error', 'err'); }
-  } else {
-    badge('standalone · mirror relay', 'warn');
-  }
-  newTab();
+/* ---------------- WIRE UP ---------------- */
+
+addr.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ go(activeId, addr.value); addr.blur(); }
+});
+
+$('#btnGo').addEventListener('click', () => go(activeId, addr.value));
+$('#btnReload').addEventListener('click', () => {
+  const t = activeTab(); if(!t) return;
+  if(t.mode === 'home') return;
+  navigate(t.id, t.url);
+});
+$('#btnBack').addEventListener('click', () => toast('History is per-tab in this build.'));
+$('#btnFwd').addEventListener('click', () => toast('History is per-tab in this build.'));
+
+$('#navHome').addEventListener('click', () => showHome(activeId));
+$('#navNew').addEventListener('click', () => newTab());
+
+proxyTag.addEventListener('click', () => {
+  PROXY_ON = !PROXY_ON;
+  proxyTag.textContent = PROXY_ON ? 'PROXY ON' : 'PROXY OFF';
+  proxyTag.classList.toggle('off', !PROXY_ON);
+  toast(PROXY_ON ? 'Translate proxy enabled' : 'Translate proxy disabled');
+});
+
+/* ---- sidebar bookmarks ---- */
+(function renderBookmarks(){
+  const list = $('#bmList');
+  BOOKMARKS.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'nav-item';
+    el.innerHTML = `<div class="ic"><img src="${faviconFor(hostOf(b.url))}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'dotfallback',textContent:'${b.name[0]}'}))"></div><span>${b.name}</span>`;
+    el.addEventListener('click', () => {
+      let t = activeTab();
+      if(!t || (t.mode === 'web' && t.url)) t = newTab();
+      go(t.id, b.url);
+    });
+    list.appendChild(el);
+  });
 })();
+
+/* ---------------- CLOCK ---------------- */
+setInterval(() => {
+  const d = new Date();
+  $('#clock').textContent = d.toLocaleTimeString([], { hour12:false });
+}, 1000);
+
+/* ---------------- TIMER ---------------- */
+let timeLeft = 300;
+let timerRunning = false;
+let timerInt = null;
+
+function renderTimer(){
+  const m = String(Math.floor(timeLeft/60)).padStart(2,'0');
+  const s = String(timeLeft%60).padStart(2,'0');
+  const el = $('#timerDisp');
+  el.textContent = m + ':' + s;
+  el.classList.toggle('warn', timeLeft <= 30);
+}
+
+function tickTimer(){
+  if(!timerRunning) return;
+  timeLeft--;
+  if(timeLeft <= 0){
+    timeLeft = 0;
+    timerRunning = false;
+    clearInterval(timerInt);
+    $('#tStart').textContent = 'Start';
+    toast("⏱ Time's up — 5 minutes elapsed.");
+  }
+  renderTimer();
+}
+
+$('#tStart').addEventListener('click', () => {
+  if(timerRunning){
+    timerRunning = false;
+    clearInterval(timerInt);
+    $('#tStart').textContent = 'Start';
+  } else {
+    if(timeLeft <= 0) timeLeft = 300;
+    timerRunning = true;
+    $('#tStart').textContent = 'Pause';
+    clearInterval(timerInt);
+    timerInt = setInterval(tickTimer, 1000);
+  }
+});
+
+$('#tReset').addEventListener('click', () => {
+  timerRunning = false;
+  clearInterval(timerInt);
+  timeLeft = 300;
+  $('#tStart').textContent = 'Start';
+  renderTimer();
+});
+
+/* ---------------- BOOT ---------------- */
+renderTimer();
+newTab();                       // first tab, home screen
+setStatus('Ready · translate.goog routing active');
+setTimeout(() => toast('Nexus ready. YouTube links open as real embeds.'), 500);
+
+/* keyboard: Ctrl+T new tab, Ctrl+W close */
+window.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key === 't'){ e.preventDefault(); newTab(); }
+  if((e.ctrlKey || e.metaKey) && e.key === 'w'){ e.preventDefault(); closeTab(activeId); }
+  if((e.ctrlKey || e.metaKey) && e.key === 'l'){ e.preventDefault(); addr.focus(); addr.select(); }
+});
 </script>
 </body>
 </html>
