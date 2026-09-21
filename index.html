@@ -1,886 +1,742 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="midnight">
+<!--
+  NEXUS — school-style proxy browser (client)
+  ▸ Deploy with Code.gs: create an HTML file named "index" in the same Apps Script
+    project and paste this whole file into it.
+  ▸ Also works standalone (open directly in a browser): falls back to the
+    translate.goog mirror without the server bridge.
+-->
+<html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexus</title>
+<title>Nexus — private browser</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2300e5a0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M7 26V6l18 20V6' fill='none' stroke='url(%23g)' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#05060a;--panel:#0c0e16;--panel2:#121522;--line:#1e2334;--text:#eef1ff;--muted:#8b93b0;--accent:#8b5cf6;--accent2:#22d3ee;--good:#34d399;--bad:#f87171;--warn:#fbbf24;--radius:14px}
-html[data-theme="crimson"]{--bg:#0a0505;--panel:#160c0c;--panel2:#221214;--line:#352021;--text:#fff1f1;--muted:#b08e8e;--accent:#ef4444;--accent2:#fb923c}
-html[data-theme="mint"]{--bg:#040a07;--panel:#0a1511;--panel2:#12231b;--line:#1f3529;--text:#ecfdf5;--muted:#8ab0a0;--accent:#10b981;--accent2:#a3e635}
-html[data-theme="amber"]{--bg:#0a0803;--panel:#161106;--panel2:#241b0b;--line:#3a2e18;--text:#fffaeb;--muted:#b3a582;--accent:#f59e0b;--accent2:#f43f5e}
-html[data-theme="ghost"]{--bg:#e8eaf2;--panel:#f7f8fc;--panel2:#ffffff;--line:#d4d8e6;--text:#141728;--muted:#5d6480;--accent:#6d28d9;--accent2:#0891b2}
+:root{--bg:#050608;--sbar:#0a0c0f;--panel:#0d1014;--panel2:#11151b;--line:#1b2029;--txt:#e9ebf2;--dim:#8a93a6;--mut:#5b6373;--acc:#7c5cff;--ok:#00e5a0;--warn:#ffb454;--err:#ff5c74}
 html,body{height:100%}
-body{background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Roboto,"Segoe UI",sans-serif;overflow:hidden;transition:background .3s,color .3s}
-/* animated bg */
-#bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.blob{position:absolute;width:55vmax;height:55vmax;border-radius:50%;filter:blur(90px);opacity:.28;animation:drift 22s ease-in-out infinite alternate}
-.b1{background:var(--accent);top:-15vmax;left:-12vmax}
-.b2{background:var(--accent2);bottom:-18vmax;right:-10vmax;animation-delay:-7s;animation-duration:26s}
-.b3{background:var(--accent);bottom:-10vmax;left:30vmax;opacity:.14;animation-delay:-13s;animation-duration:30s}
-@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(6vmax,4vmax) scale(1.15)}}
-#bg .grid{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;opacity:.25;mask-image:radial-gradient(ellipse at 50% 40%,black 30%,transparent 75%)}
-/* layout */
-#app{position:relative;z-index:1;display:flex;height:100vh}
-#side{width:86px;flex:0 0 86px;background:color-mix(in srgb,var(--panel) 82%,transparent);backdrop-filter:blur(14px);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px}
-#logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;box-shadow:0 4px 22px color-mix(in srgb,var(--accent) 55%,transparent);margin-bottom:2px}
-#logoSub{font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;font-weight:700}
-.navbtn{width:66px;padding:9px 0 7px;border:1px solid transparent;background:transparent;color:var(--muted);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;transition:all .18s}
-.navbtn svg{width:21px;height:21px}
-.navbtn:hover{color:var(--text);background:var(--panel2)}
-.navbtn.on{color:var(--text);background:var(--panel2);border-color:var(--line);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
-.navbtn.on svg{color:var(--accent)}
-#sideFoot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px}
-#netDot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
-#sideFoot span{font-size:9px;color:var(--muted)}
-main{flex:1;display:flex;flex-direction:column;min-width:0}
-#topbar{height:56px;flex:0 0 56px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 70%,transparent);backdrop-filter:blur(14px)}
-#tabTitle{font-weight:800;font-size:16px;letter-spacing:.3px}
-#watch{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:5px 12px;color:var(--accent2);min-width:118px;text-align:center}
-#watch.live{color:var(--good);border-color:color-mix(in srgb,var(--good) 50%,transparent);animation:pulse 1s infinite}
-@keyframes pulse{50%{opacity:.55}}
-.topsp{flex:1}
-.btn{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
-.btn:hover{border-color:var(--accent);transform:translateY(-1px)}
-.btn.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--accent2)));border:none;color:#fff;box-shadow:0 4px 16px color-mix(in srgb,var(--accent) 45%,transparent)}
-.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
-.btn svg{width:15px;height:15px}
-.btn:disabled{opacity:.5;cursor:wait;transform:none}
-#content{flex:1;overflow-y:auto;padding:18px;position:relative}
-.tab{display:none;animation:fadeUp .25s ease}
-.tab.on{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.card{background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:var(--radius);padding:16px;backdrop-filter:blur(10px)}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input[type=text],input[type=url],select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;font-size:13px;outline:none;min-width:0}
-input:focus,select:focus{border-color:var(--accent)}
-h2{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-h2 svg{width:17px;height:17px;color:var(--accent)}
-.muted{color:var(--muted);font-size:12px}
-/* home */
-#banner{display:none;position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);margin-bottom:18px;min-height:170px;background:var(--panel2)}
-#banner.show{display:block}
-#banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45}
-#banner .in{position:relative;padding:26px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;background:linear-gradient(90deg,color-mix(in srgb,var(--bg) 82%,transparent),transparent)}
-#banner .kicker{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--accent2);text-transform:uppercase}
-#banner .gname{font-size:30px;font-weight:800}
-.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
-.stat{background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.stat .v{font-size:19px;font-weight:800;font-family:ui-monospace,Menlo,monospace}
-.stat .k{font-size:11px;color:var(--muted)}
-.secTitle{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
-.secTitle svg{width:14px;height:14px}
-/* game cards: square image, name on hover */
-.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
-.gcard{position:relative;aspect-ratio:1/1;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--line);background:var(--panel2);transition:transform .18s,box-shadow .18s}
-.gcard:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 35%,transparent);border-color:var(--accent)}
-.gcard img{width:100%;height:100%;object-fit:cover;display:block}
-.gcard .hov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;background:linear-gradient(transparent 30%,rgba(0,0,0,.88));opacity:0;transition:opacity .18s}
-.gcard:hover .hov{opacity:1}
-.gcard .nm{font-weight:800;font-size:13px;color:#fff}
-.gcard .nt{font-size:10.5px;color:#c9cede}
-.gcard .acts{position:absolute;top:7px;right:7px;display:flex;gap:6px;opacity:0;transition:opacity .18s}
-.gcard:hover .acts{opacity:1}
-.icobtn{width:29px;height:29px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px)}
-.icobtn svg{width:14px;height:14px}
-.icobtn.faved{color:#fbbf24;border-color:#fbbf24}
-.gcard .badge{position:absolute;top:7px;left:7px;font-size:9px;font-weight:800;background:rgba(0,0,0,.6);color:var(--good);padding:3px 7px;border-radius:7px;letter-spacing:.5px}
-/* browser / tube */
-.urlrow{display:flex;gap:8px;margin-bottom:12px}
-.urlrow input{flex:1}
-.stages{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-.stage{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:11.5px;color:var(--muted)}
-.stage b{color:var(--text);font-family:ui-monospace,Menlo,monospace;font-weight:700}
-.stage.done{border-color:color-mix(in srgb,var(--good) 45%,transparent)}
-.stage.done b{color:var(--good)}
-#pbar{height:4px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-bottom:12px;border:1px solid var(--line)}
-#pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s}
-.viewwrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#000;position:relative}
-.viewwrap iframe{width:100%;height:min(62vh,640px);border:0;background:#0a0a0a;display:block}
-.viewempty{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:var(--muted);font-size:13px;background:var(--panel)}
-.viewempty svg{width:38px;height:38px;opacity:.5}
-#log,#tubeLog{background:#020308;border:1px solid var(--line);border-radius:12px;margin-top:12px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;max-height:130px;overflow-y:auto;color:#9fe8c1}
-#log div,#tubeLog div{padding:1.5px 0;border-bottom:1px dotted #14231c}
-#log .t,#tubeLog .t{color:#5b6478}
-#log .warn,#tubeLog .warn{color:var(--warn)} #log .err,#tubeLog .err{color:var(--bad)}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.chip{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12px;display:inline-flex;gap:7px;align-items:center}
-.chip svg{width:13px;height:13px;color:var(--accent2)}
-.chip b{font-weight:700}
-.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin:12px 0}
-.vcard{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .15s}
-.vcard:hover{border-color:var(--accent);transform:translateY(-2px)}
-.vcard img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}
-.vcard .t{padding:9px 11px;font-size:12px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-/* runner overlay */
-#runner{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);display:none;flex-direction:column}
-#runner.show{display:flex}
-#runHead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #222}
-#runName{font-weight:800;font-size:15px}
-#runTimer{font-family:ui-monospace,Menlo,monospace;color:var(--good);font-size:13px;background:#0d1512;border:1px solid #1d3a2f;padding:5px 12px;border-radius:8px}
-#runProg{height:3px;background:#181818}
-#runProg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-#runner iframe{flex:1;border:0;background:#000}
-#runStat{font-size:11.5px;color:#8b93b0;font-family:ui-monospace,Menlo,monospace}
-/* gate: fake chrome error */
-#gate{position:fixed;inset:0;z-index:100;background:#fff;color:#202124;display:none;font-family:"Segoe UI",Roboto,system-ui,sans-serif}
-#gate.show{display:block}
-#gate .g{max-width:640px;margin:12vh auto 0;padding:0 30px}
-#gate .gi{width:44px;height:44px;border-radius:50%;border:3px solid #9aa0a6;display:flex;align-items:center;justify-content:center;margin-bottom:22px}
-#gate .gi svg{width:22px;height:22px;color:#9aa0a6}
-#gate h1{font-size:26px;font-weight:500;margin-bottom:14px}
-#gate p{font-size:14px;margin-bottom:8px;color:#202124}
-#gate .sug{margin:14px 0;font-size:13px;color:#5f6368}
-#gate .sug li{margin-left:20px;margin-bottom:3px}
-#gate .err{margin-top:14px;font-size:12px;color:#5f6368}
-#gate .gbtns{display:flex;gap:10px;margin-top:22px}
-#gate button{border:1px solid #dadce0;background:#fff;border-radius:18px;padding:8px 22px;font-size:13px;color:#1a73e8;cursor:pointer;font-weight:500}
-#gate button.solid{background:#1a73e8;color:#fff;border-color:#1a73e8}
-#gate .hintkeys{position:fixed;bottom:14px;right:18px;font-size:11px;color:#bdc1c6;font-family:ui-monospace,monospace}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-/* settings */
-.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.themeSw{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-.tsw{width:64px;height:52px;border-radius:12px;cursor:pointer;border:2px solid transparent;position:relative;overflow:hidden;transition:all .15s}
-.tsw.on{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
-.tsw span{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:8.5px;font-weight:800;color:#fff;text-shadow:0 1px 3px #000}
-.kv{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
-.kv:last-child{border:none}
-.switch{width:44px;height:24px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;position:relative;transition:all .2s}
-.switch::after{content:"";position:absolute;top:2px;left:3px;width:17px;height:17px;border-radius:50%;background:var(--muted);transition:all .2s}
-.switch.on{background:color-mix(in srgb,var(--accent) 35%,transparent);border-color:var(--accent)}
-.switch.on::after{left:22px;background:var(--accent)}
-table.lab{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
-table.lab td,table.lab th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
-table.lab th{color:var(--muted);font-weight:700;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase}
-.ok{color:var(--good);font-weight:700}.fail{color:var(--bad);font-weight:700}.mono{font-family:ui-monospace,Menlo,monospace}
-/* update splash */
-#usplash{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;align-items:center;justify-content:center}
-#usplash .uinner{display:flex;flex-direction:column;align-items:center;gap:10px}
-#ulogo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;color:#fff;animation:pulse 1.2s infinite}
-#usplash .ut{font-weight:800;letter-spacing:4px;font-size:13px}
-#usplashStatus{color:var(--muted);font-size:12.5px}
-#usplashTime{color:var(--accent2);font-size:12px}
-/* toast */
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);border:1px solid var(--accent);color:var(--text);padding:11px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:200;transition:transform .25s;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
-#toast.show{transform:translateX(-50%) translateY(0)}
-::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
-@media(max-width:720px){#side{width:60px;flex-basis:60px}.navbtn{width:50px;font-size:8.5px}#tabTitle{font-size:13px}}
+body{background:var(--bg);color:var(--txt);font:13px/1.45 system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;display:flex;overflow:hidden}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#232936;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+select,input{font:inherit;color:var(--txt)}
+/* ── sidebar ── */
+#side{width:230px;min-width:230px;background:var(--sbar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:2px}
+.logo{display:flex;align-items:center;gap:9px;padding:6px 8px 14px}
+.logo svg{width:26px;height:26px}
+.logo b{font-size:15px;letter-spacing:2.5px;font-weight:700}
+.logo b i{color:var(--acc);font-style:normal}
+.ver{margin-left:auto;font-size:9px;color:var(--mut);border:1px solid var(--line);padding:1px 6px;border-radius:20px}
+.sec{font-size:9.5px;letter-spacing:1.6px;color:var(--mut);text-transform:uppercase;padding:12px 8px 5px}
+.nav{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:8px;color:var(--dim);text-align:left}
+.nav:hover{background:var(--panel2);color:var(--txt)}
+.nav svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pin{display:flex;align-items:center;gap:9px;width:100%;padding:6px 9px;border-radius:8px;color:var(--dim);text-align:left}
+.pin:hover{background:var(--panel2);color:var(--txt)}
+.fav{width:16px;height:16px;border-radius:4px;flex:none;object-fit:contain;background:#161a22}
+.fav-letter{width:16px;height:16px;border-radius:4px;background:#1a1f29;color:var(--dim);font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-weight:700}
+.spacer{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:11.5px}
+.card label{color:var(--mut);font-size:10px;letter-spacing:.4px}
+.card select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 7px;outline:none}
+.badge{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;background:var(--panel);border:1px solid var(--line);font-size:11px;color:var(--dim);margin-top:10px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--warn);box-shadow:0 0 6px currentColor;flex:none}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.err{background:var(--err)}
+.foot{color:var(--mut);font-size:10px;padding:10px 8px 2px;text-align:center}
+/* ── main ── */
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#tabstrip{display:flex;align-items:flex-end;background:var(--sbar);border-bottom:1px solid var(--line);padding:6px 8px 0;gap:4px;height:40px}
+#tabs{display:flex;gap:4px;flex:1;overflow:hidden}
+.tab{display:flex;align-items:center;gap:7px;max-width:190px;min-width:110px;flex:0 1 auto;padding:7px 9px;border-radius:9px 9px 0 0;background:transparent;color:var(--dim);border:1px solid transparent;border-bottom:0}
+.tab.on{background:var(--panel);color:var(--txt);border-color:var(--line)}
+.tab .tt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.tab .x{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--mut);flex:none}
+.tab .x:hover{background:#232936;color:var(--txt)}
+#newtab{width:28px;height:28px;border-radius:8px;color:var(--dim);display:flex;align-items:center;justify-content:center;margin-bottom:2px;flex:none}
+#newtab:hover{background:var(--panel2);color:var(--txt)}
+#toolbar{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.tbtn{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--dim);flex:none}
+.tbtn:hover{background:var(--panel2);color:var(--txt)}
+.tbtn:disabled{opacity:.32;pointer-events:none}
+.tbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#omni{flex:1;display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:0 14px;height:32px;min-width:0}
+#omni:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(124,92,255,.15)}
+#omni>svg{width:13px;height:13px;stroke:var(--mut);fill:none;stroke-width:2;flex:none}
+#url{flex:1;background:none;border:0;outline:none;font-size:12.5px;min-width:0}
+#modechip{font-size:10px;color:var(--mut);border:1px solid var(--line);border-radius:20px;padding:3px 9px;white-space:nowrap;flex:none}
+#modechip b{color:var(--acc);font-weight:600}
+#go{background:var(--acc);color:#fff;border-radius:20px;padding:0 15px;height:32px;font-weight:600;flex:none}
+#go:hover{filter:brightness(1.12)}
+#loadbar{height:2px;background:linear-gradient(90deg,var(--acc),var(--ok));width:0%;transition:width .25s;opacity:0}
+#loadbar.on{opacity:1}
+#content{flex:1;position:relative;background:#000;min-height:0}
+.view{position:absolute;inset:0;display:none;background:#000}
+.view.on{display:block}
+.nx-frame{width:100%;height:100%;border:0;background:#000}
+.embed-wrap{position:absolute;inset:0;display:flex;flex-direction:column}
+.embed-top{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);font-size:12px;color:var(--dim)}
+.embed-top .t{color:var(--txt);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.embed-top .u{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut);font-size:11px}
+.embed-top .nx{color:var(--acc);letter-spacing:2px;font-weight:700;font-size:11px}
+.embed-wrap iframe{flex:1;border:0;background:#000;width:100%}
+/* ── home ── */
+.home{position:absolute;inset:0;overflow:auto;background:radial-gradient(1100px 480px at 50% -10%,rgba(124,92,255,.14),transparent 60%),#050608;display:flex;justify-content:center;padding:50px 20px}
+.home-in{width:100%;max-width:780px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.biglogo svg{width:70px;height:70px}
+.home h1{font-size:30px;letter-spacing:7px;font-weight:700}
+.home h1 i{color:var(--acc);font-style:normal}
+.tag{color:var(--dim);font-size:13px;margin-top:-14px}
+.hsearch{display:flex;align-items:center;gap:10px;width:100%;max-width:560px;background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:0 18px;height:46px}
+.hsearch:focus-within{border-color:var(--acc);box-shadow:0 0 0 4px rgba(124,92,255,.14)}
+.hsearch svg{width:16px;height:16px;stroke:var(--mut);fill:none;stroke-width:2;flex:none}
+.hsearch input{flex:1;background:none;border:0;outline:none;font-size:14px;min-width:0}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:660px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 8px;color:var(--dim);text-align:center}
+.tile:hover{border-color:var(--acc);color:var(--txt);transform:translateY(-1px)}
+.tile b{color:var(--txt);font-size:12px;font-weight:600}
+.tile span{font-size:10px;color:var(--mut)}
+.tile .fav{width:22px;height:22px}
+.tips{width:100%;max-width:660px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-size:12px;color:var(--dim);line-height:1.7}
+.tips b{color:var(--txt)}
+.tips kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:10.5px;color:var(--txt)}
+.recents{width:100%;max-width:660px;display:flex;flex-direction:column;gap:4px}
+.recent{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;color:var(--dim);font-size:12px;width:100%;text-align:left}
+.recent:hover{background:var(--panel2);color:var(--txt)}
+.recent span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── toasts ── */
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:99}
+.toast{background:#141821;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;padding:10px 14px;font-size:12px;max-width:360px;color:var(--txt);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.err{border-left-color:var(--err)}.toast.ok{border-left-color:var(--ok)}
+@media(max-width:860px){#side{display:none}}
 </style>
 </head>
 <body>
-<div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div></div>
 
-<div id="usplash"><div class="uinner"><div id="ulogo">N</div><div class="ut">NEXUS</div><div id="usplashStatus">checking for updates…</div><div id="usplashTime" class="mono">0.0s</div></div></div>
-<div id="gate">
-  <div class="g">
-    <div class="gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/></svg></div>
-    <h1>This site can&rsquo;t be reached</h1>
-    <p><b id="gateHost">nexus</b> took too long to respond.</p>
-    <ul class="sug">Try:
-      <li>Checking the connection</li>
-      <li>Checking the proxy and the firewall</li>
-      <li><a href="#" id="gateDiag" style="color:#1a73e8">Running Connectivity Diagnostics</a></li>
-    </ul>
-    <div class="err">ERR_CONNECTION_TIMED_OUT</div>
-    <div class="gbtns"><button class="solid" id="gateReload">Reload</button><button id="gateDetail">Details</button></div>
-    <div class="err" id="gateMore" style="display:none;margin-top:12px">The server at <span id="gateHost2">nexus</span> can't be found because the DNS lookup failed. DNS is the network service that translates a website's name to its Internet address. (ociq ~ bypass ready)</div>
+<aside id="side">
+  <div class="logo">
+    <svg viewBox="0 0 32 32"><defs><linearGradient id="nxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#00e5a0"/></linearGradient></defs><path d="M7 26V6l18 20V6" fill="none" stroke="url(#nxg)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <b>NEX<i>US</i></b><span class="ver">v1.1</span>
   </div>
-  <div class="hintkeys">[ ~ ]</div>
-</div>
-
-<div id="app">
-  <aside id="side">
-    <div id="logo">N</div><div id="logoSub">NEXUS</div>
-    <button class="navbtn on" data-tab="home" data-ic="grid"><span>Home</span></button>
-    <button class="navbtn" data-tab="browser" data-ic="globe"><span>Browser</span></button>
-    <button class="navbtn" data-tab="tube" data-ic="youtube"><span>Tube</span></button>
-    <button class="navbtn" data-tab="games" data-ic="gamepad"><span>Games</span></button>
-    <button class="navbtn" data-tab="settings" data-ic="settings"><span>Settings</span></button>
-    <div id="sideFoot"><div id="netDot"></div><span id="netTxt">online</span></div>
-  </aside>
-  <main>
-    <div id="topbar">
-      <div id="tabTitle">Home</div>
-      <div id="watch">00:00.0</div>
-      <div class="topsp"></div>
-      <button class="btn" id="btnBlob" data-icbtn="external">Open blob</button>
-    </div>
-    <div id="content">
-      <!-- HOME -->
-      <section class="tab on" id="tab-home">
-        <div id="banner"><img id="bannerImg" alt=""><div class="in">
-          <div class="kicker">Continue where you left off</div>
-          <div class="gname" id="bannerName"></div>
-          <div class="row"><button class="btn primary" id="bannerPlay" data-icbtn="play">Play now</button><span class="muted" id="bannerWhen"></span></div>
-        </div></div>
-        <div class="statgrid">
-          <div class="stat"><div class="v" id="stProxy">—</div><div class="k">translate proxy ping (live)</div></div>
-          <div class="stat"><div class="v" id="stGames">4</div><div class="k">games installed</div></div>
-          <div class="stat"><div class="v" id="stCache">—</div><div class="k">offline cache</div></div>
-          <div class="stat"><div class="v" id="stFavs">0</div><div class="k">favorites</div></div>
-        </div>
-        <div class="card"><h2 data-ich="zap">Proxy quick test</h2>
-          <div class="row"><button class="btn primary" id="btnPing" data-icbtn="zap">Run live proxy test</button><span class="muted">fetches TikTok through translate.goog + relay with a real timer</span></div>
-          <div class="muted mono" id="pingOut" style="margin-top:10px">not run yet</div>
-          <div class="row" style="margin-top:10px"><button class="btn" id="btnDiag" data-icbtn="search">Run school diagnostics</button><span class="muted">finds what's blocked &amp; auto-picks a working relay</span></div>
-          <div id="diagOut" class="mono muted" style="margin-top:10px;font-size:11.5px;line-height:1.7">not run yet</div>
-        </div>
-        <div class="secTitle" data-ich="star">Favorites</div><div class="ggrid" id="favGrid"></div>
-        <div class="secTitle" data-ich="history">Recent</div><div class="ggrid" id="recentGrid"></div>
-      </section>
-      <!-- BROWSER -->
-      <section class="tab" id="tab-browser">
-        <div class="card">
-          <h2 data-ich="globe">Translate-proxy browser</h2>
-          <div class="urlrow">
-            <input type="url" id="bUrl" value="https://www.tiktok.com/" spellcheck="false" placeholder="https://…">
-            <select id="bPreset">
-              <option value="https://www.tiktok.com/">TikTok</option>
-              <option value="https://www.roblox.com/">Roblox</option>
-              <option value="https://www.cloudmoonapp.com/">CloudMoon</option>
-              <option value="https://www.youtube.com/">YouTube</option>
-              <option value="https://duck.ai/">duck.ai</option>
-              <option value="https://news.ycombinator.com/">Hacker News</option>
-              <option value="https://nowgg.fun/">nowgg.fun</option>
-              <option value="https://example.com/">example.com (tiny test)</option>
-            </select>
-            <select id="bLang"><option value="es">ES</option><option value="fr">FR</option><option value="de">DE</option><option value="pt">PT</option><option value="ja">JA</option><option value="en">EN</option></select>
-            <button class="btn primary" id="btnRun" data-icbtn="play">Run</button>
-            <button class="btn" id="btnOpenTr" data-icbtn="external" title="open the translate.goog URL directly — no fetch, looks like Google to school filters">Open translated</button>
-          </div>
-          <div class="stages">
-            <div class="stage" id="stFetch">fetch <b>—</b></div>
-            <div class="stage" id="stMod">modify <b>—</b></div>
-            <div class="stage" id="stRender">render <b>—</b></div>
-            <div class="stage" id="stTotal">total <b>—</b></div>
-            <div class="stage" id="stSize">size <b>—</b></div>
-            <div class="stage" id="stVia">via <b>—</b></div>
-          </div>
-          <div id="pbar"><i></i></div>
-          <div class="viewwrap"><iframe id="bFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock" title="browser"></iframe>
-            <div class="viewempty" id="bEmpty"><span data-ic="globe" data-icsz="38"></span><div>enter a URL and press Run — the page is fetched through Google Translate,<br>modified, then executed from a blob (Safari-safe, no srcdoc)</div></div>
-          </div>
-          <div id="log"><div><span class="t">[nexus]</span> ready. relay: <span id="logRelay">allorigins</span></div></div>
-        </div>
-      </section>
-      <!-- TUBE -->
-      <section class="tab" id="tab-tube">
-        <div class="card">
-          <h2 data-ich="youtube">Tube — YouTube through the proxy</h2>
-          <div class="urlrow">
-            <input type="text" id="tInput" value="dQw4w9WgXcQ" spellcheck="false" placeholder="video URL / video ID / search terms">
-            <button class="btn primary" id="btnTube" data-icbtn="play">Load</button>
-            <button class="btn" id="btnOpenTrT" data-icbtn="external" title="open the translated watch page directly">Open translated</button>
-          </div>
-          <div class="chips" id="tubeChips" style="display:none">
-            <span class="chip" data-ic="film"><b id="cTitle">—</b></span>
-            <span class="chip" data-ic="user"><b id="cChan">—</b></span>
-            <span class="chip" data-ic="eye"><b id="cViews">—</b> views</span>
-            <span class="chip" data-ic="thumb"><b id="cLikes">—</b> likes</span>
-            <span class="chip" data-ic="clock"><b id="cTime">—</b></span>
-          </div>
-          <div class="viewwrap"><iframe id="tFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock" title="tube"></iframe>
-            <div class="viewempty" id="tEmpty"><span data-ic="youtube" data-icsz="38"></span><div>load a video — UI, likes, views &amp; comments come through the translate proxy</div></div>
-          </div>
-          <div class="secTitle" data-ich="grid">More videos from this page</div>
-          <div class="vgrid" id="vGrid"><span class="muted">load something first — video cards will appear here</span></div>
-          <div id="tubeLog"><div><span class="t">[tube]</span> ready</div></div>
-        </div>
-      </section>
-      <!-- GAMES -->
-      <section class="tab" id="tab-games">
-        <div class="card" style="margin-bottom:14px"><div class="row">
-          <span data-ic="search"></span><input type="text" id="gSearch" placeholder="search games…" style="flex:1;min-width:140px">
-          <button class="btn gfilter on" data-f="all">All</button>
-          <button class="btn gfilter" data-f="fav">Favorites</button>
-          <button class="btn gfilter" data-f="recent">Recent</button>
-          <button class="btn" id="btnImport" data-icbtn="plus">Import .html</button>
-        </div></div>
-        <div class="ggrid" id="gameGrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div>
-        <input type="file" id="filePick" accept=".html,text/html" style="display:none">
-        <div class="muted" style="margin-top:10px">downloads blocked? save the game .html to Google Drive at home, re-download at school (Drive is allowed), then Import it — it runs offline from cache.</div>
-      </section>
-      <!-- SETTINGS -->
-      <section class="tab" id="tab-settings">
-        <div class="setgrid">
-          <div class="card"><h2 data-ich="palette">Theme</h2><div class="themeSw" id="themeSw"></div></div>
-          <div class="card"><h2 data-ich="zap">Proxy relay</h2>
-            <div class="kv"><span>Relay</span><select id="sRelay"><option value="allorigins">allorigins raw</option><option value="ao_get">allorigins get (json)</option><option value="corslol">cors.lol (low-profile)</option><option value="corsfix">corsfix</option><option value="codetabs">codetabs</option><option value="corsproxy">corsproxy.io</option><option value="custom">custom (your google relay ↓)</option><option value="direct">direct (usually CORS-blocked)</option></select></div>
-            <div class="kv"><span>Your own Google relay</span><button class="btn" id="btnGAS" data-icbtn="db">Copy deploy code</button></div>
-            <div class="muted">GoGuardian blocks known proxies (allorigins = "Proxy/Anonymizer" category). Fix: paste the code into <b>script.google.com</b> → Deploy → Web app → access: Anyone → paste the /exec URL into Custom relay prefix as <span class="mono">https://script.google.com/macros/s/…/exec?url=</span>. Schools always allow google.com. One-time setup per browser: paste your /exec URL here. The app then self-updates from your GitHub on every load (direct when possible, relay when school blocks github).</div>
-            <div class="kv"><span>Custom relay prefix</span><input type="text" id="sCustom" placeholder="https://my-relay/?url=" style="width:200px"></div>
-            <div class="kv"><span>Your own Google relay</span><button class="btn" id="btnGAS" data-icbtn="db">Copy deploy code</button></div>
-            <div class="muted">GoGuardian blocks known proxies (allorigins = "Proxy/Anonymizer" category). Fix: paste the code into <b>script.google.com</b> → Deploy → Web app → access: Anyone → paste the /exec URL into Custom relay prefix as <span class="mono">https://script.google.com/macros/s/…/exec?url=</span>. Schools always allow google.com.</div>
-            <div class="kv"><span>Error-page gate (~ to unlock)</span><div class="switch on" id="sGate"></div></div>
-            <div class="kv"><span>Current view in blob tab</span><button class="btn" id="btnBlob2" data-icbtn="external">Open blob</button></div>
-          </div>
-          <div class="card"><h2 data-ich="zap">School mode (GoGuardian)</h2><div class="muted" style="line-height:1.9">1. Home → <b>Run school diagnostics</b> — auto-picks a working relay.<br>2. If all relays fail: Browser → <b>Open translated</b> (no fetch, looks like Google Translate to the filter).<br>3. Nuclear option: deploy the Google relay above (2 min, unblockable).<br>4. Games: import .html files via Google Drive.<br>WARNING: nowgg.fun cloud needs websockets — translate can't proxy those, so Roblox cloud may not load at school even wrapped. Offline games (Eagler/Superhot/GeoDash) work once imported.</div></div>
-          <div class="card"><h2 data-ich="db">Data (IndexedDB)</h2>
-            <div class="kv"><span>Cached games</span><b id="dCache">—</b></div>
-            <div class="kv"><span>Cache size</span><b id="dSize">—</b></div>
-            <div class="kv"><span>Recents / Favorites</span><b id="dRf">—</b></div>
-            <div class="kv"><span>App version</span><b>v1.3.0 (self-updates from github)</b></div>
-            <div class="kv"><span>Check for updates</span><button class="btn" id="btnUpdate" data-icbtn="db">Check now</button></div>
-            <div class="row" style="margin-top:12px"><button class="btn danger" id="btnWipeCache" data-icbtn="trash">Clear game cache</button><button class="btn danger" id="btnWipeAll" data-icbtn="trash">Reset everything</button></div>
-          </div>
-          <div class="card"><h2 data-ich="check">Lab results (measured, sandbox)</h2>
-            <div style="max-height:230px;overflow-y:auto"><table class="lab">
-              <tr><th>test</th><th>time</th><th>verdict</th></tr>
-              <tr><td>proxy → TikTok UI</td><td class="mono">9.3s</td><td class="ok">UI renders</td></tr>
-              <tr><td>proxy → Roblox home</td><td class="mono">11.6s</td><td class="ok">UI renders</td></tr>
-              <tr><td>proxy → CloudMoon</td><td class="mono">8.9s</td><td class="ok">UI renders</td></tr>
-              <tr><td>proxy → YT watch (+likes)</td><td class="mono">12.7s</td><td class="ok">likes/views found</td></tr>
-              <tr><td>Eaglercraft 1.12 boot</td><td class="mono">40.9s</td><td class="ok">menu + canvas</td></tr>
-              <tr><td>GeoDash boot</td><td class="mono">17.8s</td><td class="ok">canvas, 0 errors</td></tr>
-              <tr><td>Superhot boot</td><td class="mono">20.5s</td><td class="fail">needs http (not file)</td></tr>
-              <tr><td>nowgg.fun Roblox path</td><td class="mono">227s wait</td><td class="fail">launcher error</td></tr>
-            </table></div>
-            <div class="muted" style="margin-top:8px">Roblox uses the Aptoide deep-link route instead. Superhot runs from blob/http in-app.</div>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-</div>
-
-<div id="runner">
-  <div id="runHead">
-    <button class="btn" id="runBack" data-icbtn="back">Back</button>
-    <div id="runName">—</div>
-    <div id="runTimer">0.0s</div>
-    <div id="runStat"></div>
-    <div class="topsp"></div>
-    <button class="btn" id="runBlob" data-icbtn="external">Blob</button>
-    <button class="btn" id="runFull" data-icbtn="max">Full</button>
+  <button class="nav" id="btn-home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg>Home</button>
+  <button class="nav" id="btn-new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New tab</button>
+  <div class="sec">Quick launch</div>
+  <div id="pins"></div>
+  <div class="spacer"></div>
+  <div class="card">
+    <label>RELAY MODE</label>
+    <select id="mode">
+      <option value="auto">Auto (recommended)</option>
+      <option value="fetch">Server fetch + rewrite</option>
+      <option value="server">Server iFrame (js-heavy sites)</option>
+    </select>
+    <label>MIRROR LANGUAGE</label>
+    <select id="lang">
+      <option value="es">es</option><option value="pt">pt</option><option value="fr">fr</option>
+      <option value="de">de</option><option value="zh-CN">zh-CN</option><option value="ja">ja</option>
+    </select>
   </div>
-  <div id="runProg"><i></i></div>
-  <iframe id="runFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock" title="game"></iframe>
+  <div class="badge"><span class="dot" id="tdot"></span><span id="tstate">connecting…</span></div>
+  <div class="foot">NEXUS · apps script relay</div>
+</aside>
+
+<div id="main">
+  <div id="tabstrip">
+    <div id="tabs"></div>
+    <button id="newtab" title="New tab (Ctrl+T)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
+  <div id="toolbar">
+    <button class="tbtn" id="back" title="Back (Alt+←)"><svg viewBox="0 0 24 24"><path d="M19 12H5m7-7l-7 7 7 7"/></svg></button>
+    <button class="tbtn" id="fwd" title="Forward (Alt+→)"><svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7l7 7-7 7"/></svg></button>
+    <button class="tbtn" id="reload" title="Reload"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+    <div id="omni">
+      <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <input id="url" placeholder="Search or type a URL   ·   try:  yt lofi   |   now.gg" spellcheck="false" autocomplete="off">
+      <span id="modechip"><b>idle</b></span>
+    </div>
+    <button id="go">Go</button>
+  </div>
+  <div id="loadbar"></div>
+  <div id="content"></div>
 </div>
 
-<div id="toast"></div>
+<div id="toasts"></div>
 
 <script>
-"use strict";
-/* ================= icons (lucide-style, inline) ================= */
-const P={
-grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
-globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/>',
-youtube:'<rect x="2" y="5" width="20" height="14" rx="4"/><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"/>',
-gamepad:'<path d="M6 12h4M8 10v4"/><circle cx="15" cy="13" r=".8" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".8" fill="currentColor"/><path d="M17.3 5H6.7a5 5 0 0 0-4.9 6l1.3 5.2A2 2 0 0 0 5 18a2 2 0 0 0 1.7-1l1.5-2h7.6l1.5 2a2 2 0 0 0 1.7 1 2 2 0 0 0 1.9-2.8L22.2 11a5 5 0 0 0-4.9-6z"/>',
-settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z"/>',
-search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-star:'<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
-history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3.5 2"/>',
-play:'<path d="M7 4.5v15l13-7.5z" fill="currentColor" stroke="none"/>',
-external:'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/>',
-palette:'<circle cx="12" cy="12" r="10"/><circle cx="8" cy="14" r="1.4" fill="currentColor"/><circle cx="12" cy="9" r="1.4" fill="currentColor"/><circle cx="16" cy="13" r="1.4" fill="currentColor"/><path d="M12 2a10 10 0 0 0 0 20c1.5 0 2-1 1.3-2.2-.6-1.2 0-2.8 1.7-2.8H17a4 4 0 0 0 4-4c0-6-4.5-11-9-11z"/>',
-zap:'<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>',
-trash:'<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
-back:'<path d="m12 19-7-7 7-7M19 12H5"/>',
-max:'<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>',
-film:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/>',
-eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
-thumb:'<path d="M7 10v12M15 5.9 14 10h5a2 2 0 0 1 2 2.4l-1.5 7A2 2 0 0 1 17.6 21H7V10l4.7-7.3a1.6 1.6 0 0 1 2.7 1.4z"/>',
-clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
-user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
-check:'<path d="M20 6 9 17l-5-5"/>',
-db:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
-x:'<path d="M18 6 6 18M6 6l12 12"/>',
-plus:'<path d="M12 5v14M5 12h14"/>',
-keyboard:'<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>'
-};
-function svg(n,sz){sz=sz||16;return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]||P.grid}</svg>`}
-function hydrateIcons(){
-  document.querySelectorAll('[data-ic]').forEach(el=>{el.insertAdjacentHTML('afterbegin',svg(el.dataset.ic,el.dataset.icsz?+el.dataset.icsz:21))});
-  document.querySelectorAll('[data-icbtn]').forEach(el=>{el.insertAdjacentHTML('afterbegin',svg(el.dataset.icbtn,15))});
-  document.querySelectorAll('[data-ich]').forEach(el=>{el.insertAdjacentHTML('afterbegin',svg(el.dataset.ich,17))});
+/* ══════════════ CORE ══════════════ */
+'use strict';
+const HAS_GAS = !!(window.google && google.script && google.script.run);
+const STATE = { mode: 'auto', lang: 'es', proxy: '', tabs: [], active: null, seq: 0, recents: [] };
+const YT_RE = /(?:youtube\.com\/(?:watch\?[^#]*?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i;
+const TT_RE = /tiktok\.com\/(?:[^\/?#]+\/)?video\/(\d+)/i;
+const SKIP_RE = /^(javascript:|mailto:|tel:|data:|blob:|about:|#)/i;
+const PINS = [
+  ['YouTube', 'https://www.youtube.com/'],
+  ['TikTok', 'https://www.tiktok.com/'],
+  ['Duck.ai', 'https://duck.ai/'],
+  ['now.gg', 'https://now.gg/'],
+  ['Reddit', 'https://www.reddit.com/'],
+  ['Wikipedia', 'https://en.wikipedia.org/'],
+  ['Discord', 'https://discord.com/'],
+  ['Spotify', 'https://open.spotify.com/']
+];
+const $ = (id) => document.getElementById(id);
+
+function tgoog(u, lang) {
+  try {
+    const m = String(u).match(/^(https?:\/\/)([^\/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/);
+    if (!m) return u;
+    const host = m[2].toLowerCase().replace(/-/g, '--').replace(/\./g, '-');
+    const q = m[4] || '';
+    return m[1] + host + '.translate.goog' + (m[3] || '/') + q + (q ? '&' : '?') +
+      '_x_tr_sl=auto&_x_tr_tl=' + encodeURIComponent(lang || STATE.lang) + '&_x_tr_hl=en' + (m[5] || '');
+  } catch (e) { return u; }
 }
-/* ================= tiny helpers ================= */
-const $=id=>document.getElementById(id);
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
-function fmtT(ms){const s=ms/1000;if(s<60)return s.toFixed(1)+'s';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
-function fmtB(b){if(b>1048576)return (b/1048576).toFixed(1)+' MB';if(b>1024)return (b/1024).toFixed(0)+' KB';return b+' B'}
-function fmtWatch(ms){const t=Math.max(0,ms)/1000,m=Math.floor(t/60),s=t%60;return String(m).padStart(2,'0')+':'+s.toFixed(1).padStart(4,'0')}
-/* ================= IndexedDB ================= */
-const DB={db:null,
-open(){return new Promise((res,rej)=>{try{const r=indexedDB.open('nexus',1);
-r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv');if(!d.objectStoreNames.contains('games'))d.createObjectStore('games')};
-r.onsuccess=e=>{DB.db=e.target.result;res()};r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
-q(st,mode,fn){return new Promise((res,rej)=>{try{const t=DB.db.transaction(st,mode).objectStore(st);const r=fn(t);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
-get(s,k){return this.q(s,'readonly',t=>t.get(k))},set(s,k,v){return this.q(s,'readwrite',t=>t.put(v,k))},
-del(s,k){return new Promise((res,rej)=>{try{const r=DB.db.transaction(s,'readwrite').objectStore(s).delete(k);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
-clear(s){return new Promise((res,rej)=>{try{const r=DB.db.transaction(s,'readwrite').objectStore(s).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
-keys(s){return new Promise((res,rej)=>{try{const r=DB.db.transaction(s,'readonly').objectStore(s).getAllKeys();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}};
-/* ================= state ================= */
-const state={settings:{theme:'midnight',relay:'allorigins',customRelay:'https://script.google.com/macros/s/AKfycbyS6jRvLEmASYCSMHtD09uLjN0OSjAMKkTS00bEBjIOIVCVK_J4t2_2AYd6exXg3spG/exec?url=',gate:true},recents:[],favs:[],tab:'home',blobs:{browser:'',tube:'',game:''},runT0:0,filter:'all'};
-const RELAY_URL={
-allorigins:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-ao_get:u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),
-corslol:u=>'https://api.cors.lol/?url='+encodeURIComponent(u),
-corsfix:u=>'https://proxy.corsfix.com/?'+encodeURIComponent(u),
-codetabs:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
-corsproxy:u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
-custom:u=>(state.settings.customRelay||'')+encodeURIComponent(u),
-direct:u=>u};
-const JSON_RELAYS=new Set(['ao_get']);
-const FALLBACK_RELAYS=['allorigins','ao_get','corslol','corsfix','codetabs','corsproxy','direct'];
-const RELAY_ORDER=()=>{const s=state.settings.relay;return [s,...FALLBACK_RELAYS.filter(x=>x!==s)];};
-const GAS_CODE=`function doGet(e){var u=(e&&e.parameter&&e.parameter.url)||"";if(!u)return ContentService.createTextOutput("nexus relay: use ?url=TARGET");var r=UrlFetchApp.fetch(u,{followRedirects:true,muteHttpExceptions:true,headers:{"User-Agent":"Mozilla/5.0"}});return ContentService.createTextOutput(r.getContentText());}`;
-const DEFAULT_ICON='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4"/><circle cx="16" cy="12" r=".9" fill="#8b5cf6"/><circle cx="18" cy="14" r=".9" fill="#8b5cf6"/></svg>');
-const EAGLER_ICON='data:image/jpeg;base64,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';
-const GAMES=[
-{id:'roblox',name:'Roblox',type:'remote',url:'https://nowgg.fun/apps/aptoide/5874/aptoide.html?deep_link=aptoidesearch://com.roblox.client',fallback:'https://nowgg.fun/apps/roblox-corporation/5349/roblox.html',icon:'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f2/Roblox_%282025%29_%28App_Icon%29.svg/3840px-Roblox_%282025%29_%28App_Icon%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail',note:'cloud • nowgg.fun'},
-{id:'eagler',name:'Eaglercraft 1.12',type:'fetch',urls:['https://gitea.com/RedDx/1.12-U1-builds/raw/branch/main/offline_download/wasm/Eaglercraft_1.12.2_WASM_Offline_Download.html','https://raw.githubusercontent.com/tonydsas/eaglercraftoffline/main/Eaglercraft_1.12_Offline_en_US.html'],icon:EAGLER_ICON,note:'wasm-gc • offline'},
-{id:'superhot',name:'Superhot',type:'fetch',urls:['https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/superhot.html'],icon:'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/i/a6e74472-2425-4077-817c-55d42cee8697/dd2eu62-f3c6ca09-35fb-42c8-b360-1ddd7ef02fde.png/v1/fill/w_512,h_512,q_80,strp/superhot_icon_by_iconinja__by_iconinja_dd2eu62-fullview.jpg',note:'offline build'},
-{id:'geodash',name:'Geometry Dash Lite',type:'fetch',urls:['https://raw.githubusercontent.com/CoolDude2349/Offline-HTML-Games-Pack/refs/heads/master/offline/geometry-dash.html'],icon:'https://geometrydash.wiki.gg/images/GeometryDashLite.png?7b9150',note:'offline build'}];
-let customGames=[];
-const allGames=()=>GAMES.concat(customGames);
-const gameById=id=>allGames().find(g=>g.id===id);
-/* ================= stopwatch ================= */
-let liveT0=null,lastTotal=null;
-setInterval(()=>{const w=$('watch');if(liveT0!=null){w.textContent=fmtWatch(performance.now()-liveT0);w.classList.add('live')}else{w.classList.remove('live');w.textContent=lastTotal!=null?fmtWatch(lastTotal):'00:00.0'}},100);
-/* ================= gate (fake chrome error, ~ to unlock) ================= */
-function lock(tab){if(!state.settings.gate)return;const names={home:'nexus-home',browser:'nexus-browser',tube:'nexus-tube',games:'nexus-arcade',settings:'nexus-config'};const h=names[tab]||'nexus';$('gateHost').textContent=h;$('gateHost2').textContent=h;$('gate').classList.add('show')}
-function unlock(){$('gate').classList.remove('show')}
-document.addEventListener('keydown',e=>{if(e.code==='Backquote'||e.key==='~'||e.key==='`'){unlock();toast('welcome to nexus')}});
-/* ================= tabs ================= */
-const TITLES={home:'Home',browser:'Browser',tube:'Tube',games:'Games',settings:'Settings'};
-function switchTab(t){state.tab=t;document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='tab-'+t));$('tabTitle').textContent=TITLES[t]||t;lock(t)}
-/* ================= proxy core ================= */
-function toTranslateURL(target,tl){const u=new URL(target);const host=u.hostname.replace(/\./g,'-');return `https://${host}.translate.goog${u.pathname}${u.search}${u.search?'&':'?'}_x_tr_sl=auto&_x_tr_tl=${tl||'es'}&_x_tr_hl=en`}
-async function fetchWithProgress(url,onP,timeoutMs){const ctl=new AbortController();const to=setTimeout(()=>ctl.abort('timeout'),timeoutMs||45000);
-const r=await fetch(url,{signal:ctl.signal,headers:{'Accept':'text/html,*/*'}});clearTimeout(to);
-if(!r.ok)throw new Error('HTTP '+r.status);
-const len=+r.headers.get('content-length')||0;const rd=r.body.getReader();const chunks=[];let got=0;
-for(;;){const {done,value}=await rd.read();if(done)break;chunks.push(value);got+=value.length;if(onP)onP(got,len)}
-const buf=new Uint8Array(got);let o=0;for(const c of chunks){buf.set(c,o);o+=c.length}
-return {bytes:buf,text:new TextDecoder('utf-8').decode(buf)}}
-function modifyHTML(html,origURL,proxURL){
-  const t0=performance.now();const stats={csp:0,base:0,shim:0,bytes:html.length};
-  const oh=new URL(origURL).hostname, ph=new URL(proxURL).hostname;
-  html=html.replace(/<meta[^>]+http-equiv=["']?content-security-policy["']?[^>]*>/gi,'');stats.csp=1;
-  html=html.replace(/<base[^>]*>/gi,'');
-  const dir=proxURL.slice(0,proxURL.lastIndexOf('/')+1);
-  const shim=`<scr`+`ipt>/*nexus-shim*/(function(){var OH=${JSON.stringify(oh)},PH=${JSON.stringify(ph)},n=0;function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OH)>-1){n++;return u.split(OH).join(PH)}return u}try{var F=window.fetch;window.fetch=function(u,o){if(typeof u==='string')u=rw(u);else if(u&&u.url){u=rw(u.url)}return F.call(this,u,o)}}catch(e){}try{var XO=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){try{u=rw(u)}catch(e){}return XO.call(this,m,u)}}catch(e){}function pass(){try{document.querySelectorAll('[src],[href]').forEach(function(e){['src','href'].forEach(function(a){var v=e.getAttribute&&e.getAttribute(a);if(v&&v.indexOf&&v.indexOf(OH)>-1){e.setAttribute(a,v.split(OH).join(PH));n++}})})}catch(e){}}document.addEventListener('DOMContentLoaded',pass);window.__nexus={rewrites:function(){return n}}})();</scr`+`ipt>`;
-  stats.shim=1;
-  if(/<head[^>]*>/i.test(html))html=html.replace(/<head[^>]*>/i,m=>m+`<base href="${dir}">`+shim);
-  else html=`<base href="${dir}">`+shim+html;
-  stats.base=1;stats.ms=performance.now()-t0;
-  stats.abuse=/unusual traffic/i.test(html);
-  return {html,stats};
+function gasCall(fn) {
+  const args = Array.prototype.slice.call(arguments, 1);
+  return new Promise((res, rej) => {
+    try {
+      google.script.run.withSuccessHandler(res)
+        .withFailureHandler((e) => rej(new Error((e && e.message) || 'GAS bridge error')))
+        [fn].apply(null, args);
+    } catch (e) { rej(e); }
+  });
 }
-function runBlob(html){const b=new Blob([html],{type:'text/html'});return URL.createObjectURL(b)}
-function blog(msg,cls){const l=$('log');const d=document.createElement('div');if(cls)d.className=cls;const t=new Date();d.innerHTML=`<span class="t">[${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}.${String(t.getMilliseconds()).padStart(3,'0')}]</span> ${msg}`;l.appendChild(d);l.scrollTop=l.scrollHeight}
-function tlog(msg,cls){const l=$('tubeLog');const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=`<span class="t">[tube]</span> ${msg}`;l.appendChild(d);l.scrollTop=l.scrollHeight}
-async function runProxyPipeline(targetURL,tl,onStage){
-  // returns {html,info} ; onStage(name,ms)
-  const prox=toTranslateURL(targetURL,tl);
-  let lastErr=null;
-  for(const name of RELAY_ORDER()){
-    const t0=performance.now();
-    try{
-      if(name==='custom'&&!state.settings.customRelay)throw new Error('custom relay not configured');
-      const rurl=RELAY_URL[name](prox);
-      let bytes,text;
-      if(JSON_RELAYS.has(name)){
-        const ctl=new AbortController();const to=setTimeout(()=>ctl.abort('timeout'),45000);
-        const rr=await fetch(rurl,{signal:ctl.signal,headers:{'Accept':'application/json'}});clearTimeout(to);
-        if(!rr.ok)throw new Error('HTTP '+rr.status);
-        text=((await rr.json()).contents)||'';bytes=new TextEncoder().encode(text);
-        if(onStage)onStage('prog',0,bytes.length,bytes.length);
-      }else{
-        const r=await fetchWithProgress(rurl,(g,l)=>{if(onStage)onStage('prog',0,g,l)});
-        bytes=r.bytes;text=r.text;
+function resolveInput(raw) {
+  raw = (raw || '').trim();
+  if (!raw) return '';
+  if (/^yt\s+/i.test(raw)) return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(raw.replace(/^yt\s+/i, ''));
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(raw)) return 'https://' + raw;
+  return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(raw);
+}
+function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+function prettyUrl(u) {
+  try { const x = new URL(u); return (x.hostname + x.pathname + x.search).replace(/\/$/, '').slice(0, 42); }
+  catch (e) { return String(u || '').slice(0, 42); }
+}
+function favHtml(host) {
+  const letter = (host || '?').charAt(0).toUpperCase();
+  return '<img class="fav" alt="" src="https://icons.duckduckgo.com/ip3/' + encodeURIComponent(host) + '.ico" ' +
+    'onerror="this.outerHTML=\'<span class=&quot;fav-letter&quot;>' + letter + '</span>\'">';
+}
+function toast(msg, kind) {
+  const d = document.createElement('div');
+  d.className = 'toast ' + (kind || '');
+  d.textContent = msg;
+  $('toasts').appendChild(d);
+  setTimeout(() => { d.style.opacity = '0'; d.style.transition = 'opacity .4s'; setTimeout(() => d.remove(), 420); }, 4200);
+}
+function loadbar(pct) {
+  const b = $('loadbar');
+  if (pct == null) { b.classList.remove('on'); b.style.width = '0%'; return; }
+  b.classList.add('on'); b.style.width = Math.max(4, pct) + '%';
+}
+function badge(text, cls) { $('tstate').textContent = text; $('tdot').className = 'dot ' + (cls || 'warn'); }
+
+/* ══════════════ INJECTED CLIENT HOOK (runs inside proxied pages) ══════════════ */
+function NX_HOOK() {
+  const RP = window.parent;                       // real parent, captured before any site JS messes with it
+  function abs(u) { try { return new URL(u, document.baseURI).href; } catch (e) { return u; } }
+  function deT(u) {
+    try {
+      const m = String(u).match(/^https?:\/\/(.+?)\.translate\.goog(\/.*)?$/);
+      if (!m) return u;
+      const h = m[1].replace(/--/g, '\u0001').replace(/-/g, '.').replace(/\u0001/g, '-');
+      const r = (m[2] || '/').replace(/([?&])_x_tr_[^&]*&?/g, '$1').replace(/[?&]+$/, '');
+      return 'https://' + h + r;
+    } catch (e) { return u; }
+  }
+  function emit(u, kind) { try { RP.postMessage({ __nx: 'nav', url: u, via: 'fetch', kind: kind || '' }, '*'); } catch (e) {} }
+  document.addEventListener('click', function (e) {
+    const a = e.target && e.target.closest ? e.target.closest('a,area') : null;
+    if (!a) return;
+    const h = a.getAttribute('href') || '';
+    if (!h || /^(javascript:|#|mailto:|tel:|data:|blob:)/i.test(h)) { if (h === '#') e.preventDefault(); return; }
+    e.preventDefault(); e.stopPropagation();
+    emit(a.getAttribute('data-nx1') || deT(abs(h)), 'link');
+  }, true);
+  document.addEventListener('submit', function (e) {
+    const f = e.target; if (!f) return;
+    e.preventDefault(); e.stopPropagation();
+    try {
+      const method = (f.getAttribute('method') || 'get').toLowerCase();
+      let u = abs(f.getAttribute('action') || document.baseURI);
+      if (method === 'get') {
+        u = u.split('#')[0];
+        const q = new URLSearchParams(new FormData(f)).toString();
+        if (q) u += (u.indexOf('?') > -1 ? '&' : '?') + q;
       }
-      const fms=performance.now()-t0;if(onStage)onStage('fetch',fms,bytes.length,name);
-      if(text.length<500&&/error|blocked|denied/i.test(text.slice(0,500))&&bytes.length<2000)throw new Error('relay refused ('+bytes.length+'B)');
-      const t1=performance.now();
-      const {html,stats}=modifyHTML(text,targetURL,prox);
-      if(onStage)onStage('modify',performance.now()-t1,stats);
-      if(stats.abuse&&onStage)onStage('abuse',0);
-      return {html,prox,via:name,fetchMs:fms,modMs:stats.ms,bytes:bytes.length,stats};
-    }catch(e){lastErr=e;if(onStage)onStage('relayFail',0,name,String(e&&e.message||e).slice(0,90))}
+      emit(u, 'form');
+    } catch (err) {}
+  }, true);
+  window.open = function (u) { emit(abs(u || 'about:blank'), 'popup'); return null; };
+  /* route site-internal fetch/XHR through the server bridge when available */
+  let G = null;
+  try { if (RP.google && RP.google.script && RP.google.script.run) G = RP.google.script.run; } catch (e) {}
+  if (G) {
+    const OF = window.fetch;
+    window.fetch = function (input, init) {
+      try {
+        const u = (typeof input === 'string') ? input : (input && input.url) || '';
+        if (!u) return OF ? OF(input, init) : Promise.reject(new Error('bad fetch'));
+        const au = abs(u);
+        const target = /^https?:\/\//i.test(au) ? au : deT(au);
+        return new Promise((res, rej) => {
+          G.withSuccessHandler((r) => {
+            if (!r) return rej(new Error('empty'));
+            r.ok = r.code >= 200 && r.code < 400; r.status = r.code;
+            r.headers = { get: (h) => /content-type/i.test(h || '') ? (r.ct || '') : null };
+            r.text = () => Promise.resolve(r.body || '');
+            r.json = () => { try { return Promise.resolve(JSON.parse(r.body || '{}')); } catch (e) { return Promise.resolve({}); } };
+            res(r);
+          }).withFailureHandler(rej).api_fetch(target, { mode: 't' });
+        });
+      } catch (e) { return OF ? OF(input, init) : Promise.reject(e); }
+    };
+    const OO = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (m, u) { this.__nxu = u; return OO.apply(this, arguments); };
+    const OS = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function () {
+      const self = this;
+      try {
+        if (this.__nxu && !/^(https?:)?\/\//i.test(String(this.__nxu).trim())) {
+          const au = abs(this.__nxu);
+          const target = /^https?:\/\//i.test(au) ? au : deT(au);
+          G.withSuccessHandler((r) => {
+            try {
+              Object.defineProperty(self, 'status', { value: (r && r.code) || 0, configurable: true });
+              Object.defineProperty(self, 'responseText', { value: (r && r.body) || '', configurable: true });
+              Object.defineProperty(self, 'response', { value: (r && r.body) || '', configurable: true });
+              Object.defineProperty(self, 'readyState', { value: 4, configurable: true });
+            } catch (e) {}
+            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
+            try { self.dispatchEvent(new Event('load')); } catch (e) {}
+          }).withFailureHandler(() => { try { self.dispatchEvent(new Event('error')); } catch (e) {} })
+            .api_fetch(target, { mode: 't' });
+          return;
+        }
+      } catch (e) {}
+      return OS.apply(this, arguments);
+    };
   }
-  throw lastErr||new Error('all relays failed');
+  try { Object.defineProperty(window, 'top', { get: () => window }); } catch (e) {}
 }
-/* ================= browser tab ================= */
-function setStage(id,txt,done){const e=$(id);e.querySelector('b').textContent=txt;e.classList.toggle('done',!!done)}
-async function runBrowser(){
-  let target=$('bUrl').value.trim();if(!/^https?:\/\//i.test(target))target='https://'+target;
-  const tl=$('bLang').value;const T0=performance.now();liveT0=T0;
-  $('btnRun').disabled=true;$('pbar').firstElementChild.style.width='2%';
-  ['stFetch','stMod','stRender','stTotal','stSize','stVia'].forEach(id=>setStage(id,'—',false));
-  blog(`run → <b>${target}</b>`);
-  try{
-    const prox=toTranslateURL(target,tl);blog(`proxy → ${prox.slice(0,110)}…`);
-    const res=await runProxyPipeline(target,tl,(n,ms,a,b)=>{
-      if(n==='fetch'){setStage('stFetch',fmtT(ms),true);setStage('stSize',fmtB(a),true);setStage('stVia',b,true);blog(`fetch ok: ${fmtB(a)} in ${fmtT(ms)} via ${b}`)}
-      if(n==='modify'){setStage('stMod',fmtT(ms),true);blog(`modify: csp stripped, base→proxy, shim injected (${fmtT(ms)})`)}
-      if(n==='relayFail'){blog(`relay ${a} failed: ${b}`,'warn')}
-      if(n==='abuse'){blog('WARNING: google abuse page detected — try another relay in Settings','err')}
-      if(n==='prog'){const pct=a?(b?Math.min(99,Math.round(a/b*100)):Math.min(99,Math.round(a/20000))):2;$('pbar').firstElementChild.style.width=pct+'%'}
+const HOOK_SRC = '(' + NX_HOOK.toString() + ')();';
+
+/* ══════════════ HTML REWRITER (client-side, full DOM) ══════════════ */
+function cssRewrite(css, baseUrl) {
+  return String(css || '').replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (w, q, u) => {
+    u = (u || '').trim();
+    if (!u || /^(data:|blob:|about:|#)/i.test(u)) return w;
+    return 'url("' + tgoog(absUrl(u, baseUrl)) + '")';
+  });
+}
+function absUrl(u, base) {
+  u = String(u || '').trim().replace(/^["']|["']$/g, '');
+  if (!u || SKIP_RE.test(u)) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  const m = String(base).match(/^(https?:)\/\/([^\/?#]+)([^?#]*)/i);
+  if (!m) return '';
+  const sch = m[1], origin = sch + '//' + m[2], path = m[3] || '/';
+  if (/^\/\//.test(u)) return sch + u;
+  if (u.charAt(0) === '?') return origin + path + u;
+  if (u.charAt(0) === '/') return origin + u;
+  const dir = path.substring(0, path.lastIndexOf('/') + 1);
+  const segs = dir.split('/').filter((s, i) => s !== '' || i === 0);
+  u.split('/').forEach((s) => {
+    if (!s || s === '.') return;
+    if (s === '..') { if (segs.length > 1) segs.pop(); } else segs.push(s);
+  });
+  return origin + segs.join('/');
+}
+function rewriteHtml(html, baseUrl) {
+  let doc;
+  try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch (e) { return html; }
+  if (!doc || !doc.documentElement) return html;
+  doc.querySelectorAll('meta[http-equiv]').forEach((m) => {
+    if ((m.getAttribute('http-equiv') || '').toLowerCase() === 'content-security-policy') m.remove();
+  });
+  doc.querySelectorAll('base').forEach((b) => b.remove());
+  doc.querySelectorAll('[integrity]').forEach((e) => e.removeAttribute('integrity'));
+  doc.querySelectorAll('[crossorigin]').forEach((e) => e.removeAttribute('crossorigin'));
+  doc.querySelectorAll('[target]').forEach((e) => e.removeAttribute('target'));
+  doc.querySelectorAll('a[href], area[href]').forEach((a) => {
+    const abs = absUrl(a.getAttribute('href'), baseUrl);
+    if (abs) { a.setAttribute('href', abs); a.setAttribute('data-nx1', abs); }
+  });
+  doc.querySelectorAll('form').forEach((f) => {
+    const abs = absUrl(f.getAttribute('action') || baseUrl, baseUrl);
+    if (abs) f.setAttribute('action', abs);
+  });
+  doc.querySelectorAll('meta[http-equiv="refresh" i]').forEach((m) => {
+    const c = m.getAttribute('content') || '';
+    const mm = c.match(/url=(.+)$/i);
+    if (mm) {
+      const abs = absUrl(mm[1].trim().replace(/^['"]|['"]$/g, ''), baseUrl);
+      if (abs) m.setAttribute('content', c.replace(/url=.+$/i, 'url=' + abs));
+    }
+  });
+  const subs = 'img,source,video,audio,track,embed,script';
+  doc.querySelectorAll(subs + '[src]').forEach((e) => {
+    const abs = absUrl(e.getAttribute('src'), baseUrl);
+    if (abs) e.setAttribute('src', tgoog(abs));
+  });
+  doc.querySelectorAll('[poster]').forEach((e) => {
+    const abs = absUrl(e.getAttribute('poster'), baseUrl);
+    if (abs) e.setAttribute('poster', tgoog(abs));
+  });
+  doc.querySelectorAll('[data-src]').forEach((e) => {
+    const abs = absUrl(e.getAttribute('data-src'), baseUrl);
+    if (abs) e.setAttribute('data-src', tgoog(abs));
+  });
+  doc.querySelectorAll('link[href]').forEach((l) => {
+    const rel = (l.getAttribute('rel') || '').toLowerCase();
+    if (/stylesheet|icon|shortcut|preload|prefetch|apple-touch|manifest/.test(rel)) {
+      const abs = absUrl(l.getAttribute('href'), baseUrl);
+      if (abs) l.setAttribute('href', tgoog(abs));
+    }
+  });
+  doc.querySelectorAll('iframe[src]').forEach((f) => {
+    const abs = absUrl(f.getAttribute('src'), baseUrl);
+    if (!abs) return;
+    if (/youtube(-nocookie)?\.com\/embed|tiktok\.com\/embed/i.test(abs)) { f.setAttribute('src', abs); return; }
+    f.setAttribute('src', (HAS_GAS && STATE.proxy) ? STATE.proxy + '?nx=' + encodeURIComponent(abs) : tgoog(abs));
+  });
+  doc.querySelectorAll('[srcset]').forEach((e) => {
+    const out = (e.getAttribute('srcset') || '').split(',').map((p) => {
+      const bits = p.trim().split(/\s+/);
+      if (bits[0] && !SKIP_RE.test(bits[0])) bits[0] = tgoog(absUrl(bits[0], baseUrl));
+      return bits.join(' ');
     });
-    $('pbar').firstElementChild.style.width='100%';
-    const tR=performance.now();
-    if(state.blobs.browser)URL.revokeObjectURL(state.blobs.browser);
-    state.blobs.browser=runBlob(res.html);
-    $('bFrame').src=state.blobs.browser;$('bEmpty').style.display='none';
-    setStage('stRender',fmtT(performance.now()-tR),true);
-    const tot=performance.now()-T0;setStage('stTotal',fmtT(tot),true);lastTotal=tot;
-    blog(`<b>running from blob</b> in ${fmtT(tot)} — open-blob ready`);
-    try{await DB.set('kv','lastBrowser',{url:target,tl})}catch(e){}
-  }catch(e){blog('FAILED: '+(e&&e.message||e),'err');toast('run failed: '+(e&&e.message||e).slice(0,80))}
-  liveT0=null;$('btnRun').disabled=false;
+    e.setAttribute('srcset', out.join(', '));
+  });
+  doc.querySelectorAll('style').forEach((s) => { s.textContent = cssRewrite(s.textContent, baseUrl); });
+  doc.querySelectorAll('[style]').forEach((e) => { e.setAttribute('style', cssRewrite(e.getAttribute('style'), baseUrl)); });
+  const head = doc.head || doc.documentElement;
+  const base = doc.createElement('base');
+  base.setAttribute('href', tgoog(baseUrl));
+  head.insertBefore(base, head.firstChild);
+  const hk = doc.createElement('script');
+  hk.textContent = HOOK_SRC;
+  head.insertBefore(hk, base.nextSibling);
+  return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
 }
-/* ================= tube ================= */
-function ujs(s){return s.replace(/\\u0026/g,'&').replace(/\\"/g,'"').replace(/\\\//g,'/').replace(/\\n/g,' ')}
-function parseYT(html){
-  const o={title:'',channel:'',views:'',likes:'',videos:[]};
-  try{
-  let m=html.match(/"videoDetails":\{"videoId":"[^"]+","title":"((?:[^"\\]|\\.){1,120})/);if(m)o.title=ujs(m[1]);
-  if(!o.title){m=html.match(/<title>([^<]{1,140})<\/title>/);if(m)o.title=m[1].replace(/ - YouTube$/,'')}
-  m=html.match(/"ownerChannelName":\{"simpleText":"([^"]{1,80})"/)||html.match(/"author":"((?:[^"\\]|\\.){1,60})"/);if(m)o.channel=ujs(m[1]);
-  m=html.match(/"rawViewCount":"?(\d[\d,]*)"?/)||html.match(/"viewCount":\{"simpleText":"([^"]{1,30})"/)||html.match(/"viewCount":"?(\d[\d,]*)"?/);if(m)o.views=m[1];
-  m=html.match(/"rawLikeCount":"?(\d[\d,]*)"?/)||html.match(/"likeCount":"?(\d[\d,]*)"?/);if(m)o.likes=m[1];
-  const seen=new Set();const re=/"videoId":"([A-Za-z0-9_-]{11})"/g;let k;
-  while((k=re.exec(html))&&o.videos.length<12){const id=k[1];if(seen.has(id))continue;seen.add(id);
-    const win=html.slice(k.index,k.index+900);
-    let t=(win.match(/"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.){1,90})/)||win.match(/"title":\{"simpleText":"([^"]{1,90})"/)||[])[1]||'';
-    o.videos.push({id,title:t?ujs(t):'(video '+id.slice(0,6)+')'})}
-  }catch(e){}
-  return o;
+
+/* ══════════════ TABS ══════════════ */
+function activeTab() { return STATE.tabs.find((t) => t.id === STATE.active) || null; }
+function newTab() {
+  const id = ++STATE.seq;
+  const view = document.createElement('div');
+  view.className = 'view';
+  $('content').appendChild(view);
+  const tab = { id, view, url: '', title: 'New tab', transport: 'idle', hist: [], hi: -1, token: 0, mode: '' };
+  STATE.tabs.push(tab);
+  activateTab(id);
+  renderHome(tab);
+  renderTabs();
+  return tab;
 }
-function resolveTubeInput(s){s=s.trim();
-  if(/^[A-Za-z0-9_-]{11}$/.test(s))return 'https://www.youtube.com/watch?v='+s;
-  if(/^https?:\/\//i.test(s))return s;
-  if(/youtube\.com|youtu\.be/i.test(s))return 'https://'+s.replace(/^https?:\/\//i,'');
-  return 'https://www.youtube.com/results?search_query='+encodeURIComponent(s);
+function closeTab(id) {
+  const i = STATE.tabs.findIndex((t) => t.id === id);
+  if (i < 0) return;
+  STATE.tabs[i].view.remove();
+  STATE.tabs.splice(i, 1);
+  if (!STATE.tabs.length) { newTab(); return; }
+  if (STATE.active === id) activateTab(STATE.tabs[Math.max(0, i - 1)].id);
+  renderTabs();
 }
-async function loadTube(input){
-  const target=resolveTubeInput(input||$('tInput').value);
-  $('tInput').value=target;
-  const T0=performance.now();liveT0=T0;$('btnTube').disabled=true;
-  tlog(`load → <b>${target.slice(0,90)}</b>`);
-  try{
-    const res=await runProxyPipeline(target,'es',(n,ms,a,b)=>{
-      if(n==='fetch')tlog(`fetch ok: ${fmtB(a)} in ${fmtT(ms)} via ${b}`);
-      if(n==='relayFail')tlog(`relay ${a} failed: ${b}`,'warn');
-      if(n==='abuse')tlog('WARNING: google abuse page — switch relay','err');
-    });
-    const info=parseYT(res.html);
-    $('tubeChips').style.display='flex';
-    $('cTitle').textContent=info.title||'(no title parsed)';$('cChan').textContent=info.channel||'—';
-    $('cViews').textContent=info.views||'—';$('cLikes').textContent=info.likes||'—';
-    $('cTime').textContent=fmtT(performance.now()-T0);
-    tlog(`parsed: title="${(info.title||'').slice(0,60)}" views=${info.views||'?'} likes=${info.likes||'?'} vids=${info.videos.length}`);
-    const vg=$('vGrid');vg.innerHTML='';
-    if(!info.videos.length)vg.innerHTML='<span class="muted">no video ids found in this page</span>';
-    for(const v of info.videos){const d=document.createElement('div');d.className='vcard';
-      d.innerHTML=`<img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt=""><div class="t">${v.title.replace(/</g,'&lt;')}</div>`;
-      d.onclick=()=>loadTube('https://www.youtube.com/watch?v='+v.id);vg.appendChild(d)}
-    if(state.blobs.tube)URL.revokeObjectURL(state.blobs.tube);
-    state.blobs.tube=runBlob(res.html);
-    $('tFrame').src=state.blobs.tube;$('tEmpty').style.display='none';
-    lastTotal=performance.now()-T0;tlog(`<b>watch UI running from blob</b> in ${fmtT(lastTotal)}`);
-  }catch(e){tlog('FAILED: '+(e&&e.message||e),'err');toast('tube failed: '+(e&&e.message||e).slice(0,80))}
-  liveT0=null;$('btnTube').disabled=false;
+function activateTab(id) {
+  STATE.active = id;
+  STATE.tabs.forEach((t) => t.view.classList.toggle('on', t.id === id));
+  renderTabs();
+  updateOmni();
 }
-/* ================= games ================= */
-function cardHTML(g,opts){opts=opts||{};const fav=state.favs.includes(g.id);
-  return `<div class="gcard" data-g="${g.id}" title="${g.name}">
-    ${opts.badge?`<div class="badge">${opts.badge}</div>`:''}
-    <img loading="lazy" src="${g.icon}" alt="${g.name}" onerror="this.style.opacity=.25">
-    <div class="acts"><button class="icobtn ${fav?'faved':''}" data-fav="${g.id}" title="favorite">${svg('star',14)}</button><button class="icobtn" data-play="${g.id}" title="play">${svg('play',14)}</button></div>
-    <div class="hov"><div class="nm">${g.name}</div><div class="nt">${g.note}</div></div></div>`}
-function paintGames(){
-  const q=($('gSearch').value||'').toLowerCase();const f=state.filter;
-  let list=allGames().filter(g=>g.name.toLowerCase().includes(q));
-  if(f==='fav')list=list.filter(g=>state.favs.includes(g.id));
-  if(f==='recent')list=list.filter(g=>state.recents.find(r=>r.id===g.id));
-  $('gameGrid').innerHTML=list.length?list.map(g=>cardHTML(g)).join(''):'<span class="muted">nothing here</span>';
-  // fav grid
-  const fg=allGames().filter(g=>state.favs.includes(g.id));
-  $('favGrid').innerHTML=fg.length?fg.map(g=>cardHTML(g)).join(''):'<span class="muted">star a game to pin it here</span>';
-  // recents
-  const rg=state.recents.map(r=>gameById(r.id)).filter(Boolean);
-  $('recentGrid').innerHTML=rg.length?rg.slice(0,6).map(g=>cardHTML(g)).join(''):'<span class="muted">play something — it shows up here</span>';
-  $('stFavs').textContent=state.favs.length;
-  $('stGames').textContent=allGames().length;
-  // banner
-  const last=state.recents[0]&&gameById(state.recents[0].id);
-  if(last){$('banner').classList.add('show');$('bannerImg').src=last.icon;$('bannerName').textContent=last.name;
-    const dt=Date.now()-state.recents[0].ts;$('bannerWhen').textContent=dt<60000?'just now':dt<3600000?Math.floor(dt/60000)+'m ago':Math.floor(dt/3600000)+'h ago';
-    $('bannerPlay').onclick=()=>playGame(last.id);
-  }else $('banner').classList.remove('show');
-  updateDataStats();
+function renderTabs() {
+  const wrap = $('tabs');
+  wrap.innerHTML = '';
+  STATE.tabs.forEach((t) => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (t.id === STATE.active ? ' on' : '');
+    const host = hostOf(t.url);
+    b.innerHTML = (host ? favHtml(host) : '') + '<span class="tt">' + escapeHtml(t.title || 'New tab') + '</span>' +
+      '<span class="x" title="Close (Ctrl+W)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></span>';
+    b.querySelector('.x').addEventListener('click', (e) => { e.stopPropagation(); closeTab(t.id); });
+    b.addEventListener('click', () => activateTab(t.id));
+    wrap.appendChild(b);
+  });
 }
-document.addEventListener('click',async e=>{
-  const f=e.target.closest('[data-fav]');if(f){e.stopPropagation();toggleFav(f.dataset.fav);return}
-  const p=e.target.closest('[data-play]');if(p){e.stopPropagation();playGame(p.dataset.play);return}
-  const c=e.target.closest('.gcard');if(c){playGame(c.dataset.g)}
+function updateOmni() {
+  const t = activeTab();
+  $('url').value = t ? (t.url || '') : '';
+  $('modechip').innerHTML = '<b>' + (t ? t.transport : 'idle') + '</b>';
+  $('back').disabled = !(t && t.hi > 0);
+  $('fwd').disabled = !(t && t.hi < t.hist.length - 1);
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function setTabMeta(tab, url) {
+  tab.url = url;
+  const host = hostOf(url);
+  tab.title = host || prettyUrl(url) || 'New tab';
+  renderTabs(); updateOmni();
+}
+
+/* ══════════════ VIEWS ══════════════ */
+function mkFrame(tab) {
+  const f = document.createElement('iframe');
+  f.className = 'nx-frame';
+  return f;
+}
+function loadHome(tab) { tab.view.innerHTML = ''; renderHome(tab); updateOmni(); }
+function loadPlayerView(tab, url, kind, id) {
+  tab.view.innerHTML = '';
+  tab.transport = kind === 'yt' ? 'player' : 'clip';
+  const wrap = document.createElement('div');
+  wrap.className = 'embed-wrap';
+  wrap.innerHTML = '<div class="embed-top"><span class="dot ok"></span><span class="t">' +
+    (kind === 'yt' ? 'YouTube player' : 'TikTok player') + '</span><span class="u">' + escapeHtml(url) +
+    '</span><span class="nx">NEXUS</span></div>';
+  const f = document.createElement('iframe');
+  f.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
+  f.setAttribute('allowfullscreen', '');
+  f.src = kind === 'yt'
+    ? 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1'
+    : 'https://www.tiktok.com/embed/v2/' + id;
+  wrap.appendChild(f);
+  tab.view.appendChild(wrap);
+  tab.url = url;
+  tab.title = kind === 'yt' ? 'YouTube video' : 'TikTok video';
+  renderTabs(); updateOmni();
+}
+function loadServerView(tab, url, m) {
+  tab.view.innerHTML = '';
+  tab.transport = 'iframe';
+  const f = mkFrame(tab);
+  f.src = STATE.proxy + (STATE.proxy.indexOf('?') > -1 ? '&' : '?') + 'nx=' + encodeURIComponent(url) + '&m=' + (m || 't');
+  tab.view.appendChild(f);
+  setTabMeta(tab, url);
+}
+function loadMirrorView(tab, url) {
+  /* last-resort standalone fallback: load the google mirror directly in the frame (tag loads need no CORS) */
+  tab.view.innerHTML = '';
+  tab.transport = 'mirror-frame';
+  const f = mkFrame(tab);
+  f.src = tgoog(url);
+  tab.view.appendChild(f);
+  setTabMeta(tab, url);
+}
+function loadViewer(tab, res, url) {
+  tab.view.innerHTML = '';
+  tab.transport = 'view';
+  const wrap = document.createElement('div');
+  wrap.className = 'embed-wrap';
+  wrap.innerHTML = '<div class="embed-top"><span class="dot"></span><span class="t">' + escapeHtml((res.ct || 'file').split(';')[0]) +
+    '</span><span class="u">' + escapeHtml(url) + '</span><span class="nx">NEXUS</span></div>';
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'flex:1;overflow:auto;margin:0;padding:16px;color:#9aa3b5;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#000';
+  pre.textContent = String(res.body || '').slice(0, 200000);
+  wrap.appendChild(pre);
+  tab.view.appendChild(wrap);
+}
+async function loadFetchView(tab, url, step) {
+  loadbar(12);
+  let res;
+  if (step.t === 'gas') {
+    res = await gasCall('api_fetch', url, { mode: step.m });
+    if (res.error) throw new Error(res.error);
+  } else {
+    const r = await fetch(tgoog(url), { redirect: 'follow' });
+    res = { code: r.status, ct: r.headers.get('content-type') || '', body: await r.text(), url };
+    if (!r.ok && !/<html/i.test(res.body)) throw new Error('HTTP ' + r.status);
+  }
+  loadbar(55);
+  const ct = (res.ct || '').toLowerCase();
+  const looksHtml = /html|xhtml|xml|plain|\bjson\b/.test(ct) || /<html|<!doctype/i.test(res.body || '');
+  if (!looksHtml) { loadViewer(tab, res, url); loadbar(100); setTimeout(() => loadbar(null), 300); return; }
+  if (res.code >= 400 && !/<html|<!doctype/i.test(res.body || '')) throw new Error('HTTP ' + res.code);
+  const html = rewriteHtml(res.body, url);
+  tab.view.innerHTML = '';
+  tab.transport = step.m === 'd' ? 'fetch' : 'mirror';
+  const f = mkFrame(tab);
+  f.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups allow-modals');
+  tab.view.appendChild(f);
+  await new Promise((done) => {
+    let ok = false;
+    f.addEventListener('load', () => { if (!ok) { ok = true; done(); } });
+    setTimeout(() => { if (!ok) { ok = true; done(); } }, 12000);
+    f.srcdoc = html;
+  });
+  try { const t = f.contentDocument && f.contentDocument.title; if (t) tab.title = t.slice(0, 40); } catch (e) {}
+  loadbar(100);
+  setTimeout(() => loadbar(null), 350);
+  setTabMeta(tab, url);
+}
+
+/* ══════════════ NAVIGATION ENGINE ══════════════ */
+function pushHist(tab, url) {
+  tab.hist = tab.hist.slice(0, tab.hi + 1);
+  tab.hist.push(url);
+  tab.hi = tab.hist.length - 1;
+  updateOmni();
+}
+function addRecent(url) {
+  try {
+    STATE.recents = JSON.parse(localStorage.getItem('nx_recents') || '[]');
+  } catch (e) { STATE.recents = []; }
+  STATE.recents = STATE.recents.filter((r) => r.u !== url);
+  STATE.recents.unshift({ u: url, t: Date.now() });
+  STATE.recents = STATE.recents.slice(0, 8);
+  try { localStorage.setItem('nx_recents', JSON.stringify(STATE.recents)); } catch (e) {}
+}
+async function navigate(tab, input, opts) {
+  opts = opts || {};
+  tab = tab || activeTab();
+  if (!tab) return;
+  const url = resolveInput(input);
+  if (!url) return;
+  const token = (STATE.ntok = (STATE.ntok || 0) + 1);
+  tab.token = token;
+
+  const yt = url.match(YT_RE), tt = url.match(TT_RE);
+  if (yt) { loadPlayerView(tab, url, 'yt', yt[1]); if (opts.push !== false) pushHist(tab, url); addRecent(url); return; }
+  if (tt) { loadPlayerView(tab, url, 'tt', tt[1]); if (opts.push !== false) pushHist(tab, url); addRecent(url); return; }
+
+  const mode = opts.mode || STATE.mode;
+  let chain = [];
+  if (mode === 'server') {
+    if (HAS_GAS && STATE.proxy) chain = [{ t: 'server', m: 't' }];
+    else { toast('Server iFrame mode needs the Apps Script deployment', 'err'); return; }
+  } else if (mode === 'fetch') {
+    chain = HAS_GAS ? [{ t: 'gas', m: 'd' }, { t: 'gas', m: 't' }] : [{ t: 'cors', m: 't' }, { t: 'mirror', m: 't' }];
+  } else { // auto
+    chain = HAS_GAS
+      ? [{ t: 'gas', m: 'd' }, { t: 'gas', m: 't' }].concat(STATE.proxy ? [{ t: 'server', m: 't' }] : [])
+      : [{ t: 'cors', m: 't' }, { t: 'mirror', m: 't' }];
+  }
+  let lastErr = null;
+  for (const step of chain) {
+    if (tab.token !== token) return; // superseded
+    try {
+      if (step.t === 'server') {
+        loadServerView(tab, url, step.m);
+        loadbar(100); setTimeout(() => loadbar(null), 400);
+      } else if (step.t === 'mirror') {
+        loadMirrorView(tab, url);
+        loadbar(100); setTimeout(() => loadbar(null), 400);
+      } else {
+        await loadFetchView(tab, url, step);
+      }
+      if (opts.push !== false) pushHist(tab, url);
+      addRecent(url);
+      return;
+    } catch (e) { lastErr = e; }
+  }
+  loadbar(null);
+  tab.transport = 'error';
+  updateOmni();
+  toast('Could not load ' + prettyUrl(url) + ' — ' + ((lastErr && lastErr.message) || 'all relays failed'), 'err');
+}
+function goBack() { const t = activeTab(); if (t && t.hi > 0) { t.hi--; navigate(t, t.hist[t.hi], { push: false }); } }
+function goFwd() { const t = activeTab(); if (t && t.hi < t.hist.length - 1) { t.hi++; navigate(t, t.hist[t.hi], { push: false }); } }
+function reloadTab() {
+  const t = activeTab();
+  if (t && t.url) navigate(t, t.url, { push: false });
+  else if (t) renderHome(t);
+}
+
+/* ══════════════ HOME PAGE ══════════════ */
+function renderHome(tab) {
+  tab.transport = 'home';
+  const tiles = [
+    ['YouTube', 'https://www.youtube.com/', 'videos + built-in player'],
+    ['TikTok', 'https://www.tiktok.com/', 'feed + video player'],
+    ['Duck.ai', 'https://duck.ai/', 'AI chat'],
+    ['now.gg', 'https://now.gg/', 'cloud games'],
+    ['Reddit', 'https://www.reddit.com/', 'forums'],
+    ['Wikipedia', 'https://en.wikipedia.org/', 'reference'],
+    ['Discord', 'https://discord.com/', 'chat'],
+    ['Spotify', 'https://open.spotify.com/', 'music']
+  ];
+  const rec = STATE.recents.map((r) =>
+    '<button class="recent" data-u="' + escapeHtml(r.u) + '">' + favHtml(hostOf(r.u)) + '<span>' + escapeHtml(prettyUrl(r.u)) + '</span></button>').join('');
+  tab.view.innerHTML =
+    '<div class="home"><div class="home-in">' +
+    '<div class="biglogo"><svg viewBox="0 0 32 32"><defs><linearGradient id="nxg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#00e5a0"/></linearGradient></defs><path d="M7 26V6l18 20V6" fill="none" stroke="url(#nxg2)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+    '<h1>NEX<i>US</i></h1><div class="tag">own relay · fetch rewrite · player routes — nothing else needed</div>' +
+    '<div class="hsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>' +
+    '<input id="hsearch" placeholder="Search the web or type a URL…  (  yt query  =  YouTube search )" spellcheck="false"></div>' +
+    '<div class="tiles">' + tiles.map((tl) =>
+      '<button class="tile" data-u="' + tl[1] + '"><b>' + tl[0] + '</b>' + favHtml(hostOf(tl[1])) + '<span>' + tl[2] + '</span></button>').join('') + '</div>' +
+    '<div class="tips"><b>How it works</b> — pages are fetched <b>server-side</b> by the Apps Script relay (no CORS), rewritten so every link, form and asset stays inside the proxy, then streamed into this tab. Videos on ' +
+    '<b>YouTube</b> and <b>TikTok</b> open in built-in player routes. Commands: <kbd>yt</kbd> search · <kbd>!server url</kbd> force iFrame mode · <kbd>!fetch url</kbd> force rewrite mode. Shortcuts: <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>T</kbd> <kbd>W</kbd> · <kbd>Alt</kbd>+<kbd>←→</kbd></div>' +
+    (rec ? '<div class="recents">' + rec + '</div>' : '') +
+    '</div></div>';
+  const inp = tab.view.querySelector('#hsearch');
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') omniGo(inp.value); });
+  tab.view.querySelectorAll('.tile').forEach((b) => b.addEventListener('click', () => navigate(tab, b.dataset.u)));
+  tab.view.querySelectorAll('.recent').forEach((b) => b.addEventListener('click', () => navigate(tab, b.dataset.u)));
+  updateOmni();
+}
+
+/* ══════════════ EVENTS ══════════════ */
+window.addEventListener('message', (ev) => {
+  const d = ev.data;
+  if (!d || d.__nx !== 'nav' || !d.url) return;
+  let tab = null;
+  for (const t of STATE.tabs) {
+    const f = t.view && t.view.querySelector('iframe');
+    if (f && f.contentWindow === ev.source) { tab = t; break; }
+  }
+  if (!tab) tab = activeTab();
+  if (tab) navigate(tab, d.url, { mode: d.via === 'server' ? 'server' : undefined });
 });
-async function toggleFav(id){const i=state.favs.indexOf(id);if(i>-1)state.favs.splice(i,1);else state.favs.push(id);
-  try{await DB.set('kv','favs',state.favs)}catch(e){}paintGames();toast(state.favs.includes(id)?'favorited':'unfavorited')}
-async function pushRecent(id){state.recents=state.recents.filter(r=>r.id!==id);state.recents.unshift({id,ts:Date.now()});state.recents=state.recents.slice(0,12);
-  try{await DB.set('kv','recents',state.recents)}catch(e){}}
-/* runner */
-let runTimerH=null;
-function runClock(){const el=fmtT(performance.now()-state.runT0);$('runTimer').textContent=el}
-async function playGame(id){
-  const g=gameById(id);if(!g)return;
-  await pushRecent(id);paintGames();
-  $('runner').classList.add('show');$('runName').textContent=g.name;
-  $('runProg').firstElementChild.style.width='2%';$('runStat').textContent='';
-  state.runT0=performance.now();clearInterval(runTimerH);runTimerH=setInterval(runClock,100);runClock();liveT0=state.runT0;
-  const frame=$('runFrame');frame.src='about:blank';
-  try{
-    if(g.type==='remote'){
-      $('runStat').textContent='cloud stream • '+fmtT(0);
-      frame.src=g.url;$('runProg').firstElementChild.style.width='100%';
-      $('runStat').textContent='live cloud session — if it stays black use Full';
-      setTimeout(()=>{lastTotal=performance.now()-state.runT0;liveT0=null;$('runTimer').textContent=fmtT(lastTotal)},4000);
-    }else{
-      let buf=null,fromCache=false;
-      try{const c=await DB.get('games',id);if(c&&c.bytes)buf=c.bytes,fromCache=true}catch(e){}
-      if(!buf){
-        let err=null;
-        for(const u of g.urls){
-          try{$('runStat').textContent='fetching '+(u.length>70?u.slice(0,70)+'…':u);
-            const r=await fetchWithProgress(u,(got,len)=>{$('runProg').firstElementChild.style.width=(len?Math.min(99,Math.round(got/len*100)):Math.min(99,Math.round(got/300000)))+'%';$('runStat').textContent=`${fmtB(got)}${len?' / '+fmtB(len):''} • ${fmtT(performance.now()-state.runT0)}`},120000);
-            buf=r.bytes;try{await DB.set('games',id,{bytes:buf,ts:Date.now(),url:u})}catch(ce){$('runStat').textContent+=' (cache full?)'}break;
-          }catch(e){err=e;$('runStat').textContent='mirror failed, trying next…'}
-        }
-        if(!buf)throw err||new Error('download failed');
-      }else{$('runProg').firstElementChild.style.width='100%'}
-      const mb=buf.length/1048576, secs=(performance.now()-state.runT0)/1000;
-      const blob=new Blob([buf],{type:'text/html'});
-      if(state.blobs.game)URL.revokeObjectURL(state.blobs.game);
-      state.blobs.game=URL.createObjectURL(blob);
-      $('runStat').textContent=`${fromCache?'⚡ cached':'↓ downloaded'} ${mb.toFixed(1)} MB in ${fmtT(performance.now()-state.runT0)}${!fromCache&&secs>0?` (${(mb/secs).toFixed(1)} MB/s)`:''} — launching`;
-      frame.src=state.blobs.game;
-      lastTotal=performance.now()-state.runT0;liveT0=null;
-      clearInterval(runTimerH);$('runTimer').textContent=fmtT(lastTotal);
-    }
-  }catch(e){$('runStat').textContent='FAILED: '+(e&&e.message||e);toast('game failed: '+(e&&e.message||e).slice(0,80));liveT0=null}
+ $('go').addEventListener('click', () => omniGo($('url').value));
+ $('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') omniGo(e.target.value); });
+ $('back').addEventListener('click', goBack);
+ $('fwd').addEventListener('click', goFwd);
+ $('reload').addEventListener('click', reloadTab);
+ $('newtab').addEventListener('click', () => newTab());
+ $('btn-home').addEventListener('click', () => { const t = activeTab(); if (t) loadHome(t); });
+ $('btn-new').addEventListener('click', () => newTab());
+ $('mode').addEventListener('change', (e) => { STATE.mode = e.target.value; try { localStorage.setItem('nx_mode', STATE.mode); } catch (er) {} });
+ $('lang').addEventListener('change', (e) => { STATE.lang = e.target.value; try { localStorage.setItem('nx_lang', STATE.lang); } catch (er) {} });
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key.toLowerCase() === 'l') { e.preventDefault(); $('url').focus(); $('url').select(); }
+  else if (e.ctrlKey && e.key.toLowerCase() === 't') { e.preventDefault(); newTab(); }
+  else if (e.ctrlKey && e.key.toLowerCase() === 'w') { e.preventDefault(); if (STATE.active) closeTab(STATE.active); }
+  else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); goBack(); }
+  else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); goFwd(); }
+});
+/* force-mode commands:  !server <url>  ·  !fetch <url>  ·  yt <query> */
+function omniGo(raw) {
+  raw = (raw || '').trim();
+  if (!raw) return;
+  let m;
+  if ((m = raw.match(/^!server\s+(\S+)/i))) return navigate(activeTab(), m[1], { mode: 'server' });
+  if ((m = raw.match(/^!fetch\s+(\S+)/i))) return navigate(activeTab(), m[1], { mode: 'fetch' });
+  return navigate(activeTab(), raw);
 }
-function closeRunner(){$('runner').classList.remove('show');$('runFrame').src='about:blank';clearInterval(runTimerH);liveT0=null}
-/* ================= settings / data ================= */
-const THEMES=[['midnight','#05060a'],['crimson','#160c0c'],['mint','#0a1511'],['amber','#161106'],['ghost','#f7f8fc']];
-function paintThemes(){$('themeSw').innerHTML='';for(const [n,c] of THEMES){const d=document.createElement('div');d.className='tsw'+(state.settings.theme===n?' on':'');d.style.background=`linear-gradient(135deg,${c} 55%,var(--accent))`;d.innerHTML=`<span>${n}</span>`;d.onclick=()=>setTheme(n);$('themeSw').appendChild(d)}}
-async function setTheme(n){state.settings.theme=n;document.documentElement.dataset.theme=n;try{await DB.set('kv','settings',state.settings)}catch(e){}paintThemes()}
-async function updateDataStats(){
-  try{const ks=await DB.keys('games');let total=0;for(const k of ks){try{const v=await DB.get('games',k);if(v&&v.bytes)total+=v.bytes.length}catch(e){}}
-    $('dCache').textContent=ks.length+' game(s)';$('dSize').textContent=fmtB(total);
-    $('stCache').textContent=ks.length?fmtB(total):'empty';
-  }catch(e){$('dCache').textContent='n/a'}
-  $('dRf').textContent=`${state.recents.length} / ${state.favs.length}`;
-}
-function openBlob(){const b=state.blobs[state.tab]||state.blobs.browser||state.blobs.tube||state.blobs.game;
-  if(!b){toast('nothing to open yet — run something first');return}
-  const w=window.open(b,'_blank');if(!w)toast('popup blocked — allow popups');else toast('opened blob in new tab')}
-/* ================= school-proofing: direct open, diagnostics, import ================= */
-function openTranslated(){let t=$('bUrl').value.trim();if(!/^https?:\/\//i.test(t))t='https://'+t;try{window.open(toTranslateURL(t,$('bLang').value),'_blank');toast('opened via translate.goog — no fetch, looks like Google')}catch(e){toast('bad url')}}
-function openTubeTranslated(){try{window.open(toTranslateURL(resolveTubeInput($('tInput').value),'es'),'_blank');toast('opened translated video page')}catch(e){toast('bad input')}}
-async function diagReach(url,ms){const t0=performance.now();try{await fetch(url,{mode:'no-cors',cache:'no-store',signal:AbortSignal.timeout(ms||8000)});return{ok:true,ms:performance.now()-t0}}catch(e){return{ok:false,ms:performance.now()-t0}}}
-async function runDiag(){
-  const btn=$('btnDiag');btn.disabled=true;const o=$('diagOut');o.innerHTML='probing (real timers)...';
-  const rows=[];const row=(n,r)=>rows.push('<div>'+(r.ok?'PASS':'BLOCK')+' '+n+' — '+(r.ok?fmtT(r.ms):'FAIL '+fmtT(r.ms))+'</div>');
-  row('internet (google)',await diagReach('https://www.google.com/generate_204'));
-  row('translate.goog',await diagReach('https://www-tiktok-com.translate.goog/?_x_tr_sl=auto&_x_tr_tl=es'));
-  const hosts=['api.allorigins.win/raw?url=https://example.com','api.cors.lol/?url=https://example.com','proxy.corsfix.com/?https://example.com','api.codetabs.com/v1/proxy?quest=https://example.com','raw.githubusercontent.com/','gitea.com/','nowgg.fun/','script.google.com/'];
-  for(const h of hosts)row(h.slice(0,40),await diagReach('https://'+h,7000));
-  o.innerHTML=rows.join('')+'<div>— racing relays with a REAL cors fetch...</div>';
-  const tiny='https://example.com/';const wins=[];
-  for(const name of Object.keys(RELAY_URL)){
-    if(name==='direct')continue;if(name==='custom'&&!state.settings.customRelay)continue;
-    const t0=performance.now();
-    try{let txt;const u=RELAY_URL[name](tiny);const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
-      if(JSON_RELAYS.has(name)){const r=await fetch(u,{signal:ctl.signal});if(!r.ok)throw new Error('HTTP '+r.status);txt=(await r.json()).contents||''}
-      else{const r=await fetch(u,{signal:ctl.signal});if(!r.ok)throw new Error('HTTP '+r.status);txt=await r.text()}
-      clearTimeout(to);const ms=performance.now()-t0;
-      if(txt&&txt.length>100){wins.push({name,ms});o.innerHTML+='<div>PASS '+name+': '+fmtB(txt.length)+' in '+fmtT(ms)+'</div>'}
-      else o.innerHTML+='<div>BLOCK '+name+': empty reply</div>';
-    }catch(e){o.innerHTML+='<div>BLOCK '+name+': '+(e&&e.message||'blocked').slice(0,70)+'</div>'}
+
+/* ══════════════ BOOT ══════════════ */
+(async function boot() {
+  try { STATE.mode = localStorage.getItem('nx_mode') || 'auto'; } catch (e) {}
+  try { STATE.lang = localStorage.getItem('nx_lang') || 'es'; } catch (e) {}
+  $('mode').value = STATE.mode; $('lang').value = STATE.lang;
+  $('pins').innerHTML = PINS.map((p) =>
+    '<button class="pin" data-u="' + p[1] + '">' + favHtml(hostOf(p[1])) + '<span>' + p[0] + '</span></button>').join('');
+  document.querySelectorAll('#pins .pin').forEach((b) => b.addEventListener('click', () => navigate(activeTab(), b.dataset.u)));
+  if (HAS_GAS) {
+    try {
+      const cfg = await gasCall('api_config');
+      STATE.proxy = (cfg && cfg.proxy) || '';
+      badge(STATE.proxy ? 'GAS proxy online' : 'GAS bridge ok (no url)', 'ok');
+    } catch (e) { badge('GAS bridge error', 'err'); }
+  } else {
+    badge('standalone · mirror relay', 'warn');
   }
-  if(wins.length){wins.sort((a,b)=>a.ms-b.ms);state.settings.relay=wins[0].name;try{await DB.set('kv','settings',state.settings)}catch(e){}$('sRelay').value=wins[0].name;$('logRelay').textContent=wins[0].name;o.innerHTML+='<div><b>--&gt; auto-switched to fastest working relay: '+wins[0].name+'</b></div>';toast('relay → '+wins[0].name)}
-  else o.innerHTML+='<div><b>--&gt; every relay blocked. Settings → deploy the Google Apps Script relay (runs on google.com, 2 min).</b></div>';
-  btn.disabled=false;
-}
-async function copyGAS(){try{await navigator.clipboard.writeText(GAS_CODE);toast('deploy code copied — paste at script.google.com')}catch(e){prompt('copy this into script.google.com:',GAS_CODE)}}
-function importGame(file){
-  if(!file)return;const rd=new FileReader();
-  rd.onload=async()=>{try{const buf=new Uint8Array(rd.result);const id='c'+Date.now();
-    const meta={id,name:(file.name.replace(/\.html?$/i,'')||'imported').slice(0,40),type:'fetch',urls:[],icon:DEFAULT_ICON,note:'imported - offline',custom:true};
-    customGames.push(meta);await DB.set('games',id,{bytes:buf,ts:Date.now(),url:'import'});await DB.set('kv','customGames',customGames);
-    paintGames();toast('imported '+meta.name+' ('+fmtB(buf.length)+') — cached, works offline');
-  }catch(e){toast('import failed: '+e.message)}};
-  rd.readAsArrayBuffer(file);
-}
-/* ================= self-update: HTML pulls latest from github ================= */
-window.__NXV="1.3.0";
-const NX_SOURCE_URLS=[
- 'https://github.com/icodewithai1/nexus-proxy/raw/refs/heads/main/index.html',
- 'https://raw.githubusercontent.com/icodewithai1/nexus-proxy/main/index.html'];
-const NX_RELAY_HARDCODED="https://script.google.com/macros/s/AKfycbyS6jRvLEmASYCSMHtD09uLjN0OSjAMKkTS00bEBjIOIVCVK_J4t2_2AYd6exXg3spG/exec?url="; // your deployed relay — fresh browsers self-update + proxy with zero setup
-async function nxSelfUpdate(manual){
-  try{if(!manual&&sessionStorage.getItem('nx_selfupd')===window.__NXV)return 'skip'}catch(e){}
-  const splash=$('usplash'),st=$('usplashStatus'),tm=$('usplashTime');
-  const showT=setTimeout(()=>{if(splash&&(manual||true))splash.style.display='flex'},manual?0:300);
-  const T0=performance.now();
-  const tick=setInterval(()=>{if(tm)tm.textContent=fmtT(performance.now()-T0)},100);
-  const done=r=>{clearTimeout(showT);clearInterval(tick);if(splash)splash.style.display='none';return r};
-  const say=m=>{if(st)st.textContent=m};
-  try{
-    const relays=[];
-    if(state.settings.customRelay)relays.push(state.settings.customRelay);
-    if(NX_RELAY_HARDCODED)relays.push(NX_RELAY_HARDCODED);
-    const attempts=NX_SOURCE_URLS.map(u=>({via:'direct',url:u}));
-    for(const r of relays)for(const u of NX_SOURCE_URLS)attempts.push({via:'relay',url:r+encodeURIComponent(u)});
-    for(const a of attempts){
-      try{
-        say('checking github via '+a.via+'…');
-        const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),a.via==='direct'?5000:15000);
-        const r=await fetch(a.url,{signal:ctl.signal,cache:'no-store'});clearTimeout(to);
-        if(!r.ok)continue;
-        const txt=await r.text();
-        if(txt.length<20000||txt.indexOf('__NXV=')===-1)continue;
-        const m=txt.match(/__NXV="([^"]+)"/);
-        if(m&&m[1]!==window.__NXV){
-          say('v'+m[1]+' found in '+fmtT(performance.now()-T0)+' — loading…');
-          try{sessionStorage.setItem('nx_selfupd',m[1])}catch(e){}
-          await new Promise(res=>setTimeout(res,500));
-          clearTimeout(showT);clearInterval(tick);
-          document.open();document.write(txt);document.close();
-          return 'updated';
-        }
-        return done('current');
-      }catch(e){/* next route */}
-    }
-  }catch(e){}
-  return done('offline');
-}
-/* ================= live proxy ping ================= */
-async function pingProxy(){
-  $('btnPing').disabled=true;$('pingOut').textContent='testing…';const T0=performance.now();liveT0=T0;
-  try{
-    const prox=toTranslateURL('https://www.tiktok.com/','es');
-    const r=await runProxyPipeline('https://www.tiktok.com/','es',()=>{});
-    const tot=performance.now()-T0;lastTotal=tot;
-    $('stProxy').textContent=fmtT(tot);
-    $('pingOut').textContent=`OK: ${fmtB(r.bytes)} via ${r.via} in ${fmtT(tot)} (fetch ${fmtT(r.fetchMs)} + modify ${fmtT(r.modMs)}) — "${(r.html.match(/<title>([^<]*)<\/title>/)||[])[1]||'no title'}"`;
-  }catch(e){$('pingOut').textContent='FAILED: '+(e&&e.message||e);$('stProxy').textContent='down'}
-  liveT0=null;$('btnPing').disabled=false;
-}
-/* ================= boot ================= */
-async function boot(){
-  hydrateIcons();
-  try{await DB.open()}catch(e){toast('indexeddb unavailable: '+e)}
-  try{
-    const s=await DB.get('kv','settings');if(s)state.settings=Object.assign(state.settings,s);
-    const r=await DB.get('kv','recents');if(r)state.recents=r;
-    const f=await DB.get('kv','favs');if(f)state.favs=f;
-    const cg=await DB.get('kv','customGames');if(cg)customGames=cg;
-  }catch(e){}
-  let _up='offline';try{_up=await nxSelfUpdate(false)}catch(e){}if(_up==='updated')return;
-  document.documentElement.dataset.theme=state.settings.theme;
-  $('sRelay').value=state.settings.relay;$('sCustom').value=state.settings.customRelay||'';
-  $('sGate').classList.toggle('on',!!state.settings.gate);
-  $('logRelay').textContent=state.settings.relay;
-  paintThemes();paintGames();
-  document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-  $('btnRun').onclick=runBrowser;$('bUrl').addEventListener('keydown',e=>{if(e.key==='Enter')runBrowser()});
-  $('bPreset').onchange=e=>{$('bUrl').value=e.target.value};
-  $('btnTube').onclick=()=>loadTube();$('tInput').addEventListener('keydown',e=>{if(e.key==='Enter')loadTube()});
-  $('btnPing').onclick=pingProxy;
-  $('btnDiag').onclick=runDiag;
-  $('btnOpenTr').onclick=openTranslated;
-  $('btnOpenTrT').onclick=openTubeTranslated;
-  $('btnGAS').onclick=copyGAS;
-  $('btnImport').onclick=()=>$('filePick').click();
-  $('filePick').onchange=e=>{importGame(e.target.files[0]);e.target.value=''};
-  $('btnUpdate').onclick=async()=>{const r=await nxSelfUpdate(true);if(r!=='updated')toast(r==='current'?'already on latest':r==='skip'?'already on latest':'no route to github — set custom relay?')};
-  $('btnDiag').onclick=runDiag;
-  $('btnOpenTr').onclick=openTranslated;
-  $('btnOpenTrT').onclick=openTubeTranslated;
-  $('btnGAS').onclick=copyGAS;
-  $('btnImport').onclick=()=>$('filePick').click();
-  $('filePick').onchange=e=>{importGame(e.target.files[0]);e.target.value=''};
-  $('btnBlob').onclick=openBlob;$('btnBlob2').onclick=openBlob;
-  $('gSearch').oninput=paintGames;
-  document.querySelectorAll('.gfilter').forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;document.querySelectorAll('.gfilter').forEach(x=>x.classList.toggle('on',x===b));paintGames()});
-  $('sRelay').onchange=async e=>{state.settings.relay=e.target.value;$('logRelay').textContent=e.target.value;try{await DB.set('kv','settings',state.settings)}catch(_){}toast('relay → '+e.target.value)};
-  $('sCustom').onchange=async e=>{state.settings.customRelay=e.target.value;try{await DB.set('kv','settings',state.settings)}catch(_){}};
-  $('sGate').onclick=async ()=>{state.settings.gate=!state.settings.gate;$('sGate').classList.toggle('on',state.settings.gate);try{await DB.set('kv','settings',state.settings)}catch(_){}toast('gate '+(state.settings.gate?'on — press ~ to unlock':'off'))};
-  $('btnWipeCache').onclick=async ()=>{try{await DB.clear('games')}catch(e){}paintGames();toast('game cache cleared')};
-  $('btnWipeAll').onclick=async ()=>{if(!confirm('reset nexus? clears cache, recents, favorites, settings'))return;try{await DB.clear('games');await DB.clear('kv')}catch(e){}location.reload()};
-  $('runBack').onclick=closeRunner;
-  $('runBlob').onclick=()=>{if(!state.blobs.game){toast('no game blob yet');return}window.open(state.blobs.game,'_blank')};
-  $('runFull').onclick=()=>{const f=$('runFrame');if(f.requestFullscreen)f.requestFullscreen()};
-  $('gateReload').onclick=e=>{e.preventDefault();$('gate').style.animation='shake .3s';setTimeout(()=>$('gate').style.animation='',350);toast('still unreachable — press ~')};
-  $('gateDetail').onclick=e=>{e.preventDefault();const m=$('gateMore');m.style.display=m.style.display==='none'?'block':'none'};
-  $('gateDiag').onclick=e=>{e.preventDefault();toast('diagnostics: proxy alive, press ~ to enter')};
-  window.addEventListener('online',()=>{$('netDot').style.background='var(--good)';$('netTxt').textContent='online'});
-  window.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
-  // restore last browser url
-  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
-  lock('home');
-}
-boot();
-</script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3eb50754a1455b4',t:'MTc5MDAxNzI0Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
-indow.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
-  // restore last browser url
-  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
-  lock('home');
-}
-boot();
-</script>
-</body>
-</html>
-ood)';$('netTxt').textContent='online'});
-  window.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
-  // restore last browser url
-  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
-  lock('home');
-}
-boot();
-</script>
-</body>
-</html>
-te.settings.theme;
-  $('sRelay').value=state.settings.relay;$('sCustom').value=state.settings.customRelay||'';
-  $('sGate').classList.toggle('on',!!state.settings.gate);
-  $('logRelay').textContent=state.settings.relay;
-  paintThemes();paintGames();
-  document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-  $('btnRun').onclick=runBrowser;$('bUrl').addEventListener('keydown',e=>{if(e.key==='Enter')runBrowser()});
-  $('bPreset').onchange=e=>{$('bUrl').value=e.target.value};
-  $('btnTube').onclick=()=>loadTube();$('tInput').addEventListener('keydown',e=>{if(e.key==='Enter')loadTube()});
-  $('btnPing').onclick=pingProxy;
-  $('btnBlob').onclick=openBlob;$('btnBlob2').onclick=openBlob;
-  $('gSearch').oninput=paintGames;
-  document.querySelectorAll('.gfilter').forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;document.querySelectorAll('.gfilter').forEach(x=>x.classList.toggle('on',x===b));paintGames()});
-  $('sRelay').onchange=async e=>{state.settings.relay=e.target.value;$('logRelay').textContent=e.target.value;try{await DB.set('kv','settings',state.settings)}catch(_){}toast('relay → '+e.target.value)};
-  $('sCustom').onchange=async e=>{state.settings.customRelay=e.target.value;try{await DB.set('kv','settings',state.settings)}catch(_){}};
-  $('sGate').onclick=async ()=>{state.settings.gate=!state.settings.gate;$('sGate').classList.toggle('on',state.settings.gate);try{await DB.set('kv','settings',state.settings)}catch(_){}toast('gate '+(state.settings.gate?'on — press ~ to unlock':'off'))};
-  $('btnWipeCache').onclick=async ()=>{try{await DB.clear('games')}catch(e){}paintGames();toast('game cache cleared')};
-  $('btnWipeAll').onclick=async ()=>{if(!confirm('reset nexus? clears cache, recents, favorites, settings'))return;try{await DB.clear('games');await DB.clear('kv')}catch(e){}location.reload()};
-  $('runBack').onclick=closeRunner;
-  $('runBlob').onclick=()=>{if(!state.blobs.game){toast('no game blob yet');return}window.open(state.blobs.game,'_blank')};
-  $('runFull').onclick=()=>{const f=$('runFrame');if(f.requestFullscreen)f.requestFullscreen()};
-  $('gateReload').onclick=e=>{e.preventDefault();$('gate').style.animation='shake .3s';setTimeout(()=>$('gate').style.animation='',350);toast('still unreachable — press ~')};
-  $('gateDetail').onclick=e=>{e.preventDefault();const m=$('gateMore');m.style.display=m.style.display==='none'?'block':'none'};
-  $('gateDiag').onclick=e=>{e.preventDefault();toast('diagnostics: proxy alive, press ~ to enter')};
-  window.addEventListener('online',()=>{$('netDot').style.background='var(--good)';$('netTxt').textContent='online'});
-  window.addEventListener('offline',()=>{$('netDot').style.background='var(--bad)';$('netTxt').textContent='offline'});
-  // restore last browser url
-  try{const lb=await DB.get('kv','lastBrowser');if(lb&&lb.url){$('bUrl').value=lb.url;if(lb.tl)$('bLang').value=lb.tl}}catch(e){}
-  lock('home');
-}
-boot();
+  newTab();
+})();
 </script>
 </body>
 </html>
