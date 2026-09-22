@@ -3,1569 +3,735 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='4.5' fill='url(%23g)'/%3E%3C/svg%3E">
+<title>Google</title>
+<link id="fav" rel="icon" href="https://www.google.com/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
 <style>
-:root{
-  --bg0:#04060d; --bg1:#0a0e1e;
-  --panel:rgba(255,255,255,.035); --panel2:rgba(255,255,255,.06);
-  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
-  --txt:#e8ecf7; --mut:#8b93a9; --dim:#5d6579;
-  --vio:#8b5cf6; --cya:#22d3ee; --grn:#34d399; --red:#f43f5e; --amb:#fbbf24;
-  --grad:linear-gradient(135deg,#8b5cf6,#22d3ee);
-  --r:14px; --r-lg:20px;
-  --glow:0 0 24px rgba(139,92,246,.18);
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:#09090b;color:#f4f4f5;font-family:'Manrope',system-ui,sans-serif;overflow:hidden}
+button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font-family:inherit;color:#fff;background:#141418;border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:10px 16px;font-size:14px;outline:none}
+input:focus{border-color:rgba(139,224,139,.4)}
+::placeholder{color:#7c7c85;font-weight:600}
+#stars{position:fixed;inset:0;z-index:0}
+/* ===== pill nav (matches reference image) ===== */
+#pill{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:4px;
+ background:rgba(22,22,26,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+ border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:9px 12px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#pill .logo{color:#8be08b;display:grid;place-items:center;width:36px;height:36px;margin-right:8px}
+#pill .logo svg{width:24px;height:24px}
+#pill [data-nav]{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;color:#e4e4e7;transition:.15s}
+#pill [data-nav] svg{width:19px;height:19px}
+#pill [data-nav]:hover{background:rgba(255,255,255,.09)}
+#pill [data-nav].on{background:rgba(255,255,255,.13);color:#8be08b}
+/* ===== pages ===== */
+main{position:relative;z-index:1;height:100%}
+.page{display:none;position:absolute;inset:0;flex-direction:column;padding-top:84px}
+.page.active{display:flex}
+/* home */
+#pageHome{align-items:center;justify-content:center;padding-top:0}
+#heroTitle{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(42px,7vw,64px);letter-spacing:.5px;color:#fff;text-align:center}
+.tiles{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:36px}
+.tile{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;color:#fff;transition:transform .16s;box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.tile:hover{transform:translateY(-4px) scale(1.06)}
+.tile svg{width:28px;height:28px}
+.t-ig{background:linear-gradient(135deg,#f9ce34,#ee2a7b 48%,#6228d7)}
+.t-yt{background:#ff0033}
+.t-tt{background:#161616;border:1px solid rgba(255,255,255,.14)}
+.t-tw{background:#9146ff}
+.t-dc{background:#5865f2}
+.t-sp{background:#1db954}
+#homeSearch{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);width:min(520px,86vw);
+ background:#131316;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:15px 24px;font-size:15px;text-align:center}
+#recentWrap{margin-top:30px;max-width:640px;display:none;flex-wrap:wrap;gap:8px;justify-content:center}
+#recentWrap.show{display:flex}
+.rchip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 13px;font-size:12px;color:#c9c9cf}
+.rchip:hover{background:rgba(255,255,255,.11);color:#fff}
+/* browse */
+.tabrow{display:flex;gap:8px;padding:10px 16px 4px;overflow-x:auto;align-items:center;scrollbar-width:none}
+.tabrow::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:8px;background:#141418;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:7px 11px;font-size:12.5px;color:#c9c9cf;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tab svg{width:13px;height:13px}
+.tab.on{background:#1e1e24;color:#fff;border-color:rgba(255,255,255,.15)}
+.tab .tx{opacity:.55;display:grid;place-items:center}
+.tab .tx:hover{opacity:1;color:#f87171}
+#tabAdd{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#141418;border:1px solid rgba(255,255,255,.07);color:#c9c9cf;flex-shrink:0}
+#tabAdd:hover{color:#8be08b;border-color:rgba(139,224,139,.35)}
+#tabAdd svg{width:15px;height:15px}
+.toolbar{display:flex;gap:8px;align-items:center;padding:10px 16px}
+.rbtn{width:38px;height:38px;border-radius:999px;display:grid;place-items:center;background:#141418;border:1px solid rgba(255,255,255,.07);color:#d4d4d8;flex-shrink:0}
+.rbtn:hover{background:#1e1e24;color:#fff}
+.rbtn svg{width:16px;height:16px}
+#urlInput{flex:1;min-width:120px}
+#modeBadge{flex-shrink:0;background:rgba(139,224,139,.12);color:#8be08b;border:1px solid rgba(139,224,139,.25);border-radius:999px;padding:8px 14px;font-size:11.5px;font-weight:700;letter-spacing:.4px}
+#frameHost{flex:1;margin:8px 16px 16px;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#fff;position:relative}
+.frame-holder{position:absolute;inset:0;display:none;background:#fff}
+.frame-holder.on{display:block}
+.frame-holder iframe{width:100%;height:100%;border:0;display:block}
+.overlay{position:absolute;inset:0;z-index:8;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#0c0c0f;color:#a1a1aa}
+.overlay.show{display:flex}
+.spin{width:42px;height:42px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:#8be08b;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#loadText{font-family:'Fredoka';font-size:17px;color:#fff}
+#loadSub{font-size:12.5px;color:#7c7c85}
+#frameErr .big{font-family:'Fredoka';font-size:22px;color:#fff}
+#frameErrMsg{font-size:13px;color:#8e8e96;text-align:center;max-width:420px;padding:0 20px}
+.errbtns{display:flex;gap:10px;margin-top:6px}
+.ebtn{background:#1b1b20;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600}
+.ebtn:hover{background:#26262c}
+/* apps */
+#appsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px;padding:10px 18px 20px;overflow-y:auto;align-content:start}
+.acard{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px 10px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:.15s}
+.acard:hover{background:rgba(255,255,255,.09);transform:translateY(-2px)}
+.acard .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#fff}
+.acard .ic svg{width:21px;height:21px}
+.acard span{font-size:12.5px;font-weight:600;color:#d4d4d8}
+h2.pt{font-family:'Fredoka';font-weight:600;font-size:26px;padding:6px 20px 2px}
+/* games */
+.gtop{display:flex;gap:10px;align-items:center;padding:6px 18px;flex-wrap:wrap}
+#luminStatus{background:rgba(139,224,139,.1);border:1px solid rgba(139,224,139,.25);color:#8be08b;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px}
+#luminStatus .dot{width:7px;height:7px;border-radius:50%;background:#8be08b;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.gchip{background:#141418;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:8px 15px;font-size:12.5px;font-weight:600;color:#c9c9cf}
+.gchip.on{background:rgba(139,224,139,.14);color:#8be08b;border-color:rgba(139,224,139,.3)}
+#favRowWrap{display:none;gap:8px;padding:8px 18px 0;flex-wrap:wrap;overflow-x:auto}
+#favRowWrap.show{display:flex}
+.fchip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 13px;font-size:12px;color:#e4e4e7;display:flex;gap:7px;align-items:center}
+.fchip svg{width:12px;height:12px;color:#facc15;fill:#facc15}
+#luminGames{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:12px 18px;overflow-y:auto;flex:1;align-content:start}
+.gcard{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);border-radius:15px;padding:14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:.15s;position:relative}
+.gcard:hover{background:rgba(255,255,255,.09);transform:translateY(-2px)}
+.gcard b{font-size:13px;font-weight:700;color:#f4f4f5;line-height:1.3;word-break:break-word}
+.gcard .go{font-size:11px;color:#8be08b;font-weight:700}
+.gstar{position:absolute;top:9px;right:9px;color:#6b6b74;z-index:2}
+.gstar svg{width:15px;height:15px}
+.gstar.on{color:#facc15;fill:#facc15}
+#luminHost{margin:10px 18px 18px;flex:1;min-height:200px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);overflow:auto;display:none}
+#luminHost.show{display:block}
+/* ai */
+#aibox{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 18px 18px;overflow-y:auto;max-width:820px;width:100%;margin:0 auto}
+.bub{max-width:76%;padding:12px 16px;border-radius:16px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.bub.user{align-self:flex-end;background:#8be08b;color:#0b0b0e;border-bottom-right-radius:4px;font-weight:600}
+.bub.ai{align-self:flex-start;background:#17171c;border:1px solid rgba(255,255,255,.08);border-bottom-left-radius:4px}
+.airow{display:flex;gap:10px;padding:0 18px 18px;max-width:820px;width:100%;margin:0 auto}
+#aiInput{flex:1}
+#aiSend{width:44px;height:44px;border-radius:999px;background:#8be08b;color:#0b0b0e;display:grid;place-items:center;flex-shrink:0}
+#aiSend svg{width:17px;height:17px}
+/* settings */
+#setWrap{max-width:680px;width:100%;margin:0 auto;padding:4px 20px 30px;overflow-y:auto}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 18px;margin-bottom:10px}
+.srow .lab b{display:block;font-size:13.5px;font-weight:700}
+.srow .lab span{display:block;font-size:11.5px;color:#8e8e96;margin-top:2px}
+.tgl{width:46px;height:26px;border-radius:999px;background:#2a2a30;position:relative;transition:.18s;flex-shrink:0}
+.tgl .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#7c7c85;transition:.18s}
+.tgl.on{background:rgba(139,224,139,.35)}
+.tgl.on .knob{left:23px;background:#8be08b}
+.sbtn{background:#1b1b20;border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:700;flex-shrink:0}
+.sbtn:hover{background:#26262c}
+.sbtn.warn{color:#f87171;border-color:rgba(248,113,113,.3)}
+h3.sh{font-family:'Fredoka';font-size:15px;color:#8e8e96;padding:14px 2px 8px;font-weight:500;letter-spacing:.4px}
+/* toast */
+#toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,80px);z-index:200;background:#1b1b20;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:11px 22px;font-size:13px;font-weight:600;transition:.25s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast.show{transform:translate(-50%,0)}
+/* ===== chrome error page cloak (system theme) ===== */
+#cloak{position:fixed;inset:0;z-index:1000;display:none;background:#fff;color:#202124;font-family:system-ui,'Segoe UI',Roboto,Arial,sans-serif;cursor:pointer}
+#cloak.show{display:block}
+.ck-in{max-width:620px;margin:11vh auto 0;padding:0 28px}
+.ck-x{width:64px;height:64px;margin-bottom:26px}
+.ck-x circle{fill:#9aa0a6}
+.ck-x path{stroke:#fff;stroke-width:3.4;stroke-linecap:round}
+#cloak h1{font-size:24px;font-weight:400;margin:0 0 14px;color:#202124}
+#cloak p{font-size:14.5px;line-height:1.6;color:#5f6368;margin:0 0 10px}
+.ck-btn{display:inline-block;background:#f1f3f4;color:#3c4043;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:500;margin:14px 0 22px}
+.ck-code{font-size:12px;color:#5f6368;font-family:Roboto,monospace}
+@media (prefers-color-scheme:dark){
+ #cloak{background:#202124;color:#e8eaed}
+ #cloak h1{color:#e8eaed}
+ #cloak p{color:#9aa0a6}
+ .ck-btn{background:#303134;color:#e8eaed}
+ .ck-code{color:#9aa0a6}
+ .ck-x circle{fill:#5f6368}
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;}
-body{
-  font-family:'Inter',sans-serif;background:var(--bg0);color:var(--txt);
-  height:100vh;overflow:hidden;position:relative;display:flex;flex-direction:column;
-  background-image:radial-gradient(1000px 520px at 12% -8%,rgba(139,92,246,.14),transparent 60%),
-                   radial-gradient(900px 500px at 88% 112%,rgba(34,211,238,.10),transparent 60%),
-                   radial-gradient(600px 400px at 55% 45%,rgba(59,130,246,.05),transparent 70%);
-}
-#fxCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
-::selection{background:rgba(139,92,246,.35);}
-::-webkit-scrollbar{width:9px;height:9px;}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.10);border-radius:8px;border:2px solid transparent;background-clip:padding-box;}
-::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,.35);background-clip:padding-box;}
-::-webkit-scrollbar-track{background:transparent;}
-
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes popIn{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes orbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
-@keyframes shimmer{from{background-position:-200% 0}to{background-position:200% 0}}
-@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(60px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-@keyframes dots{0%,20%{content:''}40%{content:'·'}60%{content:'··'}80%,100%{content:'···'}}
-
-/* ============ TOPBAR ============ */
-#topbar{
-  position:relative;z-index:20;display:flex;align-items:center;gap:14px;
-  padding:10px 18px;border-bottom:1px solid var(--line);
-  background:rgba(6,8,18,.72);backdrop-filter:blur(20px);flex-shrink:0;
-}
-.brand{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
-.brand-mark{
-  width:34px;height:34px;border-radius:11px;background:rgba(139,92,246,.10);
-  border:1px solid rgba(139,92,246,.35);display:grid;place-items:center;position:relative;overflow:hidden;
-  box-shadow:var(--glow);
-}
-.brand-mark iconify-icon{font-size:19px;color:#a78bfa;}
-.brand-name{font-family:'Space Grotesk';font-weight:700;font-size:19px;letter-spacing:.4px;
-  background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.nav{display:flex;gap:4px;margin-left:8px;}
-.nav-pill{
-  display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:11px;cursor:pointer;
-  font-size:12.5px;font-weight:600;color:var(--mut);border:1px solid transparent;transition:all .22s;user-select:none;
-}
-.nav-pill iconify-icon{font-size:16px;}
-.nav-pill:hover{color:var(--txt);background:var(--panel);}
-.nav-pill.active{color:#fff;background:linear-gradient(135deg,rgba(139,92,246,.20),rgba(34,211,238,.12));border-color:rgba(139,92,246,.35);box-shadow:var(--glow);}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-.chip{
-  display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:11.5px;font-weight:600;
-  background:var(--panel);border:1px solid var(--line);color:var(--mut);transition:all .2s;white-space:nowrap;
-}
-.chip iconify-icon{font-size:14px;}
-.chip.clickable{cursor:pointer;}
-.chip.clickable:hover{border-color:rgba(139,92,246,.4);color:var(--txt);}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 8px var(--grn);animation:pulse 2.4s infinite;}
-
-/* ============ PAGES ============ */
-#stage{position:relative;z-index:5;flex:1;min-height:0;display:flex;}
-.page{display:none;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;}
-.page.active{display:flex;flex-direction:column;}
-.scroll-col{flex-direction:column !important;}
-
-/* ---- HOME ---- */
-.home-inner{width:100%;max-width:1060px;margin:0 auto;padding:34px 26px 40px;}
-.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 0 8px;animation:fadeUp .5s ease both;}
-.hero-mark{width:84px;height:84px;border-radius:26px;position:relative;display:grid;place-items:center;margin-bottom:20px;
-  background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(34,211,238,.10));
-  border:1px solid rgba(139,92,246,.4);box-shadow:0 0 60px rgba(139,92,246,.28);animation:floatY 5s ease-in-out infinite;}
-.hero-mark iconify-icon{font-size:42px;color:#a78bfa;}
-.hero-orbit{position:absolute;inset:-14px;border-radius:50%;border:1px dashed rgba(139,92,246,.35);animation:orbit 14s linear infinite;}
-.hero-orbit::after{content:'';position:absolute;top:-4px;left:50%;width:8px;height:8px;border-radius:50%;background:var(--cya);box-shadow:0 0 12px var(--cya);}
-.hero h1{font-family:'Space Grotesk';font-size:52px;font-weight:700;letter-spacing:1px;line-height:1.05;
-  background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.hero .tag{margin-top:10px;color:var(--mut);font-size:14.5px;font-weight:400;max-width:520px;}
-.hero .tag b{color:var(--txt);font-weight:600;}
-.hero-badges{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
-.hbadge{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--mut);padding:5px 11px;border-radius:99px;background:var(--panel);border:1px solid var(--line);}
-.hbadge iconify-icon{font-size:13px;color:var(--cya);}
-
-.home-search{width:100%;max-width:680px;margin:26px auto 0;animation:fadeUp .55s .06s ease both;}
-.search-pill{
-  display:flex;align-items:center;gap:11px;padding:6px 6px 6px 20px;border-radius:18px;
-  background:rgba(10,13,28,.85);border:1px solid var(--line2);
-  box-shadow:0 12px 44px rgba(0,0,0,.45),var(--glow);transition:border-color .25s;
-}
-.search-pill:focus-within{border-color:rgba(139,92,246,.55);}
-.search-pill iconify-icon.mag{font-size:20px;color:var(--dim);}
-.search-pill input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:14.5px;font-family:'Inter';min-width:0;}
-.search-pill input::placeholder{color:var(--dim);}
-.search-pill .engine-tag{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:#a78bfa;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);padding:5px 10px;border-radius:99px;white-space:nowrap;}
-.go-btn{
-  width:44px;height:44px;border-radius:13px;border:none;cursor:pointer;display:grid;place-items:center;
-  background:var(--grad);color:#fff;font-size:19px;box-shadow:0 6px 20px rgba(139,92,246,.4);transition:all .2s;flex-shrink:0;
-}
-.go-btn:hover{transform:scale(1.06);box-shadow:0 6px 26px rgba(139,92,246,.55);}
-
-.quick-row{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:22px;animation:fadeUp .6s .1s ease both;}
-.qchip{
-  display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:13px;cursor:pointer;user-select:none;
-  background:var(--panel);border:1px solid var(--line);transition:all .22s;
-}
-.qchip img{width:19px;height:19px;border-radius:5px;}
-.qchip span{font-size:12.5px;font-weight:600;color:var(--mut);transition:color .2s;}
-.qchip:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.08);box-shadow:var(--glow);}
-.qchip:hover span{color:var(--txt);}
-
-.sect{margin-top:38px;animation:fadeUp .6s .14s ease both;}
-.sect-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.sect-head h2{font-family:'Space Grotesk';font-size:17px;font-weight:600;display:flex;align-items:center;gap:9px;}
-.sect-head h2 iconify-icon{font-size:19px;color:#a78bfa;}
-.sect-head .more{font-size:11.5px;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:4px;transition:color .2s;}
-.sect-head .more:hover{color:#a78bfa;}
-
-.apps-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:11px;}
-.app-card{
-  display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 8px 13px;border-radius:var(--r);cursor:pointer;
-  background:var(--panel);border:1px solid var(--line);transition:all .22s;user-select:none;
-}
-.app-card img{width:30px;height:30px;border-radius:8px;}
-.app-card span{font-size:11.5px;font-weight:600;color:var(--mut);transition:color .2s;text-align:center;}
-.app-card:hover{transform:translateY(-4px);border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.06);box-shadow:0 10px 28px rgba(0,0,0,.4);}
-.app-card:hover span{color:var(--txt);}
-
-.games-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;}
-.game-card{position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;border:1px solid var(--line);aspect-ratio:16/10;background:#0d1020;transition:all .25s;user-select:none;}
-.game-card img{width:100%;height:100%;object-fit:cover;transition:transform .35s;}
-.game-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.5);box-shadow:0 14px 34px rgba(0,0,0,.5);}
-.game-card:hover img{transform:scale(1.07);}
-.gc-shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(4,6,13,.92));}
-.gc-name{position:absolute;left:11px;bottom:9px;font-size:12.5px;font-weight:600;}
-.gc-tag{position:absolute;top:9px;right:9px;font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:4px 8px;border-radius:99px;background:var(--grad);text-transform:uppercase;}
-.game-card .gc-fb{width:100%;height:100%;display:grid;place-items:center;font-family:'Space Grotesk';font-size:26px;font-weight:700;background:linear-gradient(135deg,#141a33,#1a1033);color:#a78bfa;}
-
-.recent-row{display:flex;gap:9px;flex-wrap:wrap;}
-.recent-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);cursor:pointer;font-size:12px;font-weight:500;color:var(--mut);transition:all .2s;max-width:260px;}
-.recent-pill img{width:16px;height:16px;border-radius:4px;}
-.recent-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.recent-pill:hover{border-color:rgba(139,92,246,.4);color:var(--txt);}
-.recent-empty{font-size:12px;color:var(--dim);padding:6px 2px;}
-
-.home-foot{margin-top:40px;text-align:center;color:var(--dim);font-size:11px;line-height:2;}
-.home-foot kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:2px 6px;font-family:'Space Grotesk';font-size:10px;color:var(--mut);}
-/* ---- BROWSER ---- */
-#pageBrowse{overflow:hidden;}
-.browser-col{display:flex;flex-direction:column;height:100%;min-height:0;}
-#tabStrip{
-  display:flex;align-items:flex-end;gap:5px;padding:9px 14px 0;flex-shrink:0;overflow-x:auto;scrollbar-width:none;
-}
-#tabStrip::-webkit-scrollbar{display:none;}
-.tab{
-  display:flex;align-items:center;gap:8px;padding:8px 10px 8px 13px;border-radius:11px 11px 0 0;cursor:pointer;
-  background:transparent;border:1px solid transparent;border-bottom:none;max-width:210px;min-width:110px;position:relative;flex-shrink:1;
-  transition:background .2s;user-select:none;
-}
-.tab:hover{background:var(--panel);}
-.tab.active{background:rgba(255,255,255,.06);border-color:var(--line);}
-.tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:2px;background:var(--grad);box-shadow:0 0 8px rgba(139,92,246,.7);}
-.tab-fav{width:16px;height:16px;border-radius:4px;flex-shrink:0;display:grid;place-items:center;}
-.tab-fav img{width:16px;height:16px;border-radius:4px;}
-.tab-fav iconify-icon{font-size:13px;color:var(--dim);}
-.tab-title{flex:1;font-size:12px;font-weight:500;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
-.tab.active .tab-title{color:var(--txt);}
-.tab-x{width:17px;height:17px;border-radius:5px;display:grid;place-items:center;color:var(--dim);flex-shrink:0;transition:all .15s;}
-.tab-x:hover{background:rgba(244,63,94,.2);color:var(--red);}
-.tab-x iconify-icon{font-size:12px;}
-#tabAdd{
-  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--mut);cursor:pointer;flex-shrink:0;margin-bottom:2px;
-  border:1px dashed var(--line2);transition:all .2s;
-}
-#tabAdd:hover{color:#a78bfa;border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.08);}
-#tabAdd iconify-icon{font-size:15px;}
-
-.browser-toolbar{
-  display:flex;align-items:center;gap:7px;padding:9px 14px;border-bottom:1px solid var(--line);flex-shrink:0;
-  background:rgba(8,10,22,.6);backdrop-filter:blur(14px);
-}
-.tb-btn{
-  width:33px;height:33px;border-radius:9px;display:grid;place-items:center;color:var(--mut);cursor:pointer;flex-shrink:0;
-  background:transparent;border:1px solid transparent;transition:all .18s;
-}
-.tb-btn iconify-icon{font-size:17px;}
-.tb-btn:hover{background:var(--panel2);color:var(--txt);border-color:var(--line);}
-.tb-btn.disabled{opacity:.32;pointer-events:none;}
-.tb-sep{width:1px;height:20px;background:var(--line);margin:0 3px;flex-shrink:0;}
-.urlbox{
-  flex:1;display:flex;align-items:center;gap:9px;padding:0 6px 0 14px;height:37px;border-radius:11px;min-width:0;
-  background:rgba(4,6,13,.65);border:1px solid var(--line);transition:border-color .2s;
-}
-.urlbox:focus-within{border-color:rgba(139,92,246,.55);box-shadow:var(--glow);}
-.urlbox iconify-icon{font-size:14px;color:var(--cya);flex-shrink:0;}
-.urlbox input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13px;font-family:'Inter';min-width:0;}
-.urlbox input::placeholder{color:var(--dim);}
-.mode-badge{
-  display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.5px;padding:4px 9px;border-radius:99px;
-  background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.3);color:var(--cya);white-space:nowrap;flex-shrink:0;
-}
-.mode-badge.fetch{background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.35);color:#a78bfa;}
-.mode-badge.popout{background:rgba(52,211,153,.10);border-color:rgba(52,211,153,.35);color:var(--grn);}
-
-.browser-body{flex:1;min-height:0;position:relative;background:#07091a;}
-.frame-holder{position:absolute;inset:0;display:none;}
-.frame-holder.active{display:block;}
-.frame-holder iframe{width:100%;height:100%;border:none;background:#fff;}
-#loadOverlay{
-  position:absolute;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  background:rgba(4,6,13,.86);backdrop-filter:blur(8px);
-}
-#loadOverlay.show{display:flex;}
-.nx-spinner{width:44px;height:44px;border-radius:50%;border:3px solid rgba(139,92,246,.15);border-top-color:#8b5cf6;border-right-color:#22d3ee;animation:spin .8s linear infinite;}
-#loadOverlay p{font-size:12.5px;color:var(--mut);font-weight:500;}
-#loadOverlay small{font-size:10.5px;color:var(--dim);}
-#frameErr{
-  position:absolute;inset:0;z-index:25;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:30px;
-  background:var(--bg0);
-}
-#frameErr.show{display:flex;}
-#frameErr iconify-icon{font-size:44px;color:var(--red);}
-#frameErr h3{font-family:'Space Grotesk';font-size:19px;}
-#frameErr p{font-size:12.5px;color:var(--mut);max-width:440px;line-height:1.65;}
-#frameErr .err-actions{display:flex;gap:9px;margin-top:8px;flex-wrap:wrap;justify-content:center;}
-.btn{
-  display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;font-size:12px;font-weight:600;cursor:pointer;
-  background:var(--panel2);border:1px solid var(--line2);color:var(--txt);transition:all .2s;user-select:none;
-}
-.btn iconify-icon{font-size:15px;}
-.btn:hover{border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.10);}
-.btn.primary{background:var(--grad);border:none;color:#fff;box-shadow:0 6px 20px rgba(139,92,246,.4);}
-.btn.primary:hover{box-shadow:0 6px 28px rgba(139,92,246,.55);transform:translateY(-1px);}
-.btn.danger:hover{border-color:rgba(244,63,94,.5);background:rgba(244,63,94,.10);}
-
-/* ---- GENERIC PAGES (apps/games/settings/ai) ---- */
-.page-pad{width:100%;max-width:1080px;margin:0 auto;padding:26px 26px 44px;}
-.page-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;animation:fadeUp .4s ease both;}
-.page-head h1{font-family:'Space Grotesk';font-size:24px;font-weight:700;}
-.page-head h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.page-head .spacer{flex:1;}
-.filter-input{
-  display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);min-width:210px;
-}
-.filter-input iconify-icon{color:var(--dim);font-size:15px;}
-.filter-input input{background:none;border:none;outline:none;color:var(--txt);font-size:12.5px;width:100%;}
-.set-group{margin-bottom:26px;animation:fadeUp .45s ease both;}
-.set-group h3{font-family:'Space Grotesk';font-size:13px;font-weight:600;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:8px;}
-.set-group h3 iconify-icon{font-size:15px;}
-.set-card{
-  display:flex;align-items:center;gap:14px;padding:15px 17px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);margin-bottom:9px;transition:border-color .2s;
-}
-.set-card:hover{border-color:var(--line2);}
-.set-ic{width:37px;height:37px;border-radius:11px;display:grid;place-items:center;background:rgba(139,92,246,.10);border:1px solid rgba(139,92,246,.25);flex-shrink:0;}
-.set-ic iconify-icon{font-size:18px;color:#a78bfa;}
-.set-info{flex:1;min-width:0;}
-.set-info h4{font-size:13.5px;font-weight:600;}
-.set-info p{font-size:11.5px;color:var(--mut);margin-top:3px;line-height:1.5;}
-.toggle{width:42px;height:23px;border-radius:99px;background:rgba(255,255,255,.09);border:1px solid var(--line2);position:relative;cursor:pointer;flex-shrink:0;transition:background .25s;}
-.toggle::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#697086;transition:all .25s;}
-.toggle.on{background:linear-gradient(135deg,rgba(139,92,246,.5),rgba(34,211,238,.4));border-color:transparent;}
-.toggle.on::after{left:21px;background:#fff;box-shadow:0 0 8px rgba(139,92,246,.8);}
-select.nx-select,input.nx-input{
-  background:rgba(4,6,13,.7);border:1px solid var(--line2);color:var(--txt);font-size:12px;font-family:'Inter';font-weight:500;
-  padding:8px 11px;border-radius:10px;outline:none;cursor:pointer;max-width:190px;
-}
-select.nx-select:focus,input.nx-input:focus{border-color:rgba(139,92,246,.5);}
-select.nx-select option{background:#0a0e1e;}
-input.nx-input{cursor:text;width:190px;}
-
-/* ---- AI ---- */
-#pageAI{overflow:hidden;}
-.ai-col{display:flex;flex-direction:column;height:100%;min-height:0;}
-.ai-scroll{flex:1;min-height:0;overflow-y:auto;padding:24px 26px 10px;display:flex;flex-direction:column;gap:16px;}
-.ai-msg{display:flex;gap:12px;max-width:760px;width:100%;margin:0 auto;animation:fadeUp .3s ease both;}
-.ai-msg .msg-av{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;}
-.ai-msg .msg-av iconify-icon{font-size:16px;}
-.msg-av.av-ai{background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(34,211,238,.15));border:1px solid rgba(139,92,246,.4);color:#a78bfa;}
-.msg-av.av-user{background:var(--panel2);border:1px solid var(--line2);color:var(--mut);}
-.msg-body{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 15px;font-size:13px;line-height:1.7;color:#d5daea;}
-.msg-body p{margin:0 0 7px;}
-.msg-body p:last-child{margin:0;}
-.msg-body code{background:rgba(139,92,246,.12);padding:1px 6px;border-radius:5px;font-family:monospace;font-size:12px;color:#c4b5fd;}
-.ai-typing{display:flex;gap:5px;padding:4px 0;}
-.ai-typing span{width:7px;height:7px;border-radius:50%;background:#a78bfa;animation:pulse 1s infinite;}
-.ai-typing span:nth-child(2){animation-delay:.15s;}
-.ai-typing span:nth-child(3){animation-delay:.3s;}
-.ai-input-area{flex-shrink:0;padding:14px 26px 20px;}
-.ai-bar{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:16px;background:rgba(10,13,28,.85);border:1px solid var(--line2);box-shadow:0 10px 34px rgba(0,0,0,.4);}
-.ai-bar input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13.5px;min-width:0;}
-.ai-bar input::placeholder{color:var(--dim);}
-.ai-send{width:38px;height:38px;border-radius:11px;border:none;cursor:pointer;display:grid;place-items:center;background:var(--grad);color:#fff;font-size:17px;flex-shrink:0;transition:all .2s;}
-.ai-send:hover{transform:scale(1.05);}
-.ai-hint{max-width:760px;margin:9px auto 0;text-align:center;font-size:10.5px;color:var(--dim);}
-
-/* ---- TOAST / MODAL ---- */
-#toast{
-  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(70px);z-index:200;opacity:0;
-  display:flex;align-items:center;gap:9px;padding:11px 18px;border-radius:13px;font-size:12.5px;font-weight:500;color:var(--txt);
-  background:rgba(12,15,30,.95);border:1px solid rgba(139,92,246,.4);box-shadow:0 12px 40px rgba(0,0,0,.6),var(--glow);
-  transition:all .35s cubic-bezier(.16,1,.3,1);white-space:nowrap;pointer-events:none;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-#toast iconify-icon{font-size:16px;color:#a78bfa;}
-#toast.ok iconify-icon{color:var(--grn);}
-#toast.err iconify-icon{color:var(--red);}
-
-@media(max-width:860px){
-  .apps-grid{grid-template-columns:repeat(4,1fr);}
-  .games-grid{grid-template-columns:repeat(2,1fr);}
-  .hero h1{font-size:38px;}
-  .nav-pill span{display:none;}
-  .nav-pill{padding:8px 11px;}
-  .brand-name{display:none;}
-  .chip.hideable{display:none;}
-}
-@media(max-width:560px){
-  .apps-grid{grid-template-columns:repeat(3,1fr);}
-  .home-inner{padding:22px 14px 30px;}
-  .page-pad{padding:20px 14px 40px;}
-  .browser-toolbar{flex-wrap:wrap;}
-}
+@media(max-width:640px){.tiles{gap:12px}.tile{width:54px;height:54px;border-radius:15px}#pill{gap:2px;padding:8px 10px}}
 </style>
 </head>
 <body>
-<canvas id="fxCanvas"></canvas>
+<canvas id="stars"></canvas>
 
-<header id="topbar">
-  <div class="brand" data-page="home">
-    <div class="brand-mark"><iconify-icon icon="solar:orbit-bold-duotone"></iconify-icon></div>
-    <div class="brand-name">NEXUS</div>
-  </div>
-  <nav class="nav" id="mainNav">
-    <div class="nav-pill active" data-page="home"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon><span>Home</span></div>
-    <div class="nav-pill" data-page="apps"><iconify-icon icon="solar:widget-2-bold-duotone"></iconify-icon><span>Apps</span></div>
-    <div class="nav-pill" data-page="games"><iconify-icon icon="solar:gamepad-bold-duotone"></iconify-icon><span>Games</span></div>
-    <div class="nav-pill" data-page="ai"><iconify-icon icon="solar:stars-bold-duotone"></iconify-icon><span>Nexus AI</span></div>
-    <div class="nav-pill" data-page="settings"><iconify-icon icon="solar:settings-bold-duotone"></iconify-icon><span>Settings</span></div>
-  </nav>
-  <div class="topbar-right">
-    <div class="chip hideable" id="clockChip"><iconify-icon icon="solar:clock-circle-bold-duotone"></iconify-icon><span id="clockText">--:--</span></div>
-    <div class="chip clickable" id="cloakBtn" title="Cycle tab cloak"><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon><span id="cloakName">No cloak</span></div>
-    <div class="chip" title="Engine status"><div class="live-dot"></div><span class="hideable" style="font-weight:600;">TG Engine</span></div>
-  </div>
-</header>
-
-<div id="stage">
-
-  <!-- HOME -->
-  <section id="pageHome" class="page active">
-    <div class="home-inner">
-      <div class="hero">
-        <div class="hero-mark"><div class="hero-orbit"></div><iconify-icon icon="solar:orbit-bold-duotone"></iconify-icon></div>
-        <h1>NEXUS</h1>
-        <p class="tag">The web, <b>unblocked</b>. Nexus routes every site through Google Translate's own infrastructure — pages are fetched, reprocessed and rendered clean, so YouTube, TikTok and everything else keep working.</p>
-        <div class="hero-badges">
-          <div class="hbadge"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon> Fetch &amp; render — not blocked</div>
-          <div class="hbadge"><iconify-icon icon="solar:play-circle-bold-duotone"></iconify-icon> Media unlock layer</div>
-          <div class="hbadge"><iconify-icon icon="solar:lock-keyhole-minimalistic-bold-duotone"></iconify-icon> No keys, no logs</div>
-        </div>
-      </div>
-      <div class="home-search">
-        <div class="search-pill">
-          <iconify-icon icon="solar:magnifer-linear" class="mag"></iconify-icon>
-          <input type="text" id="homeInput" placeholder="Search DuckDuckGo or paste any URL..." autocomplete="off" spellcheck="false">
-          <span class="engine-tag"><iconify-icon icon="simple-icons:duckduckgo" style="font-size:12px;"></iconify-icon>NEXUS</span>
-          <button class="go-btn" id="homeGo"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></button>
-        </div>
-      </div>
-      <div class="quick-row" id="quickRow"></div>
-      <div class="sect" id="recentSect" style="display:none;">
-        <div class="sect-head"><h2><iconify-icon icon="solar:history-bold-duotone"></iconify-icon>Recent</h2><div class="more" id="clearRecent">Clear</div></div>
-        <div class="recent-row" id="recentRow"></div>
-      </div>
-      <div class="sect">
-        <div class="sect-head"><h2><iconify-icon icon="solar:widget-2-bold-duotone"></iconify-icon>Popular apps</h2><div class="more" data-page="apps">View all <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></div></div>
-        <div class="apps-grid" id="homeApps"></div>
-      </div>
-      <div class="sect">
-        <div class="sect-head"><h2><iconify-icon icon="solar:gamepad-bold-duotone"></iconify-icon>Trending games</h2><div class="more" data-page="games">View all <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></div></div>
-        <div class="games-grid" id="homeGames"></div>
-      </div>
-      <div class="home-foot">
-        <kbd>Esc</kbd> panic key &nbsp;·&nbsp; <kbd>Ctrl</kbd>+<kbd>M</kbd> open popout browser &nbsp;·&nbsp; Engine: Google Translate fetch &amp; render + media relay<br>
-        Nexus never stores keys or history off-device.
-      </div>
-    </div>
-  </section>
-
-  <!-- BROWSER -->
-  <section id="pageBrowse" class="page">
-    <div class="browser-col">
-      <div id="tabStrip"></div>
-      <div class="browser-toolbar">
-        <div class="tb-btn" id="btnBack" title="Back"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon></div>
-        <div class="tb-btn" id="btnFwd" title="Forward"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></div>
-        <div class="tb-btn" id="btnReload" title="Reload"><iconify-icon icon="solar:refresh-linear"></iconify-icon></div>
-        <div class="tb-btn" id="btnHome" title="Home"><iconify-icon icon="solar:home-angle-linear"></iconify-icon></div>
-        <div class="tb-sep"></div>
-        <div class="urlbox">
-          <iconify-icon icon="solar:shield-check-bold-duotone" id="urlLock"></iconify-icon>
-          <input type="text" id="urlInput" placeholder="Enter URL or search..." autocomplete="off" spellcheck="false">
-        </div>
-        <div class="mode-badge fetch" id="modeBadge" title="Engine mode"><iconify-icon icon="solar:bolt-linear" style="font-size:12px;"></iconify-icon><span id="modeText">TG-FETCH</span></div>
-        <div class="tb-btn" id="btnPopout" title="Open popout browser (about:blank)"><iconify-icon icon="solar:external-drive-linear"></iconify-icon></div>
-        <div class="tb-btn" id="btnRealTab" title="Open this site in a real tab (full media + logins)"><iconify-icon icon="solar:square-arrow-right-up-linear"></iconify-icon></div>
-        <div class="tb-btn" id="btnFull" title="Fullscreen"><iconify-icon icon="solar:maximize-square-linear"></iconify-icon></div>
-      </div>
-      <div class="browser-body">
-        <div id="frameHost"></div>
-        <div id="loadOverlay"><div class="nx-spinner"></div><p id="loadText">Fetching through Google Translate...</p><small id="loadSub">fetch → process → render</small></div>
-        <div id="frameErr">
-          <iconify-icon icon="solar:cloud-cross-bold-duotone"></iconify-icon>
-          <h3>Couldn't fetch this site</h3>
-          <p id="frameErrMsg">Every route to Google Translate was blocked on this network, or the site is offline. Try a relay retry, the popout browser, or open it in a real tab.</p>
-          <div class="err-actions">
-            <div class="btn primary" id="errRetry"><iconify-icon icon="solar:refresh-linear"></iconify-icon>Retry</div>
-            <div class="btn" id="errPopout"><iconify-icon icon="solar:external-drive-linear"></iconify-icon>Popout browser</div>
-            <div class="btn" id="errTab"><iconify-icon icon="solar:square-arrow-right-up-linear"></iconify-icon>Open in tab</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- APPS -->
-  <section id="pageApps" class="page scroll-col">
-    <div class="page-pad">
-      <div class="page-head">
-        <h1><em>Apps</em></h1>
-        <div class="spacer"></div>
-        <div class="filter-input"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input id="appsFilter" placeholder="Filter apps..." autocomplete="off"></div>
-      </div>
-      <div class="apps-grid" id="appsGrid"></div>
-    </div>
-  </section>
-
-  <!-- GAMES -->
-  <section id="pageGames" class="page scroll-col">
-    <div class="page-pad">
-      <div class="page-head">
-        <h1><em>Games</em></h1>
-        <div class="spacer"></div>
-        <div class="filter-input"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input id="gamesFilter" placeholder="Filter games..." autocomplete="off"></div>
-      </div>
-      <div class="games-grid" id="gamesGrid"></div>
-    </div>
-  </section>
-
-  <!-- AI -->
-  <section id="pageAI" class="page">
-    <div class="ai-col">
-      <div class="ai-scroll" id="aiScroll">
-        <div class="ai-msg">
-          <div class="msg-av av-ai"><iconify-icon icon="solar:stars-bold-duotone"></iconify-icon></div>
-          <div class="msg-body"><p>Hey — I'm <b>Nexus AI</b>. I run fully keyless: no API key is stored in this file or sent anywhere. Ask me anything and I'll do my best. If your network blocks the AI endpoint, I'll tell you instead of leaking data.</p></div>
-        </div>
-      </div>
-      <div class="ai-input-area">
-        <div class="ai-bar">
-          <input type="text" id="aiInput" placeholder="Message Nexus AI..." autocomplete="off">
-          <button class="ai-send" id="aiSend"><iconify-icon icon="solar:arrow-up-linear"></iconify-icon></button>
-        </div>
-        <div class="ai-hint">Keyless endpoint — no API key exists anywhere in Nexus.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SETTINGS -->
-  <section id="pageSettings" class="page scroll-col">
-    <div class="page-pad">
-      <div class="page-head"><h1><em>Settings</em></h1></div>
-
-      <div class="set-group">
-        <h3><iconify-icon icon="solar:cpu-bolt-bold-duotone"></iconify-icon>Engine</h3>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:translate-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Translation language</h4><p>Google needs a real language pair (en→en returns HTTP 400). Pages are proxied via this target language — pick one you can live with.</p></div>
-          <select class="nx-select" id="setTlang">
-            <option value="es">Spanish (default)</option><option value="fr">French</option><option value="de">German</option>
-            <option value="hi">Hindi</option><option value="pt">Portuguese</option><option value="ar">Arabic</option>
-            <option value="ja">Japanese</option><option value="zh-CN">Chinese (Simplified)</option><option value="ru">Russian</option>
-          </select>
-        </div>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:play-circle-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Media relay</h4><p>Route images &amp; video streams through Google's CDN relay so thumbnails and players load even when the source CDN is blocked.</p></div>
-          <div class="toggle on" id="setMedia"></div>
-        </div>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:link-circle-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Media unlock layer</h4><p>On YouTube &amp; TikTok pages, Nexus extracts the real video streams and injects its own player — so videos actually load.</p></div>
-          <div class="toggle on" id="setUnlock"></div>
-        </div>
-      </div>
-
-      <div class="set-group">
-        <h3><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon>Stealth</h3>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:mask-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Tab cloak</h4><p>Disguise this tab's title and favicon.</p></div>
-          <select class="nx-select" id="setCloak">
-            <option value="none">No cloak</option><option value="google">Google</option><option value="classroom">Google Classroom</option>
-            <option value="drive">Google Drive</option><option value="docs">Google Docs</option><option value="gmail">Gmail</option>
-            <option value="canvas">Canvas LMS</option><option value="custom">Custom...</option>
-          </select>
-        </div>
-        <div class="set-card" id="customCloakCard" style="display:none;">
-          <div class="set-ic"><iconify-icon icon="solar:pen-new-round-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Custom cloak</h4><p>Any title + favicon image URL.</p></div>
-          <input class="nx-input" id="cloakTitleIn" placeholder="Tab title" style="width:130px;margin-right:6px;">
-          <input class="nx-input" id="cloakIconIn" placeholder="Icon URL">
-        </div>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:danger-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Panic key (Esc)</h4><p>Pressing Esc while browsing instantly redirects to a safe page.</p></div>
-          <div class="toggle" id="setPanic"></div>
-          <select class="nx-select" id="setPanicUrl">
-            <option value="https://classroom.google.com">Classroom</option><option value="https://docs.google.com">Google Docs</option>
-            <option value="https://www.google.com">Google</option><option value="https://www.khanacademy.org">Khan Academy</option>
-          </select>
-        </div>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:external-drive-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Popout browser</h4><p>Launch Nexus inside a blank about:blank window — nothing in history, nothing to block. <b>Ctrl+M</b> anywhere.</p></div>
-          <div class="btn" id="setPopout"><iconify-icon icon="solar:arrow-right-up-linear"></iconify-icon>Launch</div>
-        </div>
-      </div>
-
-      <div class="set-group">
-        <h3><iconify-icon icon="solar:widget-4-bold-duotone"></iconify-icon>Appearance</h3>
-        <div class="set-card">
-          <div class="set-ic"><iconify-icon icon="solar:star-sparkles-bold-duotone"></iconify-icon></div>
-          <div class="set-info"><h4>Particle field</h4><p>Drifting nebula particles behind the UI.</p></div>
-          <div class="toggle on" id="setFx"></div>
-        </div>
-      </div>
-
-      <div class="set-group">
-        <h3><iconify-icon icon="solar:database-bold-duotone"></iconify-icon>Data</h3>
-        <div class="set-card">
-          <div class="set-ic" style="background:rgba(244,63,94,.1);border-color:rgba(244,63,94,.3);"><iconify-icon icon="solar:trash-bin-trash-bold-duotone" style="color:var(--red);"></iconify-icon></div>
-          <div class="set-info"><h4>Clear all data</h4><p>Wipes recents, settings and tab state from this device.</p></div>
-          <div class="btn danger" id="setClear"><iconify-icon icon="solar:trash-bin-minimalistic-linear"></iconify-icon>Clear</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+<!-- cloak: chrome-style access denied, system theme -->
+<div id="cloak">
+ <div class="ck-in">
+  <svg class="ck-x" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30"/><path d="M23 23 L41 41 M41 23 L23 41" fill="none"/></svg>
+  <h1>Access denied</h1>
+  <p>You don't have permission to access this page on this network.</p>
+  <p>This site has been blocked by your administrator. If you think this is a mistake, contact your network administrator.</p>
+  <span class="ck-btn">Reload</span>
+  <div class="ck-code">ERR_ACCESS_DENIED</div>
+ </div>
 </div>
 
-<div id="toast"><iconify-icon icon="solar:info-circle-bold-duotone" id="toastIcon"></iconify-icon><span id="toastMsg"></span></div>
+<nav id="pill">
+ <button class="logo" data-nav="home" title="Home"><i data-lucide="zap"></i></button>
+ <button data-nav="games" title="Games"><i data-lucide="gamepad-2"></i></button>
+ <button data-nav="apps" title="Apps"><i data-lucide="layout-grid"></i></button>
+ <button data-nav="browse" title="Browse"><i data-lucide="globe"></i></button>
+ <button data-nav="ai" title="AI"><i data-lucide="bot"></i></button>
+ <button data-nav="settings" title="Settings"><i data-lucide="settings"></i></button>
+</nav>
+
+<main>
+ <section class="page active" id="pageHome">
+  <h1 id="heroTitle">nexus</h1>
+  <div class="tiles">
+   <button class="tile t-ig" data-url="https://www.instagram.com" title="Instagram"><i data-lucide="instagram"></i></button>
+   <button class="tile t-tt" data-url="https://www.tiktok.com" title="TikTok"><i data-lucide="music-2"></i></button>
+   <button class="tile t-yt" data-url="https://www.youtube.com" title="YouTube"><i data-lucide="youtube"></i></button>
+   <button class="tile t-tw" data-url="https://www.twitch.tv" title="Twitch"><i data-lucide="twitch"></i></button>
+   <button class="tile t-dc" data-url="https://discord.com" title="Discord"><i data-lucide="ghost"></i></button>
+   <button class="tile t-sp" data-url="https://open.spotify.com" title="Spotify"><i data-lucide="music"></i></button>
+  </div>
+  <div id="recentWrap"></div>
+  <input id="homeSearch" placeholder="search anything..." autocomplete="off">
+ </section>
+
+ <section class="page" id="pageBrowse">
+  <div class="tabrow" id="tabStrip"><button id="tabAdd" title="New tab"><i data-lucide="plus"></i></button></div>
+  <div class="toolbar">
+   <button class="rbtn" id="btnBack" title="Back"><i data-lucide="arrow-left"></i></button>
+   <button class="rbtn" id="btnFwd" title="Forward"><i data-lucide="arrow-right"></i></button>
+   <button class="rbtn" id="btnReload" title="Reload"><i data-lucide="rotate-cw"></i></button>
+   <input id="urlInput" placeholder="Search or enter address" autocomplete="off">
+   <span id="modeBadge">PROXY</span>
+   <button class="rbtn" id="btnRealTab" title="Open in real tab"><i data-lucide="external-link"></i></button>
+   <button class="rbtn" id="btnFull" title="Fullscreen"><i data-lucide="maximize-2"></i></button>
+  </div>
+  <div id="frameHost">
+   <div class="overlay show" id="loadOverlay"><div class="spin"></div><div id="loadText">Loading</div><div id="loadSub">routing through proxy</div></div>
+   <div class="overlay" id="frameErr"><div class="big">This site didn't load</div><div id="frameErrMsg"></div>
+    <div class="errbtns"><button class="ebtn" id="errRetry">Retry</button><button class="ebtn" id="errRealTab">Open in real tab</button></div></div>
+  </div>
+ </section>
+
+ <section class="page" id="pageApps">
+  <h2 class="pt">apps</h2>
+  <div id="appsGrid"></div>
+ </section>
+
+ <section class="page" id="pageGames">
+  <h2 class="pt">games</h2>
+  <div class="gtop">
+   <div id="luminStatus"><span class="dot"></span><span id="luminStatusText">Connecting to Lumin SDK…</span></div>
+   <button class="gchip on" id="gmAll">All</button>
+   <button class="gchip" id="gmFavBtn">Favorites</button>
+   <button class="gchip" id="gmRecentBtn">Recent</button>
+   <button class="gchip" id="gmReload"><span style="display:flex;align-items:center;gap:6px"><i data-lucide="rotate-cw"></i>Reload</span></button>
+   <input id="gmSearch" placeholder="Search games..." style="flex:1;min-width:140px;max-width:260px" autocomplete="off">
+  </div>
+  <div id="favRowWrap"></div>
+  <div id="luminGames"></div>
+  <div id="luminHost"></div>
+ </section>
+
+ <section class="page" id="pageAI">
+  <div id="aibox"></div>
+  <div class="airow">
+   <input id="aiInput" placeholder="Ask AI anything..." autocomplete="off">
+   <button id="aiSend" title="Send"><i data-lucide="send"></i></button>
+  </div>
+ </section>
+
+ <section class="page" id="pageSettings">
+  <h2 class="pt">settings</h2>
+  <div id="setWrap">
+   <h3 class="sh">Cloaking</h3>
+   <div class="srow"><div class="lab"><b>Error-page disguise</b><span>Show a Chrome "Access denied" page on entry, tab switch, and ~ key</span></div><button class="tgl on" id="setErrCloak"><span class="knob"></span></button></div>
+   <div class="srow"><div class="lab"><b>Tab disguise</b><span>Tab title and icon shown in the browser</span></div>
+    <select id="setCloak"><option value="google">Google</option><option value="classroom">Classroom</option><option value="docs">Google Docs</option><option value="drive">Google Drive</option><option value="canvas">Canvas</option><option value="none">None</option></select></div>
+   <div class="srow"><div class="lab"><b>Launch in about:blank</b><span>Open the whole app in an empty about:blank window</span></div><button class="sbtn" id="btnAboutBlank">Launch</button></div>
+   <div class="srow"><div class="lab"><b>Launch as blob URL</b><span>Open the app from a temporary blob address</span></div><button class="sbtn" id="btnBlob">Launch</button></div>
+   <h3 class="sh">Panic</h3>
+   <div class="srow"><div class="lab"><b>Escape key panic</b><span>Press Esc to instantly leave</span></div><button class="tgl on" id="setPanic"><span class="knob"></span></button></div>
+   <div class="srow"><div class="lab"><b>Panic destination</b><span>Where Esc sends you</span></div>
+    <select id="setPanicUrl"><option value="classroom">Google Classroom</option><option value="docs">Google Docs</option><option value="google">Google</option><option value="canvas">Canvas</option></select></div>
+   <h3 class="sh">Proxy</h3>
+   <div class="srow"><div class="lab"><b>Translate language</b><span>Target language for the proxy route</span></div>
+    <select id="setTlang"><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pt">Portuguese</option></select></div>
+   <div class="srow"><div class="lab"><b>Route site assets through proxy</b><span>Route site media/requests through the proxy host</span></div><button class="tgl on" id="setRmedia"><span class="knob"></span></button></div>
+   <div class="srow"><div class="lab"><b>Site unlock patches</b><span>Apply patches for YouTube, TikTok and other blocked content</span></div><button class="tgl on" id="setUnlock"><span class="knob"></span></button></div>
+   <div class="srow"><div class="lab"><b>Wipe all data</b><span>Clear saved games, favorites, history and settings</span></div><button class="sbtn warn" id="btnWipe">Wipe</button></div>
+  </div>
+ </section>
+</main>
+
+<div id="toast"><span id="toastMsg"></span></div>
+
 <script>
-/* ================================================================
-   NEXUS — single-file proxy browser
-   Engine: Google Translate (translate.goog) fetch → process → render
-   CSP reality check: translate.goog sends frame-ancestors *.translate.goog,
-   so the ONLY way to show proxied pages in-app is exactly this pipeline:
-   fetch the translated HTML, reprocess it, render the finished document.
-   ================================================================ */
+(function(){
 'use strict';
+window.__SRC='<!DOCTYPE html>'+document.documentElement.outerHTML; /* snapshot for about:blank/blob */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+window.NX={tabs:[],active:null,cloaked:false,seq:0};
+function toast(m){const t=$('#toast');$('#toastMsg').textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2600)}
+NX.toast=toast;
 
-/* ---------------- settings & persistence ---------------- */
-const S = Object.assign({
-  tlang:'es', rmedia:true, unlock:true, panic:false,
-  panicUrl:'https://classroom.google.com', cloak:'none',
-  cloakTitle:'', cloakIcon:'', fx:true
-}, JSON.parse(localStorage.getItem('nx_settings')||'{}'));
-const saveS = () => localStorage.setItem('nx_settings', JSON.stringify(S));
-let RECENTS = JSON.parse(localStorage.getItem('nx_recent')||'[]');
+/* ===== cloak (chrome error page, system theme) ===== */
+const cloakEl=$('#cloak');
+function setCloak(on){NX.cloaked=!!on;cloakEl.classList.toggle('show',!!on)}
+NX.setCloak=setCloak;
+cloakEl.addEventListener('click',()=>setCloak(false));
+addEventListener('keydown',e=>{if(e.key==='`'||e.key==='~'){e.preventDefault();setCloak(!NX.cloaked)}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(localStorage.nx_errcloak||'1')!=='0')setCloak(true)});
+function panic(){const m={classroom:'https://classroom.google.com/',docs:'https://docs.google.com/document/',google:'https://www.google.com/',canvas:'https://canvas.instructure.com/'};location.replace(m[localStorage.nx_panicurl]||m.classroom)}
+addEventListener('keydown',e=>{if(e.key==='Escape'&&(localStorage.nx_panic||'1')!=='0')panic()});
+NX.panic=panic;
+/* tab disguise */
+const TITLES={google:'Google',classroom:'Classes',docs:'Google Docs',drive:'My Drive - Google Drive',canvas:'Dashboard'};
+const FAVS={google:'https://www.google.com/favicon.ico',classroom:'https://ssl.gstatic.com/classroom/favicon.png',docs:'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico',drive:'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png',canvas:'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico'};
+const LOGO="data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#8be08b'/><stop offset='1' stop-color='#4f8cff'/></linearGradient></defs><path d='M16 3 L27 16 L16 29 L5 16 Z' fill='url(#g)'/></svg>");
+function applyCloak(){const k=localStorage.nx_cloak||'google';
+ if(k==='none'){document.title='nexus';$('#fav').href=LOGO}
+ else{document.title=TITLES[k]||'Google';$('#fav').href=FAVS[k]||FAVS.google}}
+NX.applyCloak=applyCloak;
 
-/* ---------------- toast ---------------- */
-const IS_FILE = location.protocol === 'file:';
-const toastEl = document.getElementById('toast'), toastMsg = document.getElementById('toastMsg');
-let toastTimer = null;
-function toast(msg, kind='', ms=2600){
-  toastMsg.textContent = msg;
-  toastEl.className = kind===true?'ok':kind==='err'?'err':kind;
-  toastEl.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), ms);
+/* ===== page nav ===== */
+function go(name){
+ $$('.page').forEach(p=>p.classList.toggle('active',p.id==='page'+name.charAt(0).toUpperCase()+name.slice(1)));
+ $$('#pill [data-nav]').forEach(b=>b.classList.toggle('on',b.dataset.nav===name));
+ if(name==='games'&&NX.initGames)NX.initGames();
 }
+NX.go=go;
+$$('#pill [data-nav]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.nav)));
 
-/* ---------------- translate.goog URL engine ---------------- */
-const tgHostOf = h => h.replace(/-/g,'--').replace(/\./g,'-');
-const isTGHost = h => h === 'translate.goog' || h.endsWith('.translate.goog');
-function unTGHost(h){
-  // reverse google's host encoding: -- -> placeholder, - -> ., placeholder -> -
-  const bare = h.slice(0, h.length - '.translate.goog'.length);
-  return bare.replace(/--/g,'\u0001').replace(/-/g,'.').replace(/\u0001/g,'-');
+/* ===== tabs ===== */
+const strip=$('#tabStrip'),frameHost=$('#frameHost');
+function mkFrame(tab){const h=document.createElement('div');h.className='frame-holder'+(tab.id===NX.active?' on':'');h.innerHTML='<iframe referrerpolicy="no-referrer"></iframe>';frameHost.appendChild(h);tab.frame=h;return h}
+function tabLabel(tab,txt){tab.title=txt||'New tab';const s=tab.el.querySelector('.tt');if(s)s.textContent=tab.title}
+function mkTab(title){
+ const tab={id:'t'+(++NX.seq),title:title||'New tab',url:'',hist:[],hi:-1};
+ NX.tabs.push(tab);
+ const el=document.createElement('div');el.className='tab';
+ el.innerHTML='<i data-lucide="globe"></i><span class="tt">'+esc(tab.title)+'</span><button class="tx"><i data-lucide="x"></i></button>';
+ el.addEventListener('click',e=>{if(e.target.closest('.tx'))closeTab(tab.id);else actTab(tab.id)});
+ tab.el=el;strip.insertBefore(el,$('#tabAdd'));
+ if(window.lucide)lucide.createIcons();
+ actTab(tab.id);return tab;
 }
-function toTG(u){
-  try{
-    const x = new URL(u);
-    if(x.protocol !== 'http:' && x.protocol !== 'https:') return null;
-    if(isTGHost(x.hostname)) return x.href;
-    const path = x.pathname === '/' ? '' : x.pathname;
-    const extra = x.search ? x.search.slice(1) + '&' : '';
-    return 'https://' + tgHostOf(x.hostname) + '.translate.goog' + path +
-           '?' + extra + '_x_tr_sl=auto&_x_tr_tl=' + S.tlang + '&_x_tr_hl=en';
-  }catch(e){ return null; }
-}
-function fromTG(u){
-  try{
-    const x = new URL(u);
-    if(!isTGHost(x.hostname)) return u;
-    const real = 'https://' + unTGHost(x.hostname) + x.pathname;
-    const q = new URLSearchParams(x.search);
-    [...q.keys()].forEach(k=>{ if(k.startsWith('_x_tr_')) q.delete(k); });
-    const qs = q.toString();
-    return real + (qs ? '?' + qs : '');
-  }catch(e){ return u; }
-}
-function mediaTG(u, base){
-  // route a media asset through google's relay: <host-with-dashes>.translate.goog/<path>
-  try{
-    const x = new URL(u, base);
-    if(x.protocol !== 'http:' && x.protocol !== 'https:') return null;
-    if(isTGHost(x.hostname)) return null;
-    const EXEMPT = ['gstatic.com','googleapis.com','googleusercontent.com','ggpht.com','translate.goog'];
-    if(EXEMPT.some(d => x.hostname === d || x.hostname.endsWith('.' + d))) return null;
-    return 'https://' + tgHostOf(x.hostname) + '.translate.goog' + x.pathname + x.search;
-  }catch(e){ return null; }
-}
-function normalizeInput(v){
-  v = (v||'').trim();
-  if(!v) return null;
-  if(/^https?:\/\//i.test(v)) return v;
-  if(/^[\w-]+(\.[\w-]+)+(\/|$|:\d)/.test(v) && !v.includes(' ')) return 'https://' + v;
-  return null; // search
-}
+function closeTab(id){const i=NX.tabs.findIndex(t=>t.id===id);if(i<0)return;const t=NX.tabs[i];
+ t.el.remove();if(t.frame)t.frame.remove();NX.tabs.splice(i,1);
+ if(NX.active===id){const n=NX.tabs[Math.min(i,NX.tabs.length-1)];if(n)actTab(n.id);else{NX.active=null;$('#urlInput').value=''}}}
+function actTab(id){NX.active=id;
+ NX.tabs.forEach(t=>{t.el.classList.toggle('on',t.id===id);if(t.frame)t.frame.classList.toggle('on',t.id===id)});
+ const t=NX.tabs.find(x=>x.id===id);if(t)$('#urlInput').value=t.url||''}
+NX.mkTab=mkTab;NX.actTab=actTab;
+$('#tabAdd').addEventListener('click',()=>{go('browse');mkTab('New tab')});
 
-/* ---------------- relay chain (CORS relief for the fetch step) ----------------
-   Relays are RACED in parallel — first one to deliver the proxied HTML wins.
-   (allorigins raw is the workhorse; others rise/fall over time, racing absorbs that.) */
-const RELAYS = [
-  { n:'corsfix',     w:u => 'https://proxy.corsfix.com/?' + u },
-  { n:'jina-html',   w:u => 'https://r.jina.ai/' + u, hdrs:{'x-return-format':'html'} },
-  { n:'allorigins',  w:u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
-  { n:'codetabs',    w:u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
-  { n:'allorigins-json', w:u => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u), json:true },
-  { n:'cors.lol',    w:u => 'https://api.cors.lol/?url=' + encodeURIComponent(u) },
-  { n:'corsproxy',   w:u => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
-  { n:'cors.eu.org', w:u => 'https://cors.eu.org/' + u },
-  { n:'tg-direct',   w:u => u },
+/* ===== translate.goog proxy engine ===== */
+function toTG(h){return h.replace(/-/g,'--').replace(/\./g,'-')}
+function hostOf(u){try{return new URL(u).hostname}catch(e){return ''}}
+function unWrap(u){try{const x=new URL(u);
+ if(x.hostname==='translate.google.com'&&x.pathname==='/website'&&x.searchParams.get('u'))return x.searchParams.get('u');
+ if(x.hostname.endsWith('.translate.goog')){
+  const sub=x.hostname.slice(0,-'.translate.goog'.length);
+  const host=sub.replace(/--/g,'\u0001').replace(/-/g,'.').replace(/\u0001/g,'-');
+  x.searchParams.delete('_x_tr_sl');x.searchParams.delete('_x_tr_tl');x.searchParams.delete('_x_tr_hl');
+  return x.protocol+'//'+host+x.pathname+x.search;
+ }}catch(e){}return u}
+NX.unWrap=unWrap;
+function norm(v){v=(v||'').trim();if(!v)return '';
+ if(/^https?:\/\//i.test(v))return v;
+ if(/^[\w.-]+\.[a-z]{2,}([\/?#]|$)/i.test(v))return 'https://'+v;
+ return 'https://duckduckgo.com/?q='+encodeURIComponent(v)}
+function tgURL(u){try{const x=new URL(u);
+ if(!/^https?:$/.test(x.protocol))return null;
+ if(x.hostname.endsWith('.translate.goog'))return x.href;
+ const t=new URL('https://'+toTG(x.hostname)+'.translate.goog'+x.pathname+x.search);
+ t.searchParams.set('_x_tr_sl','auto');t.searchParams.set('_x_tr_tl',localStorage.nx_tlang||'en');t.searchParams.set('_x_tr_hl','en');
+ return t.href}catch(e){return null}}
+NX.tgURL=tgURL;NX.norm=norm;
+const RELAY=[
+ {mk:u=>'https://cors.eu.org/'+u,wrap:0},
+ {mk:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),wrap:0},
+ {mk:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),wrap:0},
+ {mk:u=>'https://whateverorigin.org/get?url='+encodeURIComponent(u),wrap:1}
 ];
-function fetchTO(url, ms, hdrs){
-  const c = new AbortController();
-  const id = setTimeout(()=>c.abort(), ms||30000);
-  return fetch(url, {signal:c.signal, redirect:'follow', headers:hdrs||{}}).finally(()=>clearTimeout(id));
+async function tryOne(tu,wrap,to){
+ const c=new AbortController(),tm=setTimeout(()=>c.abort(),to);
+ try{const r=await fetch(tu,{signal:c.signal,redirect:'follow'});clearTimeout(tm);
+  if(!r.ok)throw new Error('http '+r.status);
+  let t=await r.text();
+  if(wrap){const j=JSON.parse(t);t=j.contents||''}
+  if(!t||t.length<300)throw new Error('empty');
+  return t;
+ }catch(e){clearTimeout(tm);throw e}
 }
-async function fetchViaRelays(target){
-  // progressive relay race: fire the workhorse immediately, escalate in waves —
-  // avoids bandwidth contention on big pages while still failing over fast.
-  let settled = false;
-  let order = RELAYS.slice();
-  const fast = sessionStorage.getItem('nx_fast_relay');
-  if(fast){
-    order = [RELAYS[0], ...order.filter(r=>r.n===fast), ...order.filter(r=>r.n!==fast && r.n!=='tg-direct')];
+async function relayFetch(url,opts){
+ opts=opts||{};
+ try{const rs=await Promise.any(RELAY.map(r=>tryOne(r.mk(url),r.wrap,opts.timeout||14000)));return rs}
+ catch(e){throw new Error('all relay routes failed')}
+}
+NX.relayFetch=relayFetch;
+
+/* child runtime injected into proxied pages */
+const CHILD='<script>(function(){'+
+'var CB={},N=0;function pm(m){try{parent.postMessage(m,"*")}catch(e){}}'+
+'function hx(u){try{var x=new URL(u,document.baseURI);if(/^https?:$/.test(x.protocol))return x.href}catch(e){}return null}'+
+'addEventListener("message",function(e){var d=e.data||{};if(d&&d.type==="nfr"){var cb=CB[d.id];if(cb){delete CB[d.id];cb(d)}}});'+
+'var of=window.fetch;window.fetch=function(i,n){var u=typeof i==="string"?i:(i&&i.url)||"";var a=hx(u);'+
+'if(!a)return of?of(i,n):Promise.reject(new Error("bad url"));var id="f"+(++N);'+
+'return new Promise(function(res,rej){CB[id]=function(d){d.err?rej(new Error(d.err)):res(new Response(d.body,{status:d.status||200,headers:{"content-type":d.ct||"text/html"}}))};'+
+'pm({type:"nxf",id:id,url:a,method:(n&&n.method)||"GET",body:(n&&n.body)?String(n.body):null});'+
+'setTimeout(function(){if(CB[id]){delete CB[id];rej(new Error("timeout"))}},45000)})};'+
+'var oo=XMLHttpRequest.prototype.open,os=XMLHttpRequest.prototype.send;'+
+'XMLHttpRequest.prototype.open=function(m,u){this.nxu=hx(u);this.nxm=m;return oo.apply(this,arguments)};'+
+'XMLHttpRequest.prototype.send=function(b){var x=this,a=this.nxu;if(!a||!/^https?:/.test(a))return os.apply(this,arguments);var id="x"+(++N);'+
+'CB[id]=function(d){try{Object.defineProperty(x,"responseText",{value:d.body,configurable:true});Object.defineProperty(x,"response",{value:d.body,configurable:true});Object.defineProperty(x,"status",{value:d.status||200,configurable:true});Object.defineProperty(x,"readyState",{value:4,configurable:true})}catch(e){}'+
+'try{x.onreadystatechange&&x.onreadystatechange();x.dispatchEvent(new Event("readystatechange"));x.dispatchEvent(new Event("load"));x.dispatchEvent(new Event("loadend"))}catch(e){}};'+
+'pm({type:"nxf",id:id,url:a,method:this.nxm||"GET",body:b?String(b):null})};'+
+'addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a");if(!a)return;var h=a.getAttribute("data-nx")||a.getAttribute("href");if(!h)return;var t=hx(h);if(t){e.preventDefault();e.stopPropagation();pm({type:"nxnav",url:t})}},true);'+
+'addEventListener("submit",function(e){var f=e.target,m=(f.getAttribute("method")||"get").toLowerCase(),t=hx(f.getAttribute("action")||"");e.preventDefault();if(!t)return;'+
+'if(m==="get"){try{var u2=new URL(t);new FormData(f).forEach(function(v,k){u2.searchParams.set(k,v)});pm({type:"nxnav",url:u2.href})}catch(x){}}else{pm({type:"nxpost",url:t,body:new URLSearchParams(new FormData(f)).toString()})}},true);'+
+'window.open=function(u){pm({type:"nxnav",url:hx(u)||"https://www.google.com"});return null};'+
+'setInterval(function(){pm({type:"nxtitle",t:document.title})},2000);'+
+'pm({type:"nxrdy"})})();<\/'+'script>';
+
+function processHTML(html,tg,sitename){
+ html=html.replace(/<meta[^>]+http-equiv=["']?(content-security-policy|x-frame-options)["']?[^>]*>/gi,'');
+ html=html.replace(/\sintegrity=("[^"]*"|'[^']*')/gi,'');
+ html=html.replace(/<base[^>]*>/gi,'');
+ const baseTag='<base href="'+tg+'">';
+ if(/<head[^>]*>/i.test(html))html=html.replace(/<head[^>]*>/i,m=>m+baseTag);else html=baseTag+html;
+ /* anchors -> absolute + data-nx, strip target */
+ html=html.replace(/<a\b([^>]*)>/gi,function(m,at){
+  const h=/\shref\s*=\s*("([^"]*)"|'([^']*)')/i.exec(at);if(!h)return m;
+  const raw=(h[2]!==undefined?h[2]:h[3]).trim();
+  if(!raw||/^(javascript:|mailto:|tel:|data:|#)/i.test(raw))return m;
+  let a;try{a=new URL(raw,tg).href}catch(e){return m}
+  if(!/^https?:/.test(a))return m;
+  const e2=a.replace(/"/g,'&quot;');
+  const na=at.replace(/\starget\s*=\s*("[^"]*"|'[^']*')/gi,'').replace(/\shref\s*=\s*("[^"]*"|'[^']*')/i,'');
+  return '<a'+na+' href="'+e2+'" data-nx="'+e2+'">';
+ });
+ /* unlock patches */
+ if((localStorage.nx_unlock||'1')!=='0'){
+  if(/youtube\.com/i.test(sitename)){
+   html=html.replace(/"playabilityStatus":\s*\{\s*"status":\s*"(LOGIN_REQUIRED|UNPLAYABLE|ERROR|EMBEDDING_DISABLED)"/g,'"playabilityStatus":{"status":"OK"');
+   html=html.replace(/<head[^>]*>/i,m=>m+'<script>try{if(window.trustedTypes&&window.trustedTypes.createPolicy){trustedTypes.createPolicy("default",{createHTML:function(s){return s},createScript:function(s){return s},createScriptURL:function(s){return s}})}}catch(e){}<\/'+'script>');
   }
-  const mk = r => (async ()=>{
-    const res = await fetchTO(r.w(target), 30000, r.hdrs);
-    if(!res.ok) throw new Error(r.n + ' HTTP ' + res.status);
-    let txt = await res.text();
-    if(r.json){ try{ txt = (JSON.parse(txt).contents) || ''; }catch(e){} }
-    if(!txt || txt.length < 40) throw new Error(r.n + ' empty');
-    sessionStorage.setItem('nx_fast_relay', r.n);
-    return { text: txt, via: r.n };
-  })();
-  return new Promise((resolve, reject)=>{
-    let alive = 0, started = 0;
-    const run = r=>{ started++; alive++; mk(r)
-      .then(v=>{ if(!settled){ settled = true; resolve(v); } })
-      .catch(()=>{ alive--; if(!settled && started>0 && alive===0 && started>=order.length) reject(new Error('all ' + started + ' relay routes failed')); }); };
-    order.slice(0,3).forEach(run);
-    setTimeout(()=>{ if(!settled) order.slice(3,5).forEach(run); }, 3000);
-    setTimeout(()=>{ if(!settled) order.slice(5).forEach(run); }, 8000);
-  });
-}
-
-/* ---------------- HTML processor ("do its thing") ---------------- */
-function walkJSON(text, marker){
-  const i = text.indexOf(marker);
-  if(i < 0) return null;
-  const start = text.indexOf('{', i);
-  if(start < 0) return null;
-  let depth = 0, inStr = false, esc = false;
-  for(let j = start; j < text.length && j < start + 900000; j++){
-    const ch = text[j];
-    if(esc){ esc = false; continue; }
-    if(ch === '\\'){ esc = true; continue; }
-    if(ch === '"'){ inStr = !inStr; continue; }
-    if(inStr) continue;
-    if(ch === '{') depth++;
-    else if(ch === '}'){ depth--; if(depth === 0){ try{ return JSON.parse(text.slice(start, j+1)); }catch(e){ return null; } } }
+  if(/tiktok\.com/i.test(sitename)){
+   html=html.replace(/"region":"[A-Za-z]{2}"/g,'"region":"US"').replace(/"isRegionBlocked":\s*(true|false)/g,'"isRegionBlocked":false').replace(/"statusCode":\s*10\d{3}/g,'"statusCode":10204');
   }
-  return null;
+ }
+ /* child runtime */
+ if(/<\/body>/i.test(html))html=html.replace(/<\/body>/i,CHILD+'</body>');else html+=CHILD;
+ return html;
 }
-function rewriteSrcset(v, base){
-  return v.split(',').map(part=>{
-    const t = part.trim(); if(!t) return t;
-    const sp = t.split(/\s+/);
-    const nx = mediaTG(sp[0], base);
-    if(nx) sp[0] = nx;
-    return sp.join(' ');
-  }).join(', ');
+NX.processHTML=processHTML;
+
+/* render */
+function cur(){return NX.tabs.find(t=>t.id===NX.active)}
+function showLoad(txt){$('#loadOverlay').classList.add('show');$('#loadErrHide');$('#frameErr').classList.remove('show');$('#loadText').textContent=txt;$('#loadSub').textContent='routing through proxy'}
+function hideLoad(){$('#loadOverlay').classList.remove('show')}
+function showErr(msg){$('#loadOverlay').classList.remove('show');$('#frameErrMsg').textContent=msg;$('#frameErr').classList.add('show')}
+NX.showErr=showErr;
+function pushHist(tab,url){if(tab.hist[tab.hi]===url)return;tab.hist=tab.hist.slice(0,tab.hi+1);tab.hist.push(url);tab.hi=tab.hist.length-1}
+async function navigate(tab,url,push){
+ url=norm(unWrap(url));if(!url)return;
+ tab.url=url;$('#urlInput').value=url;tabLabel(tab,hostOf(url)||url);
+ if(push!==false)pushHist(tab,url);
+ /* recent sites */
+ try{let h=JSON.parse(localStorage.nx_hist||'[]');h=h.filter(x=>x.u!==url);h.unshift({u:url,t:Date.now()});localStorage.nx_hist=JSON.stringify(h.slice(0,10));renderRecent()}catch(e){}
+ await render(tab,url);
 }
-function processHTML(htmlText, pageUrl){
-  const doc = new DOMParser().parseFromString(htmlText, 'text/html');
-  if(!doc.head || !doc.body) throw new Error('not a document');
-  const baseNow = (doc.querySelector('base[href]')||{}).href || pageUrl;
-
-  // strip framing/CSP/refresh constraints + integrity pins
-  doc.querySelectorAll('meta[http-equiv]').forEach(m=>{
-    const he = (m.getAttribute('http-equiv')||'').toLowerCase();
-    if(he === 'content-security-policy' || he === 'refresh' || he === 'x-frame-options') m.remove();
-  });
-  doc.querySelectorAll('[integrity]').forEach(el=>el.removeAttribute('integrity'));
-  doc.querySelectorAll('script[nonce],link[nonce],style[nonce]').forEach(el=>el.removeAttribute('nonce'));
-
-  // media relay: route media assets through google's infra (they are no-CORS loads)
-  if(S.rmedia){
-    doc.querySelectorAll('img[src],video[src],audio[src],source[src],track[src],embed[src],object[data],video[poster]').forEach(el=>{
-      const at = el.hasAttribute('data') ? 'data' : el.hasAttribute('poster') ? 'poster' : 'src';
-      const v = el.getAttribute(at);
-      if(!v || /^(data|blob):/i.test(v)) return;
-      const nx = mediaTG(v, baseNow);
-      if(nx) el.setAttribute(at, nx);
-    });
-    doc.querySelectorAll('[srcset]').forEach(el=>{
-      const v = el.getAttribute('srcset');
-      if(v && !/^data:/i.test(v)) el.setAttribute('srcset', rewriteSrcset(v, baseNow));
-    });
-  }
-
-  // anchors: keep every click inside the proxy
-  doc.querySelectorAll('a[href]').forEach(a=>{
-    const v = a.getAttribute('href')||'';
-    if(!v || /^(javascript:|mailto:|tel:|blob:|data:|about:|#)/i.test(v)) return;
-    let abs; try{ abs = new URL(v, baseNow).href; }catch(e){ return; }
-    const tg = toTG(abs);
-    if(tg){ a.setAttribute('href', tg); a.setAttribute('data-nx-real', abs); }
-    a.removeAttribute('target');
-  });
-
-  // base → translate.goog, so every relative URL resolves through the relay (200 verified)
-  doc.querySelectorAll('base').forEach(b=>b.remove());
-  const base = doc.createElement('base');
-  base.href = toTG(pageUrl) || pageUrl;
-  doc.head.insertBefore(base, doc.head.firstChild);
-
-  // youtube media unlock
-  let ytslim = false;
-  if(S.unlock && /youtube\.com|youtu\.be/.test(pageUrl)) ytslim = unlockYouTube(doc, htmlText, pageUrl);
-  // tiktok media unlock
-  let ttslim = false;
-  if(S.unlock && /tiktok\.com/.test(pageUrl)) ttslim = unlockTikTok(doc, pageUrl);
-  // slim render: when Nexus replaces the page with its own player, drop the site's
-  // megabytes of scripts (they either can't run in-frame or would freeze the tab)
-  if(ytslim || ttslim){
-    doc.querySelectorAll('script').forEach(s=>{
-      if((s.textContent||'').length > 3000) s.remove();
-    });
-    doc.body.querySelectorAll('img,video,audio,source,iframe,embed,object').forEach(el=>{
-      if(!el.closest('#nexusMedia')) el.remove();
-    });
-    doc.querySelectorAll('link[rel="preload"],link[rel="preconnect"],link[rel="prefetch"],link[rel="modulepreload"]').forEach(l=>l.remove());
-  }
-
-  // child runtime: fetch/XHR hijack + live DOM rewriting + nav reporting
-  const rt = doc.createElement('script');
-  rt.textContent = '(' + NEXUS_CHILD_RUNTIME.toString() + ')(' + JSON.stringify({
-    SRC: pageUrl, TL: S.tlang, RMEDIA: S.rmedia,
-    RELAY: 'https://proxy.corsfix.com/?', PTO: 'https://api.allorigins.win/raw?url='
-  }) + ');';
-  doc.head.insertBefore(rt, doc.head.firstChild);
-
-  return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+NX.navigate=navigate;
+async function render(tab,url){
+ showLoad('Connecting to '+hostOf(url));
+ const tg=tgURL(url);
+ if(!tg){showErr('Unsupported address.');return}
+ let html;
+ try{html=await relayFetch(tg)}
+ catch(e){showErr('Could not reach '+hostOf(url)+'. All proxy routes failed — try another site or press Retry.');return}
+ html=processHTML(html,tg,hostOf(url));
+ const h=tab.frame||mkFrame(tab);
+ h.querySelector('iframe').srcdoc=html;
+ $('#loadText').textContent='Loading '+hostOf(url);
+ setTimeout(hideLoad,1200);
 }
-
-/* ---------------- media unlock layers ---------------- */
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function unlockYouTube(doc, htmlText, pageUrl){
-  const pr = walkJSON(htmlText, 'ytInitialPlayerResponse');
-  const m = pageUrl.match(/[?&]v=([\w-]{6,})/) || pageUrl.match(/youtu\.be\/([\w-]{6,})/);
-  const vid = (pr && pr.videoDetails && pr.videoDetails.videoId) || (m && m[1]);
-  const fmts = pr && pr.streamingData && (pr.streamingData.formats || []);
-  const d = pr && pr.videoDetails || {};
-  const pick = (fmts||[]).filter(f=>f && f.url).sort((a,b)=>(b.itag===22)-(a.itag===22)||(b.itag===18)-(a.itag===18))[0];
-  if(!vid && !(pick && pick.url)) return false; // homepage / non-watch page: nothing to unlock
-  injectMediaPanel(doc, {
-    kind:'yt', id:vid,
-    title: d.title || 'YouTube video',
-    by: d.author ? (d.author + (d.viewCount ? '  ·  ' + Number(d.viewCount).toLocaleString() + ' views' : '')) : '',
-    poster: vid ? ('https://i-ytimg-com.translate.goog/vi/' + vid + '/hqdefault.jpg') : null,
-    stream: pick ? pick.url : null,
-    quality: pick ? (pick.qualityLabel || pick.mimeType || '') : '',
-    open: vid ? ('https://www.youtube.com/watch?v=' + vid) : pageUrl
-  });
-  return true;
+function renderRecent(){
+ const w=$('#recentWrap');let h=[];
+ try{h=JSON.parse(localStorage.nx_hist||'[]')}catch(e){}
+ if(!h.length){w.classList.remove('show');return}
+ w.classList.add('show');
+ w.innerHTML=h.map(x=>'<button class="rchip" data-url="'+esc(x.u)+'">'+esc(hostOf(x.u).replace('www.',''))+'</button>').join('');
+ w.querySelectorAll('.rchip').forEach(b=>b.addEventListener('click',()=>openURL(b.dataset.url)));
 }
-function unlockTikTok(doc, pageUrl){
-  let data = null;
-  const sc = doc.querySelector('script#__UNIVERSAL_DATA_FOR_REHYDRATION__');
-  if(sc){ try{ data = JSON.parse(sc.textContent); }catch(e){} }
-  if(!data){ // SIGI_STATE fallback
-    const s2 = doc.querySelector('script#SIGI_STATE');
-    if(s2){ try{ data = JSON.parse(s2.textContent); }catch(e){} }
-  }
-  let item = null;
+NX.renderRecent=renderRecent;
+function openURL(u){
+ go('browse');
+ let t=cur();if(!t)t=mkTab('New tab');
+ navigate(t,u);
+}
+NX.openURL=openURL;
+
+/* child message hub */
+addEventListener('message',async e=>{
+ const d=e.data||{};if(!d||!d.type)return;
+ const srcTab=NX.tabs.find(t=>t.frame&&t.frame.querySelector('iframe').contentWindow===e.source);
+ if(d.type==='nxtitle'){if(srcTab&&d.t)tabLabel(srcTab,d.t)}
+ if(d.type==='nxnav'){if(srcTab&&d.url)navigate(srcTab,unWrap(d.url))}
+ if(d.type==='nxpost'){const t=srcTab;if(!t)return;
+  try{const html=await relayFetch(tgURL(d.url),{body:d.body});const h=t.frame||mkFrame(t);h.querySelector('iframe').srcdoc=processHTML(html,tgURL(d.url),hostOf(d.url))}catch(x){toast('Form failed')}}
+ if(d.type==='nxf'&&e.source){
+  let target=d.url||'';
   try{
-    const scope = data && (data.__DEFAULT_SCOPE__ || {});
-    item = (scope['webapp.video-detail']||{}).itemInfo && scope['webapp.video-detail'].itemInfo.itemStruct;
-    if(!item && data && data.ItemModule) item = Object.values(data.ItemModule)[0];
-  }catch(e){}
-  if(!item || !item.video) return false;
-  const v = item.video;
-  injectMediaPanel(doc, {
-    kind:'tt', id:item.id,
-    title: (item.desc || 'TikTok video').slice(0,160),
-    by: item.author ? ('@' + item.author.uniqueId + (item.stats ? '  ·  ' + (item.stats.playCount||0).toLocaleString() + ' plays' : '')) : '',
-    poster: v.cover || v.dynamicCover || null,
-    stream: v.playAddr || v.downloadAddr || null,
-    quality: v.height ? (v.height + 'p') : '',
-    open: pageUrl
-  });
-  return true;
-}
-function injectMediaPanel(doc, m){
-  if(doc.getElementById('nexusMedia')) return;
-  const st = doc.createElement('style');
-  st.textContent = [
-    'html,body{background:#04060d !important;}',
-    '#nexusMedia{position:fixed;inset:0;z-index:2147483000;background:#04060d;color:#e8ecf7;overflow-y:auto;',
-    'font-family:Inter,Arial,sans-serif;}',
-    '#nexusMedia .nxwrap{max-width:940px;margin:0 auto;padding:30px 18px 60px;}',
-    '#nexusMedia .nxbrand{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;letter-spacing:1px;color:#8b93a9;margin-bottom:16px;}',
-    '#nexusMedia .nxbrand i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-style:normal;',
-    'background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#fff;font-size:12px;}',
-    '#nexusMedia video{width:100%;max-height:64vh;border-radius:14px;background:#000;display:block;box-shadow:0 20px 60px rgba(0,0,0,.6);}',
-    '#nexusMedia .nxm-img{max-width:280px;border-radius:14px;display:block;margin-top:14px;}',
-    '#nexusMedia h3{font-size:17px;margin:18px 0 6px;font-weight:600;line-height:1.45;}',
-    '#nexusMedia .nxsub{font-size:12.5px;color:#8b93a9;margin-bottom:14px;}',
-    '#nexusMedia .nxq{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;color:#22d3ee;border:1px solid rgba(34,211,238,.4);border-radius:99px;padding:2px 9px;margin-left:10px;vertical-align:2px;}',
-    '#nexusMedia .nxbtns{display:flex;gap:9px;margin-top:4px;flex-wrap:wrap;}',
-    '#nexusMedia .nxb{font-size:12px;font-weight:600;padding:9px 15px;border-radius:10px;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.4);color:#cfc6ff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;}',
-    '#nexusMedia .nxb:hover{background:rgba(139,92,246,.25);}',
-    '#nexusMedia .nxnote{font-size:12px;color:#fbbf24;margin-top:14px;display:none;line-height:1.6;}',
-    '#nxReopen{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:none;font-size:12px;font-weight:600;padding:10px 16px;border-radius:12px;',
-    'background:linear-gradient(135deg,#8b5cf6,#22d3ee);color:#fff;cursor:pointer;box-shadow:0 8px 30px rgba(139,92,246,.5);border:none;font-family:Inter,Arial,sans-serif;}'
-  ].join('');
-  doc.head.appendChild(st);
-  const div = doc.createElement('div');
-  div.id = 'nexusMedia';
-  div.innerHTML =
-    '<div class="nxwrap">' +
-      '<div class="nxbrand"><i>N</i> NEXUS MEDIA UNLOCK</div>' +
-      '<div class="nxv">' +
-        '<video controls playsinline preload="none" ' + (m.poster ? 'poster="' + esc(m.poster) + '"' : '') + ' src="' + esc(m.stream||'') + '"></video>' +
-        '<h3>' + esc(m.title) + (m.quality ? '<span class="nxq">' + esc(m.quality) + '</span>' : '') + '</h3>' +
-        '<div class="nxsub">' + esc(m.by) + '</div>' +
-        '<div class="nxnote" id="nxStreamNote">This stream refused to load here (signed URLs are locked to the route that fetched the page). Use &#8220;Open in real tab&#8221; &#8212; playback always works there, still through Google, still unblocked.</div>' +
-        '<div class="nxbtns">' +
-          '<a class="nxb" data-nx-open="' + esc(m.open) + '" href="#">Open in real tab &#8599;</a>' +
-          (m.stream ? '<a class="nxb" data-nx-relay="' + esc(m.stream) + '" href="#">Reload stream via CORS relay</a>' : '') +
-        '</div>' +
-        (m.kind==='tt' && m.poster ? '<img class="nxm-img" src="' + esc(m.poster) + '" alt="">' : '') +
-      '</div>' +
-    '</div>';
-  doc.body.insertBefore(div, doc.body.firstChild);
-  const v = div.querySelector('video');
-  if(v){
-    v.addEventListener('error', ()=>{ const n = div.querySelector('#nxStreamNote'); if(n) n.style.display='block'; }, true);
-  }
-  const rb = doc.createElement('button');
-  rb.id = 'nxReopen'; rb.textContent = 'Reopen Nexus player';
-  doc.body.appendChild(rb);
-  rb.addEventListener('click', ()=>{ div.style.display='block'; rb.style.display='none'; });
-  const cl = doc.createElement('button');
-  cl.style.cssText = 'position:fixed;top:12px;right:14px;z-index:2147483001;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#8b93a9;cursor:pointer;font-size:15px;line-height:1;';
-  cl.textContent = '\u2715'; cl.title = 'Hide Nexus player';
-  div.appendChild(cl);
-  cl.addEventListener('click', ()=>{ div.style.display='none'; rb.style.display='block'; });
-}
-
-/* ---------------- child runtime (runs inside rendered page) ---------------- */
-function NEXUS_CHILD_RUNTIME(CFG){
-  if(window.__nxChild) return; window.__nxChild = 1;
-  var tgH = function(h){ return h.replace(/-/g,'--').replace(/\./g,'-'); };
-  var isTG = function(h){ return h === 'translate.goog' || h.slice(-14) === '.translate.goog'; };
-  var EXEMPT = ['gstatic.com','googleapis.com','googleusercontent.com','ggpht.com'];
-  var toTG = function(u){
-    try{
-      var x = new URL(u, CFG.BASE);
-      if(x.protocol !== 'http:' && x.protocol !== 'https:') return null;
-      if(isTG(x.hostname)) return x.href;
-      var p = x.pathname === '/' ? '' : x.pathname;
-      var e = x.search ? x.search.slice(1) + '&' : '';
-      return 'https://' + tgH(x.hostname) + '.translate.goog' + p + '?' + e + '_x_tr_sl=auto&_x_tr_tl=' + CFG.TL + '&_x_tr_hl=en';
-    }catch(err){ return null; }
-  };
-  var unTG = function(u){
-    try{
-      var x = new URL(u, CFG.BASE);
-      if(!isTG(x.hostname)) return x.href;
-      var b = x.hostname.slice(0, -14);
-      b = b.split('--').join('\u0001').split('-').join('.').split('\u0001').join('-');
-      var q = new URLSearchParams(x.search);
-      Array.from(q.keys()).forEach(function(k){ if(k.indexOf('_x_tr_') === 0) q.delete(k); });
-      var qs = q.toString();
-      return 'https://' + b + x.pathname + (qs ? '?' + qs : '');
-    }catch(err){ return u; }
-  };
-  var send = function(msg){ try{ window.parent.postMessage(msg, '*'); }catch(e){} };
-  var relayWrap = function(u){
-    // in-frame JS sees CORS walls on translate.goog (no ACAO) → bounce through POST-capable relay
-    if(CFG.RELAY) return CFG.RELAY + encodeURIComponent(u);
-    return CFG.PTO + encodeURIComponent(u);
-  };
-  /* fetch hijack */
-  var oFetch = window.fetch;
-  if(oFetch){
-    window.fetch = function(input, init){
-      try{
-        var url = (typeof input === 'string') ? input : (input && input.url);
-        if(!url || /^(data|blob):/i.test(url)) return oFetch.apply(this, arguments);
-        var tg = toTG(url);
-        if(tg) return oFetch.call(this, relayWrap(tg), init);
-        return oFetch.apply(this, arguments);
-      }catch(e){ return oFetch.apply(this, arguments); }
-    };
-  }
-  /* XHR hijack */
-  try{
-    var oOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, u){
-      var args = [].slice.call(arguments);
-      try{ var tg = toTG(u); if(tg) args[1] = relayWrap(tg); }catch(e){}
-      return oOpen.apply(this, args);
-    };
-  }catch(e){}
-  /* media host routing for dynamically added nodes */
-  var mediaFix = function(el){
-    ['src','poster','data'].forEach(function(at){
-      if(!el.hasAttribute || !el.hasAttribute(at)) return;
-      var v = el.getAttribute(at);
-      if(!v || /^(data|blob):/i.test(v) || !CFG.RMEDIA) return;
-      try{
-        var x = new URL(v, CFG.BASE);
-        if(isTG(x.hostname)) return;
-        if(EXEMPT.some(function(d){ return x.hostname === d || x.hostname.slice(-(d.length+1)) === '.' + d; })) return;
-        x.hostname = tgH(x.hostname) + '.translate.goog';
-        el.setAttribute(at, x.href);
-      }catch(e){}
-    });
-    if(el.hasAttribute && el.hasAttribute('srcset')){ /* leave; rare in dynamic media */ }
-  };
-  var mo = new MutationObserver(function(muts){
-    muts.forEach(function(m){
-      [].slice.call(m.addedNodes||[]).forEach(function(n){
-        if(n.nodeType !== 1) return;
-        var tag = n.tagName;
-        if(/^(IMG|VIDEO|AUDIO|SOURCE|TRACK|EMBED|OBJECT)$/.test(tag)) mediaFix(n);
-        if(tag === 'A' && n.getAttribute){
-          var h = n.getAttribute('href');
-          if(h && !/^(javascript:|mailto:|tel:|#|data:|blob:)/i.test(h)){
-            var tg = toTG(h);
-            if(tg && n.getAttribute('href') !== tg){ n.setAttribute('href', tg); n.setAttribute('data-nx-real', unTG(tg)); }
-            n.removeAttribute('target');
-          }
-        }
-        if(n.querySelectorAll) n.querySelectorAll('img,video,audio,source,track').forEach(mediaFix);
-      });
-      if(m.type === 'attributes' && m.target && m.target.tagName && /^(IMG|VIDEO|SOURCE)$/.test(m.target.tagName)) mediaFix(m.target);
-    });
-  });
-  try{ mo.observe(document.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['src','poster']}); }catch(e){}
-  /* click capture → report real URL to parent */
-  document.addEventListener('click', function(e){
-    var a = e.target && e.target.closest ? e.target.closest('a') : null;
-    if(!a) return;
-    var open = a.getAttribute('data-nx-open');
-    if(open){ e.preventDefault(); send({t:'nx-open', url:open}); return; }
-    var relay = a.getAttribute('data-nx-relay');
-    if(relay){
-      e.preventDefault();
-      var v = document.querySelector('#nexusMedia video');
-      if(v && relay){ v.src = CFG.RELAY + encodeURIComponent(relay); v.play && v.play().catch(function(){}); }
-      return;
-    }
-    var h = a.getAttribute('href');
-    if(!h || /^(javascript:|mailto:|tel:|#)/i.test(h)) return;
-    e.preventDefault();
-    var real = a.getAttribute('data-nx-real') || unTG(h);
-    if(/\.pdf($|\?)|\.zip($|\?)|\.mp4($|\?)/i.test(real)){ send({t:'nx-open', url:real}); return; }
-    send({t:'nx-nav', url:real, newTab: a.getAttribute('target') === '_blank'});
-  }, true);
-  /* form submit → GET-ify through engine */
-  document.addEventListener('submit', function(e){
-    var f = e.target; if(!f || !f.tagName || f.tagName !== 'FORM') return;
-    e.preventDefault();
-    try{
-      var action = f.getAttribute('action') || CFG.SRC;
-      var abs = new URL(action, CFG.BASE);
-      var u = new URL(unTG(abs.href));
-      new FormData(f).forEach(function(val, key){ if(typeof val === 'string') u.searchParams.set(key, val); });
-      send({t:'nx-nav', url:u.href});
-    }catch(err){}
-  }, true);
-  /* window.open → new app tab */
-  try{
-    var oOpen2 = window.open;
-    window.open = function(u){ if(u){ send({t:'nx-open', url:unTG(String(u))}); return null; } return oOpen2.apply(window, arguments); };
-  }catch(e){}
-  /* title + heartbeat */
-  var lastTitle = '';
-  setInterval(function(){
-    send({t:'nx-alive'});
-    try{
-      var t = document.title;
-      if(t && t !== lastTitle){ lastTitle = t; send({t:'nx-title', title:t}); }
-    }catch(e){}
-  }, 2200);
-  send({t:'nx-alive'});
-}
-/* ================================================================
-   APP LAYER
-   ================================================================ */
-
-/* ---------------- pages / nav ---------------- */
-const PAGES = { home:'pageHome', browse:'pageBrowse', apps:'pageApps', games:'pageGames', ai:'pageAI', settings:'pageSettings' };
-function showPage(n){
-  Object.values(PAGES).forEach(id=>document.getElementById(id).classList.remove('active'));
-  const el = document.getElementById(PAGES[n]); if(el) el.classList.add('active');
-  document.querySelectorAll('.nav-pill').forEach(p=>p.classList.toggle('active', p.dataset.page===n));
-  if(n==='ai') setTimeout(()=>document.getElementById('aiInput').focus(), 80);
-}
-document.addEventListener('click', e=>{
-  const nav = e.target.closest('[data-page]');
-  if(nav){ showPage(nav.dataset.page); }
-});
-
-/* ---------------- tabs ---------------- */
-const frameHost = document.getElementById('frameHost');
-const tabStrip = document.getElementById('tabStrip');
-let TABS = [], activeTabId = null, tabSeq = 0;
-const SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-presentation';
-const ALLOW = 'autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-read; clipboard-write; camera; microphone';
-function activeTab(){ return TABS.find(t=>t.id===activeTabId) || null; }
-function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
-function favOf(u){ try{ return 'https://www.google.com/s2/favicons?domain=' + hostOf(u) + '&sz=64'; }catch(e){ return ''; } }
-
-function createTab(url){
-  const id = ++tabSeq;
-  const holder = document.createElement('div');
-  holder.className = 'frame-holder';
-  const ifr = document.createElement('iframe');
-  ifr.setAttribute('sandbox', SANDBOX);
-  ifr.setAttribute('allow', ALLOW);
-  ifr.setAttribute('referrerpolicy', 'no-referrer');
-  holder.appendChild(ifr);
-  frameHost.appendChild(holder);
-  const tab = { id, url:null, title:'New tab', hist:[], hi:-1, holder, ifr, alive:false, seq:0, watchdog:null };
-  TABS.push(tab);
-  renderTabs();
-  activateTab(id);
-  if(url) navigate(tab, url);
-  return tab;
-}
-function activateTab(id){
-  activeTabId = id;
-  TABS.forEach(t=>t.holder.classList.toggle('active', t.id===id));
-  const t = activeTab();
-  document.getElementById('urlInput').value = (t && t.url) ? t.url : '';
-  document.getElementById('btnBack').classList.toggle('disabled', !t || t.hi<=0);
-  document.getElementById('btnFwd').classList.toggle('disabled', !t || t.hi>=t.hist.length-1);
-  updateModeBadge(t && t.url);
-  renderTabs();
-  showPage('browse');
-}
-function closeTab(id){
-  const i = TABS.findIndex(t=>t.id===id);
-  if(i<0) return;
-  TABS[i].holder.remove();
-  TABS.splice(i,1);
-  if(!TABS.length){ showPage('home'); renderTabs(); return; }
-  if(activeTabId===id) activateTab(TABS[Math.max(0,i-1)].id);
-  else renderTabs();
-}
-function renderTabs(){
-  tabStrip.innerHTML = '';
-  TABS.forEach(t=>{
-    const d = document.createElement('div');
-    d.className = 'tab' + (t.id===activeTabId?' active':'');
-    d.innerHTML = '<div class="tab-fav">' + (t.url
-      ? '<img src="' + favOf(t.url) + '" onerror="this.style.display=\'none\'">'
-      : '<iconify-icon icon="solar:planet-bold-duotone"></iconify-icon>') + '</div>' +
-      '<div class="tab-title">' + esc(t.title||'New tab') + '</div>' +
-      '<div class="tab-x"><iconify-icon icon="solar:close-circle-linear"></iconify-icon></div>';
-    d.addEventListener('click', e=>{ if(!e.target.closest('.tab-x')) activateTab(t.id); });
-    d.querySelector('.tab-x').addEventListener('click', ()=>closeTab(t.id));
-    tabStrip.appendChild(d);
-  });
-  const add = document.createElement('div');
-  add.id = 'tabAdd'; add.title = 'New tab';
-  add.innerHTML = '<iconify-icon icon="solar:add-circle-linear"></iconify-icon>';
-  add.addEventListener('click', ()=>{ createTab(); document.getElementById('urlInput').focus(); });
-  tabStrip.appendChild(add);
-}
-function updateModeBadge(url){
-  const b = document.getElementById('modeBadge'), tx = document.getElementById('modeText');
-  if(!url){ b.className='mode-badge fetch'; tx.textContent='READY'; return; }
-  b.className = 'mode-badge fetch';
-  tx.textContent = 'TG-FETCH · ' + hostOf(url).slice(0,14);
-}
-
-/* ---------------- the engine pipeline ---------------- */
-const loadOverlay = document.getElementById('loadOverlay');
-const loadText = document.getElementById('loadText');
-const loadSub = document.getElementById('loadSub');
-const frameErr = document.getElementById('frameErr');
-const frameErrMsg = document.getElementById('frameErrMsg');
-
-async function navigate(tab, url, push=true){
-  url = normalizeInput(url) || url;
-  if(!/^https?:\/\//i.test(url)){ url = 'https://' + url; }
-  showPage('browse');
-  frameErr.classList.remove('show');
-  loadOverlay.classList.add('show');
-  loadText.textContent = 'Fetching ' + hostOf(url) + ' through Google Translate...';
-  loadSub.textContent = 'fetch → process → render';
-  tab.alive = false;
-  const seq = ++tab.seq;
-  try{
-    const tg = toTG(url);
-    if(!tg) throw new Error('unsupported URL');
-    const { text, via } = await fetchViaRelays(tg);
-    if(seq !== tab.seq) return; // superseded
-    const done = processHTML(text, url);
-    tab.url = url;
-    tab.title = hostOf(url);
-    if(push){ tab.hist = tab.hist.slice(0, tab.hi+1); tab.hist.push(url); tab.hi = tab.hist.length-1; }
-    document.getElementById('urlInput').value = url;
-    updateModeBadge(url);
-    document.getElementById('btnBack').classList.toggle('disabled', tab.hi<=0);
-    document.getElementById('btnFwd').classList.toggle('disabled', tab.hi>=tab.hist.length-1);
-    tab.ifr.srcdoc = done;
-    tab.ifr.addEventListener('load', ()=>{
-      if(tab.seq === seq) loadOverlay.classList.remove('show');
-    }, { once:true });
-    renderTabs();
-    pushRecent(url);
-    clearTimeout(tab.watchdog);
-    tab.watchdog = setTimeout(()=>{
-      if(!tab.alive && tab.seq===seq && activeTabId===tab.id)
-        toast('Page rendered — if interactions feel dead, use Popout or Open-in-tab', '', 4200);
-    }, 9000);
-  }catch(err){
-    if(seq !== tab.seq) return;
-    loadOverlay.classList.remove('show');
-    frameErrMsg.textContent = IS_FILE
-      ? 'You opened this file locally (file://) — browsers block all cross-site fetching from local files, so the engine cannot run here. Two fixes: (1) host this file anywhere (GitHub Pages, Netlify, Vercel — it is a single static HTML) and the full engine works, or (2) click Open in tab, which still works right now.'
-      : 'Every route to Google Translate was blocked or failed (' + (err && err.message ? err.message : 'unknown') + '). Retry, use the popout browser, or open it in a real tab.';
-    frameErr.classList.add('show');
-  }
-}
-function pushRecent(url){
-  RECENTS = [{u:url, h:hostOf(url)}, ...RECENTS.filter(r=>r.u!==url)].slice(0,12);
-  localStorage.setItem('nx_recent', JSON.stringify(RECENTS));
-  renderRecents();
-}
-function renderRecents(){
-  const sect = document.getElementById('recentSect'), row = document.getElementById('recentRow');
-  if(!RECENTS.length){ sect.style.display='none'; return; }
-  sect.style.display='block';
-  row.innerHTML = RECENTS.map(r=>'<div class="recent-pill" data-url="' + esc(r.u) + '"><img src="' + favOf(r.u) + '" onerror="this.style.display=\'none\'"><span>' + esc(r.h) + '</span></div>').join('');
-}
-
-/* frame messages from child pages */
-window.addEventListener('message', e=>{
-  const d = e.data || {};
-  if(!d.t) return;
-  let tab = TABS.find(t=>t.ifr.contentWindow === e.source) || activeTab();
-  if(!tab) return;
-  if(d.t==='nx-nav' && d.url){ navigate(tab, d.url, true); }
-  else if(d.t==='nx-open' && d.url){ const nt = createTab(); navigate(nt, d.url, true); }
-  else if(d.t==='nx-alive'){ tab.alive = true; if(activeTabId===tab.id) frameErr.classList.remove('show'); }
-  else if(d.t==='nx-title' && d.title){
-    tab.title = String(d.title).slice(0,60);
-    renderTabs();
-  }
+   const isTG=/translate\.goog/.test(target);
+   const u=isTG?target:tgURL(target);
+   const body=await relayFetch(u,{timeout:45000});
+   e.source.postMessage({type:'nfr',id:d.id,status:200,body:body,ct:/json|javascript/i.test(target)?'application/json':'text/html'},'*');
+  }catch(err){e.source.postMessage({type:'nfr',id:d.id,err:String(err)},'*')}
+ }
 });
 
 /* toolbar */
-document.getElementById('btnBack').onclick = ()=>{
-  const t = activeTab(); if(!t || t.hi<=0) return;
-  t.hi--; navigate(t, t.hist[t.hi], false);
-};
-document.getElementById('btnFwd').onclick = ()=>{
-  const t = activeTab(); if(!t || t.hi>=t.hist.length-1) return;
-  t.hi++; navigate(t, t.hist[t.hi], false);
-};
-document.getElementById('btnReload').onclick = ()=>{
-  const t = activeTab(); if(t && t.url) navigate(t, t.url, false);
-};
-document.getElementById('btnHome').onclick = ()=>showPage('home');
-document.getElementById('btnFull').onclick = ()=>{
-  const el = document.getElementById('pageBrowse');
-  if(document.fullscreenElement) document.exitFullscreen();
-  else if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
-};
-document.getElementById('urlInput').addEventListener('keydown', e=>{
-  if(e.key!=='Enter') return;
-  const v = e.target.value.trim(); if(!v) return;
-  const t = activeTab() || createTab();
-  const u = normalizeInput(v);
-  if(u) navigate(t, u, true);
-  else searchWeb(v, t);
-});
-
-/* popout & real tab */
-function currentTG(){ const t = activeTab(); return (t && t.url) ? toTG(t.url) : null; }
-function openRealTab(){
-  const tg = currentTG();
-  if(!tg){ toast('Nothing to open yet', 'err'); return; }
-  window.open(tg, '_blank');
-  toast('Opened in a real tab — full media & logins', true);
-}
-document.getElementById('btnRealTab').onclick = openRealTab;
-document.getElementById('errTab').onclick = openRealTab;
-document.getElementById('errRetry').onclick = ()=>{ const t = activeTab(); if(t && t.url) navigate(t, t.url, false); };
-document.getElementById('errPopout').onclick = openPopout;
-document.getElementById('btnPopout').onclick = openPopout;
-function openPopout(){
-  try{
-    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const w = window.open('about:blank','_blank');
-    if(!w){ toast('Popup blocked — allow popups for this file', 'err'); return; }
-    w.document.open(); w.document.write(html); w.document.close();
-    toast('Popout browser launched (about:blank)', true);
-  }catch(e){ toast('Popout failed: ' + e.message, 'err'); }
-}
-
-/* ---------------- search ---------------- */
-async function searchWeb(q, tab){
-  if(!q) return;
-  showPage('browse');
-  loadOverlay.classList.add('show');
-  loadText.textContent = 'Searching DuckDuckGo anonymously...';
-  loadSub.textContent = 'no cookies · no history · relay chain';
-  const seq = ++tab.seq;
-  const enc = encodeURIComponent(q);
-  try{
-    const { text } = await fetchViaRelays('https://html.duckduckgo.com/html/?q=' + enc);
-    if(seq !== tab.seq) return;
-    const doc = new DOMParser().parseFromString(text, 'text/html');
-    const out = [];
-    doc.querySelectorAll('div.result, div.web-result').forEach(r=>{
-      const a = r.querySelector('a.result__a');
-      if(!a) return;
-      let href = a.getAttribute('href')||'';
-      try{
-        const abs = new URL(href, 'https://duckduckgo.com');
-        const u = abs.searchParams.get('uddg');
-        href = u ? decodeURIComponent(u) : abs.href;
-      }catch(e){}
-      if(!/^https?:/i.test(href)) return;
-      const sn = r.querySelector('.result__snippet');
-      out.push({ t:(a.textContent||'').trim(), u:href, s:sn?sn.textContent.trim():'' });
-    });
-    const inner = out.length
-      ? out.map(r=>
-          '<div class="rres" data-nxurl="' + esc(r.u) + '">' +
-            '<div class="rurl">' + esc(hostOf(r.u)) + '</div>' +
-            '<div class="rtitle">' + esc(r.t) + '</div>' +
-            (r.s ? '<div class="rsnip">' + esc(r.s) + '</div>' : '') +
-          '</div>').join('')
-      : '<div class="rempty">No results parsed — opening results page through the engine instead...</div>';
-    tab.url = 'https://duckduckgo.com/?q=' + enc;
-    tab.title = q + ' — search';
-    tab.hist = tab.hist.slice(0, tab.hi+1); tab.hist.push(tab.url); tab.hi = tab.hist.length-1;
-    document.getElementById('urlInput').value = tab.url;
-    updateModeBadge(tab.url);
-    const html = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
-      '<link rel="preconnect" href="https://fonts.googleapis.com">' +
-      '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
-      '<style>' +
-      'body{background:#04060d;color:#e8ecf7;font-family:Inter,sans-serif;margin:0;padding:30px 18px 60px;}' +
-      '.wrap{max-width:720px;margin:0 auto;}' +
-      '.hd{font-family:Inter;font-size:20px;font-weight:700;margin-bottom:4px;}' +
-      '.hd em{font-style:normal;background:linear-gradient(135deg,#8b5cf6,#22d3ee);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}' +
-      '.sub{color:#8b93a9;font-size:12px;margin-bottom:26px;}' +
-      '.rres{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 17px;margin-bottom:10px;cursor:pointer;transition:all .18s;}' +
-      '.rres:hover{border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.06);}' +
-      '.rurl{font-size:10.5px;color:#22d3ee;margin-bottom:5px;word-break:break-all;}' +
-      '.rtitle{font-size:14.5px;font-weight:600;margin-bottom:6px;}' +
-      '.rsnip{font-size:12px;color:#8b93a9;line-height:1.6;}' +
-      '.rempty{color:#8b93a9;font-size:13px;padding:30px 0;text-align:center;}' +
-      '</style></head><body><div class="wrap">' +
-      '<div class="hd">NEX<em>SEARCH</em></div>' +
-      '<div class="sub">' + out.length + ' results for "' + esc(q) + '" · anonymous via DuckDuckGo · click any result to open through the Nexus engine</div>' +
-      inner + '</div>' +
-      '<script>document.addEventListener("click",function(e){var r=e.target.closest(".rres");if(r&&r.getAttribute("data-nxurl")){e.preventDefault();window.parent.postMessage({t:"nx-nav",url:r.getAttribute("data-nxurl")},"*");}});<\/script>' +
-      '</body></html>';
-    tab.ifr.srcdoc = html;
-    tab.ifr.addEventListener('load', ()=>{ if(tab.seq===seq) loadOverlay.classList.remove('show'); }, { once:true });
-    renderTabs();
-  }catch(err){
-    if(seq !== tab.seq) return;
-    loadOverlay.classList.remove('show');
-    await navigate(tab, 'https://www.bing.com/search?q=' + enc, true);
-  }
-}
-
-/* ---------------- content data ---------------- */
-const APPS = [
-  ['YouTube','https://www.youtube.com'],['TikTok','https://www.tiktok.com'],['Spotify','https://open.spotify.com'],
-  ['Discord','https://discord.com'],['Reddit','https://www.reddit.com'],['X','https://x.com'],
-  ['Instagram','https://www.instagram.com'],['Twitch','https://www.twitch.tv'],['Pinterest','https://www.pinterest.com'],
-  ['Snapchat','https://www.snapchat.com'],['WhatsApp','https://web.whatsapp.com'],['Telegram','https://web.telegram.org'],
-  ['Netflix','https://www.netflix.com'],['Amazon','https://www.amazon.com'],['GitHub','https://github.com'],['LinkedIn','https://www.linkedin.com']
-];
-const GAMES = [
-  ['Roblox','https://www.roblox.com','https://images.rbxcdn.com/28ab48fcd5d5b19b03c126d2b6aef4b8.jpg','Popular'],
-  ['Krunker','https://krunker.io','https://images.crazygames.com/games/krunker-io/cover_1631002819246.png','Hot'],
-  ['1v1.LOL','https://1v1.lol','https://images.crazygames.com/games/1v1-lol/cover_1637444407307.png',''],
-  ['Smash Karts','https://smashkarts.io','https://images.crazygames.com/games/smash-karts/cover_1631562970389.png','Hot'],
-  ['Slope','https://slopegame.io','https://images.crazygames.com/games/slope/cover_1631597015863.png',''],
-  ['Retro Bowl','https://retrobowl.io','https://images.crazygames.com/games/retro-bowl/cover_1631720249843.png',''],
-  ['Cookie Clicker','https://orteil.dashnet.org/cookieclicker/','https://images.crazygames.com/games/cookie-clicker/cover_1617765390461.png',''],
-  ['Shell Shockers','https://shellshock.io','https://images.crazygames.com/games/shell-shockers/cover_1631576494273.png',''],
-  ['Slither.io','https://slither.io','https://images.crazygames.com/games/slither-io/cover_1617767374024.png',''],
-  ['Skribbl.io','https://skribbl.io','https://images.crazygames.com/games/skribbl-io/cover_1583851208944.png',''],
-  ['Agar.io','https://agar.io','https://images.crazygames.com/games/agario/cover_1583283293624.png',''],
-  ['Bonk.io','https://bonk.io','https://images.crazygames.com/games/bonk-io/cover_1591246149389.png',''],
-  ['Diep.io','https://diep.io','https://images.crazygames.com/games/diep-io/cover_1594247573294.png',''],
-  ['Paper.io 2','https://paper-io.com','https://images.crazygames.com/games/paper-io-2/cover_1582839850022.png',''],
-  ['Hole.io','https://hole-io.com','https://images.crazygames.com/games/hole-io/cover_1584135477572.png',''],
-  ['Zombs Royale','https://zombsroyale.io','https://images.crazygames.com/games/zombsroyale-io/cover_1583285325196.png',''],
-  ['Build Royale','https://buildroyale.io','https://images.crazygames.com/games/buildroyale-io/cover_1585674337992.png',''],
-  ['Gartic Phone','https://garticphone.com','https://images.crazygames.com/games/gartic-phone/cover_1632785332763.png','New'],
-  ['2048','https://play2048.co','https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/2048_logo.svg/240px-2048_logo.svg.png',''],
-  ['Wordle','https://www.nytimes.com/games/wordle/index.html','https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Wordle_222_example.png/240px-Wordle_222_example.png',''],
-  ['Run 3','https://run3.online','https://images.crazygames.com/games/run-3/cover_1617785397454.png',''],
-  ['Surviv.io','https://surviv.io','https://images.crazygames.com/games/surviv-io/cover_1582842519032.png',''],
-  ['Tetris','https://tetris.com','https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Tetris_icon.svg/240px-Tetris_icon.svg.png','']
-];
-const fq = d => 'https://www.google.com/s2/favicons?domain=' + d + '&sz=64';
-function renderLists(){
-  const appCard = ([n,u]) =>
-    '<div class="app-card" data-url="' + u + '"><img src="' + fq(hostOf(u)) + '" onerror="this.style.visibility=\'hidden\'"><span>' + n + '</span></div>';
-  const gameCard = ([n,u,img,tag]) =>
-    '<div class="game-card" data-url="' + u + '">' +
-      '<img src="' + img + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + fq(hostOf(u)) + '\'">' +
-      '<div class="gc-shade"></div>' + (tag ? '<div class="gc-tag">' + tag + '</div>' : '') +
-      '<div class="gc-name">' + n + '</div></div>';
-  document.getElementById('homeApps').innerHTML = APPS.slice(0,8).map(appCard).join('');
-  document.getElementById('homeGames').innerHTML = GAMES.slice(0,5).map(gameCard).join('');
-  document.getElementById('appsGrid').innerHTML = APPS.map(appCard).join('');
-  document.getElementById('gamesGrid').innerHTML = GAMES.map(gameCard).join('');
-  document.getElementById('quickRow').innerHTML =
-    APPS.slice(0,8).map(([n,u])=>'<div class="qchip" data-url="' + u + '"><img src="' + fq(hostOf(u)) + '" onerror="this.style.visibility=\'hidden\'"><span>' + n + '</span></div>').join('');
-}
-document.addEventListener('click', e=>{
-  const c = e.target.closest('[data-url]');
-  if(c && c.dataset.url){
-    const t = activeTab() || createTab();
-    navigate(t, c.dataset.url, true);
-  }
-});
-document.getElementById('appsFilter').addEventListener('input', e=>{
-  const v = e.target.value.toLowerCase();
-  document.querySelectorAll('#appsGrid .app-card').forEach((el,i)=>{
-    el.style.display = APPS[i] && APPS[i][0].toLowerCase().includes(v) ? '' : 'none';
-  });
-});
-document.getElementById('gamesFilter').addEventListener('input', e=>{
-  const v = e.target.value.toLowerCase();
-  document.querySelectorAll('#gamesGrid .game-card').forEach((el,i)=>{
-    el.style.display = GAMES[i] && GAMES[i][0].toLowerCase().includes(v) ? '' : 'none';
-  });
-});
-document.getElementById('clearRecent').onclick = ()=>{ RECENTS=[]; localStorage.removeItem('nx_recent'); renderRecents(); toast('Recents cleared', true); };
-
-/* home search */
-function homeGo(){
-  const v = document.getElementById('homeInput').value.trim(); if(!v) return;
-  const u = normalizeInput(v);
-  const t = activeTab() || createTab();
-  if(u) navigate(t, u, true); else searchWeb(v, t);
-  document.getElementById('homeInput').value = '';
-}
-document.getElementById('homeGo').onclick = homeGo;
-document.getElementById('homeInput').addEventListener('keydown', e=>{ if(e.key==='Enter') homeGo(); });
-
-/* ---------------- settings wiring ---------------- */
-function bindToggle(id, key, onChange){
-  const el = document.getElementById(id);
-  el.classList.toggle('on', !!S[key]);
-  el.addEventListener('click', ()=>{
-    S[key] = !S[key];
-    el.classList.toggle('on', S[key]);
-    saveS();
-    if(onChange) onChange(S[key]);
-  });
-}
-bindToggle('setMedia', 'rmedia', v=>toast(v?'Media relay ON — images & streams via Google CDN':'Media relay OFF', true));
-bindToggle('setUnlock', 'unlock', v=>toast(v?'Media unlock layer armed':'Media unlock layer off', true));
-bindToggle('setFx', 'fx', v=>{ fxOn = v; if(!v){ const c=document.getElementById('fxCanvas'); c.getContext('2d').clearRect(0,0,c.width,c.height);} });
-bindToggle('setPanic', 'panic', v=>toast(v?'Panic key armed (Esc)':'Panic key disabled', true));
-const tlangSel = document.getElementById('setTlang');
-tlangSel.value = S.tlang;
-tlangSel.addEventListener('change', ()=>{ S.tlang = tlangSel.value; saveS(); toast('Engine language → ' + S.tlang + '. Reload a tab to re-render.', true); });
-const panicSel = document.getElementById('setPanicUrl');
-panicSel.value = S.panicUrl;
-panicSel.addEventListener('change', ()=>{ S.panicUrl = panicSel.value; saveS(); });
-document.getElementById('setPopout').onclick = openPopout;
-document.getElementById('setClear').onclick = ()=>{
-  localStorage.removeItem('nx_settings'); localStorage.removeItem('nx_recent');
-  toast('All local data wiped — reloading...', true);
-  setTimeout(()=>location.reload(), 700);
-};
-
-/* cloak */
-const CLOAKS = {
-  none:{ t:null, i:null },
-  google:{ t:'Google', i:fq('google.com') },
-  classroom:{ t:'Classes', i:fq('classroom.google.com') },
-  drive:{ t:'My Drive - Google Drive', i:fq('drive.google.com') },
-  docs:{ t:'Untitled document - Google Docs', i:fq('docs.google.com') },
-  gmail:{ t:'Inbox', i:fq('mail.google.com') },
-  canvas:{ t:'Dashboard', i:fq('instructure.com') }
-};
-const NEXUS_ICON = document.querySelector('link[rel="icon"]').href;
-function applyCloak(){
-  const c = CLOAKS[S.cloak] || CLOAKS.none;
-  const title = S.cloak==='custom' ? (S.cloakTitle||'Google') : c.t;
-  const icon  = S.cloak==='custom' ? (S.cloakIcon||fq('google.com')) : c.i;
-  document.title = title || 'Nexus';
-  let link = document.querySelector('link[rel="icon"]');
-  link.href = icon || NEXUS_ICON;
-  document.getElementById('cloakName').textContent = S.cloak==='none' ? 'No cloak' : (title.length>14 ? title.slice(0,14)+'…' : title);
-  document.getElementById('setCloak').value = S.cloak;
-  document.getElementById('customCloakCard').style.display = S.cloak==='custom' ? 'flex' : 'none';
-}
-const cloakSel = document.getElementById('setCloak');
-cloakSel.addEventListener('change', ()=>{ S.cloak = cloakSel.value; saveS(); applyCloak(); toast('Cloak: ' + cloakSel.options[cloakSel.selectedIndex].text, true); });
-['cloakTitleIn','cloakIconIn'].forEach(id=>{
-  const el = document.getElementById(id);
-  el.value = id==='cloakTitleIn' ? (S.cloakTitle||'') : (S.cloakIcon||'');
-  el.addEventListener('change', ()=>{
-    S.cloakTitle = document.getElementById('cloakTitleIn').value;
-    S.cloakIcon = document.getElementById('cloakIconIn').value;
-    S.cloak = 'custom'; saveS(); applyCloak();
-  });
-});
-const CLOAK_CYCLE = ['none','google','classroom','drive','docs','gmail','canvas'];
-document.getElementById('cloakBtn').addEventListener('click', ()=>{
-  const i = CLOAK_CYCLE.indexOf(S.cloak);
-  S.cloak = CLOAK_CYCLE[(i+1) % CLOAK_CYCLE.length];
-  saveS(); applyCloak();
-  toast(S.cloak==='none' ? 'Cloak off' : 'Cloak: ' + (CLOAKS[S.cloak].t||'custom'), true);
-});
-
-/* panic + hotkeys */
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape' && S.panic && !document.fullscreenElement){
-    location.replace(S.panicUrl);
-  } else if(e.ctrlKey && (e.key==='m'||e.key==='M')){
-    e.preventDefault(); openPopout();
-  }
-});
-
-/* ---------------- Nexus AI (keyless — no API key exists) ---------------- */
-const aiScroll = document.getElementById('aiScroll'), aiInput = document.getElementById('aiInput');
-function aiMsg(role, text){
-  const d = document.createElement('div');
-  d.className = 'ai-msg';
-  d.innerHTML = '<div class="msg-av av-' + (role==='user'?'user':'ai') + '"><iconify-icon icon="' +
-    (role==='user'?'solar:user-rounded-bold-duotone':'solar:stars-bold-duotone') + '"></iconify-icon></div>' +
-    '<div class="msg-body">' + text.split('\n').map(p=>'<p>' + esc(p) + '</p>').join('') + '</div>';
-  aiScroll.appendChild(d);
-  aiScroll.scrollTop = aiScroll.scrollHeight;
-  return d;
-}
-async function sendAI(){
-  const q = aiInput.value.trim(); if(!q) return;
-  aiInput.value = '';
-  aiMsg('user', q);
-  const typing = aiMsg('ai', '...'); typing.querySelector('.msg-body').innerHTML = '<div class="ai-typing"><span></span><span></span><span></span></div>';
-  try{
-    const r = await fetch('https://text.pollinations.ai/' + encodeURIComponent(q) + '?model=openai', { signal: AbortSignal.timeout(30000) });
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    const reply = (await r.text()).trim() || 'Empty response.';
-    typing.querySelector('.msg-body').innerHTML = reply.split('\n').map(p=>'<p>' + esc(p) + '</p>').join('');
-  }catch(e){
-    typing.querySelector('.msg-body').innerHTML =
-      '<p>AI endpoint unreachable from this network (it runs keyless on <code>text.pollinations.ai</code> — no API key is involved).</p>' +
-      '<p>Everything else in Nexus keeps working.</p>';
-  }
-  aiScroll.scrollTop = aiScroll.scrollHeight;
-}
-document.getElementById('aiSend').onclick = sendAI;
-aiInput.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendAI(); } });
-
-/* ---------------- particle field ---------------- */
-const fxc = document.getElementById('fxCanvas'), fxx = fxc.getContext('2d');
-let fxOn = S.fx, PARTS = [];
-function fxResize(){
-  fxc.width = innerWidth; fxc.height = innerHeight;
-  PARTS = Array.from({length:64}, ()=>({
-    x:Math.random()*fxc.width, y:Math.random()*fxc.height,
-    r:Math.random()*1.5+.4, s:Math.random()*.28+.06,
-    o:Math.random()*.16+.04, hue:Math.random()<.5?'139,92,246':'34,211,238',
-    w:Math.random()*.2-.1, p:Math.random()*Math.PI*2
-  }));
-}
-fxResize(); addEventListener('resize', fxResize);
-(function fxLoop(){
-  fxx.clearRect(0,0,fxc.width,fxc.height);
-  if(fxOn){
-    for(const f of PARTS){
-      f.y -= f.s; f.x += f.w + Math.sin(f.p)*.1; f.p += .004;
-      if(f.y < -4){ f.y = fxc.height+4; f.x = Math.random()*fxc.width; }
-      if(f.x > fxc.width+4) f.x = -4; if(f.x < -4) f.x = fxc.width+4;
-      fxx.beginPath(); fxx.arc(f.x, f.y, f.r, 0, Math.PI*2);
-      fxx.fillStyle = 'rgba(' + f.hue + ',' + f.o + ')'; fxx.fill();
-    }
-  }
-  requestAnimationFrame(fxLoop);
+$('#btnBack').addEventListener('click',()=>{const t=cur();if(t&&t.hi>0){t.hi--;render(t,t.hist[t.hi]);t.url=t.hist[t.hi];$('#urlInput').value=t.url}});
+$('#btnFwd').addEventListener('click',()=>{const t=cur();if(t&&t.hi<t.hist.length-1){t.hi++;render(t,t.hist[t.hi]);t.url=t.hist[t.hi];$('#urlInput').value=t.url}});
+$('#btnReload').addEventListener('click',()=>{const t=cur();if(t&&t.url)render(t,t.url)});
+$('#btnRealTab').addEventListener('click',()=>{const t=cur();if(t&&t.url)window.open(t.url,'_blank')});
+$('#btnFull').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen();else $('#frameHost').requestFullscreen&&$('#frameHost').requestFullscreen()});
+$('#errRetry').addEventListener('click',()=>{const t=cur();if(t&&t.url)render(t,t.url)});
+$('#errRealTab').addEventListener('click',()=>{const t=cur();if(t&&t.url)window.open(t.url,'_blank')});
+$('#urlInput').addEventListener('keydown',e=>{if(e.key==='Enter'){const t=cur();if(t)navigate(t,e.target.value)}});
+$('#homeSearch').addEventListener('keydown',e=>{if(e.key==='Enter')openURL(e.target.value)});
+$$('.tile').forEach(b=>b.addEventListener('click',()=>openURL(b.dataset.url)));
+NX.wireApps=function(){$$('#appsGrid .acard').forEach(c=>{if(!c._w){c._w=1;c.addEventListener('click',()=>openURL(c.dataset.url))}})};
 })();
+</script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-/* ---------------- clock ---------------- */
-function tick(){
-  const d = new Date();
-  let h = d.getHours(); const ap = h>=12?'PM':'AM'; h = h%12||12;
-  document.getElementById('clockText').textContent = h + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + ap;
+/* ===== starfield background ===== */
+const cv=$('#stars'),cx=cv.getContext('2d');let ST=[];
+function rs(){cv.width=innerWidth;cv.height=innerHeight;ST=Array.from({length:170},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.4+.3,p:Math.random()*6.28,s:Math.random()*.18+.04}))}
+addEventListener('resize',rs);rs();
+(function tick(){cx.clearRect(0,0,cv.width,cv.height);const t=Date.now()/1000;
+ for(const s of ST){s.y+=s.s;if(s.y>cv.height)s.y=0;
+  cx.globalAlpha=.2+.6*Math.abs(Math.sin(t*s.s*4+s.p));cx.fillStyle='#fff';
+  cx.beginPath();cx.arc(s.x,s.y,s.r,0,6.29);cx.fill()}
+ cx.globalAlpha=1;requestAnimationFrame(tick)})();
+
+/* ===== apps grid ===== */
+const APPS=[
+ ['YouTube','youtube','#ff0033','https://www.youtube.com'],['TikTok','music-2','#111114','https://www.tiktok.com'],
+ ['Instagram','instagram','#d6249f','https://www.instagram.com'],['X','twitter','#111114','https://x.com'],
+ ['Reddit','message-circle','#ff4500','https://www.reddit.com'],['Spotify','music','#1db954','https://open.spotify.com'],
+ ['Twitch','twitch','#9146ff','https://www.twitch.tv'],['SoundCloud','cloud','#ff5500','https://soundcloud.com'],
+ ['Wikipedia','book-open','#636466','https://www.wikipedia.org'],['Google','globe','#4285f4','https://www.google.com'],
+ ['Gmail','mail','#ea4335','https://mail.google.com'],['Docs','file-text','#4285f4','https://docs.google.com'],
+ ['Classroom','graduation-cap','#0f9d58','https://classroom.google.com'],['Drive','hard-drive','#fbbc04','https://drive.google.com'],
+ ['Canvas','presentation','#e7212e','https://canvas.instructure.com'],['Kahoot','party-popper','#46178f','https://kahoot.com'],
+ ['ChatGPT','bot','#10a37f','https://chatgpt.com'],['Copilot','sparkles','#6a5cff','https://copilot.microsoft.com'],
+ ['Netflix','clapperboard','#e50914','https://www.netflix.com'],['Roblox','box','#e2231a','https://www.roblox.com']
+];
+$('#appsGrid').innerHTML=APPS.map(a=>'<button class="acard" data-url="'+a[3]+'"><span class="ic" style="background:'+a[2]+'"><i data-lucide="'+a[1]+'"></i></span><span>'+a[0]+'</span></button>').join('');
+if(window.NX&&NX.wireApps)NX.wireApps();
+
+/* ===== IndexedDB ===== */
+let DB=null;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('nexusDB',2);
+ r.onupgradeneeded=e=>{const d=e.target.result;
+  [['favs','id'],['recents','id']].forEach(pair=>{
+   const name=pair[0],kp=pair[1];
+   if(d.objectStoreNames.contains(name)){
+    const old=e.target.transaction.objectStore(name);
+    if(old.keyPath!==kp){d.deleteObjectStore(name);d.createObjectStore(name,{keyPath:kp})}
+   }else d.createObjectStore(name,{keyPath:kp});
+  })};
+ r.onsuccess=e=>{DB=e.target.result;res(DB)};r.onerror=()=>rej(r.error)})}
+const dbPut=(st,v)=>new Promise((res,rej)=>{const t=DB.transaction(st,'readwrite');t.objectStore(st).put(v);t.oncomplete=res;t.onerror=()=>rej(t.error)});
+const dbDel=(st,k)=>new Promise((res,rej)=>{const t=DB.transaction(st,'readwrite');t.objectStore(st).delete(k);t.oncomplete=res;t.onerror=()=>rej(t.error)});
+const dbAll=st=>new Promise((res,rej)=>{const r=DB.transaction(st).objectStore(st).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const dbClear=st=>new Promise((res,rej)=>{const t=DB.transaction(st,'readwrite');t.objectStore(st).clear();t.oncomplete=res;t.onerror=()=>rej(t.error)});
+
+/* ===== games (Lumin SDK) ===== */
+let GAMES=[],gfilter='all',gq='',luminStarted=false;
+function gstat(txt){$('#luminStatusText').textContent=txt}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load fail'));document.head.appendChild(s)})}
+function dedupe(arr){const seen={},out=[];for(const g of arr){const k=g.id||g.url;if(!seen[k]){seen[k]=1;out.push(g)}}return out}
+async function initGames(){
+ if(luminStarted){drawGames();return}
+ luminStarted=true;
+ gstat('Connecting to Lumin SDK…');
+ try{
+  await loadScript('https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js');
+  gstat('SDK loaded — building library…');
+  const host=$('#luminHost');
+  try{if(window.Lumin&&Lumin.init){host.classList.add('show');Lumin.init({container:host,theme:'dark'})}}catch(e){console.warn('Lumin init',e)}
+  let tries=0;
+  const scan=setInterval(()=>{
+   tries++;
+   let items=[];
+   try{
+    const sr=host.shadowRoot;
+    if(sr){
+     items=[...sr.querySelectorAll('.lumin-card')].map((c,i)=>{
+      const t=(sr.querySelectorAll('.lumin-card-title')[i]||c).textContent.trim().slice(0,60);
+      return {id:t,title:t,url:'#lm:'+t};
+     }).filter(g=>g.title);
+    }
+    if(!items.length){
+     items=[...host.querySelectorAll('a[href]')].map(a=>({id:a.href,title:(a.textContent||'').trim().split('\n')[0].slice(0,60)||'game',url:a.href}))
+      .filter(g=>g.title&&/^https?:/.test(g.url));
+    }
+   }catch(e){}
+   if(items.length>=3){
+    GAMES=dedupe(GAMES.concat(items));clearInterval(scan);
+    gstat('Connected — '+GAMES.length+' games');drawGames();
+   }else if(tries>=12){
+    clearInterval(scan);
+    if(GAMES.length){gstat('Connected — '+GAMES.length+' games');drawGames()}
+    else{gstat('SDK ready — browse the library below');host.classList.add('show')}
+   }else gstat('Loading games… ('+tries+')');
+  },1000);
+ }catch(e){gstat('SDK failed to load — check connection');console.warn(e)}
 }
-tick(); setInterval(tick, 20000);
+function drawGames(){
+ const host=$('#luminHost');
+ let list=GAMES.slice();
+ if(gfilter==='favs')list=list.filter(g=>FavSet.has(g.id||g.url));
+ if(gfilter==='recent')list=RecentArr.slice().sort((a,b)=>b.ts-a.ts).map(r=>GAMES.find(g=>(g.id||g.url)===r.id)||{id:r.id,title:r.title,url:r.url,ts:r.ts});
+ if(gq)list=list.filter(g=>g.title.toLowerCase().includes(gq));
+ const grid=$('#luminGames');
+ if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#7c7c85;font-size:13px;padding:30px 0">'+(GAMES.length?'No games match.':'Loading library…')+'</div>';}
+ else grid.innerHTML=list.map(g=>{
+  const id=esc(g.id||g.url),fav=FavSet.has(id);
+  return '<div class="gcard" data-id="'+id+'" data-url="'+esc(g.url)+'">'+
+   '<button class="gstar'+(fav?' on':'')+'" data-star="'+id+'" title="Favorite"><i data-lucide="star"></i></button>'+
+   '<b>'+esc(g.title)+'</b><span class="go">PLAY</span></div>'}).join('');
+ if(window.lucide)lucide.createIcons();
+ grid.querySelectorAll('.gcard').forEach(c=>c.addEventListener('click',e=>{
+  if(e.target.closest('.gstar'))return;playGame(c.dataset.url,c.querySelector('b').textContent)}));
+ grid.querySelectorAll('.gstar').forEach(b=>b.addEventListener('click',()=>toggleFav(b.dataset.star,b.dataset.url,b.closest('.gcard').querySelector('b').textContent)));
+}
+let FavSet=new Set(),RecentArr=[];
+async function refreshFavs(){if(!DB)return;try{const f=await dbAll('favs');FavSet=new Set(f.map(x=>x.id));drawFavRow();drawGames()}catch(e){}}
+async function refreshRecents(){if(!DB)return;try{RecentArr=(await dbAll('recents')).sort((a,b)=>b.ts-a.ts).slice(0,12);drawGames()}catch(e){}}
+async function drawFavRow(){
+ const w=$('#favRowWrap');const f=DB?await dbAll('favs'):[];
+ if(!f.length){w.classList.remove('show');return}
+ w.classList.add('show');
+ w.innerHTML=f.map(x=>'<button class="fchip" data-url="'+esc(x.url)+'"><i data-lucide="star"></i>'+esc(x.title)+'</button>').join('');
+ if(window.lucide)lucide.createIcons();
+ w.querySelectorAll('.fchip').forEach(b=>b.addEventListener('click',()=>playGame(b.dataset.url,'game')));
+}
+async function toggleFav(id,url,title){
+ if(!DB)return;
+ if(FavSet.has(id)){await dbDel('favs',id);toast('Removed from favorites')}
+ else{await dbPut('favs',{id:id,url:url,title:title,ts:Date.now()});toast('Added to favorites')}
+ refreshFavs();
+}
+async function playGame(url,title){
+ if(!DB)return;
+ try{await dbPut('recents',{id:title||url,url:url,title:title||'Game',ts:Date.now()})}catch(e){}
+ refreshRecents();
+ if(url&&url.indexOf('#lm:')===0){
+  const t=url.slice(4);
+  try{const sr=$('#luminHost').shadowRoot;
+   const cards=[...(sr?sr.querySelectorAll('.lumin-card'):[])];
+   const c=cards.find(x=>x.textContent.trim().indexOf(t)===0)||(sr?sr.querySelector('.lumin-card'):null);
+   if(c){c.click();toast('Launching '+t)}
+   else toast('Game not found — open the library below');
+  }catch(e){toast('Could not launch game')}
+ }else{toast('Launching '+(title||'game'));NX.openURL(url)}
+}
+/* record recents when user clicks games directly inside the SDK library */
+$('#luminHost').addEventListener('click',e=>{
+ try{const path=e.composedPath?e.composedPath():[];
+  const card=path.find(n=>n.classList&&n.classList.contains('lumin-card'));
+  if(!card)return;
+  const tEl=card.querySelector('.lumin-card-title');
+  const t=(tEl?tEl.textContent:card.textContent).trim().slice(0,60);
+  if(t&&DB){dbPut('recents',{id:t,url:'#lm:'+t,title:t,ts:Date.now()}).then(refreshRecents).catch(()=>{})}
+ }catch(e){}
+},true);
+$('#gmSearch').addEventListener('input',e=>{gq=e.target.value.toLowerCase().trim();drawGames()});
+$('#gmAll').addEventListener('click',()=>{gfilter='all';[[$('#gmAll'),1],[$('#gmFavBtn'),0],[$('#gmRecentBtn'),0]].forEach(x=>x[0].classList.toggle('on',!!x[1]));drawGames()});
+$('#gmFavBtn').addEventListener('click',()=>{gfilter='favs';[$('#gmAll'),$('#gmFavBtn'),$('#gmRecentBtn')].forEach(x=>x.classList.toggle('on',x.id==='gmFavBtn'));drawGames()});
+$('#gmRecentBtn').addEventListener('click',()=>{gfilter='recent';[$('#gmAll'),$('#gmFavBtn'),$('#gmRecentBtn')].forEach(x=>x.classList.toggle('on',x.id==='gmRecentBtn'));drawGames()});
+$('#gmReload').addEventListener('click',()=>{luminStarted=false;$('#luminHost').classList.remove('show');$('#luminHost').innerHTML='';GAMES=[];initGames()});
+NX.initGames=initGames;
 
-/* ---------------- boot ---------------- */
-renderLists();
-renderRecents();
-applyCloak();
-if(!TABS.length) renderTabs();
-setTimeout(()=>{ if(!localStorage.getItem('nx_seen')){ localStorage.setItem('nx_seen','1'); toast('Welcome to Nexus — press Esc anytime if you need out', true, 4200); } }, 900);
-if(IS_FILE) setTimeout(()=>toast('Running from file:// — host this file (GH Pages / Netlify) for the full engine. Open-in-tab still works.', '', 6500), 4800);
+/* ===== AI (keyless) ===== */
+function bubble(cls,txt){const b=document.createElement('div');b.className='bub '+cls;b.textContent=txt;$('#aibox').appendChild(b);$('#aibox').scrollTop=1e9;return b}
+async function aiSend(){
+ const q=$('#aiInput').value.trim();if(!q)return;
+ $('#aiInput').value='';bubble('user',q);
+ const b=bubble('ai','Thinking…');
+ const answer=await new Promise(res=>{
+  const f=document.createElement('iframe');
+  f.sandbox='allow-scripts';f.style.display='none';
+  const code='fetch("https://text.pollinations.ai/'+encodeURIComponent(q).replace(/'/g,'%27')+'",{cache:"no-store"}).then(r=>r.text()).then(t=>parent.postMessage({nxai:t},"*")).catch(e=>parent.postMessage({nxai:"__ERR__"},"*"))';
+  f.srcdoc='<scr'+'ipt>'+code+'</scr'+'ipt>';
+  const done=v=>{clearTimeout(tm);f.remove();res(v)};
+  const onMsg=e=>{if(e.data&&e.data.nxai!==undefined){removeEventListener('message',onMsg);done(e.data.nxai)}};
+  addEventListener('message',onMsg);
+  const tm=setTimeout(()=>{removeEventListener('message',onMsg);f.remove();res('__ERR__')},45000);
+  document.body.appendChild(f);
+ });
+ b.textContent=(answer&&answer!=='__ERR__'&&answer.length<6000)?answer:(answer==='__ERR__'||!answer)?'AI is unreachable right now.':answer;
+ $('#aibox').scrollTop=1e9;
+}
+$('#aiSend').addEventListener('click',aiSend);
+$('#aiInput').addEventListener('keydown',e=>{if(e.key==='Enter')aiSend()});
+
+/* ===== settings ===== */
+function bindTgl(id,key,dflt){
+ const el=$(id);
+ const on=(localStorage[key]===undefined?dflt:localStorage[key])!=='0';
+ el.classList.toggle('on',on);
+ el.addEventListener('click',()=>{const v=el.classList.toggle('on')?'1':'0';localStorage[key]=v;
+  if(key==='nx_errcloak'&&v==='0')NX.setCloak(false);
+  toast(v==='1'?'Enabled':'Disabled')});
+ return el;
+}
+bindTgl('#setErrCloak','nx_errcloak',1);
+bindTgl('#setPanic','nx_panic',1);
+bindTgl('#setRmedia','nx_rmedia',1);
+bindTgl('#setUnlock','nx_unlock',1);
+const selCloak=$('#setCloak');selCloak.value=localStorage.nx_cloak||'google';
+selCloak.addEventListener('change',()=>{localStorage.nx_cloak=selCloak.value;NX.applyCloak();toast('Tab disguise updated')});
+const selPanic=$('#setPanicUrl');selPanic.value=localStorage.nx_panicurl||'classroom';
+selPanic.addEventListener('change',()=>{localStorage.nx_panicurl=selPanic.value;toast('Panic destination updated')});
+const selTl=$('#setTlang');selTl.value=localStorage.nx_tlang||'en';
+selTl.addEventListener('change',()=>{localStorage.nx_tlang=selTl.value;toast('Proxy language updated')});
+$('#btnAboutBlank').addEventListener('click',()=>{
+ const w=window.open('about:blank','_blank');
+ if(!w){toast('Popup blocked — allow popups first');return}
+ try{w.document.open();w.document.write(window.__SRC);w.document.close();toast('Launched in about:blank — press ~ to enter')}
+ catch(e){toast('Launch failed')}});
+$('#btnBlob').addEventListener('click',()=>{
+ try{const u=URL.createObjectURL(new Blob([window.__SRC],{type:'text/html'}));
+  const w=window.open(u,'_blank');if(!w){toast('Popup blocked — allow popups first')}else toast('Launched as blob — press ~ to enter')}
+ catch(e){toast('Launch failed')}});
+$('#btnWipe').addEventListener('click',async()=>{
+ try{localStorage.clear();if(DB){await dbClear('favs');await dbClear('recents')}indexedDB.deleteDatabase('nexusDB')}catch(e){}
+ toast('All data wiped — reloading');setTimeout(()=>location.reload(),900)});
+
+/* ===== boot ===== */
+if(window.lucide)lucide.createIcons();
+NX.applyCloak();
+if((localStorage.nx_errcloak||'1')!=='0')NX.setCloak(true);
+openDB().then(()=>{refreshFavs();refreshRecents()}).catch(()=>{});
+NX.renderRecent&&NX.renderRecent();
+if(window.NX&&NX.wireApps)NX.wireApps();
+setTimeout(()=>{if(window.lucide)lucide.createIcons()},300);
+NX.dbg={get favs(){return [...FavSet]},get games(){return GAMES.length},get db(){return !!DB},get rec(){return RecentArr.length}};
+})();
 </script>
 </body>
 </html>
