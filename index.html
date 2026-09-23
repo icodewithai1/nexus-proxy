@@ -153,7 +153,18 @@ body.nolabels .lbl{display:none}
 .chip.zc .dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
 .chip.lite .dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
 .chip.zc{color:var(--accent)} .chip.lite{color:var(--amber)}
-#frame{flex:1;border:0;background:#0b0c0e;width:100%}
+#frame{flex:1;min-height:0;overflow:auto;background:#0b0c0e;width:100%;position:relative;isolation:isolate}
+#frame .raw-loading{min-height:100%;display:grid;place-items:center;color:#8d9793;font:13px/1.6 sans-serif;letter-spacing:.1em}
+#frame .raw-message{min-height:100%;display:grid;place-items:center;padding:28px;background:#08090b;color:#f2f5f3;font:14px/1.7 sans-serif}
+#frame .raw-message .box{max-width:520px;text-align:center}
+#frame .raw-message h2{font-size:21px;font-weight:600;margin:0 0 10px}
+#frame .raw-message p{color:#8d9793;margin:8px 0}
+#frame .raw-message button{margin:8px 4px 0;background:rgba(126,240,166,.1);border:1px solid rgba(126,240,166,.35);color:#7ef0a6;border-radius:999px;padding:10px 18px;cursor:pointer;font:inherit}
+#frame .raw-page{min-height:100%;background:#fff;color:#111;overflow:hidden}
+#frame .raw-page img,#frame .raw-page video,#frame .raw-page audio{max-width:100%}
+#frame .raw-page a{cursor:pointer}
+#frame .raw-page .nexus-removed-frame{display:grid;place-items:center;min-height:90px;padding:16px;background:#f2f3f5;color:#666;border:1px dashed #bbb;font:13px sans-serif}
+#frame .raw-page .nexus-removed-frame a{color:#2867c7}
 
 /* palette */
 #palette{position:fixed;top:14vh;left:50%;transform:translateX(-50%);z-index:10;width:min(560px,92vw);background:rgba(24,26,29,.97);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.7);display:none;flex-direction:column;overflow:hidden;backdrop-filter:blur(14px)}
@@ -581,7 +592,7 @@ body.nolabels .lbl{display:none}
   <path d="M12 5v14" />
 </svg></button>
   </div>
-  <iframe id="frame" title="proxied page" allow="fullscreen; autoplay; encrypted-media; gamepad"></iframe>
+  <div id="frame" role="document" aria-live="polite"></div>
 </div>
 
 <!-- ══ PALETTE ══ -->
@@ -1012,21 +1023,14 @@ function frame(t){
 requestAnimationFrame(frame);
 
 /* ---------- zero-cors priming ---------- */
-var mode="boot",primePromise=null;
+var mode="zc",primePromise=null;
+/* Raw mode deliberately does not create an iframe. The zero-cors service worker
+   must already be active for its origin; if it is not, the view offers a
+   one-click activation tab instead of silently switching engines. */
 function primeZC(){
   if(primePromise)return primePromise;
-  primePromise=new Promise(function(res){
-    var f=document.createElement("iframe");
-    f.style.cssText="position:fixed;left:-99px;top:0;width:2px;height:2px;opacity:0;border:0;pointer-events:none";
-    f.setAttribute("aria-hidden","true");
-    var done=false;
-    function fin(ok){ if(done)return;done=true;clearTimeout(to);setTimeout(function(){f.remove();res(ok);},ok?1200:0); }
-    var to=setTimeout(function(){fin(false);},7000);
-    f.addEventListener("load",function(){fin(true);});
-    f.addEventListener("error",function(){fin(false);});
-    f.src=ZC_ORIGIN;
-    document.body.appendChild(f);
-  }).then(function(ok){ mode=ok?"zc":"lite"; chip(); return ok; });
+  mode="zc"; chip();
+  primePromise=Promise.resolve(true);
   return primePromise;
 }
 function chip(){
@@ -1038,57 +1042,111 @@ $("#chip").addEventListener("click",function(){ window.open(ZC_ORIGIN,"_blank");
 
 /* ---------- browser overlay ---------- */
 var frame=$("#frame"),stack=[],sp=-1,currentUrl="";
+var frameRoot=frame.attachShadow?frame.attachShadow({mode:"open"}):frame;
+var RAW_CSS="<style>\
+:host{display:block;overflow:auto;min-height:100%;background:#0b0c0e}\
+.raw-loading{min-height:100%;display:grid;place-items:center;color:#8d9793;font:13px/1.6 sans-serif;letter-spacing:.1em}\
+.raw-message{min-height:100%;display:grid;place-items:center;padding:28px;background:#08090b;color:#f2f5f3;font:14px/1.7 sans-serif}\
+.raw-message .box{max-width:560px;text-align:center}.raw-message h2{font-size:21px;font-weight:600;margin:0 0 10px}.raw-message p{color:#8d9793;margin:8px 0}.raw-message button{margin:8px 4px 0;background:rgba(126,240,166,.1);border:1px solid rgba(126,240,166,.35);color:#7ef0a6;border-radius:999px;padding:10px 18px;cursor:pointer;font:inherit}\
+.raw-page{min-height:100%;background:#fff;color:#111;overflow:hidden}.raw-page img,.raw-page video,.raw-page audio{max-width:100%}.raw-page a{cursor:pointer}.nexus-removed-frame{display:grid;place-items:center;min-height:90px;padding:16px;background:#f2f3f5;color:#666;border:1px dashed #bbb;font:13px sans-serif}\
+.nexus-removed-frame a{color:#2867c7}\
+</style>";
 function showBrowser(){ $("#browser").classList.add("open"); }
-function loadingPage(){ frame.srcdoc="<!doctype html><body style='margin:0;background:#08090b;display:grid;place-items:center;height:100vh;color:#8d9793;font-family:sans-serif;letter-spacing:.1em'>linking route...</body>"; }
+function loadingPage(){ frameRoot.innerHTML=RAW_CSS+"<div class='raw-loading'>fetching raw route...</div>"; }
+function rawUrl(u){
+  try{var x=new URL(u);x.hash="";return ZC_ORIGIN+"raw/"+x.href;}catch(e){return null;}
+}
+function safeAbs(u,base){
+  if(!u)return null;u=String(u).trim();
+  if(!u||/^(data:|blob:|javascript:|mailto:|tel:|#)/i.test(u))return null;
+  try{var x=new URL(u,base);if(x.protocol!=="http:"&&x.protocol!=="https:")return null;x.hash="";return x.href;}catch(e){return null;}
+}
+function rawResource(u,base){var a=safeAbs(u,base);return a?rawUrl(a):u;}
+function patchCssUrls(css,base){
+  css=String(css||"");
+  css=css.replace(/url\\(\\s*(['"]?)([^'")]+)\\1\\s*\\)/gi,function(_,q,u){var v=rawResource(u,base);return v&&v!==u?"url("+q+v+q+")":_});
+  css=css.replace(/(@import\\s+)(["'])([^"']+)\\2/gi,function(_,p,q,u){var v=rawResource(u,base);return v?p+q+v+q:_;});
+  return css;
+}
+function patchSrcset(v,base){
+  return String(v||"").split(",").map(function(part){
+    var bits=part.trim().split(/\\s+/),u=rawResource(bits.shift(),base);return (u||"")+ (bits.length?" "+bits.join(" "):"");
+  }).join(", ");
+}
+function makeRawMessage(title,text,activate){
+  frameRoot.innerHTML=RAW_CSS+"<div class='raw-message'><div class='box'><h2>"+title+"</h2><p>"+text+"</p><button id='rawactivate'>activate zero-cors</button><button id='rawretry'>retry</button><button id='rawdirect'>open direct</button></div></div>";
+  frameRoot.querySelector("#rawactivate").addEventListener("click",function(){window.open(ZC_ORIGIN,"_blank");toast("activate zero-cors, then retry");});
+  frameRoot.querySelector("#rawretry").addEventListener("click",function(){if(currentUrl)nav(currentUrl,true);});
+  frameRoot.querySelector("#rawdirect").addEventListener("click",function(){if(currentUrl)window.open(currentUrl,"_blank");});
+}
+function renderRaw(html,url){
+  var doc=new DOMParser().parseFromString(String(html||""),"text/html");
+  var page=document.createElement("div");page.className="raw-page";
+  var body=doc.body?doc.body.cloneNode(false):document.createElement("div");
+  body.classList.add("nexus-raw-body");
+  if(doc.body)Array.prototype.slice.call(doc.body.childNodes).forEach(function(n){body.appendChild(n.cloneNode(true));});
+  page.appendChild(body);
+  frameRoot.innerHTML=RAW_CSS;
+  Array.prototype.slice.call(doc.head?doc.head.querySelectorAll("style"):[]).forEach(function(s){
+    var st=document.createElement("style");st.textContent=patchCssUrls(s.textContent||"",url);frameRoot.appendChild(st);
+  });
+  frameRoot.appendChild(page);
+  page.querySelectorAll("style").forEach(function(s){s.textContent=patchCssUrls(s.textContent||"",url);});
+  var bad=page.querySelectorAll("script,iframe,frame,frameset,object,embed,portal");
+  Array.prototype.slice.call(bad).forEach(function(n){
+    var box=document.createElement("div");box.className="nexus-removed-frame";box.textContent="embedded content removed in raw mode";n.replaceWith(box);
+  });
+  page.querySelectorAll("[style]").forEach(function(n){n.setAttribute("style",patchCssUrls(n.getAttribute("style"),url));});
+  page.querySelectorAll("a[href]").forEach(function(a){
+    var u=safeAbs(a.getAttribute("href"),url);if(!u)return;
+    a.setAttribute("data-nexus-url",u);a.setAttribute("href","#");a.removeAttribute("target");
+  });
+  page.querySelectorAll("form").forEach(function(f){
+    var u=safeAbs(f.getAttribute("action")||url,url);if(u)f.setAttribute("data-nexus-action",u);f.setAttribute("action","#");
+  });
+  page.querySelectorAll("img[src],video[src],audio[src],source[src],track[src],input[src],button[src]").forEach(function(n){
+    var v=n.getAttribute("src"),u=safeAbs(v,url);if(u)n.setAttribute("src",rawUrl(u));
+  });
+  page.querySelectorAll("[poster]").forEach(function(n){var u=safeAbs(n.getAttribute("poster"),url);if(u)n.setAttribute("poster",rawUrl(u));});
+  page.querySelectorAll("[srcset]").forEach(function(n){n.setAttribute("srcset",patchSrcset(n.getAttribute("srcset"),url));});
+  doc.querySelectorAll("link[rel~='stylesheet' i]").forEach(function(link){
+    var u=safeAbs(link.getAttribute("href"),url);if(!u)return;
+    var st=document.createElement("style");frameRoot.appendChild(st);
+    rawFetch(u).then(function(css){st.textContent=patchCssUrls(css,u);}).catch(function(){});
+  });
+}
+function rawClick(e){
+  var path=e.composedPath?e.composedPath():[],a=null;
+  for(var i=0;i<path.length;i++){if(path[i]&&path[i].getAttribute&&path[i].getAttribute("data-nexus-url")){a=path[i];break;}}
+  if(!a)return;e.preventDefault();var u=a.getAttribute("data-nexus-url");if(u)nav(u,true);
+}
+function rawSubmit(e){
+  var f=e.target;if(!f||!f.getAttribute||!f.getAttribute("data-nexus-action"))return;e.preventDefault();
+  var u=f.getAttribute("data-nexus-action"),qs="";
+  try{qs=new URLSearchParams(new FormData(f)).toString();}catch(err){}
+  nav(u+(u.indexOf("?")<0?"?":"&")+qs,true);
+}
+frameRoot.addEventListener("click",rawClick);frameRoot.addEventListener("submit",rawSubmit);
+function rawFetch(url){
+  var endpoint=rawUrl(url);if(!endpoint)return Promise.reject(new Error("bad url"));
+  return fetch(endpoint,{mode:"cors",credentials:"omit"}).then(function(res){
+    if(!res.ok)throw new Error("raw route "+res.status);return res.text();
+  }).then(function(tx){if(!tx||tx.length<20)throw new Error("empty raw response");return tx;});
+}
 function openBrowser(q){ showBrowser(); loadingPage(); primeZC().then(function(){ nav(q,true); }); }
 function nav(input,push){
   var url=looksLikeUrl(input)?normalizeUrl(input):"https://html.duckduckgo.com/html/?q="+encodeURIComponent(input);
   currentUrl=url;$("#burl").value=url;
-  var id=ytId(url);
-  var entry=id?{kind:"embed",id:id,url:url}:{kind:"web",url:url};
+  var entry={kind:"web",url:url};
   if(push){stack=stack.slice(0,sp+1);stack.push(entry);sp++;}
   render(entry);
 }
 function render(entry){
-  if(entry.kind==="embed"){frame.srcdoc=embedPage(entry.id);return;}
-  if(entry.kind==="direct"){frame.removeAttribute("srcdoc");frame.src=entry.url;return;}
-  if(entry.cached){frame.srcdoc=entry.cached;return;}
-  if(mode==="zc"){frame.removeAttribute("srcdoc");frame.src=ZC_ORIGIN+"p/"+entry.url;return;}
-  liteNav(entry);
-}
-function liteNav(entry){
+  if(entry.cached){renderRaw(entry.cached,entry.url);return;}
   loadingPage();
-  relayFetch(entry.url).then(function(html){
-    entry.cached=patchHtml(html,entry.url,liteShim());
-    frame.srcdoc=entry.cached;
-  }).catch(function(){ frame.srcdoc=errPage(entry.url); });
-}
-function relayFetch(url){
-  var i=0;
-  function next(){
-    if(i>=RELAYS.length)return Promise.reject(new Error("all engines failed"));
-    var r=RELAYS[i++];
-    var ctl=("AbortController" in window)?new AbortController():null;
-    var to=ctl?setTimeout(function(){ctl.abort();},15000):0;
-    return fetch(r(url),ctl?{signal:ctl.signal}:{}).then(function(res){
-      clearTimeout(to); if(!res.ok)throw new Error("bad"); return res.text();
-    }).then(function(tx){ if(!tx||tx.length<40)throw new Error("empty"); return tx; })
-    .catch(function(){clearTimeout(to);return next();});
-  }
-  return next();
-}
-function embedPage(id){
-  return "<!doctype html><html><head><style>html,body{margin:0;height:100%;background:#000}iframe{position:absolute;inset:0;width:100%;height:100%;border:0}</style></head><body>"+
-    "<iframe src='https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0' allow='autoplay; fullscreen; encrypted-media; picture-in-picture' allowfullscreen></iframe></body></html>";
-}
-function errPage(url){
-  return "<!doctype html><html><head><style>body{margin:0;background:#08090b;color:#f2f5f3;font-family:sans-serif;display:grid;place-items:center;height:100vh}.c{text-align:center;max-width:440px;padding:24px}h2{letter-spacing:.02em}p{color:#8d9793;font-size:14px;line-height:1.6}button{margin:6px;background:rgba(126,240,166,.1);border:1px solid rgba(126,240,166,.35);color:#7ef0a6;border-radius:999px;padding:10px 20px;cursor:pointer;font:inherit}</style></head><body><div class='c'>"+
-    "<h2>route failed</h2><p>backend not active and lite engines couldn't reach <b>"+url.replace(/</g,"&lt;")+"</b>.</p>"+
-    "<button onclick='parent.__nexusActivate()'>activate backend</button>"+
-    "<button onclick='parent.__nexusRetry()'>retry</button>"+
-    "<button onclick='parent.__nexusDirect()'>open direct</button>"+
-    "<button onclick='parent.__nexusTranslate()'>translate engine</button>"+
-    "</div></body></html>";
+  rawFetch(entry.url).then(function(html){entry.cached=html;renderRaw(html,entry.url);}).catch(function(){
+    makeRawMessage("raw route needs activation","zero-cors did not return the raw page. Open zero-cors once in another tab, then press retry. This viewer intentionally uses the raw API and no iframe.",true);
+  });
 }
 window.__nexusNav=function(u){nav(u,true);};
 window.__nexusRetry=function(){if(currentUrl)nav(currentUrl,true);};
@@ -1321,5 +1379,5 @@ Promise.all([kvGet("theme"),kvGet("bg"),kvGet("relock")]).then(function(v){
 }).catch(function(){ syncSettingsUI(); });
 })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3f912168a06eb5e',t:'MTc5MDE2MTQ4OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
