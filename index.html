@@ -1,1419 +1,654 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nexus</title>
-<!-- icons: Lucide (ISC) + brand marks via simple-icons (CC0) · font: Space Grotesk (OFL) · games: LuminSDK · proxy: zero-cors -->
-<link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237ef0a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Ccircle cx='6' cy='12' r='3'/%3E%3Ccircle cx='18' cy='19' r='3'/%3E%3Cline x1='8.59' x2='15.42' y1='13.51' y2='17.49'/%3E%3Cline x1='15.41' x2='8.59' y1='6.51' y2='10.49'/%3E%3C/svg%3E" />
-<style>
-@font-face{
-  font-family:"Space Grotesk";font-style:normal;font-weight:300 700;font-display:swap;
-  src:url(data:font/woff2;base64,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) format("woff2");
-}
-:root{
-  --bg:#08090b;
-  --panel:rgba(22,24,27,.82);
-  --panel-solid:#16181b;
-  --line:rgba(255,255,255,.07);
-  --text:#f2f5f3;
-  --muted:#8d9793;
-  --accent:#7ef0a6;
-  --accent-deep:#2fd97c;
-  --amber:#f5c069;
-  --orb1:#0f4028;
-  --orb2:#0d2c3d;
-  color-scheme:dark;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:"Space Grotesk","Trebuchet MS",system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
-svg{display:block}
-button{font:inherit;color:inherit}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus</title>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- libcurl.js -->
+  <script src="https://cdn.jsdelivr.net/npm/libcurl.js@latest/libcurl_full.js" defer></script>
+  <!-- LuminSDK (games) -->
+  <script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js" defer></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
 
-/* ---------- lock screen (fake chrome error) ---------- */
-#lock{
-  position:fixed;inset:0;z-index:99;background:#fff;color:#202124;
-  font-family:"Segoe UI",Arial,sans-serif;display:none;align-items:center;justify-content:center;
-}
-#lock.on{display:flex}
-#lock .lw{max-width:520px;padding:24px}
-#lock .lico{margin-bottom:18px;opacity:.6}
-#lock h3{font-size:24px;font-weight:400;color:#202124;margin-bottom:14px}
-#lock p{font-size:14px;color:#5f6368;line-height:1.7;margin-bottom:6px}
-#lock .err{font-size:13px;color:#5f6368;margin-top:18px}
-#lock .lhint{font-size:11px;color:#9aa0a6;margin-top:34px;letter-spacing:.04em}
+    /* ---------- CLOAK / ERROR PAGE ---------- */
+    #cloak {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+    #cloak h1 { font-size: 72px; font-weight: 300; margin-bottom: 16px; }
+    #cloak p { font-size: 18px; color: #555; max-width: 500px; }
+    #cloak .hint {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 12px;
+      color: #aaa;
+      opacity: 0.3;
+    }
 
-/* ---------- animated backgrounds ---------- */
-canvas#net{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:1;mix-blend-mode:screen;filter:drop-shadow(0 0 2px rgba(126,240,166,.22))}
-.orb{position:fixed;border-radius:50%;filter:blur(100px);opacity:.16;z-index:0;pointer-events:none}
-.orb.a{width:520px;height:520px;background:var(--orb1);top:-160px;left:-140px;animation:drift1 26s ease-in-out infinite alternate}
-.orb.b{width:560px;height:560px;background:var(--orb2);bottom:-180px;right:-160px;animation:drift2 33s ease-in-out infinite alternate}
-@keyframes drift1{to{transform:translate(140px,90px) scale(1.18)}}
-@keyframes drift2{to{transform:translate(-150px,-70px) scale(1.12)}}
+    /* ---------- MAIN APP ---------- */
+    #app {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      position: relative;
+    }
+    #app.active { display: flex; }
 
-/* ---------- top bar ---------- */
-.bar{
-  position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:6;
-  display:flex;align-items:center;justify-content:space-between;min-width:min(460px,92vw);
-  background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:9px 12px;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 34px rgba(0,0,0,.5);
-  animation:drop .7s cubic-bezier(.2,.9,.3,1.2) backwards;
-}
-@keyframes drop{from{opacity:0;transform:translate(-50%,-26px)}to{opacity:1;transform:translate(-50%,0)}}
-.logo{display:flex;align-items:center;gap:9px;color:var(--accent);background:none;border:0;cursor:pointer;padding:6px 8px;border-radius:12px;transition:background .2s}
-.logo:hover{background:color-mix(in srgb,var(--accent) 9%,transparent)}
-.logo svg{width:22px;height:22px}
-.logo .word{font-weight:700;letter-spacing:.06em;font-size:15px;color:var(--text)}
-.logo .word b{color:var(--accent)}
-.navicons{display:flex;gap:4px}
-.iconbtn{width:38px;height:38px;border:0;border-radius:12px;background:transparent;color:#dfe5e2;display:grid;place-items:center;cursor:pointer;transition:background .2s,color .2s,transform .15s}
-.iconbtn svg{width:21px;height:21px;transition:transform .25s}
-.iconbtn:hover{background:rgba(255,255,255,.08);color:var(--accent);transform:translateY(-1px)}
-.wrap{position:relative}
-#menubtn.open svg{transform:rotate(45deg)}
-#gclose svg,#bclose svg,#sclose svg,#xclose svg{transform:rotate(45deg)}
+    /* Top Bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 24px;
+      gap: 24px;
+      background: #0a0a0a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .topbar .nav-icons {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .topbar .nav-icons button {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .topbar .nav-icons button:hover { background: #1a1a1a; color: #fff; }
+    .topbar .nav-icons button.active { color: #fff; background: #1a1a1a; }
+    .topbar .logo {
+      position: absolute;
+      left: 24px;
+      font-weight: 700;
+      font-size: 18px;
+      color: #7c3aed;
+      letter-spacing: -0.5px;
+    }
 
-/* ---------- popover menu ---------- */
-.menu{position:absolute;top:48px;right:0;min-width:210px;background:rgba(24,26,29,.96);border:1px solid var(--line);border-radius:14px;padding:6px;display:none;flex-direction:column;gap:2px;box-shadow:0 18px 50px rgba(0,0,0,.6);backdrop-filter:blur(14px)}
-.menu.open{display:flex;animation:pop .18s ease backwards}
-.menu .head{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:8px 10px 4px}
-.menu button{display:flex;align-items:center;gap:10px;padding:9px 10px;border:0;border-radius:10px;background:none;color:var(--text);font-size:13.5px;cursor:pointer;text-align:left}
-.menu button svg{width:16px;height:16px;color:var(--muted)}
-.menu button:hover{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent)}
-.menu button:hover svg{color:var(--accent)}
+    /* Main content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      gap: 32px;
+      overflow-y: auto;
+    }
 
-/* ---------- main ---------- */
-main{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:34px;padding:0 16px calc(6vh + 10px)}
-h1{font-size:clamp(44px,6.4vw,68px);font-weight:700;letter-spacing:-.02em;line-height:1;text-shadow:0 0 60px color-mix(in srgb,var(--accent) 30%,transparent);display:flex;align-items:baseline;gap:14px;animation:rise .8s .1s cubic-bezier(.2,.9,.3,1.1) backwards}
-h1 .badge{font-size:13px;font-weight:500;letter-spacing:.08em;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);background:color-mix(in srgb,var(--accent) 8%,transparent);padding:4px 10px;border-radius:999px;transform:translateY(-8px)}
-@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+    /* App Grid */
+    .app-grid {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .app-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .app-icon:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .app-icon img, .app-icon svg { width: 40px; height: 40px; }
+    .app-icon .label {
+      position: absolute;
+      bottom: 4px;
+      font-size: 8px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-.tiles{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
-.tile{width:86px;height:86px;border-radius:22px;text-decoration:none;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;transition:transform .25s cubic-bezier(.2,.9,.3,1.4),box-shadow .25s;animation:pop .55s backwards;position:relative;overflow:hidden}
-.tile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.14),transparent 45%);pointer-events:none}
-.tile svg{width:32px;height:32px;fill:currentColor}
-.tile .lbl{font-size:11px;font-weight:500;letter-spacing:.04em;opacity:.92}
-.tile:hover{transform:translateY(-7px) scale(1.05);box-shadow:0 16px 40px rgba(0,0,0,.55)}
-.tile:nth-child(1){animation-delay:.25s}.tile:nth-child(2){animation-delay:.32s}
-.tile:nth-child(3){animation-delay:.39s}.tile:nth-child(4){animation-delay:.46s}
-.tile:nth-child(5){animation-delay:.53s}.tile:nth-child(6){animation-delay:.60s}
-@keyframes pop{from{opacity:0;transform:scale(.6) translateY(18px)}to{opacity:1;transform:none}}
-.t-insta{background:radial-gradient(circle at 30% 110%,#fdc468 0%,#df4996 45%,#8a3ab9 90%)}
-.t-movies{background:linear-gradient(160deg,#4b2178,#1c0b33)}
-.t-tiktok{background:#0c0c0e}
-.t-tiktok svg{filter:drop-shadow(1.5px 0 0 #ff2d55) drop-shadow(-1.5px 0 0 #25f4ee)}
-.t-twitch{background:#7a3ff2}
-.t-yt{background:#e03127}
-.t-dc{background:#5865f2}
-body.nolabels .lbl{display:none}
+    /* Search */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 12px;
+      padding: 14px 20px;
+      width: 100%;
+      max-width: 560px;
+    }
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: #e0e0e0;
+      font-size: 16px;
+      flex: 1;
+    }
+    .search-box input::placeholder { color: #555; }
+    .search-box i, .search-box svg { color: #555; flex-shrink: 0; }
 
-/* ---------- search ---------- */
-.search{display:flex;align-items:center;gap:12px;width:min(560px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:16px 22px;backdrop-filter:blur(14px);transition:border-color .25s,box-shadow .25s;animation:rise .8s .55s cubic-bezier(.2,.9,.3,1.1) backwards}
-.search:focus-within{border-color:color-mix(in srgb,var(--accent) 55%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 12%,transparent),0 0 40px color-mix(in srgb,var(--accent) 14%,transparent)}
-.search svg{width:18px;height:18px;color:var(--muted);flex:none}
-.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:16px}
-.search input::placeholder{color:var(--muted)}
-.search kbd{flex:none;font-family:inherit;font-size:11px;color:var(--muted);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:3px 7px}
-.hint{font-size:11.5px;color:var(--muted);letter-spacing:.06em;margin-top:-16px;animation:rise .8s .7s backwards}
+    /* Proxy view */
+    #proxy-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+    #proxy-view.active { display: flex; }
+    #proxy-frame {
+      flex: 1;
+      border: none;
+      width: 100%;
+      background: #fff;
+    }
+    .proxy-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #141414;
+      border-bottom: 1px solid #262626;
+    }
+    .proxy-bar button {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+    }
+    .proxy-bar button:hover { background: #262626; color: #fff; }
+    .proxy-bar .url-display {
+      flex: 1;
+      font-size: 13px;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-/* ---------- overlays ---------- */
-.overlay{position:fixed;inset:0;z-index:8;background:var(--bg);display:none;flex-direction:column;overflow:hidden}
-.overlay.open{display:flex;animation:fadein .25s ease}
-@keyframes fadein{from{opacity:0}to{opacity:1}}
-.ovhead{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel-solid);border-bottom:1px solid var(--line);flex:none;flex-wrap:wrap}
-.ovhead .t{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.05em}
-.ovhead .t svg{width:20px;height:20px;color:var(--accent)}
-.ovhead input[type=text]{flex:1;max-width:420px;min-width:120px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:9px 16px;color:var(--text);font:inherit;font-size:14px;outline:0}
-.ovhead input[type=text]:focus{border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
-.grow{flex:1}
-.srcchip{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);border-radius:999px;padding:7px 14px;font-size:12px;letter-spacing:.06em;cursor:pointer}
-.srcchip.on{border-color:color-mix(in srgb,var(--accent) 50%,transparent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+    /* Games tab */
+    #games-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      padding: 24px;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    #games-view.active { display: flex; }
+    #games-container { width: 100%; }
+    .games-search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 10px;
+      padding: 12px 16px;
+      max-width: 480px;
+    }
+    .games-search input {
+      background: none; border: none; outline: none;
+      color: #e0e0e0; font-size: 14px; flex: 1;
+    }
 
-/* arcade */
-#gamegrid{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:22px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));align-content:start}
-.gcard{background:var(--panel-solid);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;display:flex;flex-direction:column;position:relative;min-height:132px}
-.gcard:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
-.gcard .thumb{position:relative;width:100%;height:clamp(96px,10vw,140px);min-height:96px;flex:0 0 auto;aspect-ratio:16/10;background:#101214;display:grid;place-items:center;font-size:42px;overflow:hidden}
-.gcard .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.gcard .nm{padding:10px 12px;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.favbtn{position:absolute;top:8px;right:8px;z-index:2;width:30px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(4px)}
-.favbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}
-.favbtn.on{color:var(--amber)}
-.favbtn.on svg{fill:var(--amber)}
-#gamestatus{padding:0 22px 8px;color:var(--muted);font-size:12px;letter-spacing:.06em;flex:none}
-#morebtn{margin:0 auto 22px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent);border-radius:999px;padding:10px 22px;cursor:pointer;flex:none}
-#morebtn svg{width:16px;height:16px}
-
-/* browser */
-#burl{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:9px 16px;color:var(--text);font:inherit;font-size:13px;outline:0;min-width:60px}
-#burl:focus{border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
-.chip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);padding:7px 12px;font-size:11px;letter-spacing:.08em;color:var(--muted);cursor:pointer;flex:none}
-.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-.chip.zc .dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
-.chip.lite .dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
-.chip.zc{color:var(--accent)} .chip.lite,.chip.fallback{color:var(--amber)} .chip.fallback .dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
-#frame{flex:1;min-height:0;overflow:auto;background:#0b0c0e;width:100%;position:relative;isolation:isolate}
-#frame .raw-loading{min-height:100%;display:grid;place-items:center;color:#8d9793;font:13px/1.6 sans-serif;letter-spacing:.1em}
-#frame .raw-message{min-height:100%;display:grid;place-items:center;padding:28px;background:#08090b;color:#f2f5f3;font:14px/1.7 sans-serif}
-#frame .raw-message .box{max-width:520px;text-align:center}
-#frame .raw-message h2{font-size:21px;font-weight:600;margin:0 0 10px}
-#frame .raw-message p{color:#8d9793;margin:8px 0}
-#frame .raw-message button{margin:8px 4px 0;background:rgba(126,240,166,.1);border:1px solid rgba(126,240,166,.35);color:#7ef0a6;border-radius:999px;padding:10px 18px;cursor:pointer;font:inherit}
-#frame .raw-page{min-height:100%;background:#fff;color:#111;overflow:hidden}
-#frame .raw-page img,#frame .raw-page video,#frame .raw-page audio{max-width:100%}
-#frame .raw-page a{cursor:pointer}
-#frame .raw-page .nexus-removed-frame{display:grid;place-items:center;min-height:90px;padding:16px;background:#f2f3f5;color:#666;border:1px dashed #bbb;font:13px sans-serif}
-#frame .raw-page .nexus-removed-frame a{color:#2867c7}
-
-/* palette */
-#palette{position:fixed;top:14vh;left:50%;transform:translateX(-50%);z-index:10;width:min(560px,92vw);background:rgba(24,26,29,.97);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.7);display:none;flex-direction:column;overflow:hidden;backdrop-filter:blur(14px)}
-#palette.open{display:flex;animation:pop .18s ease backwards}
-#palette .prow{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
-#palette .prow svg{width:17px;height:17px;color:var(--accent);flex:none}
-#pinput{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:15px}
-#pinput::placeholder{color:var(--muted)}
-#plist{max-height:46vh;overflow-y:auto;padding:6px}
-.pitem{display:flex;gap:12px;align-items:baseline;padding:9px 12px;border-radius:10px;cursor:pointer;font-size:13.5px}
-.pitem b{color:var(--accent);font-weight:600;min-width:86px}
-.pitem span{color:var(--muted)}
-.pitem:hover,.pitem.sel{background:color-mix(in srgb,var(--accent) 10%,transparent)}
-
-/* settings + credits */
-.panel{flex:1;overflow-y:auto;padding:26px;max-width:760px;margin:0 auto;width:100%}
-.panel h4{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:22px 0 12px}
-.panel h4:first-child{margin-top:0}
-.optrow{display:flex;gap:10px;flex-wrap:wrap}
-.opt{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:12px;padding:10px 16px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:9px}
-.opt:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
-.opt.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
-.opt .sw{width:14px;height:14px;border-radius:50%}
-.toggle{display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px;cursor:pointer;user-select:none}
-.toggle .tr{width:40px;height:22px;border-radius:999px;background:rgba(255,255,255,.12);position:relative;transition:background .2s;flex:none}
-.toggle .tr::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
-.toggle.on .tr{background:var(--accent)}
-.toggle.on .tr::after{left:21px}
-.crew{display:grid;gap:10px}
-.crew .row{display:flex;align-items:center;gap:12px;background:var(--panel-solid);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px}
-.crew .row .emo{font-size:22px}
-.crew .row small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-
-/* toast */
-#toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,20px);z-index:9;background:rgba(24,26,29,.95);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent);font-size:13px;letter-spacing:.04em;padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:88vw;text-align:center}
-#toast.show{opacity:1;transform:translate(-50%,0)}
-
-@media (max-height:620px){body{overflow:auto}main{justify-content:center;padding:90px 16px 40px}}
-@media (max-width:560px){.tile{width:72px;height:72px;border-radius:18px}.tile svg{width:28px;height:28px}.tiles{gap:12px}.chip .lbl{display:none}}
-</style>
+    /* Loading */
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid #262626;
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay {
+      position: absolute; inset: 0;
+      background: rgba(10,10,10,0.9);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; flex-direction: column; gap: 12px;
+    }
+    .loading-overlay.hidden { display: none; }
+  </style>
 </head>
 <body>
 
-<div id="lock">
-  <div class="lw">
-    <svg class="lico" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/></svg>
-    <h3>This site can&rsquo;t be reached</h3>
-    <p><b>www.google.com</b> refused to connect.</p>
-    <p>Try checking your internet connection or proxy settings.</p>
-    <p class="err">ERR_ACCESS_DENIED</p>
-    <p class="lhint">tilde gets you home</p>
-  </div>
+<!-- ============ CLOAKED ERROR PAGE ============ -->
+<div id="cloak">
+  <h1>This site can’t be reached</h1>
+  <p>The connection was reset. Please check your internet connection and try again.</p>
+  <div class="hint">~</div>
 </div>
 
-<div class="orb a"></div>
-<div class="orb b"></div>
-<canvas id="net"></canvas>
+<!-- ============ MAIN APP ============ -->
+<div id="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="logo">NEXUS</div>
+    <div class="nav-icons">
+      <button id="nav-home" class="active" data-tab="home">
+        <i data-lucide="home" width="20" height="20"></i>
+      </button>
+      <button id="nav-games" data-tab="games">
+        <i data-lucide="gamepad-2" width="20" height="20"></i>
+      </button>
+      <button id="nav-proxy" data-tab="proxy">
+        <i data-lucide="globe" width="20" height="20"></i>
+      </button>
+      <button id="nav-settings">
+        <i data-lucide="settings" width="20" height="20"></i>
+      </button>
+    </div>
+  </div>
 
-<header class="bar">
-  <button class="logo" id="logobtn" title="nexus">
-    <!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-share-2"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <circle cx="18" cy="5" r="3" />
-  <circle cx="6" cy="12" r="3" />
-  <circle cx="18" cy="19" r="3" />
-  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
-  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
-</svg>
-    <span class="word">ne<b>x</b>us</span>
-  </button>
-  <nav class="navicons">
-    <button class="iconbtn" id="gamesbtn" title="arcade"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-gamepad-2"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <line x1="6" x2="10" y1="11" y2="11" />
-  <line x1="8" x2="8" y1="9" y2="13" />
-  <line x1="15" x2="15.01" y1="12" y2="12" />
-  <line x1="18" x2="18.01" y1="10" y2="10" />
-  <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z" />
-</svg></button>
-    <button class="iconbtn" id="crewbtn" title="credits"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-handshake"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="m11 17 2 2a1 1 0 1 0 3-3" />
-  <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" />
-  <path d="m21 3 1 11h-2" />
-  <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" />
-  <path d="M3 4h8" />
-</svg></button>
-    <button class="iconbtn" id="setbtn" title="settings"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-settings"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-  <circle cx="12" cy="12" r="3" />
-</svg></button>
-    <div class="wrap">
-      <button class="iconbtn" id="menubtn" title="cloak"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-plus"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M5 12h14" />
-  <path d="M12 5v14" />
-</svg></button>
-      <div class="menu" id="menu">
-        <div class="head">tab cloak</div>
-        <button data-act="cloak" data-k="error"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-monitor"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <rect width="20" height="14" x="2" y="3" rx="2" />
-  <line x1="8" x2="16" y1="21" y2="21" />
-  <line x1="12" x2="12" y1="17" y2="21" />
-</svg> Chrome error (stealth)</button>
-        <button data-act="cloak" data-k="classroom"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-monitor"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <rect width="20" height="14" x="2" y="3" rx="2" />
-  <line x1="8" x2="16" y1="21" y2="21" />
-  <line x1="12" x2="12" y1="17" y2="21" />
-</svg> Google Classroom</button>
-        <button data-act="cloak" data-k="gmail"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-mail"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <rect width="20" height="16" x="2" y="4" rx="2" />
-  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-</svg> Gmail</button>
-        <button data-act="cloak" data-k="canvas"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-book-open"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
-</svg> Canvas</button>
-        <div class="head">view</div>
-        <button data-act="fullscreen"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-maximize"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M8 3H5a2 2 0 0 0-2 2v3" />
-  <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-  <path d="M3 16v3a2 2 0 0 0 2 2h3" />
-  <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-</svg> Fullscreen</button>
-        <button data-act="stealth"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-external-link"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M15 3h6v6" />
-  <path d="M10 14 21 3" />
-  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-</svg> Open in blob tab</button>
+  <!-- Home View -->
+  <div id="home-view" class="main-content active">
+    <div class="app-grid">
+      <div class="app-icon" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);" data-url="https://instagram.com">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="Instagram" style="filter:brightness(0) invert(1);width:36px;">
+      </div>
+      <div class="app-icon" style="background:#1a1a2e;" data-url="https://youtube.com">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg" alt="YouTube" style="filter:brightness(0) invert(1);width:36px;">
+      </div>
+      <div class="app-icon" style="background:#000;" data-url="https://tiktok.com">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg" alt="TikTok" style="filter:brightness(0) invert(1);width:36px;">
+      </div>
+      <div class="app-icon" style="background:#5865F2;" data-url="https://discord.com">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/discord.svg" alt="Discord" style="filter:brightness(0) invert(1);width:36px;">
+      </div>
+      <div class="app-icon" style="background:#7c3aed;" data-url="https://now.gg">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/nowdotgg.svg" alt="now.gg" style="filter:brightness(0) invert(1);width:36px;">
+      </div>
+      <div class="app-icon" style="background:#1a1a2e;" data-url="https://duck.ai">
+        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/duckduckgo.svg" alt="Duck.ai" style="filter:brightness(0) invert(1);width:36px;">
       </div>
     </div>
-  </nav>
-</header>
 
-<main>
-  <h1>nexus</h1>
-
-  <div class="tiles" id="tiles">
-    <a class="tile t-insta"  href="https://www.instagram.com" target="_blank" rel="noopener" title="instagram"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg><span class="lbl">insta</span></a>
-    <a class="tile t-movies" href="https://www.netflix.com"   target="_blank" rel="noopener" title="movies"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.398 0v.006c3.028 8.556 5.37 15.175 8.348 23.596 2.344.058 4.85.398 4.854.398-2.8-7.924-5.923-16.747-8.487-24zm8.489 0v9.63L18.6 22.951c-.043-7.86-.004-15.913.002-22.95zM5.398 1.05V24c1.873-.225 2.81-.312 4.715-.398v-9.22z"/></svg><span class="lbl">movies</span></a>
-    <a class="tile t-tiktok" href="https://www.tiktok.com"    target="_blank" rel="noopener" title="tiktok"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg><span class="lbl">tiktok</span></a>
-    <a class="tile t-twitch" href="https://www.twitch.tv"     target="_blank" rel="noopener" title="twitch"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg><span class="lbl">twitch</span></a>
-    <a class="tile t-yt"     href="https://www.youtube.com"   target="_blank" rel="noopener" title="youtube"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg><span class="lbl">youtube</span></a>
-    <a class="tile t-dc"     href="https://discord.com"       target="_blank" rel="noopener" title="discord"><svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg><span class="lbl">discord</span></a>
-  </div>
-
-  <form class="search" id="searchform" autocomplete="off">
-    <!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-search"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <circle cx="11" cy="11" r="8" />
-  <path d="m21 21-4.3-4.3" />
-</svg>
-    <input id="q" type="text" placeholder="search anything... ( / for commands )" spellcheck="false" />
-    <kbd>/</kbd>
-  </form>
-  <div class="hint">press / for commands &middot; press ~ to unlock</div>
-</main>
-
-<!-- ══ ARCADE ══ -->
-<div class="overlay" id="arcade">
-  <div class="ovhead">
-    <span class="t"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-dice-5"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-  <path d="M16 8h.01" />
-  <path d="M8 8h.01" />
-  <path d="M8 16h.01" />
-  <path d="M16 16h.01" />
-  <path d="M12 12h.01" />
-</svg> arcade</span>
-    <button class="srcchip on" id="src-lumin">lumin</button>
-    <button class="srcchip" id="src-nexus">nexus games</button>
-    <button class="srcchip" id="src-favs">&#9733; favs</button>
-    <input type="text" id="gsearch" placeholder="search games..." autocomplete="off" />
-    <span class="grow"></span>
-    <button class="iconbtn" id="gclose" title="close"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-plus"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M5 12h14" />
-  <path d="M12 5v14" />
-</svg></button>
-  </div>
-  <div id="gamestatus">warming up the cabinets...</div>
-  <div id="gamegrid"></div>
-  <button id="morebtn"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-chevron-down"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="m6 9 6 6 6-6" />
-</svg> more games</button>
-</div>
-
-<!-- ══ BROWSER ══ -->
-<div class="overlay" id="browser">
-  <div class="ovhead">
-    <button class="iconbtn" id="bback" title="back"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-arrow-left"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="m12 19-7-7 7-7" />
-  <path d="M19 12H5" />
-</svg></button>
-    <button class="iconbtn" id="breload" title="reload"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-rotate-cw"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-  <path d="M21 3v5h-5" />
-</svg></button>
-    <form id="bform" style="display:flex;flex:1;gap:10px;min-width:0">
-      <input type="text" id="burl" spellcheck="false" placeholder="url or search..." />
-    </form>
-    <button class="chip" id="chip" title="proxy engine"><span class="dot"></span><span class="lbl" id="chiplbl">linking...</span></button>
-    <button class="iconbtn" id="bfull" title="fullscreen game/page"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-maximize"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M8 3H5a2 2 0 0 0-2 2v3" />
-  <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-  <path d="M3 16v3a2 2 0 0 0 2 2h3" />
-  <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-</svg></button>
-    <button class="iconbtn" id="btrans" title="translate engine (new tab)"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-globe"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <circle cx="12" cy="12" r="10" />
-  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-  <path d="M2 12h20" />
-</svg></button>
-    <button class="iconbtn" id="bopen" title="open direct"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-external-link"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M15 3h6v6" />
-  <path d="M10 14 21 3" />
-  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-</svg></button>
-    <button class="iconbtn" id="bclose" title="close"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-plus"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M5 12h14" />
-  <path d="M12 5v14" />
-</svg></button>
-  </div>
-  <div id="frame" role="document" aria-live="polite"></div>
-</div>
-
-<!-- ══ PALETTE ══ -->
-<div id="palette">
-  <div class="prow"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-search"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <circle cx="11" cy="11" r="8" />
-  <path d="m21 21-4.3-4.3" />
-</svg><input id="pinput" placeholder="type a command... (browser, theme, bg, cloak...)" autocomplete="off" /></div>
-  <div id="plist"></div>
-</div>
-
-<!-- ══ SETTINGS ══ -->
-<div class="overlay" id="settings">
-  <div class="ovhead">
-    <span class="t"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-settings"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-  <circle cx="12" cy="12" r="3" />
-</svg> settings</span>
-    <span class="grow"></span>
-    <button class="iconbtn" id="sclose" title="close"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-plus"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M5 12h14" />
-  <path d="M12 5v14" />
-</svg></button>
-  </div>
-  <div class="panel">
-    <h4>theme</h4>
-    <div class="optrow" id="themerow"></div>
-    <h4>background animation</h4>
-    <div class="optrow" id="bgrow"></div>
-    <h4>stealth</h4>
-    <div class="toggle on" id="relock"><span class="tr"></span>re-lock as chrome error when i leave the tab</div>
-    <div class="optrow" style="margin-top:12px">
-      <button class="opt" id="blobbtn"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-external-link"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M15 3h6v6" />
-  <path d="M10 14 21 3" />
-  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-</svg> open nexus in a blob tab</button>
-      <button class="opt" id="purgebtn"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-rotate-cw"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-  <path d="M21 3v5h-5" />
-</svg> wipe favorites + settings</button>
-    </div>
-    <h4>about</h4>
-    <p style="color:var(--muted);font-size:13px;line-height:1.7">data lives in indexeddb on this device only. games by lumin sdk, proxy routes by zero-cors, icons by lucide.</p>
-  </div>
-</div>
-
-<!-- ══ CREDITS ══ -->
-<div class="overlay" id="credits">
-  <div class="ovhead">
-    <span class="t"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-handshake"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="m11 17 2 2a1 1 0 1 0 3-3" />
-  <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" />
-  <path d="m21 3 1 11h-2" />
-  <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" />
-  <path d="M3 4h8" />
-</svg> the crew</span>
-    <span class="grow"></span>
-    <button class="iconbtn" id="xclose" title="close"><!-- @license lucide-static v0.462.0 - ISC -->
-<svg
-  class="lucide lucide-plus"
-  xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M5 12h14" />
-  <path d="M12 5v14" />
-</svg></button>
-  </div>
-  <div class="panel">
-    <div class="crew">
-      <div class="row"><span class="emo">&#128056;</span><div>the nexus crew<small>design, chaos, and shipping it at 2am</small></div></div>
-      <div class="row"><span class="emo">&#127918;</span><div>lumin sdk<small>1000+ arcade cabinets, one script tag</small></div></div>
-      <div class="row"><span class="emo">&#128268;</span><div>zero-cors<small>the service-worker proxy fleet that routes the web</small></div></div>
-      <div class="row"><span class="emo">&#128302;</span><div>lucide + simple-icons<small>every glyph on this page</small></div></div>
-      <div class="row"><span class="emo">&#9997;&#65039;</span><div>space grotesk<small>the letters you are reading</small></div></div>
+    <div class="search-box">
+      <i data-lucide="search" width="20" height="20"></i>
+      <input type="text" id="search-input" placeholder="Search the web or enter URL...">
     </div>
   </div>
-</div>
 
-<div id="toast"></div>
+  <!-- Games View -->
+  <div id="games-view">
+    <div class="games-search">
+      <i data-lucide="search" width="18" height="18"></i>
+      <input type="text" id="games-search-input" placeholder="Search games...">
+    </div>
+    <div id="games-container"></div>
+  </div>
+
+  <!-- Proxy View -->
+  <div id="proxy-view">
+    <div class="proxy-bar">
+      <button id="proxy-back"><i data-lucide="arrow-left" width="18" height="18"></i></button>
+      <button id="proxy-reload"><i data-lucide="refresh-cw" width="18" height="18"></i></button>
+      <span class="url-display" id="proxy-url">about:blank</span>
+      <button id="proxy-close"><i data-lucide="x" width="18" height="18"></i></button>
+    </div>
+    <iframe id="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <span style="font-size:13px;color:#888;">Loading via Nexus proxy...</span>
+  </div>
+</div>
 
 <script>
-/* ════════ PURE HELPERS (node-testable) ════════ */
-/*PURE-START*/
-var ZC_ORIGIN = "https://icodewithai1.github.io/zero-cors/";
-var THEMES = {
-  green:  { a:"#7ef0a6", d:"#2fd97c", o1:"#0f4028", o2:"#0d2c3d" },
-  purple: { a:"#c084fc", d:"#a855f7", o1:"#3b1d60", o2:"#1e1b4b" },
-  blue:   { a:"#7dd3fc", d:"#0ea5e9", o1:"#0c3a4d", o2:"#172554" },
-  crimson:{ a:"#fb7185", d:"#e11d48", o1:"#4c0519", o2:"#27060b" },
-  amber:  { a:"#fcd34d", d:"#f59e0b", o1:"#451a03", o2:"#1c1917" }
-};
-var BGS = ["network","stars","matrix","off"];
-var COMMANDS = [
-  { c:"browser",    d:"open a url or search in the proxy browser" },
-  { c:"theme",      d:"green / purple / blue / crimson / amber" },
-  { c:"bg",         d:"network / stars / matrix / off" },
-  { c:"cloak",      d:"error / classroom / gmail / canvas" },
-  { c:"arcade",     d:"open the games tab" },
-  { c:"settings",   d:"themes, backgrounds, stealth" },
-  { c:"credits",    d:"the crew" },
-  { c:"stealth",    d:"open nexus in a blob tab" },
-  { c:"fullscreen", d:"toggle fullscreen" },
-  { c:"help",       d:"show this list" }
+/* ============================================================
+   NEXUS PROXY ENGINE
+   Uses libcurl.js + WISP relays to fetch and patch pages.
+   ============================================================ */
+
+const RELAYS = [
+  'wss://wisp.mercurywork.shop/',
+  'wss://nebulaproxy.io/wisp/',
+  'wss://relay.wisp.talk/',
+  'wss://relay.damus.io/',
+  'wss://nos.lol/'
 ];
-function parseCommand(s){
-  s = String(s || "").trim();
-  if(!s) return { cmd:"help", arg:"" };
-  var m = /^(\S+)\s*(.*)$/.exec(s);
-  var c = m[1].toLowerCase();
-  var known = COMMANDS.map(function(x){ return x.c; });
-  if(known.indexOf(c) < 0) return { cmd:"browser", arg:s };
-  return { cmd:c, arg:(m[2] || "").trim() };
+
+let currentRelayIndex = 0;
+
+/* ---------- CLOAK LOGIC ---------- */
+const cloak = document.getElementById('cloak');
+const app = document.getElementById('app');
+
+function showCloak() {
+  cloak.style.display = 'flex';
+  app.classList.remove('active');
 }
-var RELAYS = [
-  function(u){ return "https://api.allorigins.win/raw?url=" + encodeURIComponent(u); },
-  function(u){ return "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u); },
-  function(u){ return "https://corsproxy.io/?url=" + encodeURIComponent(u); }
-];
-function translateLink(url){
-  var m = /^https?:\/\/([^\/]+)(\/.*)?$/.exec(url);
-  if(!m) return null;
-  var host = m[1].replace(/\./g,"-");
-  var path = m[2] || "/";
-  return "https://" + host + ".translate.goog" + path + (path.indexOf("?") < 0 ? "?" : "&") + "_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en";
+function hideCloak() {
+  cloak.style.display = 'none';
+  app.classList.add('active');
 }
-function looksLikeUrl(q){ return /^https?:\/\//i.test(q) || /^[\w-]+(\.[\w-]+)+([\/?#].*)?$/.test(q); }
-function normalizeUrl(q){ return /^https?:\/\//i.test(q) ? q : "https://" + q; }
-function ytId(url){
-  var m = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([\w-]{6,})/i.exec(url);
-  return m ? m[1] : null;
+
+// Press ~ to bypass
+document.addEventListener('keydown', (e) => {
+  if (e.key === '~' || e.key === '`') {
+    hideCloak();
+  }
+});
+
+// Show cloak on load
+showCloak();
+
+// Re-show cloak when tab visibility changes (basic "switch tab" cloak)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Optionally show cloak when user switches away
+    // showCloak();
+  }
+});
+
+/* ---------- NAVIGATION ---------- */
+const navHome = document.getElementById('nav-home');
+const navGames = document.getElementById('nav-games');
+const navProxy = document.getElementById('nav-proxy');
+const homeView = document.getElementById('home-view');
+const gamesView = document.getElementById('games-view');
+const proxyView = document.getElementById('proxy-view');
+
+function switchTab(tab) {
+  [navHome, navGames, navProxy].forEach(b => b.classList.remove('active'));
+  [homeView, gamesView, proxyView].forEach(v => v.classList.remove('active'));
+  if (tab === 'home') { navHome.classList.add('active'); homeView.classList.add('active'); }
+  if (tab === 'games') { navGames.classList.add('active'); gamesView.classList.add('active'); }
+  if (tab === 'proxy') { navProxy.classList.add('active'); proxyView.classList.add('active'); }
 }
-function hexToRgb(hex){
-  var m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
-  return m ? [parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)] : [126,240,166];
+
+navHome.addEventListener('click', () => switchTab('home'));
+navGames.addEventListener('click', () => switchTab('games'));
+navProxy.addEventListener('click', () => switchTab('proxy'));
+
+/* ---------- PROXY CORE ---------- */
+const proxyFrame = document.getElementById('proxy-frame');
+const proxyUrl = document.getElementById('proxy-url');
+const loadingOverlay = document.getElementById('loading-overlay');
+
+async function initLibcurl() {
+  if (typeof libcurl === 'undefined') {
+    console.warn('libcurl.js not loaded yet');
+    return false;
+  }
+  // Set WebSocket relay
+  libcurl.set_websocket(RELAYS[currentRelayIndex]);
+  return true;
 }
-function patchHtml(html, base, shim){
-  html = html.replace(/<meta[^>]*http-equiv\s*=\s*["']?content-security-policy[^>]*>/gi, "");
-  html = html.replace(/\sintegrity\s*=\s*["'][^"']*["']/gi, "");
-  html = html.replace(/(src\s*=\s*["'])\/\//gi, "$1https://");
-  html = html.replace(/(href\s*=\s*["'])\/\//gi, "$1https://");
-  var inject = '<base href="' + base + '">' + shim;
-  var head = /<head[^>]*>/i.exec(html);
-  if(head){ var at = head.index + head[0].length; html = html.slice(0,at) + inject + html.slice(at); }
-  else html = inject + html;
+
+async function proxyFetch(url) {
+  // Try each relay until one works
+  for (let i = 0; i < RELAYS.length; i++) {
+    const relay = RELAYS[(currentRelayIndex + i) % RELAYS.length];
+    try {
+      libcurl.set_websocket(relay);
+      const response = await libcurl.fetch(url, {
+        headers: {
+          'User-Agent': navigator.userAgent,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      });
+      if (response.ok) {
+        currentRelayIndex = (currentRelayIndex + i) % RELAYS.length;
+        return response;
+      }
+    } catch (e) {
+      console.warn('Relay failed:', relay, e.message);
+    }
+  }
+  throw new Error('All relays failed');
+}
+
+function patchHTML(html, baseUrl) {
+  const urlObj = new URL(baseUrl);
+  const origin = urlObj.origin;
+
+  // 1. Inject <base> so relative URLs resolve correctly
+  if (!html.includes('<base')) {
+    html = html.replace(/<head([^>]*)>/i, `<head$1><base href="${baseUrl}">`);
+  }
+
+  // 2. Rewrite absolute URLs that point to the same origin to go through proxy
+  //    (Simplified — for a real proxy you'd need a dedicated proxy path)
+  //    We use a blob/data approach for simplicity: rewrite src/href to absolute URLs
+  html = html.replace(/(src|href)=["'](?!https?:\/\/|data:|blob:|#|\/\/)([^"']+)["']/gi,
+    (match, attr, path) => {
+      try {
+        const abs = new URL(path, baseUrl).href;
+        return `${attr}="${abs}"`;
+      } catch { return match; }
+    });
+
+  // 3. Inject runtime patch script inside the iframe
+  const patchScript = `
+    <script>
+    (function() {
+      // Intercept fetch
+      const origFetch = window.fetch;
+      window.fetch = function(input, init) {
+        if (typeof input === 'string' && input.startsWith('/')) {
+          input = '${origin}' + input;
+        }
+        return origFetch.call(this, input, init);
+      };
+      // Intercept XHR
+      const origOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+        if (url.startsWith('/')) url = '${origin}' + url;
+        return origOpen.call(this, method, url, ...rest);
+      };
+      // Notify parent of navigation
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (a && a.href && a.target !== '_blank') {
+          e.preventDefault();
+          window.parent.postMessage({ type: 'navigate', url: a.href }, '*');
+        }
+      });
+    })();
+    <\/script>`;
+  html = html.replace('</body>', patchScript + '</body>');
+
   return html;
 }
-function liteShim(){
-  return "<scr" + "ipt>(function(){" +
-    "var R=[function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u)}," +
-    "function(u){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)}," +
-    "function(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u)}];" +
-    "function abs(u){try{return new URL(u,document.baseURI).href}catch(e){return null}}" +
-    "function go(u){var p=window.parent;if(p&&p!==window&&p.__nexusNav){p.__nexusNav(u)}else{location.href=u}}" +
-    "var nf=window.fetch;" +
-    "window.fetch=function(i,o){" +
-      "var u=typeof i==='string'?i:(i&&i.url);var a=u?abs(u):null;" +
-      "if(a){var bh=new URL(document.baseURI).host;" +
-        "if(new URL(a).host===bh){return (async function(){for(var k=0;k<R.length;k++){try{var r=await nf(R[k](a));if(r.ok)return r}catch(e){}}return nf(a)})();}" +
-      "}" +
-      "return nf.apply(this,arguments)};" +
-    "document.addEventListener('click',function(e){" +
-      "var a=e.target&&e.target.closest?e.target.closest('a'):null;if(!a)return;" +
-      "var h=a.getAttribute('href');if(!h||h.charAt(0)==='#')return;" +
-      "e.preventDefault();var u=abs(h);if(u)go(u);" +
-    "},true);" +
-    "document.addEventListener('submit',function(e){" +
-      "var f=e.target;e.preventDefault();" +
-      "var u=abs(f.getAttribute('action')||'');if(!u)return;" +
-      "var m=(f.getAttribute('method')||'get').toLowerCase();var qs='';" +
-      "if(m==='get'){try{qs=new URLSearchParams(new FormData(f)).toString()}catch(err){}}" +
-      "go(u+(u.indexOf('?')<0?'?':'&')+qs);" +
-    "},true);" +
-    "if(navigator.serviceWorker){navigator.serviceWorker.register=function(){return Promise.reject(new Error('sw blocked'))}}" +
-    "window.open=function(u){var a=abs(u||'');if(a)go(a);return window};" +
-  "})()</scr" + "ipt>";
-}
-/*PURE-END*/
 
-/* ════════ APP ════════ */
-(function(){
-"use strict";
-var $ = function(s){ return document.querySelector(s); };
+async function navigateTo(url) {
+  try {
+    switchTab('proxy');
+    proxyUrl.textContent = url;
+    loadingOverlay.classList.remove('hidden');
 
-/* ---------- indexeddb ---------- */
-var DB = null;
-function idb(){
-  if(DB) return Promise.resolve(DB);
-  return new Promise(function(res,rej){
-    var rq = indexedDB.open("nexus-db",1);
-    rq.onupgradeneeded = function(){
-      var db = rq.result;
-      if(!db.objectStoreNames.contains("kv")) db.createObjectStore("kv");
-      if(!db.objectStoreNames.contains("favs")) db.createObjectStore("favs",{keyPath:"id"});
-    };
-    rq.onsuccess = function(){ DB = rq.result; res(DB); };
-    rq.onerror = function(){ rej(rq.error); };
-  });
-}
-function kvGet(k){ return idb().then(function(db){ return new Promise(function(res){ var r=db.transaction("kv").objectStore("kv").get(k); r.onsuccess=function(){res(r.result);}; r.onerror=function(){res(undefined);}; }); }); }
-function kvSet(k,v){ return idb().then(function(db){ return new Promise(function(res){ var r=db.transaction("kv","readwrite").objectStore("kv").put(v,k); r.onsuccess=function(){res();}; r.onerror=function(){res();}; }); }); }
-function favAll(){ return idb().then(function(db){ return new Promise(function(res){ var r=db.transaction("favs").objectStore("favs").getAll(); r.onsuccess=function(){res(r.result||[]);}; r.onerror=function(){res([]);}; }); }); }
-function favPut(g){ return idb().then(function(db){ return new Promise(function(res){ db.transaction("favs","readwrite").objectStore("favs").put(g).onsuccess=function(){res();}; }); }); }
-function favDel(id){ return idb().then(function(db){ return new Promise(function(res){ db.transaction("favs","readwrite").objectStore("favs").delete(id).onsuccess=function(){res();}; }); }); }
-function wipeAll(){ return idb().then(function(db){ var t=db.transaction(["kv","favs"],"readwrite"); t.objectStore("kv").clear(); t.objectStore("favs").clear(); }); }
+    // Ensure libcurl is ready
+    const ready = await initLibcurl();
+    if (!ready) throw new Error('libcurl not available');
 
-/* ---------- toast ---------- */
-var toastEl=$("#toast"),tt;
-function toast(m){ toastEl.textContent=m; toastEl.classList.add("show"); clearTimeout(tt); tt=setTimeout(function(){toastEl.classList.remove("show");},2200); }
+    const response = await proxyFetch(url);
+    let html = await response.text();
 
-/* ---------- lock screen + stealth title ---------- */
-var ERR_TITLE="This site can\u2019t be reached";
-var ERR_FAV="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/></svg>');
-var NEXUS_FAV=$("#favicon").getAttribute("href");
-var cloakTitle=null, cloakFav=null, locked=true;
-function applyIdentity(){
-  if(cloakTitle){ document.title=cloakTitle; $("#favicon").setAttribute("href",cloakFav); }
-  else { document.title=ERR_TITLE; $("#favicon").setAttribute("href",ERR_FAV); }
-}
-function setLocked(v){
-  locked=v;
-  $("#lock").classList.toggle("on",v);
-  if(v && document.activeElement) document.activeElement.blur();
-}
-applyIdentity();
-setLocked(true);
-addEventListener("keydown",function(e){
-  if(e.key==="~" && locked){ e.preventDefault(); setLocked(false); return; }
-});
-document.addEventListener("visibilitychange",function(){
-  if(!document.hidden && SETTINGS.relock) setLocked(true);
-});
+    // Patch the HTML
+    html = patchHTML(html, url);
 
-/* ---------- settings (theme / bg / relock) ---------- */
-var SETTINGS={theme:"green",bg:"network",relock:true};
-var accentRGB=hexToRgb(THEMES.green.a);
-function applyTheme(name){
-  var t=THEMES[name]||THEMES.green; SETTINGS.theme=THEMES[name]?name:"green";
-  var r=document.documentElement.style;
-  r.setProperty("--accent",t.a); r.setProperty("--accent-deep",t.d);
-  r.setProperty("--orb1",t.o1); r.setProperty("--orb2",t.o2);
-  accentRGB=hexToRgb(t.a);
-  kvSet("theme",SETTINGS.theme);
-  syncSettingsUI();
-}
-function applyBg(name){
-  SETTINGS.bg=BGS.indexOf(name)>=0?name:"network";
-  bgMode=SETTINGS.bg; initBg();
-  kvSet("bg",SETTINGS.bg);
-  syncSettingsUI();
-}
-function buildSettingsUI(){
-  var tr=$("#themerow");
-  Object.keys(THEMES).forEach(function(k){
-    var b=document.createElement("button"); b.className="opt"; b.setAttribute("data-th",k);
-    b.innerHTML='<span class="sw" style="background:'+THEMES[k].a+'"></span>'+k;
-    b.addEventListener("click",function(){ applyTheme(k); });
-    tr.appendChild(b);
-  });
-  var br=$("#bgrow");
-  BGS.forEach(function(k){
-    var b=document.createElement("button"); b.className="opt"; b.setAttribute("data-bg",k); b.textContent=k;
-    b.addEventListener("click",function(){ applyBg(k); });
-    br.appendChild(b);
-  });
-  $("#relock").addEventListener("click",function(){
-    SETTINGS.relock=!SETTINGS.relock; kvSet("relock",SETTINGS.relock); syncSettingsUI();
-  });
-  $("#blobbtn").addEventListener("click",blobOpen);
-  $("#purgebtn").addEventListener("click",function(){
-    wipeAll().then(function(){ toast("wiped favorites + settings"); });
-  });
-}
-function syncSettingsUI(){
-  document.querySelectorAll("#themerow .opt").forEach(function(b){ b.classList.toggle("on",b.getAttribute("data-th")===SETTINGS.theme); });
-  document.querySelectorAll("#bgrow .opt").forEach(function(b){ b.classList.toggle("on",b.getAttribute("data-bg")===SETTINGS.bg); });
-  $("#relock").classList.toggle("on",!!SETTINGS.relock);
-}
-function blobOpen(){
-  function open(txt){
-    var b=new Blob([txt],{type:"text/html"});
-    window.open(URL.createObjectURL(b),"_blank");
-    toast("nexus opened in a blob tab \u2014 address bar says blob:");
+    // Write to iframe via srcdoc
+    proxyFrame.srcdoc = html;
+
+    loadingOverlay.classList.add('hidden');
+  } catch (err) {
+    console.error('Proxy error:', err);
+    proxyUrl.textContent = 'Error: ' + err.message;
+    loadingOverlay.classList.add('hidden');
   }
-  if(location.protocol==="file:"){ open("<!doctype html>"+document.documentElement.outerHTML); return; }
-  fetch(location.href).then(function(r){return r.text();}).then(open).catch(function(){ open("<!doctype html>"+document.documentElement.outerHTML); });
 }
 
-/* ---------- backgrounds (network / stars / matrix / off) ---------- */
-var canvas=$("#net"),ctx=canvas.getContext("2d");
-var W=0,H=0,DPR=1,pts=[],pulses=[],mouse={x:-1e4,y:-1e4};
-var LINK=230,MLINK=280,bgMode=SETTINGS.bg,drops=[];
-var reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-function seed(){
-  var n = bgMode==="stars" ? Math.min(240,Math.floor(W*H/8000)) : Math.min(220,Math.max(90,Math.floor(W*H/7200)));
-  pts=[];
-  for(var i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,
-    vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.6+.7,
-    tw:Math.random()*6.283,ts:.6+Math.random()*1.2,g:Math.random()<.42});
-  drops=[]; var cols=Math.floor(W/14);
-  for(var c=0;c<cols;c++)drops.push(Math.random()*-60);
-}
-function initBg(){ ctx.clearRect(0,0,W,H); seed(); }
-function resize(){
-  DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;
-  canvas.width=W*DPR;canvas.height=H*DPR;canvas.style.width=W+"px";canvas.style.height=H+"px";
-  ctx.setTransform(DPR,0,0,DPR,0,0);seed();
-}
-addEventListener("resize",resize);resize();
-addEventListener("mousemove",function(e){mouse.x=e.clientX;mouse.y=e.clientY;});
-document.addEventListener("mouseleave",function(){mouse.x=-1e4;mouse.y=-1e4;});
-var GLYPHS="01<>*+ｱｶｻﾀﾅﾊﾏﾔﾗ$#";
-var last=0;
-function paintFrame(t){
-  requestAnimationFrame(paintFrame);
-  var dt=Math.min(33,t-last);last=t;var s=reduced?0:dt/16.7;
-  var A=accentRGB[0]+","+accentRGB[1]+","+accentRGB[2];
-  if(bgMode==="off"){ ctx.clearRect(0,0,W,H); return; }
-  if(bgMode==="matrix"){
-    ctx.fillStyle="rgba(8,9,11,.16)";ctx.fillRect(0,0,W,H);
-    ctx.font="13px monospace";
-    for(var c=0;c<drops.length;c++){
-      var ch=GLYPHS[Math.floor(Math.random()*GLYPHS.length)];
-      var y=drops[c]*16;
-      ctx.fillStyle="rgba("+A+",.85)";
-      ctx.fillText(ch,c*14,y);
-      if(y>H&&Math.random()>.975)drops[c]=0;
-      drops[c]+= .5*s;
+/* ---------- APP ICON CLICKS ---------- */
+document.querySelectorAll('.app-icon').forEach(icon => {
+  icon.addEventListener('click', () => {
+    const url = icon.dataset.url;
+    if (url) navigateTo(url);
+  });
+});
+
+/* ---------- SEARCH ---------- */
+document.getElementById('search-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    let val = e.target.value.trim();
+    if (!val) return;
+    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+      // Treat as search query
+      val = 'https://duckduckgo.com/?q=' + encodeURIComponent(val);
     }
+    navigateTo(val);
+  }
+});
+
+/* ---------- PROXY BAR ---------- */
+document.getElementById('proxy-back').addEventListener('click', () => {
+  // Simple back: go home
+  switchTab('home');
+});
+document.getElementById('proxy-reload').addEventListener('click', () => {
+  const url = proxyUrl.textContent;
+  if (url && url !== 'about:blank' && !url.startsWith('Error')) {
+    navigateTo(url);
+  }
+});
+document.getElementById('proxy-close').addEventListener('click', () => {
+  switchTab('home');
+});
+
+/* ---------- MESSAGE FROM IFRAME (navigation) ---------- */
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'navigate') {
+    navigateTo(e.data.url);
+  }
+});
+
+/* ============================================================
+   GAMES TAB — LuminSDK + IndexedDB
+   ============================================================ */
+const gamesContainer = document.getElementById('games-container');
+const gamesSearchInput = document.getElementById('games-search-input');
+
+let luminReady = false;
+
+function initLumin() {
+  if (typeof Lumin === 'undefined') {
+    console.warn('LuminSDK not loaded');
     return;
   }
-  ctx.clearRect(0,0,W,H);
-  var i,j,p,a,b,dx,dy,d2,d,al;
-  for(i=0;i<pts.length;i++){p=pts[i];p.x+=p.vx*s;p.y+=p.vy*s;
-    if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;
-    if(bgMode==="network"){
-      dx=mouse.x-p.x;dy=mouse.y-p.y;d=Math.sqrt(dx*dx+dy*dy);
-      if(d<160&&d>1){p.vx+=dx/d*.012*s;p.vy+=dy/d*.012*s;}
-      var sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy);if(sp>.9){p.vx=p.vx/sp*.9;p.vy=p.vy/sp*.9;}
-    }}
-  if(bgMode==="network"){
-    for(i=0;i<pts.length;i++){a=pts[i];
-      for(j=i+1;j<pts.length;j++){b=pts[j];dx=a.x-b.x;dy=a.y-b.y;d2=dx*dx+dy*dy;
-        if(d2<LINK*LINK){d=Math.sqrt(d2);al=(1-d/LINK)*.5;
-          ctx.strokeStyle=(a.g||b.g)?"rgba("+A+","+(al*.92).toFixed(3)+")":"rgba(190,205,216,"+(al*.82).toFixed(3)+")";
-          ctx.lineWidth=1.15;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-          if(!reduced&&pulses.length<8&&Math.random()<.002)pulses.push({a:a,b:b,t:0,sp:.008+Math.random()*.02});}}
-      dx=a.x-mouse.x;dy=a.y-mouse.y;d2=dx*dx+dy*dy;
-      if(d2<MLINK*MLINK){d=Math.sqrt(d2);al=(1-d/MLINK)*.55;
-        ctx.strokeStyle="rgba("+A+","+(al*.9).toFixed(3)+")";ctx.lineWidth=1.2;
-        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke();}}
-    for(i=pulses.length-1;i>=0;i--){p=pulses[i];p.t+=p.sp*s;
-      if(p.t>=1){pulses.splice(i,1);continue;}
-      var x=p.a.x+(p.b.x-p.a.x)*p.t,y=p.a.y+(p.b.y-p.a.y)*p.t;
-      ctx.save();ctx.shadowColor="rgba("+A+",.9)";ctx.shadowBlur=10;
-      ctx.fillStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.arc(x,y,2,0,6.283);ctx.fill();ctx.restore();}
-  }
-  for(i=0;i<pts.length;i++){p=pts[i];
-    al=.45+.5*(.5+.5*Math.sin(t*.001*p.ts+p.tw));
-    ctx.shadowColor=p.g?"rgba("+A+",.9)":"transparent";ctx.shadowBlur=p.g?7:0;
-    ctx.fillStyle=p.g?"rgba("+A+","+al.toFixed(3)+")":"rgba(240,245,243,"+(al*.9).toFixed(3)+")";
-    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.283);ctx.fill();}
-  ctx.shadowBlur=0;
-}
-requestAnimationFrame(paintFrame);
-
-/* ---------- zero-cors priming ---------- */
-var mode="zc",primePromise=null;
-/* Raw mode deliberately does not create an iframe. The zero-cors service worker
-   must already be active for its origin; if it is not, the view offers a
-   one-click activation tab instead of silently switching engines. */
-function primeZC(){
-  if(primePromise)return primePromise;
-  mode="zc"; chip();
-  primePromise=Promise.resolve(true);
-  return primePromise;
-}
-function chip(){
-  var c=$("#chip");c.classList.remove("zc","lite","fallback");
-  if(mode==="zc"){c.classList.add("zc");$("#chiplbl").textContent="zero-cors raw";}
-  else {c.classList.add("fallback");$("#chiplbl").textContent="fallback raw";}
-}
-$("#chip").addEventListener("click",function(){ window.open(ZC_ORIGIN,"_blank"); toast("one visit activates the backend in your browser"); });
-
-/* ---------- browser overlay ---------- */
-var frame=$("#frame"),stack=[],sp=-1,currentUrl="";
-var frameRoot=frame.attachShadow?frame.attachShadow({mode:"open"}):frame;
-var RAW_CSS="<style>\
-:host{display:block;overflow:auto;min-height:100%;background:#0b0c0e}\
-.raw-loading{min-height:100%;display:grid;place-items:center;color:#8d9793;font:13px/1.6 sans-serif;letter-spacing:.1em}\
-.raw-message{min-height:100%;display:grid;place-items:center;padding:28px;background:#08090b;color:#f2f5f3;font:14px/1.7 sans-serif}\
-.raw-message .box{max-width:560px;text-align:center}.raw-message h2{font-size:21px;font-weight:600;margin:0 0 10px}.raw-message p{color:#8d9793;margin:8px 0}.raw-message button{margin:8px 4px 0;background:rgba(126,240,166,.1);border:1px solid rgba(126,240,166,.35);color:#7ef0a6;border-radius:999px;padding:10px 18px;cursor:pointer;font:inherit}\
-.raw-page{min-height:100%;background:#fff;color:#111;overflow:hidden}.raw-page img,.raw-page video,.raw-page audio{max-width:100%}.raw-page a{cursor:pointer}.nexus-removed-frame{display:grid;place-items:center;min-height:90px;padding:16px;background:#f2f3f5;color:#666;border:1px dashed #bbb;font:13px sans-serif}\
-.nexus-removed-frame a{color:#2867c7}\
-</style>";
-function showBrowser(){ $("#browser").classList.add("open"); }
-function loadingPage(){ frameRoot.innerHTML=RAW_CSS+"<div class='raw-loading'>fetching raw route...</div>"; }
-function rawUrl(u){
-  try{var x=new URL(u);x.hash="";return ZC_ORIGIN+"raw/"+x.href;}catch(e){return null;}
-}
-function safeAbs(u,base){
-  if(!u)return null;u=String(u).trim();
-  if(!u||/^(data:|blob:|javascript:|mailto:|tel:|#)/i.test(u))return null;
-  try{var x=new URL(u,base);if(x.protocol!=="http:"&&x.protocol!=="https:")return null;x.hash="";return x.href;}catch(e){return null;}
-}
-function fallbackUrl(u){
-  try{return RELAYS[0](u);}catch(e){return u;}
-}
-function rawResource(u,base){var a=safeAbs(u,base);if(!a)return u;return mode==="zc"?rawUrl(a):fallbackUrl(a);}
-function patchCssUrls(css,base){
-  css=String(css||"");
-  css=css.replace(/url\\(\\s*(['"]?)([^'")]+)\\1\\s*\\)/gi,function(_,q,u){var v=rawResource(u,base);return v&&v!==u?"url("+q+v+q+")":_});
-  css=css.replace(/(@import\\s+)(["'])([^"']+)\\2/gi,function(_,p,q,u){var v=rawResource(u,base);return v?p+q+v+q:_;});
-  return css;
-}
-function patchSrcset(v,base){
-  return String(v||"").split(",").map(function(part){
-    var bits=part.trim().split(/\\s+/),u=rawResource(bits.shift(),base);return (u||"")+ (bits.length?" "+bits.join(" "):"");
-  }).join(", ");
-}
-function makeRawMessage(title,text,activate){
-  frameRoot.innerHTML=RAW_CSS+"<div class='raw-message'><div class='box'><h2>"+title+"</h2><p>"+text+"</p><button id='rawactivate'>activate zero-cors</button><button id='rawretry'>retry</button><button id='rawdirect'>open direct</button></div></div>";
-  frameRoot.querySelector("#rawactivate").addEventListener("click",function(){window.open(ZC_ORIGIN,"_blank");toast("activate zero-cors, then retry");});
-  frameRoot.querySelector("#rawretry").addEventListener("click",function(){if(currentUrl)nav(currentUrl,true);});
-  frameRoot.querySelector("#rawdirect").addEventListener("click",function(){if(currentUrl)window.open(currentUrl,"_blank");});
-}
-function renderRaw(html,url){
-  var doc=new DOMParser().parseFromString(String(html||""),"text/html");
-  var page=document.createElement("div");page.className="raw-page";
-  var body=doc.body?doc.body.cloneNode(false):document.createElement("div");
-  body.classList.add("nexus-raw-body");
-  if(doc.body)Array.prototype.slice.call(doc.body.childNodes).forEach(function(n){body.appendChild(n.cloneNode(true));});
-  page.appendChild(body);
-  frameRoot.innerHTML=RAW_CSS;
-  Array.prototype.slice.call(doc.head?doc.head.querySelectorAll("style"):[]).forEach(function(s){
-    var st=document.createElement("style");st.textContent=patchCssUrls(s.textContent||"",url);frameRoot.appendChild(st);
+  Lumin.init({
+    container: '#games-container',
+    theme: 'dark',
+    onReady: () => {
+      luminReady = true;
+      console.log('LuminSDK ready');
+    },
+    onError: (err) => {
+      console.error('LuminSDK error:', err);
+    }
   });
-  frameRoot.appendChild(page);
-  page.querySelectorAll("style").forEach(function(s){s.textContent=patchCssUrls(s.textContent||"",url);});
-  var bad=page.querySelectorAll("script,iframe,frame,frameset,object,embed,portal");
-  Array.prototype.slice.call(bad).forEach(function(n){
-    var box=document.createElement("div");box.className="nexus-removed-frame";box.textContent="embedded content removed in raw mode";n.replaceWith(box);
-  });
-  page.querySelectorAll("[style]").forEach(function(n){n.setAttribute("style",patchCssUrls(n.getAttribute("style"),url));});
-  page.querySelectorAll("a[href]").forEach(function(a){
-    var u=safeAbs(a.getAttribute("href"),url);if(!u)return;
-    a.setAttribute("data-nexus-url",u);a.setAttribute("href","#");a.removeAttribute("target");
-  });
-  page.querySelectorAll("form").forEach(function(f){
-    var u=safeAbs(f.getAttribute("action")||url,url);if(u)f.setAttribute("data-nexus-action",u);f.setAttribute("action","#");
-  });
-  page.querySelectorAll("img[src],video[src],audio[src],source[src],track[src],input[src],button[src]").forEach(function(n){
-    var v=n.getAttribute("src"),u=safeAbs(v,url);if(u)n.setAttribute("src",rawUrl(u));
-  });
-  page.querySelectorAll("[poster]").forEach(function(n){var u=safeAbs(n.getAttribute("poster"),url);if(u)n.setAttribute("poster",rawUrl(u));});
-  page.querySelectorAll("[srcset]").forEach(function(n){n.setAttribute("srcset",patchSrcset(n.getAttribute("srcset"),url));});
-  doc.querySelectorAll("link[rel~='stylesheet' i]").forEach(function(link){
-    var u=safeAbs(link.getAttribute("href"),url);if(!u)return;
-    var st=document.createElement("style");frameRoot.appendChild(st);
-    pageFetch(u).then(function(css){st.textContent=patchCssUrls(css,u);}).catch(function(){});
-  });
-}
-function rawClick(e){
-  var path=e.composedPath?e.composedPath():[],a=null;
-  for(var i=0;i<path.length;i++){if(path[i]&&path[i].getAttribute&&path[i].getAttribute("data-nexus-url")){a=path[i];break;}}
-  if(!a)return;e.preventDefault();var u=a.getAttribute("data-nexus-url");if(u)nav(u,true);
-}
-function rawSubmit(e){
-  var f=e.target;if(!f||!f.getAttribute||!f.getAttribute("data-nexus-action"))return;e.preventDefault();
-  var u=f.getAttribute("data-nexus-action"),qs="";
-  try{qs=new URLSearchParams(new FormData(f)).toString();}catch(err){}
-  nav(u+(u.indexOf("?")<0?"?":"&")+qs,true);
-}
-frameRoot.addEventListener("click",rawClick);frameRoot.addEventListener("submit",rawSubmit);
-function rawFetch(url){
-  var endpoint=rawUrl(url);if(!endpoint)return Promise.reject(new Error("bad url"));
-  return fetch(endpoint,{mode:"cors",credentials:"omit"}).then(function(res){
-    if(!res.ok)throw new Error("raw route "+res.status);return res.text();
-  }).then(function(tx){if(!tx||tx.length<20)throw new Error("empty raw response");return tx;});
-}
-var AUTO_RELAYS=[function(u){return "https://r.jina.ai/http://"+u.replace("https://","").replace("http://","");}].concat(RELAYS);
-function relayFetch(url){
-  var i=0;
-  function next(){
-    if(i>=AUTO_RELAYS.length)return Promise.reject(new Error("all fallback routes failed"));
-    var endpoint;
-    try{endpoint=AUTO_RELAYS[i++](url);}catch(e){return next();}
-    var ctl=("AbortController" in window)?new AbortController():null;
-    var timer=ctl?setTimeout(function(){ctl.abort();},12000):0;
-    return fetch(endpoint,ctl?{mode:"cors",signal:ctl.signal}: {mode:"cors"}).then(function(res){
-      clearTimeout(timer);if(!res.ok)throw new Error("fallback "+res.status);return res.text();
-    }).then(function(tx){if(!tx||tx.length<20)throw new Error("empty fallback response");return tx;}).catch(function(){clearTimeout(timer);return next();});
-  }
-  return next();
-}
-function pageFetch(url){
-  return rawFetch(url).then(function(tx){mode="zc";chip();return tx;}).catch(function(primary){
-    return relayFetch(url).then(function(tx){mode="fallback";chip();return tx;}).catch(function(){throw primary;});
-  });
-}
-function openBrowser(q){ showBrowser(); loadingPage(); primeZC().then(function(){ nav(q,true); }); }
-function nav(input,push){
-  var url=looksLikeUrl(input)?normalizeUrl(input):"https://html.duckduckgo.com/html/?q="+encodeURIComponent(input);
-  currentUrl=url;$("#burl").value=url;
-  var entry={kind:"web",url:url};
-  if(push){stack=stack.slice(0,sp+1);stack.push(entry);sp++;}
-  render(entry);
-}
-function render(entry){
-  if(entry.cached){renderRaw(entry.cached,entry.url);return;}
-  loadingPage();
-  pageFetch(entry.url).then(function(html){entry.cached=html;renderRaw(html,entry.url);}).catch(function(){
-    makeRawMessage("proxy routes blocked","The raw API and the automatic fallback routes were blocked by the network. You can still open zero-cors once manually, then retry.",true);
-  });
-}
-window.__nexusNav=function(u){nav(u,true);};
-window.__nexusRetry=function(){if(currentUrl)nav(currentUrl,true);};
-window.__nexusDirect=function(){if(currentUrl)window.open(currentUrl,"_blank");};
-window.__nexusTranslate=function(){var l=translateLink(currentUrl);if(l)window.open(l,"_blank");};
-window.__nexusActivate=function(){window.open(ZC_ORIGIN,"_blank");toast("visit once, then retry");};
-$("#bform").addEventListener("submit",function(e){e.preventDefault();var v=$("#burl").value.trim();if(v)nav(v,true);});
-$("#bback").addEventListener("click",function(){if(sp>0){sp--;render(stack[sp]);$("#burl").value=stack[sp].url;currentUrl=stack[sp].url;}});
-$("#breload").addEventListener("click",function(){if(sp>=0){stack[sp].cached=null;render(stack[sp]);}});
-$("#bopen").addEventListener("click",function(){if(currentUrl)window.open(currentUrl,"_blank");});
-$("#btrans").addEventListener("click",function(){var l=translateLink(currentUrl);if(l){window.open(l,"_blank");toast("routed via google translate engine");}});
-$("#bfull").addEventListener("click",function(){
-  if(document.fullscreenElement){document.exitFullscreen();return;}
-  (frame.requestFullscreen?frame.requestFullscreen():Promise.resolve()).catch(function(){toast("fullscreen blocked here");});
-});
-$("#bclose").addEventListener("click",function(){$("#browser").classList.remove("open");});
-
-/* ---------- palette ---------- */
-var palette=$("#palette"),pinput=$("#pinput"),plist=$("#plist"),psel=0,pitems=[];
-function openPalette(){ palette.classList.add("open"); pinput.value=""; renderPalette(""); pinput.focus(); }
-function closePalette(){ palette.classList.remove("open"); }
-function renderPalette(q){
-  plist.innerHTML="";pitems=[];psel=0;
-  var parsed=parseCommand(q);
-  var list=COMMANDS.filter(function(c){ return !q || c.c.indexOf(q.trim().split(/\s/)[0].toLowerCase())===0 || c.d.indexOf(q.toLowerCase())>=0; });
-  if(q && parsed.cmd==="browser" && q.trim()){
-    var b=document.createElement("div");b.className="pitem sel";
-    b.innerHTML="<b>browser</b><span>open \u201c"+q.trim().replace(/</g,"&lt;")+"\u201d in the proxy browser</span>";
-    b.addEventListener("click",function(){runCommand(parseCommand(q));});
-    plist.appendChild(b);pitems.push({el:b,cmd:parseCommand(q)});
-  }
-  list.forEach(function(c,idx){
-    var d=document.createElement("div");d.className="pitem"+(pitems.length===0&&!q?"":"");
-    d.innerHTML="<b>"+c.c+"</b><span>"+c.d+"</span>";
-    d.addEventListener("click",function(){runCommand({cmd:c.c,arg:""});});
-    plist.appendChild(d);pitems.push({el:d,cmd:{cmd:c.c,arg:""}});
-  });
-}
-pinput.addEventListener("input",function(){renderPalette(pinput.value);});
-pinput.addEventListener("keydown",function(e){
-  if(e.key==="Enter"){e.preventDefault();runCommand(parseCommand(pinput.value));}
-  if(e.key==="Escape"){closePalette();}
-});
-function runCommand(p){
-  closePalette();
-  switch(p.cmd){
-    case "browser": if(p.arg)openBrowser(p.arg); else {showBrowser();} break;
-    case "theme":
-      if(THEMES[p.arg]){applyTheme(p.arg);toast("theme: "+p.arg);}
-      else toast("themes: "+Object.keys(THEMES).join(" / "));
-      break;
-    case "bg":
-      if(BGS.indexOf(p.arg)>=0){applyBg(p.arg);toast("background: "+p.arg);}
-      else toast("bgs: "+BGS.join(" / "));
-      break;
-    case "cloak": doCloak(p.arg); break;
-    case "arcade": openArcade(); break;
-    case "settings": $("#settings").classList.add("open"); break;
-    case "credits": $("#credits").classList.add("open"); break;
-    case "stealth": blobOpen(); break;
-    case "fullscreen":
-      if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();
-      break;
-    default: openPalette(); break;
-  }
 }
 
-/* ---------- main search ---------- */
-$("#searchform").addEventListener("submit",function(e){
-  e.preventDefault();var q=$("#q").value.trim();if(q)openBrowser(q);
-});
-
-/* ---------- arcade ---------- */
-var luminReady=null;
-function loadLumin(){
-  if(luminReady)return luminReady;
-  luminReady=new Promise(function(res,rej){
-    if(window.Lumin){res(window.Lumin);return;}
-    var s=document.createElement("script");
-    s.src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js";
-    s.onload=function(){window.Lumin?res(window.Lumin):rej(new Error("no Lumin"));};
-    s.onerror=function(){rej(new Error("sdk blocked"));};
-    document.head.appendChild(s);
-  }).then(function(L){return L.init({headless:true}).then(function(){return L;});});
-  return luminReady;
-}
-var gPage=1,gQuery="",gTotal=0,gSrc="lumin",FAVS=[],gLoading=false,gDone=false;
-var NEXUS_GAMES=[
-  {id:"roblox",name:"Roblox",url:"https://nowgg.fun",e:"\uD83E\uDD16"},
-  {id:"mc",name:"Minecraft Classic",url:"https://classic.minecraft.net",e:"\u26CF\uFE0F"},
-  {id:"cc",name:"Cookie Clicker",url:"https://orteil.dashnet.org/cookieclicker/",e:"\uD83C\uDF6A"},
-  {id:"2048",name:"2048",url:"https://play2048.co",e:"\uD83E\uDE98"},
-  {id:"tetris",name:"Tetris",url:"https://chvin.github.io/tetris/",e:"\uD83E\uDDF1"},
-  {id:"dino",name:"Chrome Dino",url:"https://chromedino.com",e:"\uD83E\uDD96"},
-  {id:"snake",name:"Snake",url:"https://patorjk.com/games/snake/",e:"\uD83D\uDC0D"},
-  {id:"hex",name:"Hextris",url:"https://hextris.github.io/hextris/",e:"\uD83D\uDD37"},
-  {id:"bird",name:"Floppy Bird",url:"https://nebez.github.io/floppybird/",e:"\uD83D\uDC26"},
-  {id:"pacman",name:"Pac-Man",url:"https://www.google.com/logos/2010/pacman10-i.html",e:"\uD83D\uDC7E"},
-  {id:"slope",name:"Slope",url:"https://slope-game.github.io/rune/slope/",e:"\uD83C\uDFC2"},
-  {id:"gd",name:"Geometry Dash",url:"https://scratch.mit.edu/projects/1054955705/embed",e:"\uD83D\uDFE8"}
-];
-function gstatus(s){$("#gamestatus").textContent=s;}
-function openArcade(){ $("#arcade").classList.add("open"); if($("#gamegrid").children.length===0)loadGames(true); }
-function setSrc(s){
-  gSrc=s;
-  ["lumin","nexus","favs"].forEach(function(k){$("#src-"+k).classList.toggle("on",k===s);});
-  loadGames(true);
-}
-$("#src-lumin").addEventListener("click",function(){setSrc("lumin");});
-$("#src-nexus").addEventListener("click",function(){setSrc("nexus");});
-$("#src-favs").addEventListener("click",function(){setSrc("favs");});
-function isFav(id){ return FAVS.some(function(f){return f.id===id;}); }
-function loadGames(reset){
-  if(gLoading)return;
-  if(reset){gPage=1;gDone=false;$("#gamegrid").innerHTML="";}
-  if(gSrc==="nexus"){
-    gstatus(NEXUS_GAMES.length+" nexus cabinets \u00b7 roblox runs on nowgg.fun");
-    renderGames(NEXUS_GAMES,"nexus");$("#morebtn").style.display="none";return;
-  }
-  if(gSrc==="favs"){
-    favAll().then(function(f){FAVS=f;gstatus(f.length+" favorites");renderGames(f,"favs");$("#morebtn").style.display="none";});
-    return;
-  }
-  if(gDone)return;
-  gLoading=true;$("#morebtn").style.display="flex";gstatus(gPage===1?"racking up the cabinets...":"loading more games...");
-  loadLumin().then(function(L){
-    return L.getGames({page:gPage,limit:24,search:gQuery||undefined}).then(function(r){
-      var list=r.games||[];gTotal=r.total||0;
-      return Promise.all(list.map(function(g){
-        return L.getImageUrl(g.image_token).then(function(u){g.img=u;return g;}).catch(function(){return g;});
-      })).then(function(games){
-        if(!games.length||((gTotal&&gPage*24>=gTotal)||games.length<24))gDone=true;
-        renderGames(games,"lumin");gPage++;
-      });
-    });
-  }).catch(function(){
-    gDone=true;gstatus("lumin sdk unreachable \u2014 showing nexus cabinets");
-    renderGames(NEXUS_GAMES,"nexus");$("#morebtn").style.display="none";
-  }).then(function(){
-    gLoading=false;if(gSrc==="lumin"&&!gDone)$("#morebtn").style.display="flex";
-  });
-}
-$("#gamegrid").addEventListener("scroll",function(){
-  var el=this;
-  if(gSrc==="lumin"&&!gLoading&&!gDone&&el.scrollTop+el.clientHeight>=el.scrollHeight-240)loadGames(false);
-});
-function renderGames(games,src){
-  var grid=$("#gamegrid");
-  games.forEach(function(g){
-    var c=document.createElement("div");c.className="gcard";
-    var th=document.createElement("div");th.className="thumb";
-    if(g.img){var im=document.createElement("img");im.src=g.img;im.alt=g.name;im.loading="lazy";th.appendChild(im);}
-    else{th.textContent=g.e||"\uD83D\uDD79\uFE0F";}
-    var nm=document.createElement("div");nm.className="nm";nm.textContent=g.name;
-    var fb=document.createElement("button");fb.className="favbtn"+(isFav(g.id)?" on":"");fb.title="favorite";
-    fb.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
-    fb.addEventListener("click",function(e){
-      e.stopPropagation();
-      if(isFav(g.id)){favDel(g.id).then(function(){FAVS=FAVS.filter(function(f){return f.id!==g.id;});fb.classList.remove("on");toast("unfavved "+g.name);if(gSrc==="favs")loadGames(true);});}
-      else{favPut({id:g.id,name:g.name,img:g.img,e:g.e,url:g.url}).then(function(){FAVS.push(g);fb.classList.add("on");toast("\u2605 "+g.name);});}
-    });
-    c.appendChild(fb);c.appendChild(th);c.appendChild(nm);
-    c.addEventListener("click",function(){playGame(g,src);});
-    grid.appendChild(c);
-  });
-  if(src==="lumin")gstatus(gTotal+" games via lumin sdk \u00b7 \u2605 to favorite");
-}
-function playGame(g,src){
-  if(src!=="lumin"&&g.url){openBrowser(g.url);return;}
-  $("#arcade").classList.remove("open");showBrowser();
-  currentUrl="arcade:"+g.id;$("#burl").value="arcade \u25B8 "+g.name;
-  loadLumin().then(function(L){return L.getGameUrl(g.id);}).then(function(r){
-    var entry={kind:"direct",url:r.url};
-    stack=stack.slice(0,sp+1);stack.push(entry);sp++;render(entry);
-    toast("hit the \u26F6 button up top to fullscreen");
-  }).catch(function(){
-    toast("couldn't rack up "+g.name);
-  });
-}
-var gdeb;
-$("#gsearch").addEventListener("input",function(){
-  clearTimeout(gdeb);
-  gdeb=setTimeout(function(){gQuery=$("#gsearch").value.trim();if(gSrc!=="lumin")setSrc("lumin");else loadGames(true);},350);
-});
-$("#morebtn").addEventListener("click",function(){loadGames(false);});
-$("#gclose").addEventListener("click",function(){$("#arcade").classList.remove("open");});
-$("#gamesbtn").addEventListener("click",openArcade);
-
-/* ---------- bar buttons / menu / cloaks ---------- */
-$("#crewbtn").addEventListener("click",function(){$("#credits").classList.add("open");});
-$("#setbtn").addEventListener("click",function(){$("#settings").classList.add("open");});
-$("#sclose").addEventListener("click",function(){$("#settings").classList.remove("open");});
-$("#xclose").addEventListener("click",function(){$("#credits").classList.remove("open");});
-$("#logobtn").addEventListener("click",function(){toast("nexus \u00b7 your gateway");});
-var menu=$("#menu"),menubtn=$("#menubtn");
-menubtn.addEventListener("click",function(e){e.stopPropagation();menu.classList.toggle("open");menubtn.classList.toggle("open");});
-document.addEventListener("click",function(e){ if(!menu.contains(e.target)&&e.target!==menubtn){menu.classList.remove("open");menubtn.classList.remove("open");} });
-var homeFav=NEXUS_FAV;
-var cloaks={classroom:["Classes","\uD83D\uDCDA"],gmail:["Inbox (2) - Gmail","\uD83D\uDCE7"],canvas:["Dashboard","\uD83D\uDCD8"]};
-function emojiFav(ch){return "data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">'+ch+"</text></svg>");}
-function doCloak(k){
-  if(k==="error"||k==="reset"){cloakTitle=null;cloakFav=null;toast("stealth: chrome error");}
-  else if(cloaks[k]){cloakTitle=cloaks[k][0];cloakFav=emojiFav(cloaks[k][1]);toast("cloaked as "+k);}
-  else {toast("cloaks: error / classroom / gmail / canvas");return;}
-  applyIdentity();
-}
-menu.addEventListener("click",function(e){
-  var btn=e.target.closest("button");if(!btn)return;
-  var act=btn.getAttribute("data-act");
-  if(act==="cloak")doCloak(btn.getAttribute("data-k"));
-  if(act==="fullscreen"){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}
-  if(act==="stealth")blobOpen();
-  menu.classList.remove("open");menubtn.classList.remove("open");
-});
-
-/* ---------- global keys ---------- */
-addEventListener("keydown",function(e){
-  var typing=document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName);
-  if(locked)return;
-  if(e.key==="/"&&!typing&&!$("#browser").classList.contains("open")&&!$("#arcade").classList.contains("open")&&!$("#settings").classList.contains("open")&&!$("#credits").classList.contains("open")){
-    e.preventDefault();openPalette();
-  }
-  if(e.key==="Escape"){
-    if(palette.classList.contains("open"))closePalette();
-    else if($("#browser").classList.contains("open"))$("#browser").classList.remove("open");
-    else if($("#arcade").classList.contains("open"))$("#arcade").classList.remove("open");
-    else if($("#settings").classList.contains("open"))$("#settings").classList.remove("open");
-    else if($("#credits").classList.contains("open"))$("#credits").classList.remove("open");
-    else{menu.classList.remove("open");menubtn.classList.remove("open");}
+// Search games via Lumin SDK (if it exposes a search method)
+gamesSearchInput.addEventListener('input', (e) => {
+  const query = e.target.value.trim();
+  if (typeof Lumin !== 'undefined' && Lumin.search) {
+    Lumin.search(query);
   }
 });
 
-/* ---------- boot ---------- */
-buildSettingsUI();
-Promise.all([kvGet("theme"),kvGet("bg"),kvGet("relock")]).then(function(v){
-  if(v[0]&&THEMES[v[0]])applyTheme(v[0]);
-  if(v[1]&&BGS.indexOf(v[1])>=0)applyBg(v[1]);
-  if(typeof v[2]==="boolean")SETTINGS.relock=v[2];
-  syncSettingsUI();
-  favAll().then(function(f){FAVS=f;});
-}).catch(function(){ syncSettingsUI(); });
-})();
+/* ---------- INDEXEDDB STORAGE ---------- */
+const DB_NAME = 'nexus-games';
+const DB_VERSION = 1;
+const STORE_NAME = 'gameData';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function storeGameData(games) {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  const store = tx.objectStore(STORE_NAME);
+  games.forEach(g => store.put(g));
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+async function getGameData() {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const store = tx.objectStore(STORE_NAME);
+  return new Promise((resolve, reject) => {
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = reject;
+  });
+}
+
+// Verify game data is stored
+async function verifyGameStorage() {
+  const data = await getGameData();
+  console.log('[Nexus] Game data records in IndexedDB:', data.length);
+  return data.length > 0;
+}
+
+/* ---------- INIT ---------- */
+window.addEventListener('load', async () => {
+  // Wait a tick for defer scripts
+  setTimeout(async () => {
+    initLumin();
+    // Pre-load game data if Lumin exposes it
+    // await verifyGameStorage();
+  }, 1500);
+
+  // Init libcurl
+  await initLibcurl();
+});
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3fbd5416d6c5c14',t:'MTc5MDE5MDQ1Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
