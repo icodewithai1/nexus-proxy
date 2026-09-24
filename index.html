@@ -145,6 +145,10 @@ h1#hero span{color:var(--acc)}
     <input id="gsearch" placeholder="search games..." autocomplete="off">
     <span id="idbBadge">IndexedDB: connecting…</span>
   </div>
+  <div id="recentWrap" class="hidden">
+    <h3 style="margin:0 0 10px;font-size:14px;color:var(--mut)">recently played</h3>
+    <div id="recent" style="display:flex;gap:12px;overflow-x:auto;margin-bottom:20px;padding-bottom:4px"></div>
+  </div>
   <div id="ggrid"></div>
   <div id="luminHost"></div>
 </section>
@@ -227,8 +231,32 @@ const CORS = [
     unwrap: async (r) => { const j = await r.json(); return { buf: new TextEncoder().encode(j.contents || ''), ct: (j.content_type || 'text/html').split(';')[0] }; } },
   { name: 'codetabs',     w: (u) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
 ];
-let assetIdx = 0;                       // CORS relay currently used for <img>/<link>/…
+let assetIdx = -1;                      // -1 = direct assets w/ blob-relay fallback; else CORS relay i
+window.__nxBlob = async (u) => { const d = await chainFetch(u); return new Blob([d.buf], { type: d.ct }); };
+window.__nxPatch = (html, target) => patchDoc(html, target);
+window.__nxFetchAbs = async (u) => { const d = await chainFetch(u); return { buf: d.buf, ct: d.ct }; };
+function AW(a){ return assetIdx >= 0 ? CORS[assetIdx].w(a) : a; }
 function getRelays(){ try { const v = JSON.parse(localStorage.getItem('nx_relays') || 'null'); if (Array.isArray(v) && v.length) return v; } catch(e){} return DEFAULT_RELAYS; }
+
+/* ---- relay probing: prove a relay works, then use it first ---- */
+let bestRelay = localStorage.getItem('nx_best') || null;
+function probeWisp(u){ return new Promise((res, rej) => {
+  const ws = new WebSocket(u);
+  const t = setTimeout(() => { try{ws.close()}catch(e){} rej(new Error('timeout')); }, 5000);
+  ws.onopen = () => { clearTimeout(t); try{ws.close()}catch(e){} res(); };
+  ws.onerror = () => { clearTimeout(t); rej(new Error('fail')); };
+});}
+async function probeRelay(u){
+  try { await probeWisp(u); const d = await libcurlFetch('https://example.com/', u); if (d && d.ok) return true; } catch(e){}
+  return false;
+}
+function orderedRelays(){ const list = getRelays(); return bestRelay ? [bestRelay, ...list.filter(r => r !== bestRelay)] : list; }
+async function pickRelay(){
+  for (const r of orderedRelays()) {
+    if (await probeRelay(r)) { bestRelay = r; localStorage.setItem('nx_best', r); return r; }
+  }
+  return null;
+}
 
 /* libcurl.js inside a Blob worker (single-file: no extra assets) */
 const LCW_SRC = `
@@ -276,7 +304,7 @@ function libcurlFetch(url, relay) {
 
 /* raced chain for the main document; remembers which CORS relay is alive */
 async function chainFetch(url) {
-  const relays = getRelays();
+  const relays = orderedRelays();
   const attempts = [];
   attempts.push((async () => {
     let last = null;
@@ -309,11 +337,15 @@ async function chainFetch(url) {
 
 /* ================= patcher (page context, has DOMParser) ================= */
 function abs(target, u) { try { const a = new URL(u, target).href; return /^https?:\/\//i.test(a) ? a : null; } catch (e) { return null; } }
-function wrapAsset(target, u) { const a = abs(target, u); return a ? CORS[assetIdx].w(a) : u; }
+function wrapAsset(target, u) { const a = abs(target, u); return a ? AW(a) : u; }
 function cssRewrite(css, target) {
-  return String(css || '').replace(/url\(\s*(['"]?)([^)"']+)\1\s*\)/gi, (m, q, u) => {
-    const a = abs(target, u); return a ? 'url(' + q + CORS[assetIdx].w(a) + q + ')' : m;
-  });
+  return String(css || '')
+    .replace(/@import\s+(?:url\(\s*)?(['"]?)([^'");]+)\1\s*\)?/gi, (m, q, u) => {
+      const a = abs(target, u); return a ? '@import ' + q + AW(a) + q : m;
+    })
+    .replace(/url\(\s*(['"]?)([^)"']+)\1\s*\)/gi, (m, q, u) => {
+      const a = abs(target, u); return a ? 'url(' + q + AW(a) + q + ')' : m;
+    });
 }
 const URL_ATTRS = [['a','href'],['link','href'],['img','src'],['script','src'],['iframe','src'],['frame','src'],['embed','src'],['object','data'],['source','src'],['track','src'],['video','src'],['video','poster'],['audio','src'],['input','src'],['form','action'],['body','background']];
 function patchDoc(html, target) {
@@ -321,15 +353,19 @@ function patchDoc(html, target) {
   doc.querySelectorAll('meta[http-equiv]').forEach((m) => {
     const v = (m.getAttribute('http-equiv') || '').toLowerCase();
     if (v.includes('content-security-policy')) m.remove();
+    if (v === 'refresh') {
+      const c = m.getAttribute('content') || '';
+      m.setAttribute('content', c.replace(/url=(['"]?)(.+)\1/i, (mm, q, u) => { const a = abs(target, u); return a ? 'url=' + q + AW(a) + q : mm; }));
+    }
   });
   let base = doc.querySelector('base');
   if (!base) { base = doc.createElement('base'); (doc.head || doc.documentElement).prepend(base); }
   base.setAttribute('href', target);
   for (const [tag, at] of URL_ATTRS) doc.querySelectorAll(tag + '[' + at + ']').forEach((el) => {
-    const a = abs(target, el.getAttribute(at)); if (a) el.setAttribute(at, CORS[assetIdx].w(a));
+    const a = abs(target, el.getAttribute(at)); if (a) el.setAttribute(at, AW(a));
   });
   doc.querySelectorAll('[srcset]').forEach((el) => el.setAttribute('srcset', el.getAttribute('srcset').split(',').map(p => {
-    const s = p.trim().split(/\s+/); const a = abs(target, s[0]); if (a) s[0] = CORS[assetIdx].w(a); return s.join(' ');
+    const s = p.trim().split(/\s+/); const a = abs(target, s[0]); if (a) s[0] = AW(a); return s.join(' ');
   }).join(', ')));
   doc.querySelectorAll('[integrity]').forEach(el => el.removeAttribute('integrity'));
   doc.querySelectorAll('[crossorigin]').forEach(el => el.removeAttribute('crossorigin'));
@@ -356,16 +392,34 @@ var TMPL = __NX_CORSW__;
 var AIDX = __NX_ASSET__;
 function W(u, i){ var a; try { a = new URL(u, TARGET).href; } catch(e){ return u; }
   if (!/^https?:\\/\\//i.test(a)) return u;
-  return TMPL[i == null ? AIDX : i].replace('\\u0001', encodeURIComponent(a)); }
+  var k = (i == null ? AIDX : i);
+  if (k < 0) return a;                       // no live CORS relay: direct, blob fallback on error
+  return TMPL[k].replace('\\u0001', encodeURIComponent(a)); }
 window.__nxW = W;
+/* sites that document.write() at runtime wipe our patch — re-patch what they write */
+try {
+  var odw = document.write.bind(document);
+  document.write = function(s){ try { s = parent.__nxPatch(String(s), TARGET); } catch(e){} return odw(s); };
+  var odo = document.open.bind(document);
+  document.open = function(){ return odo(); };
+} catch(e){}
 var of = window.fetch;
 window.fetch = function(i, init){
-  if (typeof i === 'string' && /^https?:/i.test(i)) {
+  var u = typeof i === 'string' ? i : (i && i.url);
+  if (u && /^https?:/i.test(u)) {
     var chain = [AIDX,0,1,2].filter(function(v,idx,arr){ return arr.indexOf(v)===idx; });
-    var k = 0; var self=this; var args=arguments;
+    var k = 0; var self = this;
     return (function next(){
-      if (k >= chain.length) return of.call(self, i, init);
-      return of.call(self, W(i, chain[k++]), init).then(function(r){ if (r.ok || r.type==='opaque') return r; throw r; }, next);
+      if (k >= chain.length) {
+        /* native paths dead (CORS etc) → relay-fetch via parent, synthesize Response */
+        try {
+          var absU = new URL(u, TARGET).href;
+          return parent.__nxFetchAbs(absU).then(function(d){
+            return new Response(d.buf, { status: 200, headers: { 'content-type': d.ct } });
+          });
+        } catch(e) { return of.call(self, i, init); }
+      }
+      return of.call(self, W(u, chain[k++]), init).then(function(r){ if (r.ok || r.type==='opaque') return r; throw r; }, next);
     })();
   }
   return of.call(this, i, init);
@@ -383,10 +437,36 @@ function hook(proto, prop){
 hook(HTMLImageElement.prototype,'src'); hook(HTMLScriptElement.prototype,'src');
 hook(HTMLLinkElement.prototype,'href'); hook(HTMLIFrameElement.prototype,'src');
 hook(HTMLSourceElement.prototype,'src'); hook(HTMLMediaElement.prototype,'src');
+/* setAttribute path (libs that set attrs dynamically) */
+var osa = Element.prototype.setAttribute;
+Element.prototype.setAttribute = function(n, v){
+  if (typeof v === 'string' && /^https?:/i.test(v)) {
+    var t = this.tagName;
+    if (n === 'src' && /^(IMG|SCRIPT|IFRAME|FRAME|EMBED|SOURCE|VIDEO|AUDIO|TRACK|INPUT)$/.test(t)) { this.dataset.nxabs = v; return osa.call(this, n, W(v)); }
+    if (n === 'href' && t === 'LINK') { this.dataset.nxabs = v; return osa.call(this, n, W(v)); }
+    if (n === 'poster' && t === 'VIDEO') return osa.call(this, n, W(v));
+  }
+  return osa.call(this, n, v);
+};
 /* relay-fail cycler */
 document.addEventListener('error', function(e){
   var el = e.target; if (!el || !el.dataset || !el.dataset.nxabs) return;
-  var i = (+el.dataset.nxr || AIDX) + 1; if (i >= TMPL.length) return;
+  var i = (+el.dataset.nxr || (AIDX < 0 ? -1 : AIDX)) + 1;
+  if (i >= TMPL.length) {
+    /* every CORS relay dead: refetch through the libcurl relay as a blob */
+    try {
+      parent.__nxBlob(el.dataset.nxabs).then(function(bl){
+        if (el.tagName === 'LINK') {
+          var st = document.createElement('style'); st.textContent = '';
+          el.replaceWith(st);
+          bl.text().then(function(t){ st.textContent = t; });
+        } else if (el.tagName === 'SCRIPT') {
+          bl.text().then(function(t){ var s2 = document.createElement('script'); s2.textContent = t; el.replaceWith(s2); });
+        } else { el.src = URL.createObjectURL(bl); }
+      });
+    } catch(err){}
+    return;
+  }
   el.dataset.nxr = i;
   var set = el.src != null ? 'src' : 'href';
   try { el[set] = W(el.dataset.nxabs, i); } catch(err){}
@@ -447,6 +527,7 @@ try { window.WebSocket = WispWS; } catch(e){}
 
 /* ================= proxy view ================= */
 const stack = [];
+const nxRetry = {};
 async function loadProxy(url) {
   $('#pload').classList.remove('hidden');
   $('#purl').value = url;
@@ -456,11 +537,17 @@ async function loadProxy(url) {
     if (ct === 'text/html') {
       $('#frame').srcdoc = patchDoc(new TextDecoder().decode(d.buf), url);
     } else {
-      $('#frame').srcdoc = '<iframe style="width:100%;height:100%;border:0" src="' + CORS[assetIdx].w(url) + '"></iframe>';
+      $('#frame').srcdoc = '<iframe style="width:100%;height:100%;border:0" src="' + AW(abs(url,url)||url) + '"></iframe>';
     }
     $('#via').textContent = 'via ' + d.via;
+    delete nxRetry[url];
   } catch (e) {
-    $('#frame').srcdoc = '<body style="font-family:system-ui;background:#111;color:#ddd;display:grid;place-items:center;height:100vh"><div style="max-width:540px;text-align:center"><h2 style="color:#86efac">NEXUS relay miss</h2><p>' + String(e.message || e).replace(/</g,'&lt;') + '</p><button onclick="location.reload()" style="background:#86efac;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer">Retry</button></div></body>';
+    if (!nxRetry[url]) {                      // proxy stopped working? re-probe relays, retry once
+      nxRetry[url] = 1;
+      await pickRelay();
+      return loadProxy(url);
+    }
+    $('#frame').srcdoc = '<body style="font-family:system-ui;background:#111;color:#ddd;display:grid;place-items:center;height:100vh"><div style="max-width:540px;text-align:center"><h2 style="color:#86efac">NEXUS relay miss</h2><p>' + String(e.message || e).replace(/</g,'&lt;') + '</p><button onclick="parent.postMessage({__nx:\'retry\'},\'*\')" style="background:#86efac;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer">Retry</button></div></body>';
     $('#via').textContent = 'via none';
   }
   $('#pload').classList.add('hidden');
@@ -475,6 +562,7 @@ function openProxy(url) {
 }
 window.addEventListener('message', (e) => {
   const d = e.data || {};
+  if (d.__nx === 'retry' && stack.length) { delete nxRetry[stack[stack.length-1]]; loadProxy(stack[stack.length-1]); return; }
   if (d.__nx === 'nav' && d.url) { let u = d.url; if (!/^https?:\/\//i.test(u)) { try { u = new URL(u, stack[stack.length-1]).href; } catch(x){ return; } } stack.push(u); $('#proxyView').classList.remove('hidden'); loadProxy(u); }
 });
 function norm(v){ v=v.trim(); if(/^https?:\/\//i.test(v)) return v; if(/^[^\s]+\.[^\s]{2,}$/.test(v)) return 'https://'+v; return 'https://lite.duckduckgo.com/lite/?q='+encodeURIComponent(v); }
@@ -564,12 +652,20 @@ $('#navRelays').onclick = async () => {
 };
 
 /* ================= games (LuminSDK + IndexedDB) ================= */
-function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('nexus',1);
-  r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains('kv')) db.createObjectStore('kv'); if(!db.objectStoreNames.contains('games')) db.createObjectStore('games',{keyPath:'id'}); };
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('nexus',2);
+  r.onupgradeneeded=()=>{ const db=r.result;
+    if(!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+    if(!db.objectStoreNames.contains('played')) db.createObjectStore('played',{keyPath:'id'});
+  };
   r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });}
-async function gamesPut(list){ const db=await idb(); return new Promise(res=>{ const tx=db.transaction('games','readwrite'); list.forEach(g=>tx.objectStore('games').put(g)); tx.oncomplete=res; });}
-async function gamesAll(){ const db=await idb(); return new Promise(res=>{ const g=db.transaction('games').objectStore('games').getAll(); g.onsuccess=()=>res(g.result||[]); });}
-async function gamesCount(){ const db=await idb(); return new Promise(res=>{ const g=db.transaction('games').objectStore('games').count(); g.onsuccess=()=>res(g.result); });}
+/* IndexedDB stores ONLY played-game data, per spec */
+async function playedPut(gm){ const db=await idb(); return new Promise(res=>{
+  const tx=db.transaction('played','readwrite'); const st=tx.objectStore('played');
+  const g=st.get(gm.id);
+  g.onsuccess=()=>{ const old=g.result||{plays:0}; st.put({ id:gm.id, name:gm.name||gm.id, category:gm.category||'', at:Date.now(), plays:(old.plays||0)+1 }); };
+  tx.oncomplete=res; });}
+async function playedAll(){ const db=await idb(); return new Promise(res=>{ const g=db.transaction('played').objectStore('played').getAll(); g.onsuccess=()=>res((g.result||[]).sort((a,b)=>b.at-a.at)); });}
+async function playedCount(){ const db=await idb(); return new Promise(res=>{ const g=db.transaction('played').objectStore('played').count(); g.onsuccess=()=>res(g.result); });}
 let luminReady = false;
 async function initGames(){
   const badge = $('#idbBadge'); badge.className=''; badge.textContent='IndexedDB: connecting…';
@@ -577,11 +673,24 @@ async function initGames(){
   const q = $('#gsearch').value.trim();
   let list = null;
   if (luminReady) { try { list = q ? (await Lumin.search(q)).games : (await Lumin.getGames({ page:1, limit:48 })).games; } catch(e){} }
-  if (list && list.length) { await gamesPut(list.map(g => ({ id:g.id, name:g.name, category:g.category||'', image_token:g.image_token||'' }))); renderGames(list, true); }
-  else renderGames(await gamesAll(), false);
-  const n = await gamesCount();
-  if (n > 0) { badge.className='ok'; badge.textContent='IndexedDB ✓ verified — '+n+' games stored'; }
-  else badge.textContent = 'IndexedDB: empty';
+  renderGames(list || [], !!list);
+  const recent = await playedAll();
+  renderRecent(recent);
+  const n = await playedCount();
+  if (n > 0) { badge.className='ok'; badge.textContent='IndexedDB ✓ verified — '+n+' played game'+(n>1?'s':'')+' stored'; }
+  else badge.textContent = 'IndexedDB: ready — played games will be stored';
+}
+function renderRecent(list){
+  const wrap = $('#recentWrap'), row = $('#recent');
+  if (!list || !list.length) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden'); row.innerHTML = '';
+  list.slice(0, 12).forEach(gm => {
+    const c = document.createElement('button');
+    c.className = 'gcard'; c.style.minWidth = '130px';
+    c.innerHTML = '<div class="tt">' + (gm.name||gm.id).replace(/</g,'&lt;') + '</div><div class="cc">played ×' + gm.plays + '</div>';
+    c.onclick = () => playGame(gm);
+    row.appendChild(c);
+  });
 }
 function renderGames(list, live){
   const g = $('#ggrid'); g.innerHTML='';
@@ -596,10 +705,21 @@ function renderGames(list, live){
   if (!list || !list.length) g.innerHTML = '<p style="color:var(--mut)">No games loaded — LuminSDK unreachable and no IndexedDB cache.</p>';
 }
 $('#gsearch').addEventListener('keydown', e => { if (e.key==='Enter') initGames(); });
+let pLoaded = false, pWatch = null;
 async function playGame(gm){
   $('#player').classList.remove('hidden'); $('#pTitle').textContent = gm.name||'game';
-  if (luminReady) { try { const { url } = await Lumin.getGameUrl(gm.id); $('#pFrame').src = url; return; } catch(e){} }
-  $('#pFrame').src = 'about:blank';
+  playedPut(gm).then(() => { if (!$('#viewGames').classList.contains('hidden')) initGames(); });
+  pLoaded = false; clearTimeout(pWatch);
+  const pf = $('#pFrame');
+  pf.onload = () => { pLoaded = true; };
+  pf.onerror = () => { if (!pLoaded) gameViaProxy(gm); };
+  pWatch = setTimeout(() => { if (!pLoaded) gameViaProxy(gm); }, 9000);
+  if (luminReady) { try { const { url } = await Lumin.getGameUrl(gm.id); gm._url = url; pf.src = url; return; } catch(e){} }
+  pf.src = 'about:blank';
+}
+async function gameViaProxy(gm){
+  if (!gm._url) return;
+  try { const d = await chainFetch(gm._url); $('#pFrame').srcdoc = patchDoc(new TextDecoder().decode(d.buf), gm._url); pLoaded = true; } catch(e){}
 }
 $('#pExit').onclick = () => { $('#player').classList.add('hidden'); $('#pFrame').src='about:blank'; if (luminReady) { try{Lumin.endGame()}catch(e){} } };
 
@@ -653,11 +773,12 @@ document.addEventListener('visibilitychange', () => {
 /* ================= boot ================= */
 window.addEventListener('load', () => {
   applyBg(localStorage.getItem('nx_bg') || 'aurora');
+  pickRelay();   // prove a relay works, remember it, use it first
   (async () => { for (let i = 0; i < CORS.length; i++) { try { const r = await fetch(CORS[i].w('https://example.com')); if (r.ok) { assetIdx = i; return; } } catch (e) {} } })();
   if (window.lucide) lucide.createIcons();
   renderDock(); renderApps(); cloakOn();
   setTimeout(()=>{ if (window.lucide) lucide.createIcons(); }, 800);
 });
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a404af675a46fc79',t:'MTc5MDI4MzI3NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
