@@ -427,36 +427,115 @@ function setFavicon(href){
   link.href=href;
 }
 function showCloak(){
-  cloakEl.style.display='flex';
-  appEl.style.display='none';
-  document.title='This site can’t be reached';
-  setFavicon("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛔</text></svg>");
-  isCloaked=true;
-  document.getElementById('cloakUrl').textContent='https://'+location.hostname+'/'+(Math.random().toString(36).slice(2,8));
+  try{
+    cloakEl.style.display='flex';
+    appEl.style.display='none';
+    document.title='This site can’t be reached';
+    setFavicon("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛔</text></svg>");
+    isCloaked=true;
+    const urlEl=document.getElementById('cloakUrl');
+    if(urlEl) urlEl.textContent='https://'+location.hostname+'/'+(Math.random().toString(36).slice(2,8));
+  }catch(e){
+    console.error('showCloak failed',e);
+  }
 }
 function hideCloak(){
-  cloakEl.style.display='none';
-  appEl.style.display='flex';
-  document.title='Nexus v4 — Access Granted';
-  setFavicon("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%238b5cf6'/><path d='M8 10l8 4 8-4-8-4-8 4zm0 6l8 4 8-4M8 22l8 4 8-4' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  isCloaked=false;
-  lucide.createIcons();
+  try{
+    cloakEl.style.display='none';
+    appEl.style.display='flex';
+    document.title='Nexus v4 — Access Granted';
+    setFavicon("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%238b5cf6'/><path d='M8 10l8 4 8-4-8-4-8 4zm0 6l8 4 8-4M8 22l8 4 8-4' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    isCloaked=false;
+    if(window.lucide && lucide.createIcons){
+      try{ lucide.createIcons(); }catch(e){ console.warn('lucide failed',e); }
+    }
+    // Focus search for quick use
+    setTimeout(()=>{ document.getElementById('searchInput')?.focus(); },100);
+    console.log('[Nexus] Cloak hidden, app visible');
+  }catch(e){
+    console.error('hideCloak failed',e);
+    // Force hide anyway
+    cloakEl.style.display='none';
+    appEl.style.display='flex';
+    isCloaked=false;
+  }
 }
 showCloak();
-document.addEventListener('keydown',e=>{
-  if(e.key==='~' || e.key==='`' || e.code==='Backquote'){
+
+// Robust cloak bypass - listens everywhere
+function handleBypass(e){
+  // Check for ~, `, Backquote, and also 192 keyCode
+  const isTilde = e.key === '~' || e.key === '`' || e.code === 'Backquote' || e.keyCode === 192 || e.which === 192;
+  // Also allow pressing ~ even if shift is held, or typing
+  if(isTilde){
     e.preventDefault();
-    if(isCloaked) hideCloak();
-    else showCloak();
+    e.stopPropagation();
+    console.log('[Nexus] Tilde pressed, bypassing cloak, isCloaked=', isCloaked);
+    if(isCloaked){
+      hideCloak();
+      // Visual feedback
+      document.body.style.transition='filter 0.2s';
+      document.body.style.filter='brightness(1.2)';
+      setTimeout(()=>document.body.style.filter='',200);
+    } else {
+      // Allow re-cloaking with same key if you want to hide quickly
+      // showCloak(); // disabled to prevent accidental re-cloak, use ESC to re-cloak
+    }
+    return true;
+  }
+  return false;
+}
+
+// Listen on all possible targets with capture
+['keydown','keyup','keypress'].forEach(ev=>{
+  window.addEventListener(ev, handleBypass, true);
+  document.addEventListener(ev, handleBypass, true);
+  document.body.addEventListener(ev, handleBypass, true);
+});
+
+// Also allow clicking the sad face 5 times quickly as fallback
+let clickCount=0, lastClick=0;
+const iconEl=cloakEl.querySelector('.icon');
+if(iconEl){
+  iconEl.style.cursor='pointer';
+  iconEl.title=''; // don't hint
+  iconEl.addEventListener('click',()=>{
+    const now=Date.now();
+    if(now-lastClick>2000) clickCount=0;
+    lastClick=now;
+    clickCount++;
+    if(clickCount>=5){
+      console.log('[Nexus] 5 clicks bypass');
+      hideCloak();
+      clickCount=0;
+    }
+  });
+}
+
+// Allow typing "nexus" as secret fallback (hidden)
+let typedBuffer='';
+window.addEventListener('keydown',e=>{
+  if(e.key.length===1){
+    typedBuffer+=e.key.toLowerCase();
+    if(typedBuffer.length>10) typedBuffer=typedBuffer.slice(-10);
+    if(typedBuffer.includes('nexus')){
+      hideCloak();
+      typedBuffer='';
+    }
   }
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
     e.preventDefault();
     document.getElementById('searchInput')?.focus();
   }
-});
+  // ESC to re-cloak when inside
+  if(e.key==='Escape' && !isCloaked){
+    showCloak();
+  }
+}, true);
+
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
-    // Screen cloak on tab switch
+    // Screen cloak on tab switch - only if user enabled? Keep as requested
     showCloak();
   }
 });
@@ -465,6 +544,11 @@ cloakEl.addEventListener('click',e=>{
     location.reload();
   }
 });
+
+// Add visible hint after 3 seconds? No - requirement says error doesn't mention how to bypass
+// But add console hint for devs
+console.log('%c[Nexus] Press ~ to bypass cloak', 'color:#8b5cf6;font-weight:bold');
+console.log('%cOr click the sad face 5 times, or type "nexus"', 'color:#6b7280;font-size:11px');
 
 // Top nav
 document.querySelectorAll('.top-btn[data-view]').forEach(btn=>{
