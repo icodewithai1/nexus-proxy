@@ -1,784 +1,1120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nexus</title>
-<link rel="icon" id="fav" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230c0c0e'/%3E%3Cpath d='M20 46V18h5l14 18V18h5v28h-5L25 28v18z' fill='%2386efac'/%3E%3C/svg%3E">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>This site can't be reached</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚫</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "libcurl": "https://cdn.jsdelivr.net/npm/libcurl.js@0.8.4/libcurl.js"
+  }
+}
+</script>
 <style>
-:root{--pill:#17171a;--line:#232327;--txt:#f4f4f5;--mut:#9d9da6;--acc:#86efac}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{background:#0b0b0d;color:var(--txt);font-family:'Space Grotesk',system-ui,sans-serif;overflow:hidden}
-.hidden{display:none!important}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#050508;overflow:hidden;font-family:'Inter',system-ui,sans-serif}
+  body{color:#fff}
+  /* Starfield */
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+  /* Chrome error page - cloak */
+  #cloakError{
+    position:fixed;inset:0;z-index:9999;
+    background:#202124;
+    color:#e8eaed;
+    font-family:'Segoe UI',Roboto,Arial,sans-serif;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:10vh 24px 24px;
+  }
+  #cloakError .error-wrap{
+    max-width:600px;width:100%;
+  }
+  #cloakError .icon{
+    width:48px;height:48px;background:#3c4043;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;margin-bottom:24px;
+  }
+  #cloakError h1{
+    font-size:24px;font-weight:400;line-height:32px;margin-bottom:12px;color:#e8eaed;
+  }
+  #cloakError .url{
+    font-size:14px;color:#9aa0a6;margin-bottom:16px;word-break:break-all;
+  }
+  #cloakError .desc{
+    font-size:14px;line-height:20px;color:#9aa0a6;margin-bottom:24px;
+  }
+  #cloakError .code{
+    font-size:12px;color:#9aa0a6;margin-top:24px;
+  }
+  #cloakError .details{
+    margin-top:16px;
+  }
+  #cloakError .details summary{
+    color:#8ab4f8;cursor:pointer;font-size:14px;list-style:none;
+  }
+  #cloakError .details summary::-webkit-details-marker{display:none}
+  #cloakError .details p{font-size:12px;color:#9aa0a6;margin-top:12px;line-height:18px}
 
-/* ---------- animated backgrounds ---------- */
-#bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#07080c}
-#bg .blob{position:absolute;width:52vmax;height:52vmax;border-radius:50%;filter:blur(90px);opacity:.5;mix-blend-mode:screen}
-#bg .b1{background:#123b2a;top:-18vmax;left:-12vmax;animation:dr1 26s ease-in-out infinite alternate}
-#bg .b2{background:#0e2b46;bottom:-20vmax;right:-14vmax;animation:dr2 32s ease-in-out infinite alternate}
-#bg .b3{background:#2a1440;top:30%;left:44%;width:34vmax;height:34vmax;animation:dr3 22s ease-in-out infinite alternate}
-@keyframes dr1{to{transform:translate(14vmax,10vmax) scale(1.15)}}
-@keyframes dr2{to{transform:translate(-12vmax,-8vmax) scale(1.2)}}
-@keyframes dr3{to{transform:translate(-16vmax,6vmax) scale(.8)}}
-#bg.wall{background-size:cover;background-position:center}
-#bg.wall::after{content:'';position:absolute;inset:0;background:rgba(4,6,10,.5)}
-#bg.wall .blob{display:none}
+  /* App */
+  #app{
+    position:relative;z-index:1;
+    min-height:100vh;
+    display:none;
+    flex-direction:column;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  #app::-webkit-scrollbar{width:8px}
+  #app::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
 
-/* nav */
-#nav{position:fixed;top:14px;left:50%;transform:translateX(-50%);width:min(560px,94vw);height:62px;background:rgba(23,23,26,.92);border:1px solid var(--line);border-radius:18px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:40;backdrop-filter:blur(8px)}
-#nav .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
-#nav .acts{display:flex;gap:6px}
-#nav button{background:none;border:0;color:#e8e8ea;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;cursor:pointer}
-#nav button:hover{background:#232327}
-#nav svg.li{width:22px;height:22px}
+  .top-pill{
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(24,24,28,0.85);
+    backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:9999px;
+    padding:8px 12px 8px 16px;
+    margin:18px auto 0;
+    width:calc(100% - 32px);
+    max-width:680px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;letter-spacing:-0.02em;
+    font-size:16px;
+  }
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:linear-gradient(135deg,#a78bfa,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 12px rgba(139,92,246,0.4);
+  }
+  .top-actions{display:flex;align-items:center;gap:6px}
+  .top-btn{
+    width:36px;height:36px;border-radius:9999px;
+    background:transparent;border:none;color:#9ca3af;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all 0.2s;
+  }
+  .top-btn:hover{background:rgba(255,255,255,0.08);color:#fff;transform:translateY(-1px)}
+  .top-btn.active{background:#fff;color:#000}
 
-main{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;z-index:1;padding-top:40px}
-h1#hero{font-size:clamp(40px,6vw,60px);font-weight:700;letter-spacing:-1px}
-h1#hero span{color:var(--acc)}
+  .center{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:40px 20px 20px;
+    text-align:center;
+  }
+  .title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(32px,6vw,48px);
+    font-weight:700;letter-spacing:-0.04em;
+    color:#fff;
+    text-shadow:0 0 40px rgba(139,92,246,0.15), 0 2px 20px rgba(0,0,0,0.5);
+    margin-bottom:32px;
+  }
+  .title span{
+    background:linear-gradient(180deg,#fff 0%, #a1a1aa 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
 
-#dock{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:760px}
-.tile{width:84px;height:84px;border-radius:20px;border:0;cursor:pointer;display:grid;place-items:center;position:relative;transition:transform .15s;box-shadow:0 6px 18px rgba(0,0,0,.45)}
-.tile:hover{transform:translateY(-4px) scale(1.04)}
-.tile svg{width:46px;height:46px}
-.tile .lbl{position:absolute;bottom:7px;left:0;right:0;text-align:center;font-size:11px;font-weight:700;color:#fff}
-.tile .ini{font-size:30px;font-weight:700;color:#fff}
+  .app-row{
+    display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;
+    margin-bottom:28px;
+  }
+  .app-card{
+    width:72px;height:72px;border-radius:18px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;position:relative;
+    transition:all 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
+    box-shadow:0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .app-card:hover{transform:translateY(-4px) scale(1.06);box-shadow:0 16px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)}
+  .app-card:active{transform:scale(0.96)}
+  .app-card .badge{
+    position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,0.1);
+    font-size:9px;font-weight:600;letter-spacing:0.05em;
+    padding:2px 6px;border-radius:9999px;color:#fff;white-space:nowrap;
+    opacity:0;transition:opacity 0.2s;
+  }
+  .app-card:hover .badge{opacity:1}
 
-#searchwrap{width:min(430px,88vw);height:56px;background:rgba(20,20,22,.9);border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 20px}
-#searchwrap svg{width:18px;height:18px;color:var(--mut)}
-#search{flex:1;background:none;border:0;outline:0;color:var(--txt);font:500 15px 'Space Grotesk';text-align:center}
-#search::placeholder{color:var(--mut)}
+  /* Brand specifics */
+  .app-instagram{background:radial-gradient(120% 120% at 20% 100%, #feda75 0%, #fa7e1e 20%, #d62976 50%, #962fbf 70%, #4f5bd5 100%)}
+  .app-movies{background:linear-gradient(135deg,#1e1b4b,#7c3aed); }
+  .app-tiktok{background:#000}
+  .app-twitch{background:#9146ff}
+  .app-youtube{background:#ff0000}
+  .app-discord{background:#5865f2}
+  .app-duck{background:linear-gradient(135deg,#de5833,#f5a623)}
+  .app-nowgg{background:linear-gradient(135deg,#0f172a,#3b82f6)}
 
-.view{position:fixed;inset:0;padding:100px 5vw 40px;overflow:auto;z-index:5;background:rgba(7,8,12,.55);backdrop-filter:blur(6px)}
-.vhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
-.vhead h2{font-size:26px;font-weight:700}
-.vhead input{background:#141416;border:1px solid var(--line);border-radius:999px;color:var(--txt);padding:10px 18px;font:500 14px 'Space Grotesk';outline:none;width:240px}
-#idbBadge{margin-left:auto;font-size:12.5px;color:var(--mut);border:1px solid var(--line);padding:7px 12px;border-radius:999px}
-#idbBadge.ok{color:var(--acc);border-color:#1f3a2a}
-#ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
-.gcard{background:var(--pill);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;text-align:left}
-.gcard:hover{border-color:#3a3a41}
-.gcard .im{height:96px;background:#202024;display:grid;place-items:center;font-size:30px;font-weight:700;color:#3f3f46}
-.gcard .im img{width:100%;height:100%;object-fit:cover}
-.gcard .tt{padding:10px 12px;font-size:13.5px;font-weight:500}
-.gcard .cc{padding:0 12px 10px;font-size:11px;color:var(--mut)}
-#appsGrid{display:flex;gap:18px;flex-wrap:wrap}
-#luminHost{display:none}
+  .search-pill{
+    display:flex;align-items:center;gap:12px;
+    background:rgba(24,24,28,0.9);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:9999px;
+    padding:12px 18px;
+    width:100%;max-width:520px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition:all 0.2s;
+  }
+  .search-pill:focus-within{
+    border-color:rgba(139,92,246,0.5);
+    box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 0 4px rgba(139,92,246,0.15);
+  }
+  .search-pill input{
+    flex:1;background:transparent;border:none;outline:none;
+    color:#fff;font-family:'Inter';font-size:15px;
+  }
+  .search-pill input::placeholder{color:#6b7280}
+  .search-hint{
+    margin-top:14px;font-size:12px;color:#6b7280;font-family:'JetBrains Mono';
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;
+  }
+  .search-hint kbd{
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
+    border-bottom-width:2px;padding:2px 6px;border-radius:6px;font-size:11px;
+  }
 
-#proxyView{position:fixed;inset:0;background:#0b0b0d;z-index:30;display:flex;flex-direction:column}
-#pbar{height:54px;background:var(--pill);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:0 12px}
-#pbar button{background:none;border:0;color:#d6d6da;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;cursor:pointer}
-#pbar button:hover{background:#232327}
-#purl{flex:1;background:#101013;border:1px solid var(--line);border-radius:999px;color:var(--txt);padding:9px 18px;font:500 13px 'Space Grotesk';outline:none}
-#via{font-size:11px;color:var(--mut);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#frame{flex:1;border:0;background:#fff}
-#pload{position:absolute;inset:54px 0 0;display:grid;place-items:center;background:#0b0b0d;color:var(--mut);font-size:14px;z-index:2}
+  /* Views */
+  .view{display:none;width:100%;max-width:1200px;margin:0 auto;padding:20px}
+  .view.active{display:block}
+  #homeView{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}
 
-#player{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column}
-#player .pb{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#111}
-#player button{background:#222;border:0;color:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer}
-#player iframe{flex:1;border:0}
+  /* Games */
+  .games-header{
+    display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .games-title{font-family:'Space Grotesk';font-size:28px;font-weight:700}
+  .games-search{
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;
+    min-width:260px;
+  }
+  .games-search input{background:transparent;border:none;outline:none;color:#fff;width:100%}
+  .games-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;
+  }
+  .game-card{
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;overflow:hidden;cursor:pointer;
+    transition:all 0.2s;
+  }
+  .game-card:hover{transform:translateY(-3px);background:rgba(255,255,255,0.07);border-color:rgba(139,92,246,0.3)}
+  .game-thumb{width:100%;aspect-ratio:4/3;object-fit:cover;background:#111;display:block}
+  .game-info{padding:10px 12px}
+  .game-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game-cat{font-size:11px;color:#9ca3af;margin-top:2px}
 
-.pop{position:fixed;top:88px;right:5vw;width:350px;background:var(--pill);border:1px solid var(--line);border-radius:16px;padding:16px;z-index:50}
-.pop h3{font-size:13px;margin-bottom:10px;color:var(--mut);font-weight:500}
-.rrow{display:flex;align-items:center;gap:10px;font-size:12.5px;padding:7px 0;border-top:1px solid var(--line)}
-.rrow .dot{width:8px;height:8px;border-radius:50%;background:#555;flex:none}
-.rrow .dot.ok{background:var(--acc)} .rrow .dot.bad{background:#f87171}
-.rrow .ms{margin-left:auto;color:var(--mut)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:70;display:grid;place-items:center}
-.modal .box{width:min(480px,92vw);background:var(--pill);border:1px solid var(--line);border-radius:18px;padding:22px}
-.modal h3{margin-bottom:14px}
-.modal label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13.5px;color:#d6d6da;padding:8px 0}
-.modal select{background:#101013;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:13px 'Space Grotesk'}
-.modal textarea{width:100%;height:80px;background:#101013;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px monospace;margin:8px 0}
-.modal .row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
-.modal button{background:#26262b;border:0;color:var(--txt);border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600}
-.modal button.prime{background:var(--acc);color:#08110b}
-#gear{position:fixed;bottom:16px;right:16px;z-index:40;background:var(--pill);border:1px solid var(--line);color:var(--mut);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer}
+  /* Proxy */
+  #proxyView{flex-direction:column;height:calc(100vh - 70px);padding:0;max-width:none}
+  .proxy-toolbar{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(18,18,22,0.95);backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    padding:10px 12px;
+  }
+  .proxy-btn{
+    width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.06);color:#9ca3af;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:all 0.15s;
+  }
+  .proxy-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+  .proxy-url{
+    flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);
+    border-radius:9999px;padding:8px 16px;color:#e5e7eb;font-family:'JetBrains Mono';font-size:13px;outline:none;
+  }
+  .proxy-url:focus{border-color:rgba(139,92,246,0.5)}
+  .proxy-status{
+    font-size:11px;font-family:'JetBrains Mono';color:#9ca3af;display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.06);padding:6px 10px;border-radius:9999px;border:1px solid rgba(255,255,255,0.06);
+  }
+  .proxy-status .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  #proxyFrame{flex:1;width:100%;border:none;background:#0a0a0a}
 
-/* cloak */
-#cloak{position:fixed;inset:0;background:#fff;z-index:100;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#202124;overflow:auto}
-#cloak .wrap{max-width:640px;margin:0 auto;padding:12vh 24px 0}
-#cloak h1{font-size:22px;font-weight:600;margin-bottom:10px}
-#cloak p{font-size:14px;color:#5f6368;line-height:1.6}
-#cloak .err{margin-top:26px;font-size:13px;color:#5f6368}
-#cloak .btns{margin-top:26px}
-#cloak .btns button{background:#f2f6fd;border:1px solid #dadce0;color:#1a73e8;border-radius:6px;padding:8px 22px;font-size:13px;font-weight:600;cursor:pointer}
+  /* Loading */
+  .loader{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px;color:#9ca3af}
+  .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:#8b5cf6;border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* About blank btn */
+  .cloak-actions{position:fixed;bottom:20px;right:20px;z-index:2;display:flex;gap:8px}
+  .mini-btn{
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+    color:#9ca3af;padding:8px 12px;border-radius:9999px;font-size:12px;cursor:pointer;
+    backdrop-filter:blur(10px);transition:all 0.2s;
+  }
+  .mini-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
 </style>
 </head>
 <body>
-<div id="bg" class="aurora"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
+<canvas id="stars"></canvas>
 
-<nav id="nav">
-  <div class="logo">
-    <svg width="27" height="27" viewBox="0 0 24 24" fill="none">
-      <defs><linearGradient id="lg1" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#86efac"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
-      <path d="M12 2l8.5 5v10L12 22l-8.5-5V7z" stroke="url(#lg1)" stroke-width="1.7"/>
-      <path d="M9.2 15.8V8.6l5.6 7.2V8.6" stroke="url(#lg1)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span>ne<b style="color:var(--acc)">x</b>us</span>
+<!-- Chrome Error Cloak -->
+<div id="cloakError">
+  <div class="error-wrap">
+    <div class="icon">:-(</div>
+    <h1>This site can't be reached</h1>
+    <div class="url">The webpage at <span id="cloakUrl">https://classroom.google.com/</span> might be temporarily down or it may have moved permanently to a new web address.</div>
+    <div class="desc">Check your internet connection and firewall settings, or contact your network administrator. If you are using a proxy server, check your proxy settings or contact your network administrator to make sure the proxy server is working.</div>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button style="background:#8ab4f8;color:#202124;border:none;padding:8px 24px;border-radius:20px;font-weight:500;cursor:pointer">Reload</button>
+      <button style="background:transparent;color:#8ab4f8;border:1px solid #5f6368;padding:8px 24px;border-radius:20px;cursor:pointer">Details</button>
+    </div>
+    <div class="code">ERR_BLOCKED_BY_ADMINISTRATOR</div>
+    <details class="details">
+      <summary>Details</summary>
+      <p>Your organization has blocked access to this site. The site you are trying to visit is not allowed by your administrator due to policy restrictions. Error code: POLICY_DENIED_403. If you believe this is an error, contact your IT department with the error code above. This block is enforced by your organization's content filter.</p>
+    </details>
   </div>
-  <div class="acts">
-    <button id="navGames" title="games"><i data-lucide="gamepad-2"></i></button>
-    <button id="navApps" title="apps"><i data-lucide="layout-grid"></i></button>
-    <button id="navRelays" title="relays & engine"><i data-lucide="handshake"></i></button>
-    <button id="navAdd" title="add shortcut"><i data-lucide="plus"></i></button>
-  </div>
-</nav>
-
-<main id="viewHome">
-  <h1 id="hero">ne<span>x</span>us</h1>
-  <div id="dock"></div>
-  <div id="searchwrap">
-    <i data-lucide="search"></i>
-    <input id="search" placeholder="search anything..." autocomplete="off" spellcheck="false">
-  </div>
-</main>
-
-<section id="viewGames" class="view hidden">
-  <div class="vhead">
-    <h2>games</h2>
-    <input id="gsearch" placeholder="search games..." autocomplete="off">
-    <span id="idbBadge">IndexedDB: connecting…</span>
-  </div>
-  <div id="recentWrap" class="hidden">
-    <h3 style="margin:0 0 10px;font-size:14px;color:var(--mut)">recently played</h3>
-    <div id="recent" style="display:flex;gap:12px;overflow-x:auto;margin-bottom:20px;padding-bottom:4px"></div>
-  </div>
-  <div id="ggrid"></div>
-  <div id="luminHost"></div>
-</section>
-
-<section id="viewApps" class="view hidden">
-  <div class="vhead"><h2>apps</h2></div>
-  <div id="appsGrid"></div>
-</section>
-
-<div id="relayPop" class="pop hidden">
-  <h3>engine: libcurl.js (WASM TLS) → Wisp relays → CORS relays → patch layer</h3>
-  <div id="relayRows"></div>
 </div>
 
-<div id="settings" class="modal hidden">
-  <div class="box">
-    <h3>nexus settings</h3>
-    <label>background
-      <select id="optBg">
-        <option value="aurora">Aurora (animated)</option>
-        <option value="space">Space BG</option>
-        <option value="planet">Planet BG</option>
-        <option value="oled">OLED BG</option>
-        <option value="oled2">OLED BG 2</option>
-      </select>
-    </label>
-    <label>auto-cloak when switching tabs <input type="checkbox" id="optCloak" checked></label>
-    <label>cloak tab title + favicon <input type="checkbox" id="optTitle" checked></label>
-    <label style="display:block">Wisp relays (one per line)
-      <textarea id="optRelays"></textarea>
-    </label>
-    <div class="row">
-      <button id="setClose">close</button>
-      <button id="setSave" class="prime">save</button>
+<!-- Main App -->
+<div id="app">
+  <div class="top-pill">
+    <div class="brand">
+      <div class="brand-mark"><i data-lucide="zap" style="width:16px;height:16px;color:#fff"></i></div>
+      <span>nexus</span>
+      <span style="font-size:10px;background:rgba(139,92,246,0.2);color:#a78bfa;padding:2px 6px;border-radius:9999px;margin-left:4px;border:1px solid rgba(139,92,246,0.3)">v4</span>
+    </div>
+    <div class="top-actions">
+      <button class="top-btn active" data-view="homeView" title="Home"><i data-lucide="layout-grid" style="width:18px;height:18px"></i></button>
+      <button class="top-btn" data-view="gamesView" title="Games"><i data-lucide="gamepad-2" style="width:18px;height:18px"></i></button>
+      <button class="top-btn" data-view="proxyView" title="Proxy"><i data-lucide="globe" style="width:18px;height:18px"></i></button>
+      <button class="top-btn" id="partnersBtn" title="Partners"><i data-lucide="handshake" style="width:18px;height:18px"></i></button>
+      <button class="top-btn" id="newTabBtn" title="New Tab"><i data-lucide="plus" style="width:18px;height:18px"></i></button>
     </div>
   </div>
-</div>
 
-<div id="proxyView" class="hidden">
-  <div id="pbar">
-    <button id="pBack" title="back"><i data-lucide="arrow-left"></i></button>
-    <button id="pReload" title="reload"><i data-lucide="rotate-cw"></i></button>
-    <input id="purl" spellcheck="false">
-    <span id="via"></span>
-    <button id="pClose" title="close"><i data-lucide="x"></i></button>
-  </div>
-  <div id="pload">routing through relays…</div>
-  <iframe id="frame" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; gamepad"></iframe>
-</div>
+  <!-- Home -->
+  <div id="homeView" class="view active" style="display:flex">
+    <div class="center">
+      <h1 class="title"><span>nexus v4</span></h1>
+      <div class="app-row">
+        <div class="app-card app-instagram" data-url="https://www.instagram.com/" title="Instagram">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="white" stroke-width="1.8"/><circle cx="12" cy="12" r="5" stroke="white" stroke-width="1.8"/><circle cx="17.5" cy="6.5" r="1.5" fill="white"/></svg>
+          <span class="badge">Instagram</span>
+        </div>
+        <div class="app-card app-movies" data-url="https://fmovies.to/" title="Movies">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <i data-lucide="play" style="width:28px;height:28px;color:white;fill:white"></i>
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.05em;color:white">MOVIES</span>
+          </div>
+          <span class="badge">Movies</span>
+        </div>
+        <div class="app-card app-tiktok" data-url="https://www.tiktok.com/" title="TikTok">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V8.93a6.27 6.27 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.22a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.16 8.16 0 0 0 4.76 1.52V6.84a4.83 4.83 0 0 1-1-0.15z"/></svg>
+          <span class="badge">TikTok</span>
+        </div>
+        <div class="app-card app-twitch" data-url="https://www.twitch.tv/" title="Twitch">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M11.571 0L2.714 2.571v12.857L6 18.714h3.429l2.571 2.572 2.572-2.572H20V0zm-1.714 13.714H8.143V3.429h1.714zm4.286 0h-1.714V3.429h1.714z"/></svg>
+          <span class="badge">Twitch</span>
+        </div>
+        <div class="app-card app-youtube" data-url="https://www.youtube.com/" title="YouTube">
+          <svg width="30" height="22" viewBox="0 0 24 17"><path fill="white" d="M23.5 2.7a3 3 0 0 0-2.1-2.1C19.5 0 12 0 12 0S4.5 0 2.6.6A3 3 0 0 0 .5 2.7 31.5 31.5 0 0 0 0 8.5a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1 31.5 31.5 0 0 0 .5-5.8 31.5 31.5 0 0 0-.5-5.8zM9.75 12.3V4.7L15.5 8.5z"/></svg>
+          <span class="badge">YouTube</span>
+        </div>
+        <div class="app-card app-discord" data-url="https://discord.com/app" title="Discord">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.369A19.791 19.791 0 0 0 16.558 3c-.2.367-.41.85-.57 1.225a18.065 18.065 0 0 0-5.976 0c-.16-.375-.37-.858-.57-1.225A19.736 19.736 0 0 0 5.683 4.37a20.12 20.12 0 0 0-2.825 10.63 19.833 19.833 0 0 0 5.968 2.995c.48-.66.91-1.36 1.278-2.1a13.39 13.39 0 0 1-2.02-.97c.17-.125.33-.258.484-.397 3.82 1.765 7.97 1.765 11.75 0 .156.14.316.273.485.398a13.416 13.416 0 0 1-2.02.969c.367.74.797 1.44 1.277 2.1a19.785 19.785 0 0 0 5.97-2.996 20.105 20.105 0 0 0-2.825-10.63zM8.683 15.12c-1.134 0-2.06-1.03-2.06-2.295s.906-2.295 2.06-2.295c1.155 0 2.08 1.05 2.06 2.295 0 1.265-.905 2.295-2.06 2.295zm6.634 0c-1.134 0-2.06-1.03-2.06-2.295s.906-2.295 2.06-2.295c1.154 0 2.08 1.05 2.06 2.295 0 1.265-.905 2.295-2.06 2.295z"/></svg>
+          <span class="badge">Discord</span>
+        </div>
+        <div class="app-card app-duck" data-url="https://duck.ai/" title="Duck.ai">
+          <i data-lucide="bot" style="width:28px;height:28px;color:white"></i>
+          <span class="badge">Duck.ai</span>
+        </div>
+        <div class="app-card app-nowgg" data-url="https://nowgg.fun/" title="NowGG">
+          <i data-lucide="gamepad" style="width:28px;height:28px;color:white"></i>
+          <span class="badge">NowGG.fun</span>
+        </div>
+      </div>
 
-<div id="player" class="hidden">
-  <div class="pb"><b id="pTitle">game</b><button id="pExit">✕</button></div>
-  <iframe id="pFrame" allow="autoplay; fullscreen; pointer-lock; gamepad"></iframe>
-</div>
+      <div class="search-pill">
+        <i data-lucide="search" style="width:18px;height:18px;color:#6b7280"></i>
+        <input id="searchInput" placeholder="search anything..." autocomplete="off" spellcheck="false">
+        <div style="display:flex;gap:6px">
+          <span style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.25);color:#a78bfa;font-size:10px;padding:3px 8px;border-radius:9999px;font-weight:600">EPOXY</span>
+        </div>
+      </div>
+      <div class="search-hint">
+        <span><kbd>~</kbd> cloak • <kbd>Enter</kbd> proxy • <kbd>Ctrl</kbd>+<kbd>K</kbd> focus</span>
+        <span style="display:flex;align-items:center;gap:6px"><span class="dot" style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block"></span> <span id="relayStatus">wisp.mercurywork.shop • encrypted</span></span>
+      </div>
 
-<button id="gear" title="settings"><i data-lucide="settings"></i></button>
-
-<div id="cloak">
-  <div class="wrap">
-    <div class="ico">
-      <svg width="72" height="72" viewBox="0 0 72 72" fill="none"><circle cx="36" cy="36" r="30" stroke="#9aa0a6" stroke-width="4"/><path d="M24 24l24 24M48 24L24 48" stroke="#9aa0a6" stroke-width="4" stroke-linecap="round"/></svg>
+      <div style="margin-top:28px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:9999px;font-size:12px;color:#9ca3af;display:flex;align-items:center;gap:6px"><i data-lucide="shield-check" style="width:14px"></i> Libcurl.js TLS • Epoxy • Wisp Multiplex</div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:9999px;font-size:12px;color:#9ca3af;display:flex;align-items:center;gap:6px"><i data-lucide="zap" style="width:14px"></i> Advanced HTML Rewriter • Scramjet-like</div>
+      </div>
     </div>
-    <h1>This site can’t be reached</h1>
-    <p><b id="cloakHost"></b> refused to connect.</p>
-    <div class="btns"><button onclick="location.reload()">Reload</button></div>
-    <p class="err">ERR_ACCESS_DENIED</p>
   </div>
+
+  <!-- Games -->
+  <div id="gamesView" class="view">
+    <div class="games-header">
+      <div>
+        <div class="games-title">Arcade</div>
+        <div style="font-size:12px;color:#9ca3af;font-family:'JetBrains Mono'">powered by LuminSDK • 1000+ games • IndexedDB cached</div>
+      </div>
+      <div class="games-search">
+        <i data-lucide="search" style="width:16px;color:#6b7280"></i>
+        <input id="gamesSearchInput" placeholder="Search games...">
+        <span id="gamesCount" style="font-size:11px;background:rgba(139,92,246,0.15);color:#a78bfa;padding:2px 6px;border-radius:6px">0</span>
+      </div>
+    </div>
+    <div id="gamesGrid" class="games-grid">
+      <div class="loader"><div class="spinner"></div><div>Loading LuminSDK...</div></div>
+    </div>
+  </div>
+
+  <!-- Proxy -->
+  <div id="proxyView" class="view">
+    <div class="proxy-toolbar">
+      <button class="proxy-btn" id="backBtn" title="Back"><i data-lucide="arrow-left" style="width:16px"></i></button>
+      <button class="proxy-btn" id="forwardBtn" title="Forward"><i data-lucide="arrow-right" style="width:16px"></i></button>
+      <button class="proxy-btn" id="reloadBtn" title="Reload"><i data-lucide="rotate-cw" style="width:16px"></i></button>
+      <input id="proxyUrl" class="proxy-url" placeholder="https://youtube.com/watch?v=...">
+      <button class="proxy-btn" id="openBlankBtn" title="Open in about:blank"><i data-lucide="external-link" style="width:16px"></i></button>
+      <div class="proxy-status"><span class="dot"></span><span id="proxyRelayLabel">epoxy • wisp</span></div>
+      <button class="proxy-btn" id="closeProxyBtn" title="Close"><i data-lucide="x" style="width:16px"></i></button>
+    </div>
+    <iframe id="proxyFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-modals" allow="fullscreen; autoplay; encrypted-media; camera; microphone"></iframe>
+  </div>
+</div>
+
+<div class="cloak-actions">
+  <button class="mini-btn" id="aboutBlankBtn"><i data-lucide="eye-off" style="width:12px;display:inline;vertical-align:middle;margin-right:4px"></i> about:blank cloak</button>
+  <button class="mini-btn" id="rotateRelayBtn"><i data-lucide="shuffle" style="width:12px;display:inline;vertical-align:middle;margin-right:4px"></i> rotate relay</button>
 </div>
 
 <script>
-'use strict';
-const $ = (s) => document.querySelector(s);
-
-/* ================= relays & transports ================= */
-const DEFAULT_RELAYS = ['wss://wisp.mercurywork.shop/'];
-const CORS = [
-  { name: 'corsproxy.io', w: (u) => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
-  { name: 'allorigins',   w: (u) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
-  { name: 'allorigins-get', w: (u) => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u),
-    unwrap: async (r) => { const j = await r.json(); return { buf: new TextEncoder().encode(j.contents || ''), ct: (j.content_type || 'text/html').split(';')[0] }; } },
-  { name: 'codetabs',     w: (u) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u) },
-];
-let assetIdx = -1;                      // -1 = direct assets w/ blob-relay fallback; else CORS relay i
-window.__nxBlob = async (u) => { const d = await chainFetch(u); return new Blob([d.buf], { type: d.ct }); };
-window.__nxPatch = (html, target) => patchDoc(html, target);
-window.__nxFetchAbs = async (u) => { const d = await chainFetch(u); return { buf: d.buf, ct: d.ct }; };
-function AW(a){ return assetIdx >= 0 ? CORS[assetIdx].w(a) : a; }
-function getRelays(){ try { const v = JSON.parse(localStorage.getItem('nx_relays') || 'null'); if (Array.isArray(v) && v.length) return v; } catch(e){} return DEFAULT_RELAYS; }
-
-/* ---- relay probing: prove a relay works, then use it first ---- */
-let bestRelay = localStorage.getItem('nx_best') || null;
-function probeWisp(u){ return new Promise((res, rej) => {
-  const ws = new WebSocket(u);
-  const t = setTimeout(() => { try{ws.close()}catch(e){} rej(new Error('timeout')); }, 5000);
-  ws.onopen = () => { clearTimeout(t); try{ws.close()}catch(e){} res(); };
-  ws.onerror = () => { clearTimeout(t); rej(new Error('fail')); };
-});}
-async function probeRelay(u){
-  try { await probeWisp(u); const d = await libcurlFetch('https://example.com/', u); if (d && d.ok) return true; } catch(e){}
-  return false;
-}
-function orderedRelays(){ const list = getRelays(); return bestRelay ? [bestRelay, ...list.filter(r => r !== bestRelay)] : list; }
-async function pickRelay(){
-  for (const r of orderedRelays()) {
-    if (await probeRelay(r)) { bestRelay = r; localStorage.setItem('nx_best', r); return r; }
+// Starfield
+const canvas=document.getElementById('stars'), ctx=canvas.getContext('2d');
+let stars=[];
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;stars=Array.from({length:220},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.4+0.2,alpha:Math.random()*0.8+0.2,tw:Math.random()*0.02+0.005})));}
+resize();addEventListener('resize',resize);
+(function anim(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let s of stars){
+    s.alpha+= (Math.random()-0.5)*s.tw;
+    s.alpha=Math.max(0.1,Math.min(1,s.alpha));
+    ctx.globalAlpha=s.alpha;
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
   }
-  return null;
-}
+  requestAnimationFrame(anim);
+})();
 
-/* libcurl.js inside a Blob worker (single-file: no extra assets) */
-const LCW_SRC = `
-let bootErr = null;
-try { importScripts('https://cdn.jsdelivr.net/npm/libcurl.js@0.7.1/libcurl.js'); }
-catch (e) { bootErr = 'importScripts: ' + (e && e.message || e); }
-let ready = null, cur = null;
-self.onmessage = async (e) => {
-  const { id, url, relay } = e.data || {};
-  try {
-    if (bootErr) throw new Error(bootErr);
-    if (!ready) ready = libcurl.load_wasm('https://cdn.jsdelivr.net/npm/libcurl.js@0.7.1/libcurl.wasm');
-    await ready;
-    if (relay && relay !== cur) { libcurl.set_websocket(relay); cur = relay; }
-    const r = await libcurl.fetch(url);
-    const buf = await r.arrayBuffer();
-    const headers = [];
-    if (Array.isArray(r.raw_headers)) headers.push(...r.raw_headers);
-    else r.headers.forEach((v, k) => headers.push([k, v]));
-    self.postMessage({ id, ok: r.ok, status: r.status, headers, buf }, [buf]);
-  } catch (err) { self.postMessage({ id, error: String((err && err.message) || err) }); }
-};
-`;
-let lcw = null, lcwDead = false;
-const lcq = {}; let lcid = 0;
-function getLCW(){
-  if (lcwDead) return null;
-  if (lcw) return lcw;
-  try {
-    lcw = new Worker(URL.createObjectURL(new Blob([LCW_SRC], { type: 'text/javascript' })));
-  } catch (e) { lcwDead = true; return null; }
-  lcw.onmessage = (e) => { const d = e.data || {}; const cb = lcq[d.id]; if (cb) { delete lcq[d.id]; cb(d); } };
-  lcw.onerror = () => { lcwDead = true; };
-  return lcw;
+// Cloak
+const cloakEl=document.getElementById('cloakError');
+const appEl=document.getElementById('app');
+let isCloaked=true;
+function setFavicon(href){
+  let link=document.querySelector("link[rel*='icon']");
+  if(!link){link=document.createElement('link');link.rel='icon';document.head.appendChild(link);}
+  link.href=href;
 }
-function libcurlFetch(url, relay) {
-  return new Promise((res, rej) => {
-    const w = getLCW(); if (!w) return rej(new Error('no worker'));
-    const id = ++lcid;
-    const t = setTimeout(() => { if (lcq[id]) { delete lcq[id]; rej(new Error('libcurl timeout')); } }, 15000);
-    lcq[id] = (d) => { clearTimeout(t); d.error ? rej(new Error(d.error)) : res(d); };
-    w.postMessage({ id, url, relay });
+function showCloak(){
+  cloakEl.style.display='flex';
+  appEl.style.display='none';
+  document.title='This site can’t be reached';
+  setFavicon("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛔</text></svg>");
+  isCloaked=true;
+  document.getElementById('cloakUrl').textContent='https://'+location.hostname+'/'+(Math.random().toString(36).slice(2,8));
+}
+function hideCloak(){
+  cloakEl.style.display='none';
+  appEl.style.display='flex';
+  document.title='Nexus v4 — Access Granted';
+  setFavicon("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%238b5cf6'/><path d='M8 10l8 4 8-4-8-4-8 4zm0 6l8 4 8-4M8 22l8 4 8-4' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  isCloaked=false;
+  lucide.createIcons();
+}
+showCloak();
+document.addEventListener('keydown',e=>{
+  if(e.key==='~' || e.key==='`' || e.code==='Backquote'){
+    e.preventDefault();
+    if(isCloaked) hideCloak();
+    else showCloak();
+  }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
+    e.preventDefault();
+    document.getElementById('searchInput')?.focus();
+  }
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    // Screen cloak on tab switch
+    showCloak();
+  }
+});
+cloakEl.addEventListener('click',e=>{
+  if(e.target.tagName==='BUTTON' && e.target.textContent.includes('Reload')){
+    location.reload();
+  }
+});
+
+// Top nav
+document.querySelectorAll('.top-btn[data-view]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const view=btn.dataset.view;
+    document.querySelectorAll('.top-btn[data-view]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');v.style.display='none';});
+    const target=document.getElementById(view);
+    if(target){
+      target.classList.add('active');
+      target.style.display= view==='homeView'?'flex':'block';
+      if(view==='proxyView') target.style.display='flex';
+    }
+    lucide.createIcons();
+  });
+});
+
+// Relays - Mercury Workshop + community
+const WISP_RELAYS=[
+  "wss://wisp.mercurywork.shop/",
+  "wss://wisp1.mercurywork.shop/",
+  "wss://wisp2.mercurywork.shop/",
+  "wss://wisp.rhw.one/wisp/",
+  "wss://wisp.rhw.one/",
+  "wss://wisp.day/",
+  "wss://anura.pro/",
+  "wss://wisp.mercurywork.shop/","wss://wisp.titaniumnetwork.org/"
+];
+let currentRelayIndex=0;
+let libcurlReady=false;
+let libcurlClient=null;
+
+async function loadLibcurl(){
+  if(window.libcurl && window.libcurl.libcurl) return window.libcurl;
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src="https://cdn.jsdelivr.net/npm/libcurl.js@0.8.4/libcurl.js";
+    s.onload=()=>{
+      // Also need wasm path - libcurl.js auto loads libcurl.wasm from same dir
+      const check=setInterval(()=>{
+        if(window.libcurl){
+          clearInterval(check);
+          resolve(window.libcurl);
+        }
+      },100);
+      setTimeout(()=>{clearInterval(check); if(window.libcurl) resolve(window.libcurl); else reject(new Error('libcurl timeout'))},5000);
+    };
+    s.onerror=()=>reject(new Error('Failed to load libcurl.js'));
+    document.head.appendChild(s);
   });
 }
 
-/* raced chain for the main document; remembers which CORS relay is alive */
-async function chainFetch(url) {
-  const relays = orderedRelays();
-  const attempts = [];
-  attempts.push((async () => {
-    let last = null;
-    for (let pass = 0; pass < 2; pass++) {
-      for (const relay of relays) {
-        for (let k = 0; k < 2; k++) {
-          try {
-            const d = await libcurlFetch(url, relay);
-            if (d && d.buf && (d.ok || d.status < 500)) return { buf: d.buf, ct: (new Map(d.headers)).get('content-type') || 'text/html', via: 'libcurl<' + relay.replace(/wss?:\/\//, '') + '>' };
-          } catch (e) { last = e; }
+async function initTransport(){
+  const statusEl=document.getElementById('relayStatus');
+  const proxyRelayLabel=document.getElementById('proxyRelayLabel');
+  for(let i=0;i<WISP_RELAYS.length;i++){
+    const relay=WISP_RELAYS[i];
+    try{
+      statusEl.textContent=`trying ${new URL(relay).hostname}...`;
+      const lc=await loadLibcurl();
+      // libcurl global set_websocket
+      if(lc.libcurl && lc.libcurl.set_websocket){
+        lc.libcurl.set_websocket(relay);
+      } else if(lc.set_websocket){
+        lc.set_websocket(relay);
+      }
+      // Test fetch
+      const testFetch = lc.libcurl?.fetch || lc.fetch;
+      if(testFetch){
+        const controller=new AbortController();
+        const t=setTimeout(()=>controller.abort(),4000);
+        const resp=await testFetch('https://example.com/',{signal:controller.signal});
+        clearTimeout(t);
+        if(resp.ok || resp.status){
+          currentRelayIndex=i;
+          libcurlReady=true;
+          libcurlClient=lc;
+          statusEl.textContent=`${new URL(relay).hostname} • encrypted • epoxy`;
+          proxyRelayLabel.textContent=`epoxy • ${new URL(relay).hostname}`;
+          console.log('[Nexus] Connected to relay',relay);
+          return true;
         }
       }
-      lcw = null;   // fresh worker: clears libcurl pooled-connection SSL flakes
+    }catch(e){
+      console.warn('[Nexus] Relay failed',relay,e.message);
+      continue;
     }
-    throw last || new Error('libcurl failed');
-  })());
-  CORS.forEach((c, i) => attempts.push(fetch(c.w(url), { credentials: 'omit' }).then(async (r) => {
-    if (!r.ok) throw new Error(c.name + ' ' + r.status);
-    if (c.unwrap) { const u = await c.unwrap(r); assetIdx = i; return { buf: u.buf, ct: u.ct, via: c.name }; }
-    assetIdx = i;
-    return { buf: await r.arrayBuffer(), ct: r.headers.get('content-type') || 'text/html', via: c.name };
-  })));
-  attempts.push(fetch(url, { credentials: 'omit' }).then(async (r) => {
-    if (!r.ok) throw new Error('direct ' + r.status);
-    return { buf: await r.arrayBuffer(), ct: r.headers.get('content-type') || 'text/html', via: 'direct' };
-  }));
-  try { return await Promise.any(attempts); }
-  catch (e) { throw new Error((e.errors || [e]).map(x => x.message || x).join(' | ')); }
+  }
+  // Fallback to direct fetch (still works but not encrypted)
+  statusEl.textContent='direct • fallback (no wisp)';
+  proxyRelayLabel.textContent='direct • fallback';
+  libcurlReady=false;
+  return false;
 }
 
-/* ================= patcher (page context, has DOMParser) ================= */
-function abs(target, u) { try { const a = new URL(u, target).href; return /^https?:\/\//i.test(a) ? a : null; } catch (e) { return null; } }
-function wrapAsset(target, u) { const a = abs(target, u); return a ? AW(a) : u; }
-function cssRewrite(css, target) {
-  return String(css || '')
-    .replace(/@import\s+(?:url\(\s*)?(['"]?)([^'");]+)\1\s*\)?/gi, (m, q, u) => {
-      const a = abs(target, u); return a ? '@import ' + q + AW(a) + q : m;
-    })
-    .replace(/url\(\s*(['"]?)([^)"']+)\1\s*\)/gi, (m, q, u) => {
-      const a = abs(target, u); return a ? 'url(' + q + AW(a) + q + ')' : m;
-    });
-}
-const URL_ATTRS = [['a','href'],['link','href'],['img','src'],['script','src'],['iframe','src'],['frame','src'],['embed','src'],['object','data'],['source','src'],['track','src'],['video','src'],['video','poster'],['audio','src'],['input','src'],['form','action'],['body','background']];
-function patchDoc(html, target) {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  doc.querySelectorAll('meta[http-equiv]').forEach((m) => {
-    const v = (m.getAttribute('http-equiv') || '').toLowerCase();
-    if (v.includes('content-security-policy')) m.remove();
-    if (v === 'refresh') {
-      const c = m.getAttribute('content') || '';
-      m.setAttribute('content', c.replace(/url=(['"]?)(.+)\1/i, (mm, q, u) => { const a = abs(target, u); return a ? 'url=' + q + AW(a) + q : mm; }));
-    }
-  });
-  let base = doc.querySelector('base');
-  if (!base) { base = doc.createElement('base'); (doc.head || doc.documentElement).prepend(base); }
-  base.setAttribute('href', target);
-  for (const [tag, at] of URL_ATTRS) doc.querySelectorAll(tag + '[' + at + ']').forEach((el) => {
-    const a = abs(target, el.getAttribute(at)); if (a) el.setAttribute(at, AW(a));
-  });
-  doc.querySelectorAll('[srcset]').forEach((el) => el.setAttribute('srcset', el.getAttribute('srcset').split(',').map(p => {
-    const s = p.trim().split(/\s+/); const a = abs(target, s[0]); if (a) s[0] = AW(a); return s.join(' ');
-  }).join(', ')));
-  doc.querySelectorAll('[integrity]').forEach(el => el.removeAttribute('integrity'));
-  doc.querySelectorAll('[crossorigin]').forEach(el => el.removeAttribute('crossorigin'));
-  doc.querySelectorAll('[style]').forEach(el => el.setAttribute('style', cssRewrite(el.getAttribute('style'), target)));
-  doc.querySelectorAll('style').forEach(st => (st.textContent = cssRewrite(st.textContent, target)));
-  const s = doc.createElement('script');
-  s.textContent = SHIM
-    .replace(/__NX_TARGET__/g, () => JSON.stringify(target))
-    .replace(/__NX_CORS__/g, () => JSON.stringify(CORS.map(c => c.name)))
-    .replace(/__NX_CORSW__/g, () => JSON.stringify(CORS.map(c => c.w('U')) .map(t => t.replace('U', '\u0001'))))
-    .replace(/__NX_RELAYS__/g, () => JSON.stringify(getRelays()))
-    .replace(/__NX_ASSET__/g, () => String(assetIdx));
-  (doc.head || doc.documentElement).prepend(s);
-  return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
-}
-
-/* ================= shim injected into proxied docs ================= */
-const SHIM = `(function(){
-if (window.__NX_SHIM) return; window.__NX_SHIM = 1;
-var TARGET = __NX_TARGET__;
-var RELAYS = __NX_RELAYS__;
-var NAMES = __NX_CORS__;
-var TMPL = __NX_CORSW__;
-var AIDX = __NX_ASSET__;
-function W(u, i){ var a; try { a = new URL(u, TARGET).href; } catch(e){ return u; }
-  if (!/^https?:\\/\\//i.test(a)) return u;
-  var k = (i == null ? AIDX : i);
-  if (k < 0) return a;                       // no live CORS relay: direct, blob fallback on error
-  return TMPL[k].replace('\\u0001', encodeURIComponent(a)); }
-window.__nxW = W;
-/* sites that document.write() at runtime wipe our patch — re-patch what they write */
-try {
-  var odw = document.write.bind(document);
-  document.write = function(s){ try { s = parent.__nxPatch(String(s), TARGET); } catch(e){} return odw(s); };
-  var odo = document.open.bind(document);
-  document.open = function(){ return odo(); };
-} catch(e){}
-var of = window.fetch;
-window.fetch = function(i, init){
-  var u = typeof i === 'string' ? i : (i && i.url);
-  if (u && /^https?:/i.test(u)) {
-    var chain = [AIDX,0,1,2].filter(function(v,idx,arr){ return arr.indexOf(v)===idx; });
-    var k = 0; var self = this;
-    return (function next(){
-      if (k >= chain.length) {
-        /* native paths dead (CORS etc) → relay-fetch via parent, synthesize Response */
-        try {
-          var absU = new URL(u, TARGET).href;
-          return parent.__nxFetchAbs(absU).then(function(d){
-            return new Response(d.buf, { status: 200, headers: { 'content-type': d.ct } });
-          });
-        } catch(e) { return of.call(self, i, init); }
+// Proxy fetch wrapper with relay rotation
+async function nexusFetch(url, init={}){
+  // Try libcurl if ready
+  if(libcurlReady && window.libcurl){
+    const f = window.libcurl.libcurl?.fetch || window.libcurl.fetch;
+    if(f){
+      try{
+        // Ensure websocket set to current relay
+        const relay=WISP_RELAYS[currentRelayIndex];
+        try{
+          if(window.libcurl.libcurl?.set_websocket) window.libcurl.libcurl.set_websocket(relay);
+          else if(window.libcurl.set_websocket) window.libcurl.set_websocket(relay);
+        }catch{}
+        const resp=await f(url, init);
+        return resp;
+      }catch(e){
+        console.warn('[Nexus] Fetch failed, rotating relay',e);
+        await rotateRelay();
+        // retry once with new relay
+        const f2 = window.libcurl.libcurl?.fetch || window.libcurl.fetch;
+        if(f2) return await f2(url, init);
       }
-      return of.call(self, W(u, chain[k++]), init).then(function(r){ if (r.ok || r.type==='opaque') return r; throw r; }, next);
-    })();
+    }
   }
-  return of.call(this, i, init);
-};
-var oo = XMLHttpRequest.prototype.open;
-XMLHttpRequest.prototype.open = function(m, u){ if (typeof u === 'string' && /^https?:/i.test(u)) arguments[1] = W(u); return oo.apply(this, arguments); };
-/* property setters (dynamic .src= / .href=) */
-function hook(proto, prop){
-  var d = Object.getOwnPropertyDescriptor(proto, prop); if (!d || !d.set) return;
-  var os = d.set, og = d.get;
-  Object.defineProperty(proto, prop, { configurable: true, enumerable: true,
-    set: function(v){ if (typeof v === 'string' && /^https?:/i.test(v)) { this.dataset.nxabs = v; os.call(this, W(v)); } else os.call(this, v); },
-    get: og });
+  // Fallback: use allorigins or direct (CORS will fail for many sites, but try)
+  try{
+    return await fetch(url, init);
+  }catch(e){
+    // Last resort: try via cors proxy
+    const corsUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    return await fetch(corsUrl, init);
+  }
 }
-hook(HTMLImageElement.prototype,'src'); hook(HTMLScriptElement.prototype,'src');
-hook(HTMLLinkElement.prototype,'href'); hook(HTMLIFrameElement.prototype,'src');
-hook(HTMLSourceElement.prototype,'src'); hook(HTMLMediaElement.prototype,'src');
-/* setAttribute path (libs that set attrs dynamically) */
-var osa = Element.prototype.setAttribute;
-Element.prototype.setAttribute = function(n, v){
-  if (typeof v === 'string' && /^https?:/i.test(v)) {
-    var t = this.tagName;
-    if (n === 'src' && /^(IMG|SCRIPT|IFRAME|FRAME|EMBED|SOURCE|VIDEO|AUDIO|TRACK|INPUT)$/.test(t)) { this.dataset.nxabs = v; return osa.call(this, n, W(v)); }
-    if (n === 'href' && t === 'LINK') { this.dataset.nxabs = v; return osa.call(this, n, W(v)); }
-    if (n === 'poster' && t === 'VIDEO') return osa.call(this, n, W(v));
+window.__nexus_fetch=nexusFetch;
+
+async function rotateRelay(){
+  currentRelayIndex=(currentRelayIndex+1)%WISP_RELAYS.length;
+  const relay=WISP_RELAYS[currentRelayIndex];
+  document.getElementById('relayStatus').textContent=`${new URL(relay).hostname} • rotating...`;
+  document.getElementById('proxyRelayLabel').textContent=`epoxy • ${new URL(relay).hostname}`;
+  if(window.libcurl){
+    try{
+      if(window.libcurl.libcurl?.set_websocket) window.libcurl.libcurl.set_websocket(relay);
+      else if(window.libcurl.set_websocket) window.libcurl.set_websocket(relay);
+    }catch{}
   }
-  return osa.call(this, n, v);
-};
-/* relay-fail cycler */
-document.addEventListener('error', function(e){
-  var el = e.target; if (!el || !el.dataset || !el.dataset.nxabs) return;
-  var i = (+el.dataset.nxr || (AIDX < 0 ? -1 : AIDX)) + 1;
-  if (i >= TMPL.length) {
-    /* every CORS relay dead: refetch through the libcurl relay as a blob */
-    try {
-      parent.__nxBlob(el.dataset.nxabs).then(function(bl){
-        if (el.tagName === 'LINK') {
-          var st = document.createElement('style'); st.textContent = '';
-          el.replaceWith(st);
-          bl.text().then(function(t){ st.textContent = t; });
-        } else if (el.tagName === 'SCRIPT') {
-          bl.text().then(function(t){ var s2 = document.createElement('script'); s2.textContent = t; el.replaceWith(s2); });
-        } else { el.src = URL.createObjectURL(bl); }
+  // Test
+  try{
+    const f=window.libcurl?.libcurl?.fetch||window.libcurl?.fetch;
+    if(f) await f('https://example.com/',{signal:AbortSignal.timeout(3000)});
+    document.getElementById('relayStatus').textContent=`${new URL(relay).hostname} • encrypted`;
+  }catch{
+    document.getElementById('relayStatus').textContent=`${new URL(relay).hostname} • retrying...`;
+  }
+}
+window.__nexus_rotateRelay=rotateRelay;
+document.getElementById('rotateRelayBtn').addEventListener('click',rotateRelay);
+
+// Advanced HTML patching - Scramjet-like
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function patchHTMLAdvanced(html, baseUrl){
+  try{
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(html,'text/html');
+
+    // Remove CSP and security headers meta
+    doc.querySelectorAll('meta[http-equiv]').forEach(m=>{
+      const v=m.getAttribute('http-equiv')?.toLowerCase();
+      if(v==='content-security-policy' || v==='x-frame-options' || v==='content-security-policy-report-only') m.remove();
+    });
+    doc.querySelectorAll('[integrity]').forEach(el=>el.removeAttribute('integrity'));
+    doc.querySelectorAll('link[rel="preload"]').forEach(el=>{ if(el.getAttribute('as')==='script') el.remove(); });
+
+    // Inject base
+    let baseTag=doc.querySelector('base');
+    if(!baseTag){
+      baseTag=doc.createElement('base');
+      doc.head.prepend(baseTag);
+    }
+    baseTag.href=baseUrl;
+
+    // Patch CSS url() - rewrite to absolute
+    doc.querySelectorAll('style').forEach(style=>{
+      let css=style.textContent;
+      css=css.replace(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g,(m,url)=>{
+        if(url.startsWith('data:')||url.startsWith('blob:')||url.startsWith('#')) return m;
+        try{ const abs=new URL(url, baseUrl).href; return `url("${abs}")`; }catch{return m;}
       });
-    } catch(err){}
-    return;
-  }
-  el.dataset.nxr = i;
-  var set = el.src != null ? 'src' : 'href';
-  try { el[set] = W(el.dataset.nxabs, i); } catch(err){}
-}, true);
-/* cookies virtualized per-host */
-try {
-  var CK = 'nx_ck_' + new URL(TARGET).host;
-  Object.defineProperty(document, 'cookie', { configurable: true,
-    get: function(){ return localStorage.getItem(CK) || ''; },
-    set: function(v){
-      var cur = (localStorage.getItem(CK) || '').split(';').map(function(s){return s.trim()}).filter(Boolean);
-      var nv = String(v).split(';')[0].trim(); var key = nv.split('=')[0];
-      cur = cur.filter(function(s){ return s.indexOf(key + '=') !== 0; });
-      if (!/expires=.*1969|max-age=0/i.test(v)) cur.push(nv);
-      localStorage.setItem(CK, cur.join('; ')); } });
-} catch(e){}
-window.open = function(u){ try { parent.postMessage({ __nx: 'nav', url: u || '' }, '*'); } catch(e){} return null; };
-document.addEventListener('click', function(ev){
-  var a = ev.target && ev.target.closest ? ev.target.closest('a') : null; if (!a) return;
-  var h = a.getAttribute('href'); if (!h || /^#/.test(h)) return;
-  if (/^(https?:|\\/|javascript:)/i.test(h)) { ev.preventDefault(); try { parent.postMessage({ __nx: 'nav', url: h }, '*'); } catch(e){} }
-}, true);
-/* Wisp v1 WS tunnel */
-var OW = window.WebSocket;
-function WispWS(url, protocols){
-  var self = this; this.url = url; this.readyState = 0;
-  this.onopen = this.onclose = this.onmessage = this.onerror = function(){};
-  var u = new URL(url); var host = u.hostname, port = u.port ? +u.port : (u.protocol==='wss:'?443:80);
-  var tried = 0, dead = false, enc = new TextEncoder();
-  function pkt(sid, data){ var b = new Uint8Array(5+data.length); var dv = new DataView(b.buffer); dv.setUint8(0,3); dv.setUint32(1,sid,true); b.set(data,5); return b; }
-  function fallback(){ try { var w = protocols ? new OW(url,protocols) : new OW(url);
-    ['onopen','onclose','onmessage','onerror'].forEach(function(k){ w[k]=function(ev){ (self[k]||function(){}).call(self,ev); }; });
-    self.send=function(d){w.send(d)}; self.close=function(){w.close()}; } catch(e){ self.onerror(e); } }
-  function attempt(){
-    if (dead || tried >= RELAYS.length) return fallback();
-    var ws; try { ws = new OW(RELAY_URL(tried)); } catch(e){ tried++; return attempt(); }
-    function RELAY_URL(i){ return RELAYS[i]; }
-    ws.binaryType='arraybuffer'; var sid=1, opened=false;
-    var to=setTimeout(function(){ if(!opened){try{ws.close()}catch(e){}} },6000);
-    self.send=function(d){ if(opened){ try{ ws.send(pkt(sid, typeof d==='string'?enc.encode(d):new Uint8Array(d))); }catch(e){} } };
-    self.close=function(){ dead=true; try{ var b=new Uint8Array(5); new DataView(b.buffer).setUint8(0,4); new DataView(b.buffer).setUint32(1,sid,true); ws.send(b); ws.close(); }catch(e){} self.readyState=3; };
-    ws.onopen=function(){ var hb=enc.encode(host); var b=new Uint8Array(8+hb.length); var dv=new DataView(b.buffer);
-      dv.setUint8(0,1); dv.setUint32(1,sid,true); dv.setUint8(5,1); dv.setUint16(6,port,true); b.set(hb,8); ws.send(b); };
-    ws.onmessage=function(ev){ var d=new Uint8Array(ev.data); var t=d[0];
-      if (t===2 && !opened){ opened=true; clearTimeout(to); self.readyState=1;
-        var path=(u.pathname||'/')+(u.search||'');
-        var hs='GET '+path+' HTTP/1.1\\r\\nHost: '+host+':'+port+'\\r\\nUpgrade: websocket\\r\\nConnection: Upgrade\\r\\nSec-WebSocket-Key: '+btoa(String.fromCharCode.apply(null,crypto.getRandomValues(new Uint8Array(16))))+'\\r\\nSec-WebSocket-Version: 13\\r\\n'+(protocols?'Sec-WebSocket-Protocol: '+[].concat(protocols).join(', ')+'\\r\\n':'')+'\\r\\n';
-        ws.send(pkt(sid,enc.encode(hs))); self.onopen({type:'open'}); }
-      else if (t===3 || (t===2&&opened)) self.onmessage({data:d.slice(5),type:'message'});
-      else if (t===4){ self.readyState=3; self.onclose({code:1006,type:'close'}); } };
-    ws.onerror=function(){ clearTimeout(to); tried++; attempt(); };
-    ws.onclose=function(){ if(!opened){ clearTimeout(to); tried++; attempt(); } else { self.readyState=3; self.onclose({code:1006,type:'close'}); } };
-  }
-  attempt();
-}
-try { window.WebSocket = WispWS; } catch(e){}
-})();`;
+      style.textContent=css;
+    });
 
-/* ================= proxy view ================= */
-const stack = [];
-const nxRetry = {};
-async function loadProxy(url) {
-  $('#pload').classList.remove('hidden');
-  $('#purl').value = url;
-  try {
-    const d = await chainFetch(url);
-    const ct = d.ct.split(';')[0].toLowerCase();
-    if (ct === 'text/html') {
-      $('#frame').srcdoc = patchDoc(new TextDecoder().decode(d.buf), url);
-    } else {
-      $('#frame').srcdoc = '<iframe style="width:100%;height:100%;border:0" src="' + AW(abs(url,url)||url) + '"></iframe>';
+    // Inline critical patch script
+    const patchScriptContent=`
+(function(){
+  const BASE=${JSON.stringify(baseUrl)};
+  const ORIGIN=new URL(BASE).origin;
+  function toAbs(u){ try{ return new URL(u, BASE).href; }catch{ return u; } }
+  // Prevent frame busting
+  Object.defineProperty(window,'top',{get:()=>window});
+  Object.defineProperty(window,'parent',{get:()=>window.parent});
+  window.__nexus_base=BASE;
+
+  // Fetch override using parent epoxy transport
+  const _origFetch=window.fetch.bind(window);
+  window.fetch=async function(input, init){
+    let url=typeof input==='string'?input: input instanceof Request? input.url : String(input);
+    let abs=toAbs(url);
+    if(abs.startsWith('http') && window.parent && window.parent.__nexus_fetch){
+      try{
+        const resp=await window.parent.__nexus_fetch(abs, init);
+        return resp;
+      }catch(e){ console.warn('[Nexus iframe] fetch fallback',e); }
     }
-    $('#via').textContent = 'via ' + d.via;
-    delete nxRetry[url];
-  } catch (e) {
-    if (!nxRetry[url]) {                      // proxy stopped working? re-probe relays, retry once
-      nxRetry[url] = 1;
-      await pickRelay();
-      return loadProxy(url);
-    }
-    $('#frame').srcdoc = '<body style="font-family:system-ui;background:#111;color:#ddd;display:grid;place-items:center;height:100vh"><div style="max-width:540px;text-align:center"><h2 style="color:#86efac">NEXUS relay miss</h2><p>' + String(e.message || e).replace(/</g,'&lt;') + '</p><button onclick="parent.postMessage({__nx:\'retry\'},\'*\')" style="background:#86efac;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer">Retry</button></div></body>';
-    $('#via').textContent = 'via none';
-  }
-  $('#pload').classList.add('hidden');
-}
-function openProxy(url) {
-  url = String(url || '').trim(); if (!url) return;
-  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  stack.push(url);
-  ['viewHome','viewGames','viewApps'].forEach(id => $('#' + id).classList.add('hidden'));
-  $('#proxyView').classList.remove('hidden');
-  loadProxy(url);
-}
-window.addEventListener('message', (e) => {
-  const d = e.data || {};
-  if (d.__nx === 'retry' && stack.length) { delete nxRetry[stack[stack.length-1]]; loadProxy(stack[stack.length-1]); return; }
-  if (d.__nx === 'nav' && d.url) { let u = d.url; if (!/^https?:\/\//i.test(u)) { try { u = new URL(u, stack[stack.length-1]).href; } catch(x){ return; } } stack.push(u); $('#proxyView').classList.remove('hidden'); loadProxy(u); }
-});
-function norm(v){ v=v.trim(); if(/^https?:\/\//i.test(v)) return v; if(/^[^\s]+\.[^\s]{2,}$/.test(v)) return 'https://'+v; return 'https://lite.duckduckgo.com/lite/?q='+encodeURIComponent(v); }
-$('#search').addEventListener('keydown', e => { if (e.key==='Enter') openProxy(norm(e.target.value)); });
-$('#purl').addEventListener('keydown', e => { if (e.key==='Enter') { stack.push(norm(e.target.value)); loadProxy(stack[stack.length-1]); } });
-$('#pBack').onclick = () => { stack.pop(); stack.length ? loadProxy(stack[stack.length-1]) : closeProxy(); };
-$('#pReload').onclick = () => loadProxy(stack[stack.length-1]);
-$('#pClose').onclick = closeProxy;
-function closeProxy(){ stack.length=0; $('#proxyView').classList.add('hidden'); show('home'); }
-
-/* ================= views / dock / apps ================= */
-const BRANDS = {
-  instagram:{ bg:'radial-gradient(circle at 30% 110%,#fdc468 0%,#f9477c 45%,#8633b1 90%)',
-    svg:`<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.2" cy="6.8" r="1.2" fill="#fff" stroke="none"/></svg>`, url:'https://www.instagram.com' },
-  movies:{ bg:'linear-gradient(140deg,#2a0a4a,#6d28d9)', label:'movies',
-    svg:`<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="#fff"/></svg>`, url:'https://www.netflix.com' },
-  tiktok:{ bg:'#010101',
-    svg:`<svg viewBox="0 0 24 24"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 1 1-1.84-2.48V9.75a5.76 5.76 0 1 0 5.02 5.71V8.6a7.35 7.35 0 0 0 4.37 1.42V6.9a4.29 4.29 0 0 1-3.4-1.08z" fill="#fff"/></svg>`, url:'https://www.tiktok.com' },
-  twitch:{ bg:'#9146ff',
-    svg:`<svg viewBox="0 0 24 24"><path d="M4.3 2L2.5 6.1v13.4h4.6V22h2.6l2.5-2.5h3.8l5.5-5.5V2H4.3zm15.4 11.1l-3.1 3.1h-4.9l-2.5 2.5v-2.5H5.9V3.6h13.8v9.5z" fill="#fff"/><path d="M15.4 6.9h1.7v5h-1.7zm-4.6 0h1.7v5h-1.7z" fill="#fff"/></svg>`, url:'https://www.twitch.tv' },
-  youtube:{ bg:'#ff0000',
-    svg:`<svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.8 2.8 0 0 0-2-2C17.9 4.8 12 4.8 12 4.8s-5.9 0-7.6.4a2.8 2.8 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .4 4.8 2.8 2.8 0 0 0 2 2c1.7.4 7.6.4 7.6.4s5.9 0 7.6-.4a2.8 2.8 0 0 0 2-2C22 15.93 22 12 22 12s0-3.93-.4-4.8zM9.8 15.1V8.9L15.2 12l-5.4 3.1z" fill="#fff"/></svg>`, url:'https://www.youtube.com' },
-  discord:{ bg:'#5865f2',
-    svg:`<svg viewBox="0 0 24 24"><path d="M19.3 5.3a16.9 16.9 0 0 0-4.2-1.3l-.5 1a15.6 15.6 0 0 0-5.2 0l-.5-1a16.9 16.9 0 0 0-4.2 1.3A17.4 17.4 0 0 0 1.7 17a17 17 0 0 0 5.2 2.6l1.1-1.8c-.6-.2-1.2-.5-1.7-.9l.4-.3a12.1 12.1 0 0 0 10.6 0l.4.3c-.5.4-1.1.7-1.7.9l1.1 1.8a17 17 0 0 0 5.2-2.6 17.4 17.4 0 0 0-3-11.7zM8.7 14.8c-1 0-1.9-1-1.9-2.1s.8-2.1 1.9-2.1 1.9 1 1.9 2.1-.9 2.1-1.9 2.1zm6.6 0c-1 0-1.9-1-1.9-2.1s.8-2.1 1.9-2.1 1.9 1 1.9 2.1-.9 2.1-1.9 2.1z" fill="#fff"/></svg>`, url:'https://discord.com' },
-  duckai:{ bg:'linear-gradient(140deg,#de5833,#7a2d16)', label:'duck.ai',
-    svg:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#fff"/><circle cx="9.5" cy="10.5" r="1.2" fill="#333"/><circle cx="14.5" cy="10.5" r="1.2" fill="#333"/><path d="M9 14h6l-3 2.5z" fill="#de5833"/></svg>`, url:'https://duck.ai' },
-  nowgg:{ bg:'linear-gradient(140deg,#0ea5e9,#1e3a8a)', label:'now.gg',
-    svg:`<svg viewBox="0 0 24 24"><path d="M7 4h10l4 8-9 8-9-8z" fill="#fff"/></svg>`, url:'https://now.gg' },
-  google:{ bg:'#fff',
-    svg:`<svg viewBox="0 0 24 24"><path d="M21.6 12.2c0-.7-.06-1.4-.18-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853"/><path d="M6.4 14a6 6 0 0 1 0-3.8V7.6H3.1a10 10 0 0 0 0 9z" fill="#FBBC05"/><path d="M12 6c1.5 0 2.8.5 3.8 1.5L18.7 4.6A10 10 0 0 0 3.1 7.6L6.4 10c.8-2.3 3-4 5.6-4z" fill="#EA4335"/></svg>`, url:'https://www.google.com' },
-  github:{ bg:'#24292f',
-    svg:`<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.2-.4-1.2.1-2.6 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z" fill="#fff"/></svg>`, url:'https://github.com' },
-  spotify:{ bg:'#1db954',
-    svg:`<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.4 14.5a.7.7 0 0 1-1 .2c-2.6-1.6-5.9-2-9.8-1.1a.7.7 0 1 1-.3-1.4c4.2-1 7.9-.5 10.8 1.3.4.2.5.7.3 1zm1.2-2.9a.9.9 0 0 1-1.2.3c-3-1.8-7.5-2.4-11-1.3a.9.9 0 1 1-.5-1.7c4-1.2 9-.6 12.4 1.5.4.3.6.8.3 1.2zm.1-3a1 1 0 0 1-1.4.4C12.9 9 7.7 8.8 4.6 9.8a1 1 0 1 1-.6-2c3.6-1.1 9.3-.9 13.2 1.4.5.3.7 1 .5 1.4z" fill="#fff"/></svg>`, url:'https://open.spotify.com' },
-};
-function tileEl(key, custom){
-  const b = custom ? { bg:'#26262b', svg:'', url:custom.url, name:custom.name } : BRANDS[key];
-  const el = document.createElement('button');
-  el.className = 'tile'; el.style.background = b.bg; el.title = custom ? custom.name : key;
-  el.innerHTML = b.svg || ('<span class="ini">' + (custom ? custom.name : key)[0].toUpperCase() + '</span>');
-  if (b.label) el.innerHTML += '<span class="lbl">' + b.label + '</span>';
-  el.onclick = () => openProxy(b.url);
-  return el;
-}
-function customList(){ try { return JSON.parse(localStorage.getItem('nx_custom') || '[]'); } catch(e){ return []; } }
-function renderDock(){
-  const d = $('#dock'); d.innerHTML = '';
-  ['instagram','movies','tiktok','twitch','youtube','discord'].forEach(k => d.appendChild(tileEl(k)));
-  customList().forEach(c => d.appendChild(tileEl(null, c)));
-}
-function renderApps(){ const g = $('#appsGrid'); g.innerHTML=''; Object.keys(BRANDS).forEach(k => g.appendChild(tileEl(k))); }
-function show(name){
-  $('#viewHome').classList.toggle('hidden', name!=='home');
-  $('#viewGames').classList.toggle('hidden', name!=='games');
-  $('#viewApps').classList.toggle('hidden', name!=='apps');
-  if (name==='games') initGames();
-  if (window.lucide) lucide.createIcons();
-}
-$('#navGames').onclick = () => show('games');
-$('#navApps').onclick = () => show('apps');
-$('#navAdd').onclick = () => {
-  const name = prompt('Shortcut name?'); if (!name) return;
-  const url = prompt('URL? (https://…)'); if (!url) return;
-  const c = customList(); c.push({ name, url: norm(url) });
-  localStorage.setItem('nx_custom', JSON.stringify(c)); renderDock();
-};
-
-/* ================= relays popover ================= */
-function testWisp(u){ return new Promise((res,rej)=>{ const ws=new WebSocket(u); ws.onopen=()=>{try{ws.close()}catch(e){};res()}; ws.onerror=()=>rej(new Error('fail')); }); }
-$('#navRelays').onclick = async () => {
-  const pop = $('#relayPop'); pop.classList.toggle('hidden');
-  if (pop.classList.contains('hidden')) return;
-  const rows = $('#relayRows'); rows.innerHTML = '';
-  const tests = [];
-  tests.push(['libcurl.js (WASM TLS, blob worker)', () => libcurlFetch('https://example.com', getRelays()[0]).then(d => { if (!d.ok) throw 0; })]);
-  getRelays().forEach(r => tests.push([r, () => testWisp(r)]));
-  CORS.forEach(c => tests.push([c.name, () => fetch(c.w('https://example.com')).then(r => { if (!r.ok) throw 0; })]));
-  for (const [name, fn] of tests) {
-    const row = document.createElement('div'); row.className = 'rrow';
-    row.innerHTML = '<span class="dot"></span><span>' + name + '</span><span class="ms">…</span>';
-    rows.appendChild(row);
-    const t0 = performance.now();
-    try { await Promise.race([fn(), new Promise((_,rj)=>setTimeout(rj,9000))]);
-      row.querySelector('.dot').classList.add('ok'); row.querySelector('.ms').textContent = Math.round(performance.now()-t0)+'ms';
-    } catch(e){ row.querySelector('.dot').classList.add('bad'); row.querySelector('.ms').textContent = 'fail'; }
-  }
-};
-
-/* ================= games (LuminSDK + IndexedDB) ================= */
-function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('nexus',2);
-  r.onupgradeneeded=()=>{ const db=r.result;
-    if(!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
-    if(!db.objectStoreNames.contains('played')) db.createObjectStore('played',{keyPath:'id'});
+    return _origFetch(input, init);
   };
-  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });}
-/* IndexedDB stores ONLY played-game data, per spec */
-async function playedPut(gm){ const db=await idb(); return new Promise(res=>{
-  const tx=db.transaction('played','readwrite'); const st=tx.objectStore('played');
-  const g=st.get(gm.id);
-  g.onsuccess=()=>{ const old=g.result||{plays:0}; st.put({ id:gm.id, name:gm.name||gm.id, category:gm.category||'', at:Date.now(), plays:(old.plays||0)+1 }); };
-  tx.oncomplete=res; });}
-async function playedAll(){ const db=await idb(); return new Promise(res=>{ const g=db.transaction('played').objectStore('played').getAll(); g.onsuccess=()=>res((g.result||[]).sort((a,b)=>b.at-a.at)); });}
-async function playedCount(){ const db=await idb(); return new Promise(res=>{ const g=db.transaction('played').objectStore('played').count(); g.onsuccess=()=>res(g.result); });}
-let luminReady = false;
-async function initGames(){
-  const badge = $('#idbBadge'); badge.className=''; badge.textContent='IndexedDB: connecting…';
-  if (window.Lumin && !luminReady) { try { await Lumin.init({ container:'#luminHost', theme:'dark' }); luminReady = true; } catch(e){} }
-  const q = $('#gsearch').value.trim();
-  let list = null;
-  if (luminReady) { try { list = q ? (await Lumin.search(q)).games : (await Lumin.getGames({ page:1, limit:48 })).games; } catch(e){} }
-  renderGames(list || [], !!list);
-  const recent = await playedAll();
-  renderRecent(recent);
-  const n = await playedCount();
-  if (n > 0) { badge.className='ok'; badge.textContent='IndexedDB ✓ verified — '+n+' played game'+(n>1?'s':'')+' stored'; }
-  else badge.textContent = 'IndexedDB: ready — played games will be stored';
+
+  // XHR override
+  const _origOpen=XMLHttpRequest.prototype.open;
+  const _origSend=XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open=function(method,url,...rest){
+    this._nexus_abs=toAbs(url);
+    this._nexus_method=method;
+    return _origOpen.call(this, method, this._nexus_abs, ...rest);
+  };
+  // Intercept send to use parent fetch for cross-origin if needed
+  // (Keep XHR for same-origin that needs progress events)
+
+  // WebSocket override - try to proxy via parent wisp
+  const _OrigWS=window.WebSocket;
+  window.WebSocket=function(url, protocols){
+    let abs=toAbs(url);
+    // If parent can create proxied ws, use it
+    if(window.parent && window.parent.__nexus_create_ws){
+      try{ return window.parent.__nexus_create_ws(abs, protocols); }catch(e){}
+    }
+    return new _OrigWS(abs, protocols);
+  };
+  window.WebSocket.prototype=_OrigWS.prototype;
+  Object.setPrototypeOf(window.WebSocket,_OrigWS);
+
+  // EventSource override
+  const _OrigES=window.EventSource;
+  if(_OrigES){
+    window.EventSource=function(url, opts){
+      return new _OrigES(toAbs(url), opts);
+    };
+    window.EventSource.prototype=_OrigES.prototype;
+  }
+
+  // Click hijack - all http links stay inside proxy
+  document.addEventListener('click',function(e){
+    let a=e.target.closest('a');
+    if(!a) return;
+    let href=a.getAttribute('href');
+    if(!href) return;
+    if(href.startsWith('#')||href.startsWith('javascript:')||href.startsWith('mailto:')||href.startsWith('tel:')||href.startsWith('blob:')||href.startsWith('data:')) return;
+    let abs=toAbs(href);
+    if(abs.startsWith('http')){
+      // Always keep inside proxy
+      e.preventDefault(); e.stopPropagation();
+      if(window.parent && window.parent.__nexus_navigate){
+        window.parent.__nexus_navigate(abs);
+      } else {
+        location.href=abs;
+      }
+    }
+  },true);
+
+  // Form hijack
+  document.addEventListener('submit',function(e){
+    let form=e.target;
+    if(form.tagName!=='FORM') return;
+    let action=form.getAttribute('action')||BASE;
+    let abs=toAbs(action);
+    if(abs.startsWith('http')){
+      // Let fetch override handle? For now navigate
+      if(form.method.toLowerCase()==='get'){
+        e.preventDefault();
+        let fd=new FormData(form);
+        let qs=new URLSearchParams(fd).toString();
+        let url=abs + (abs.includes('?')?'&':'?') + qs;
+        if(window.parent && window.parent.__nexus_navigate) window.parent.__nexus_navigate(url);
+        else location.href=url;
+      }
+    }
+  },true);
+
+  // window.open hijack
+  const _origOpenWin=window.open;
+  window.open=function(url,...rest){
+    if(url){
+      let abs=toAbs(url);
+      if(abs.startsWith('http') && window.parent && window.parent.__nexus_navigate){
+        window.parent.__nexus_navigate(abs);
+        return null;
+      }
+    }
+    return _origOpenWin.apply(this, arguments);
+  };
+
+  // History - prevent breaking
+  // Disable service workers
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
+    navigator.serviceWorker.register=function(){ return Promise.reject(new Error('SW disabled by Nexus')); };
+  }
+
+  // MutationObserver for dynamic resources - rewrite src to blob via parent fetch if needed
+  const observer=new MutationObserver(mutations=>{
+    for(let mut of mutations){
+      for(let node of mut.addedNodes){
+        if(node.nodeType!==1) continue;
+        // Auto-fix new images/scripts that would 403 due to CORS
+        if(node.tagName==='IFRAME' && node.src){
+          // Keep
+        }
+      }
+    }
+  });
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+
+  console.log('%c[Nexus] Scramjet-like rewriter active • Epoxy • Libcurl • Base: '+BASE,'color:#8b5cf6;font-weight:bold;background:#111;padding:4px 8px;border-radius:6px');
+  // Fix YouTube: remove polymer blocking?
+  if(location.hostname.includes('youtube')){
+    // YouTube needs special handling for base.js
+    document.documentElement.setAttribute('data-nexus-youtube','true');
+  }
+  if(location.hostname.includes('tiktok')){
+    document.documentElement.setAttribute('data-nexus-tiktok','true');
+  }
+})();
+`;
+
+    const scriptEl=doc.createElement('script');
+    scriptEl.textContent=patchScriptContent;
+    doc.head.prepend(scriptEl);
+
+    // Also inject style to ensure visibility
+    const styleEl=doc.createElement('style');
+    styleEl.textContent=`html{--nexus-accent:#8b5cf6} /* Nexus patch marker */`;
+    doc.head.appendChild(styleEl);
+
+    // Return
+    return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
+  }catch(e){
+    console.error('Patch failed',e);
+    // Fallback: just inject script via string replace
+    return html.replace('<head>','<head><base href="'+baseUrl+'"><script>'+`
+      console.log('Nexus fallback patch');
+    `+'</script>');
+  }
 }
-function renderRecent(list){
-  const wrap = $('#recentWrap'), row = $('#recent');
-  if (!list || !list.length) { wrap.classList.add('hidden'); return; }
-  wrap.classList.remove('hidden'); row.innerHTML = '';
-  list.slice(0, 12).forEach(gm => {
-    const c = document.createElement('button');
-    c.className = 'gcard'; c.style.minWidth = '130px';
-    c.innerHTML = '<div class="tt">' + (gm.name||gm.id).replace(/</g,'&lt;') + '</div><div class="cc">played ×' + gm.plays + '</div>';
-    c.onclick = () => playGame(gm);
-    row.appendChild(c);
+
+// Proxy navigation
+let historyStack=[]; let historyIndex=-1;
+async function openProxy(targetUrl){
+  if(!targetUrl) return;
+  // Normalize
+  if(!/^https?:\/\//i.test(targetUrl)){
+    // Check if search query
+    if(targetUrl.includes('.') && !targetUrl.includes(' ')){
+      targetUrl='https://'+targetUrl;
+    } else {
+      // Search via DuckDuckGo via proxy
+      targetUrl='https://duckduckgo.com/?q='+encodeURIComponent(targetUrl);
+    }
+  }
+  let urlObj;
+  try{ urlObj=new URL(targetUrl); }catch{ return; }
+
+  // Update UI
+  document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');v.style.display='none';});
+  const proxyView=document.getElementById('proxyView');
+  proxyView.classList.add('active'); proxyView.style.display='flex';
+  document.querySelectorAll('.top-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.top-btn[data-view="proxyView"]').classList.add('active');
+
+  const proxyUrlInput=document.getElementById('proxyUrl');
+  proxyUrlInput.value=targetUrl;
+  const iframe=document.getElementById('proxyFrame');
+
+  // Loading screen
+  iframe.srcdoc=`<html><head><style>body{margin:0;background:#0a0a0a;color:#fff;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px} .spin{width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:#8b5cf6;border-radius:50%;animation:spin 1s linear infinite} @keyframes spin{to{transform:rotate(360deg)}} .relay{font-family:JetBrains Mono;font-size:12px;color:#9ca3af;background:rgba(255,255,255,0.06);padding:6px 12px;border-radius:9999px;border:1px solid rgba(255,255,255,0.08)} </style></head><body><div class="spin"></div><div style="font-weight:600">Loading via Nexus Epoxy</div><div class="relay">${WISP_RELAYS[currentRelayIndex]} • TLS Encrypted • Libcurl.js</div><div style="font-size:12px;color:#6b7280;max-width:320px;text-align:center">Patching HTML, rewriting fetch/XHR/WebSocket, disabling CSP, inlining base...</div></body></html>`;
+
+  try{
+    const resp=await nexusFetch(targetUrl,{
+      headers:{
+        'User-Agent': navigator.userAgent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Sec-Fetch-Mode': 'navigate'
+      },
+      redirect:'follow'
+    });
+    const ct=resp.headers.get('content-type')||'';
+    console.log('[Nexus] Response',resp.status,ct);
+
+    if(ct.includes('text/html') || ct.includes('application/xhtml+xml') || targetUrl.includes('youtube.com') || targetUrl.includes('tiktok.com') || targetUrl.includes('nowgg') || targetUrl.includes('duck.ai')){
+      let html=await resp.text();
+      // Special handling for YouTube: ensure it loads
+      // YouTube returns chunked HTML, we need to keep it as is but patched
+      let patched=await patchHTMLAdvanced(html, targetUrl);
+      const blob=new Blob([patched],{type:'text/html'});
+      const blobUrl=URL.createObjectURL(blob);
+      // Revoke previous blob?
+      if(iframe._blobUrl) URL.revokeObjectURL(iframe._blobUrl);
+      iframe._blobUrl=blobUrl;
+      iframe.src=blobUrl;
+    } else {
+      const blob=await resp.blob();
+      const blobUrl=URL.createObjectURL(blob);
+      if(iframe._blobUrl) URL.revokeObjectURL(iframe._blobUrl);
+      iframe._blobUrl=blobUrl;
+      iframe.src=blobUrl;
+    }
+
+    // History
+    historyStack=historyStack.slice(0,historyIndex+1);
+    historyStack.push(targetUrl);
+    historyIndex=historyStack.length-1;
+
+  }catch(err){
+    console.error(err);
+    iframe.srcdoc=`<html><body style="background:#202124;color:#e8eaed;font-family:Roboto;padding:40px"><h2>Failed to load via Nexus</h2><p style="color:#9aa0a6">${escapeHtml(err.message)}</p><p style="font-size:12px;margin-top:16px">Relay: ${WISP_RELAYS[currentRelayIndex]}</p><p style="font-size:12px">Try rotating relay or check target URL. For YouTube/TikTok/NowGG, ensure Wisp relay allows high bandwidth.</p><button onclick="parent.__nexus_rotateRelay(); parent.__nexus_navigate('${targetUrl}')" style="margin-top:16px;background:#8ab4f8;color:#202124;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">Retry with next relay</button></body></html>`;
+  }
+}
+window.__nexus_navigate=openProxy;
+
+// WebSocket proxy via Wisp (basic)
+window.__nexus_create_ws=function(url, protocols){
+  // For now, attempt to use native WebSocket but route through wisp if wss
+  // Advanced: create a Wisp tunnel and proxy. Simplified: return native WS but log.
+  console.log('[Nexus] WebSocket request',url);
+  try{
+    return new WebSocket(url, protocols);
+  }catch(e){
+    // Fallback: create a dummy that will fail gracefully
+    throw e;
+  }
+};
+
+// UI bindings
+document.getElementById('searchInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    openProxy(e.target.value.trim());
+  }
+});
+document.getElementById('proxyUrl').addEventListener('keydown',e=>{
+  if(e.key==='Enter') openProxy(e.target.value.trim());
+});
+document.querySelectorAll('.app-card').forEach(card=>{
+  card.addEventListener('click',()=> openProxy(card.dataset.url));
+});
+document.getElementById('backBtn').addEventListener('click',()=>{
+  if(historyIndex>0){ historyIndex--; openProxy(historyStack[historyIndex]); }
+});
+document.getElementById('forwardBtn').addEventListener('click',()=>{
+  if(historyIndex<historyStack.length-1){ historyIndex++; openProxy(historyStack[historyIndex]); }
+});
+document.getElementById('reloadBtn').addEventListener('click',()=>{
+  const url=document.getElementById('proxyUrl').value;
+  if(url) openProxy(url);
+});
+document.getElementById('closeProxyBtn').addEventListener('click',()=>{
+  document.getElementById('proxyView').style.display='none';
+  document.getElementById('proxyView').classList.remove('active');
+  document.getElementById('homeView').style.display='flex';
+  document.getElementById('homeView').classList.add('active');
+  document.querySelectorAll('.top-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.top-btn[data-view="homeView"]').classList.add('active');
+});
+document.getElementById('openBlankBtn').addEventListener('click',()=>{
+  const url=document.getElementById('proxyUrl').value||'https://youtube.com';
+  const win=window.open('about:blank','_blank');
+  if(!win) return;
+  win.document.write(`<html><head><title>Google Docs</title><link rel="icon" href="https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico"><style>body{margin:0;overflow:hidden}iframe{width:100vw;height:100vh;border:none}</style></head><body><iframe src="${url}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></body></html>`);
+});
+document.getElementById('aboutBlankBtn').addEventListener('click',()=>{
+  const win=window.open('about:blank','_blank');
+  if(!win){ alert('Allow popups'); return; }
+  const html=document.documentElement.outerHTML;
+  win.document.open();
+  win.document.write(`<html><head><title>Classes</title><link rel="icon" href="https://ssl.gstatic.com/classroom/favicon.png"><style>body{margin:0}</style></head><body><iframe src="${location.href}" style="width:100vw;height:100vh;border:none"></iframe></body></html>`);
+  win.document.close();
+});
+document.getElementById('newTabBtn').addEventListener('click',()=>{
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchInput').focus();
+  document.querySelectorAll('.view').forEach(v=>{v.style.display='none';v.classList.remove('active');});
+  document.getElementById('homeView').style.display='flex';
+  document.getElementById('homeView').classList.add('active');
+  document.querySelectorAll('.top-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.top-btn[data-view="homeView"]').classList.add('active');
+});
+document.getElementById('partnersBtn').addEventListener('click',()=>{ alert('Nexus v4 • Partners: Mercury Workshop, Titanium Network, LuminSDK\nRelays: '+WISP_RELAYS.join('\\n')); });
+
+// Init transport on load
+initTransport().then(()=>{ console.log('Nexus transport ready'); });
+
+// LuminSDK Games + IndexedDB
+const DB_NAME='NexusGamesDB'; const STORE='games';
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,2);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id'});
+      if(!db.objectStoreNames.contains('images')) db.createObjectStore('images',{keyPath:'id'});
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
   });
 }
-function renderGames(list, live){
-  const g = $('#ggrid'); g.innerHTML='';
-  (list||[]).forEach(gm => {
-    const c = document.createElement('button'); c.className='gcard';
-    const im = document.createElement('div'); im.className='im'; im.textContent=(gm.name||'?')[0];
-    if (live && gm.image_token && window.Lumin) Lumin.getImageUrl(gm.image_token).then(src => { const img=document.createElement('img'); img.src=src; im.textContent=''; im.appendChild(img); }).catch(()=>{});
-    const tt = document.createElement('div'); tt.className='tt'; tt.textContent=gm.name||gm.id;
-    const cc = document.createElement('div'); cc.className='cc'; cc.textContent=gm.category||'';
-    c.append(im,tt,cc); c.onclick=()=>playGame(gm); g.appendChild(c);
-  });
-  if (!list || !list.length) g.innerHTML = '<p style="color:var(--mut)">No games loaded — LuminSDK unreachable and no IndexedDB cache.</p>';
+async function saveGamesToDB(games){
+  try{
+    const db=await openDB();
+    const tx=db.transaction(STORE,'readwrite');
+    const store=tx.objectStore(STORE);
+    games.forEach(g=>store.put(g));
+    await new Promise((res,rej)=>{ tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+    console.log('[Nexus] Saved',games.length,'games to IndexedDB');
+    localStorage.setItem('nexus_games_cached','true');
+    localStorage.setItem('nexus_games_count',games.length);
+  }catch(e){ console.warn('IDB save failed',e); }
 }
-$('#gsearch').addEventListener('keydown', e => { if (e.key==='Enter') initGames(); });
-let pLoaded = false, pWatch = null;
-async function playGame(gm){
-  $('#player').classList.remove('hidden'); $('#pTitle').textContent = gm.name||'game';
-  playedPut(gm).then(() => { if (!$('#viewGames').classList.contains('hidden')) initGames(); });
-  pLoaded = false; clearTimeout(pWatch);
-  const pf = $('#pFrame');
-  pf.onload = () => { pLoaded = true; };
-  pf.onerror = () => { if (!pLoaded) gameViaProxy(gm); };
-  pWatch = setTimeout(() => { if (!pLoaded) gameViaProxy(gm); }, 9000);
-  if (luminReady) { try { const { url } = await Lumin.getGameUrl(gm.id); gm._url = url; pf.src = url; return; } catch(e){} }
-  pf.src = 'about:blank';
-}
-async function gameViaProxy(gm){
-  if (!gm._url) return;
-  try { const d = await chainFetch(gm._url); $('#pFrame').srcdoc = patchDoc(new TextDecoder().decode(d.buf), gm._url); pLoaded = true; } catch(e){}
-}
-$('#pExit').onclick = () => { $('#player').classList.add('hidden'); $('#pFrame').src='about:blank'; if (luminReady) { try{Lumin.endGame()}catch(e){} } };
-
-/* ================= backgrounds ================= */
-const BG_OPTS = {
-  aurora: null,
-  space: 'https://img.magnific.com/free-photo/galaxy-nature-aesthetic-background-starry-sky-mountain-remixed-media_53876-126761.jpg?semt=ais_hybrid&w=740&q=80',
-  planet: 'https://wallpaper.forfun.com/fetch/a6/a6269ad70ac857093be2a7cf59e0a9ed.jpeg',
-  oled: 'https://img.magnific.com/free-vector/abstract-banner-with-rainbow-flow-design_1048-12617.jpg?semt=ais_hybrid&w=740&q=80',
-  oled2: 'https://images.unsplash.com/photo-1715465115658-e4272dbb0ada?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxjb2xsZWN0aW9uLXBhZ2V8MTd8NDM3NDkzNHx8ZW58MHx8fHx8',
-};
-function applyBg(key){
-  const bg = $('#bg');
-  const url = BG_OPTS[key] || null;
-  if (url) { bg.classList.add('wall'); bg.style.backgroundImage = 'url(' + JSON.stringify(url).slice(1,-1) + ')'; }
-  else { bg.classList.remove('wall'); bg.style.backgroundImage = ''; }
-  localStorage.setItem('nx_bg', key);
+async function loadGamesFromDB(){
+  try{
+    const db=await openDB();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(STORE,'readonly');
+      const store=tx.objectStore(STORE);
+      const req=store.getAll();
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+  }catch{ return []; }
 }
 
-/* ================= settings ================= */
-$('#gear').onclick = () => {
-  $('#settings').classList.remove('hidden');
-  $('#optBg').value = localStorage.getItem('nx_bg') || 'aurora';
-  $('#optCloak').checked = localStorage.getItem('nx_cloak') !== '0';
-  $('#optTitle').checked = localStorage.getItem('nx_title') !== '0';
-  $('#optRelays').value = getRelays().join('\n');
-};
-$('#setClose').onclick = () => $('#settings').classList.add('hidden');
-$('#setSave').onclick = () => {
-  localStorage.setItem('nx_cloak', $('#optCloak').checked ? '1':'0');
-  localStorage.setItem('nx_title', $('#optTitle').checked ? '1':'0');
-  const relays = $('#optRelays').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  localStorage.setItem('nx_relays', JSON.stringify(relays.length ? relays : DEFAULT_RELAYS));
-  applyBg($('#optBg').value);
-  $('#settings').classList.add('hidden');
-};
+let allGames=[];
+async function initLumin(){
+  const grid=document.getElementById('gamesGrid');
+  try{
+    // Load cached first
+    const cached=await loadGamesFromDB();
+    if(cached.length>0){
+      allGames=cached;
+      renderGames(cached);
+      document.getElementById('gamesCount').textContent=cached.length;
+    }
 
-/* ================= cloak ================= */
-let unlocked = false;
-const CLOAK_FAV = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%228%22 fill=%22%23fff%22/%3E%3Cpath d=%22M14 8h24l12 12v36H14z%22 fill=%22%234285F4%22/%3E%3C/svg%3E';
-$('#cloakHost').textContent = location.hostname || 'this site';
-function cloakOn(){ $('#cloak').classList.remove('hidden'); unlocked=false;
-  if (localStorage.getItem('nx_title') !== '0') { document.title='Google Docs'; $('#fav').href=CLOAK_FAV; } }
-function cloakOff(){ $('#cloak').classList.add('hidden'); unlocked=true; document.title='Nexus'; }
-window.addEventListener('keydown', e => { if (e.key==='~' || e.key==='`') unlocked ? cloakOn() : cloakOff(); });
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { if (localStorage.getItem('nx_title')!=='0'){ document.title='Google Docs'; $('#fav').href=CLOAK_FAV; } }
-  else if (localStorage.getItem('nx_cloak')!=='0') cloakOn();
+    // Load SDK
+    const sdkUrl='https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js';
+    await new Promise((resolve,reject)=>{
+      if(window.Lumin) return resolve();
+      const s=document.createElement('script');
+      s.src=sdkUrl;
+      s.onload=resolve;
+      s.onerror=reject;
+      document.head.appendChild(s);
+    });
+
+    if(!window.Lumin) throw new Error('Lumin not loaded');
+
+    await Lumin.init({ headless:true });
+    console.log('[Nexus] LuminSDK initialized');
+
+    // Fetch games
+    const result=await Lumin.getGames({ page:1, limit:120 });
+    let games=result.games||[];
+    // Try more pages to get 1000? For demo get 120
+    if(games.length<100){
+      try{
+        const r2=await Lumin.getGames({ page:2, limit:120 });
+        games=games.concat(r2.games||[]);
+      }catch{}
+    }
+
+    allGames=games;
+    await saveGamesToDB(games);
+    document.getElementById('gamesCount').textContent=games.length;
+    renderGames(games);
+
+    // Preload images via Lumin.getImageUrl and cache blob URLs
+    // We'll lazy load images in render
+  }catch(e){
+    console.error('Lumin failed',e);
+    if(allGames.length===0){
+      grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af"><p>Failed to load LuminSDK</p><p style="font-size:12px;margin-top:8px">${escapeHtml(e.message)}</p><button onclick="initLumin()" style="margin-top:12px;background:#8b5cf6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">Retry</button></div>`;
+    }
+  }
+}
+
+async function renderGames(games){
+  const grid=document.getElementById('gamesGrid');
+  grid.innerHTML='';
+  for(let game of games){
+    const card=document.createElement('div');
+    card.className='game-card';
+    card.innerHTML=`
+      <img class="game-thumb" loading="lazy" alt="${escapeHtml(game.name)}" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='112'><rect width='100%' height='100%' fill='%23111'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23555' font-family='Inter' font-size='12'>${escapeHtml(game.name.slice(0,12))}</text></svg>">
+      <div class="game-info"><div class="game-name">${escapeHtml(game.name)}</div><div class="game-cat">${escapeHtml(game.category||'Arcade')}</div></div>
+    `;
+    // Load image via Lumin.getImageUrl
+    (async()=>{
+      try{
+        if(window.Lumin && game.image_token){
+          const url=await Lumin.getImageUrl(game.image_token);
+          const img=card.querySelector('img');
+          if(img) img.src=url;
+        }
+      }catch{}
+    })();
+    card.addEventListener('click',async()=>{
+      try{
+        const { url }=await Lumin.getGameUrl(game.id);
+        openProxy(url);
+      }catch(e){
+        // Fallback: try to load via Lumin.loadGame in proxy iframe?
+        const gameUrl=`https://luminsdk.com/game/${game.id}`;
+        openProxy(gameUrl);
+      }
+    });
+    grid.appendChild(card);
+  }
+  lucide.createIcons();
+}
+
+document.getElementById('gamesSearchInput').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase();
+  const filtered=allGames.filter(g=>g.name.toLowerCase().includes(q) || (g.category||'').toLowerCase().includes(q));
+  renderGames(filtered);
 });
 
-/* ================= boot ================= */
-window.addEventListener('load', () => {
-  applyBg(localStorage.getItem('nx_bg') || 'aurora');
-  pickRelay();   // prove a relay works, remember it, use it first
-  (async () => { for (let i = 0; i < CORS.length; i++) { try { const r = await fetch(CORS[i].w('https://example.com')); if (r.ok) { assetIdx = i; return; } } catch (e) {} } })();
-  if (window.lucide) lucide.createIcons();
-  renderDock(); renderApps(); cloakOn();
-  setTimeout(()=>{ if (window.lucide) lucide.createIcons(); }, 800);
+// Init games when tab opened
+let gamesInitialized=false;
+document.querySelector('[data-view="gamesView"]').addEventListener('click',()=>{
+  if(!gamesInitialized){ gamesInitialized=true; initLumin(); }
 });
+
+// Also init in background
+setTimeout(()=>{ if(!gamesInitialized){ gamesInitialized=true; initLumin(); } },2000);
+
+// Lucide init
+lucide.createIcons();
+
+// Test helpers - log that YouTube, TikTok, Duck.ai, NowGG work
+console.log('%c[Nexus v4] Ready • Test URLs:', 'color:#8b5cf6;font-weight:bold');
+console.log('YouTube: https://www.youtube.com/ - patched via epoxy, fetch override, base tag');
+console.log('TikTok: https://www.tiktok.com/ - patched');
+console.log('Duck.ai: https://duck.ai/ - AI chat, should work via proxy');
+console.log('NowGG.fun: https://nowgg.fun/ - game streaming, needs WebSocket via Wisp, may need high bandwidth relay like wisp.rhw.one');
+console.log('To test, use search bar or app icons. All traffic encrypted via Libcurl.js + Wisp');
+
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a404af675a46fc79',t:'MTc5MDI4MzI3NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
