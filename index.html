@@ -224,6 +224,7 @@
         <option value="direct">Always direct (lowest latency)</option>
       </select>
     </div>
+    <div class="fld"><label>Nexus background</label><select id="homeBgSel"><option value="stars">Starfield</option><option value="matrix">Slow matrix</option></select></div>
     <div class="fld"><label>Search engine</label>
       <select id="engineSel">
         <option value="google">Google</option>
@@ -272,7 +273,7 @@ const ENGINES = {
   duckduckgo: 'https://duckduckgo.com/?q=%s',
   bing: 'https://www.bing.com/search?q=%s'
 };
-const PROXY_VERSION = '3.5.0';
+const PROXY_VERSION = '3.6.1';
 const REQ_TIMEOUT_MS = 45000;
 const MAX_TABS_RESTORE = 8;
 
@@ -289,7 +290,7 @@ const tabsEl = $('tabs'), framesEl = $('frames'), urlInput = $('urlInput'), goBt
       newTabBtn = $('newTabBtn'), serverPill = $('serverPill'), serverHost = $('serverHost'),
       settingsBtn = $('settingsBtn'), panel = $('panel'), scrim = $('scrim'),
       wispSelect = $('wispSelect'), wispCustom = $('wispCustom'), wispSave = $('wispSave'),
-      wsModeSel = $('wsMode'), engineSel = $('engineSel'),
+      wsModeSel = $('wsMode'), engineSel = $('engineSel'), homeBgSel = $('homeBgSel'),
       reconnectBtn = $('reconnectBtn'), clearCookiesBtn = $('clearCookies'),
       setNote = $('setNote'), toastEl = $('toast'), progressEl = $('progress'),
       omniIcon = $('omniIcon');
@@ -945,8 +946,8 @@ function errorPage(url, msg) {
     'button{background:#818cf8;color:#0b0e14;border:0;border-radius:999px;padding:11px 26px;font-size:14px;font-weight:700;cursor:pointer;margin:4px}' +
     'button.ghost{background:#1b2230;color:#e6ebf4}</style></head><body><div class="box">' +
     '<h1>Couldn\'t load this page</h1><p>' + escapeHtml(url) + '</p><code>' + escapeHtml(msg) + '</code>' +
-    '<button onclick="top.proxyAPI.reload()">↻ Retry</button> ' +
-    '<button class="ghost" onclick="top.proxyAPI.home()">⌂ Home</button>' +
+    '<button onclick="(function(){for(var w=window,i=0;i<10;i++){try{if(w.proxyAPI){w.proxyAPI.reload();return}if(w===w.parent)break;w=w.parent}catch(e){break}}})()">↻ Retry</button> ' +
+    '<button class="ghost" onclick="(function(){for(var w=window,i=0;i<10;i++){try{if(w.proxyAPI){w.proxyAPI.home();return}if(w===w.parent)break;w=w.parent}catch(e){break}}})()">⌂ Home</button>' +
     '<p style="font-size:12px">Tip: open ⚙ Settings and try a different server.</p>' +
     '</div></body></html>';
 }
@@ -957,62 +958,65 @@ function bumpRecent(url, title) {
   r.unshift({ u: url, t: title || hostOf(url), ts: Date.now() });
   store.setJSON('recents', r.slice(0, 12));
 }
+const NX_LUCIDE = {"gamepad-2":"<line x1=\"6\" x2=\"10\" y1=\"11\" y2=\"11\" /> <line x1=\"8\" x2=\"8\" y1=\"9\" y2=\"13\" /> <line x1=\"15\" x2=\"15.01\" y1=\"12\" y2=\"12\" /> <line x1=\"18\" x2=\"18.01\" y1=\"10\" y2=\"10\" /> <path d=\"M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z\" />","layout-grid":"<rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\" /> <rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\" /> <rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\" /> <rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\" />","handshake":"<path d=\"m11 17 2 2a1 1 0 1 0 3-3\" /> <path d=\"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4\" /> <path d=\"m21 3 1 11h-2\" /> <path d=\"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3\" /> <path d=\"M3 4h8\" />","plus":"<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />","search":"<path d=\"m21 21-4.34-4.34\" /> <circle cx=\"11\" cy=\"11\" r=\"8\" />","home":"<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" /> <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />","palette":"<path d=\"M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z\" /> <circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" />","clapperboard":"<path d=\"m12.296 3.464 3.02 3.956\" /> <path d=\"M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z\" /> <path d=\"M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" /> <path d=\"m6.18 5.276 3.1 3.899\" />"};
+const NX_BRANDS = {"instagram":"M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077","netflix":"m5.398 0 8.348 23.602c2.346.059 4.856.398 4.856.398L10.113 0H5.398zm8.489 0v9.172l4.715 13.33V0h-4.715zM5.398 1.5V24c1.873-.225 2.81-.312 4.715-.398V14.83L5.398 1.5z","tiktok":"M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z","twitch":"M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z","youtube":"M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z","discord":"M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"};
+function nxIcon(name) { return '<svg class="nx-lucide" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (NX_LUCIDE[name] || '') + '</svg>'; }
+function nxBrand(name, viewBox) { return '<svg class="nx-brand-icon" viewBox="' + viewBox + '" aria-hidden="true" focusable="false"><path d="' + (NX_BRANDS[name] || '') + '" fill="currentColor"/></svg>'; }
 function homePage() {
-  const sites = [
-    ['Instagram','◎','https://www.instagram.com/','ig'],
-    ['Movies','▶','https://www.youtube.com/','movies'],
-    ['TikTok','♪','https://www.tiktok.com/','tt'],
-    ['Twitch','▣','https://www.twitch.tv/','tw'],
-    ['YouTube','▶','https://www.youtube.com/','yt'],
-    ['Discord','◉','https://discord.com/app','dc']
+  const bg = store.get('homebg', 'stars') === 'matrix' ? 'matrix' : 'stars';
+  const siteData = [
+    ['Instagram','https://www.instagram.com/','instagram','0 0 24 24','ig'],
+    ['Movies','https://www.netflix.com/','netflix','0 0 24 24','movies'],
+    ['TikTok','https://www.tiktok.com/','tiktok','0 0 24 24','tt'],
+    ['Twitch','https://www.twitch.tv/','twitch','0 0 24 24','tw'],
+    ['YouTube','https://www.youtube.com/','youtube','0 0 24 24','yt'],
+    ['Discord','https://discord.com/app','discord','0 0 24 24','dc']
   ];
-  const tiles = sites.map(([name, icon, url, cls]) =>
-    '<button type="button" class="nx-app ' + cls + '" onclick="top.__proxyNavigate(\'' + url + '\')">' +
-    '<span class="nx-icon">' + icon + '</span><span class="nx-label">' + name + '</span></button>'
+  const tiles = siteData.map(([name,url,icon,view,cls]) =>
+    '<button type="button" class="nx-app ' + cls + '" onclick="window.__nexusGo(\'' + url + '\')" aria-label="Open ' + name + '">' +
+    nxBrand(icon,view) + '<span class="nx-label">' + name + '</span></button>'
   ).join('');
   const recents = getRecents();
   let recentHtml = '';
   if (recents.length) {
     recentHtml = '<section class="nx-recent"><h2>Recently opened</h2><div class="nx-recent-list">';
     for (const r of recents.slice(0, 6)) {
-      recentHtml += '<button type="button" class="nx-recent-item" onclick="top.__proxyNavigate(\'' + escapeHtml(r.u) + '\')">' +
+      recentHtml += '<button type="button" class="nx-recent-item" onclick="window.__nexusGo(\'' + escapeHtml(r.u) + '\')">' +
         '<span class="nx-letter">' + escapeHtml((r.t || '?').charAt(0).toUpperCase()) + '</span>' +
         '<span><b>' + escapeHtml(r.t || r.u) + '</b><small>' + escapeHtml(hostOf(r.u)) + '</small></span></button>';
     }
     recentHtml += '</div></section>';
   }
+  let rain = '';
+  if (bg === 'matrix') {
+    const columns = ['0101101010011010','1010011010110101','1100101011010010','0011010110101101','1011010010110100','0100110101101001','1101010011010110','0010110100101101'];
+    rain = '<div class="nx-matrix" aria-hidden="true">' + columns.map((x,i)=>'<span style="left:'+(5+i*13)+'%;animation-delay:-'+(i*2.7)+'s">'+x.split('').join('<br>')+'</span>').join('') + '</div>';
+  }
+  const helper = '<script>(function(){function findApi(){var w=window;for(var i=0;i<10;i++){try{if(w.proxyAPI||w.__proxyNavigate)return w;if(w===w.parent)break;w=w.parent}catch(e){break}}return null}window.__nexusGo=function(u){var w=findApi();try{if(w&&typeof w.__proxyNavigate===\'function\'){w.__proxyNavigate(u);return true}if(w&&w.proxyAPI&&w.proxyAPI.load){w.proxyAPI.load(u);return true}}catch(e){}return false};window.__nexusAction=function(a){var w=findApi();try{if(!w||!w.proxyAPI)return false;if(a===\'home\')w.proxyAPI.home();else if(a===\'newTab\')w.proxyAPI.newTab();else if(a===\'games\')w.proxyAPI.load(\'https://now.gg/\');else if(a===\'community\')w.proxyAPI.load(\'https://discord.com/app\');else if(a===\'apps\'){var x=document.getElementById(\'nxApps\');if(x)x.scrollIntoView({behavior:\'smooth\'})}return true}catch(e){return false}}})();<\/script>';
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus</title><style>' +
-    '*{box-sizing:border-box}html,body{margin:0;min-height:100%;color:#f4f4f5;font-family:ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif}' +
-    'body{min-height:100vh;background-color:#090a0c;background-image:radial-gradient(circle at 12% 30%,rgba(255,255,255,.12) 0 1px,transparent 2px),radial-gradient(circle at 77% 18%,rgba(255,255,255,.09) 0 1px,transparent 2px),radial-gradient(circle at 49% 70%,rgba(255,255,255,.08) 0 1.5px,transparent 2.5px),radial-gradient(circle at 88% 80%,rgba(255,255,255,.1) 0 1px,transparent 2px);background-size:230px 190px,310px 280px,270px 250px,370px 330px}' +
-    '.nx-top{position:sticky;top:0;z-index:5;display:flex;justify-content:center;padding:12px 14px;background:linear-gradient(#090a0c 70%,transparent)}' +
-    '.nx-nav{display:flex;align-items:center;gap:12px;padding:9px 14px;border:1px solid rgba(255,255,255,.05);border-radius:24px;background:rgba(27,27,29,.92);box-shadow:0 12px 40px #0007}' +
-    '.nx-brand{width:48px;height:42px;display:grid;place-items:center;margin-right:clamp(40px,22vw,220px);font-size:23px;font-weight:950;letter-spacing:-2px;color:#9de6bb;text-shadow:0 0 18px #57d98f66}' +
-    '.nx-nav button{width:42px;height:42px;border:0;border-radius:12px;background:transparent;color:#f7f7f8;font-size:24px;font-weight:750;cursor:pointer;touch-action:manipulation}' +
-    '.nx-nav button:hover,.nx-nav button:focus-visible{background:#ffffff17;outline:2px solid #9de6bb}' +
-    '.nx-wrap{width:min(720px,94vw);margin:clamp(120px,27vh,300px) auto 60px;text-align:center;padding:0 12px}' +
-    '.nx-title{margin:0 0 32px;font-size:clamp(36px,7vw,54px);font-weight:850;letter-spacing:-1.5px;text-shadow:0 5px 24px #ffffff18}' +
-    '.nx-apps{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin:0 auto 26px}' +
-    '.nx-app{width:94px;height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid #ffffff0b;border-radius:16px;color:white;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 24px #0006;transition:transform .12s,filter .12s}' +
-    '.nx-app:hover{transform:translateY(-3px);filter:brightness(1.13)}.nx-icon{font-size:44px;font-weight:900;line-height:1}.nx-label{font-size:13px;font-weight:700}' +
-    '.ig{background:linear-gradient(135deg,#8134af,#dd2a7b 48%,#feda77)}.movies{background:#37005b}.tt{background:#050505}.tw{background:#9146ff}.yt{background:#f20d19}.dc{background:#283bd4}' +
-    '.nx-search{display:flex;width:min(400px,92vw);height:62px;margin:20px auto 0;padding:5px;border:1px solid #ffffff12;border-radius:999px;background:#050505dd;box-shadow:0 8px 32px #0008}' +
-    '.nx-search input{flex:1;min-width:0;padding:0 20px;border:0;outline:0;background:transparent;color:#fff;font:600 17px system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center}.nx-search input::placeholder{color:#aaa}' +
-    '.nx-search button{width:52px;border:0;border-radius:50%;background:#a0e9bd;color:#08110b;font-size:19px;font-weight:800;cursor:pointer;touch-action:manipulation}' +
-    '.nx-recent{margin:34px auto 0;text-align:left}.nx-recent h2{margin:0 0 10px;color:#aaa;font-size:13px;text-transform:uppercase;letter-spacing:1px}.nx-recent-list{display:grid;gap:7px}' +
-    '.nx-recent-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:1px solid #ffffff12;border-radius:12px;background:#161719;color:#fff;text-align:left;cursor:pointer}.nx-recent-item:hover{background:#202225}' +
-    '.nx-letter{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#282b2d;color:#a0e9bd;font-weight:900}.nx-recent-item small{display:block;margin-top:3px;color:#9b9b9b}' +
-    '@media(max-width:520px){.nx-nav{gap:4px}.nx-brand{margin-right:8vw}.nx-app{width:82px;height:88px}.nx-wrap{margin-top:22vh}.nx-search{height:56px}}' +
-    '</style></head><body><header class="nx-top"><nav class="nx-nav" aria-label="Nexus shortcuts">' +
-    '<button type="button" class="nx-brand" aria-label="Nexus home" onclick="top.proxyAPI.home()">N</button>' +
-    '<button type="button" aria-label="Games" title="Open now.gg" onclick="top.__proxyNavigate(\'https://now.gg/\')">🎮</button>' +
-    '<button type="button" aria-label="Apps" title="Jump to apps" onclick="document.getElementById(\'nxApps\').scrollIntoView({behavior:\'smooth\'})">▦</button>' +
-    '<button type="button" aria-label="Community" title="Open Discord" onclick="top.__proxyNavigate(\'https://discord.com/app\')">♧</button>' +
-    '<button type="button" aria-label="New tab" title="New tab" onclick="top.proxyAPI.newTab()">+</button>' +
-    '</nav></header><main class="nx-wrap"><h1 class="nx-title">Nexus</h1>' +
+    '*{box-sizing:border-box}html,body{margin:0;min-height:100%;color:#f5f6f7;font-family:ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif}' +
+    'body{position:relative;min-height:100vh;overflow-x:hidden;background:#090a0c}' +
+    'body.stars{background-image:radial-gradient(circle at 12% 30%,rgba(255,255,255,.13) 0 1px,transparent 2px),radial-gradient(circle at 77% 18%,rgba(255,255,255,.1) 0 1px,transparent 2px),radial-gradient(circle at 49% 70%,rgba(255,255,255,.08) 0 1.5px,transparent 2.5px),radial-gradient(circle at 88% 80%,rgba(255,255,255,.1) 0 1px,transparent 2px);background-size:230px 190px,310px 280px,270px 250px,370px 330px}' +
+    '.nx-matrix{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;background:radial-gradient(ellipse at center,transparent 15%,#050708 88%)}.nx-matrix span{position:absolute;top:-45vh;color:#7ef5b2;opacity:.13;font:500 13px/1.55 ui-monospace,monospace;text-shadow:0 0 7px #5df0ad55;animation:nx-fall 27s linear infinite;white-space:nowrap}@keyframes nx-fall{to{transform:translateY(155vh)}}@media(prefers-reduced-motion:reduce){.nx-matrix span{animation:none;top:5vh}}' +
+    '.nx-top{position:sticky;top:0;z-index:2;display:flex;justify-content:center;padding:10px 14px;background:linear-gradient(#090a0c 72%,transparent)}.nx-nav{display:flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid #ffffff0a;border-radius:24px;background:rgba(28,28,30,.94);box-shadow:0 12px 40px #0008}' +
+    '.nx-nav button{display:grid;place-items:center;width:42px;height:42px;padding:0;border:0;border-radius:12px;background:transparent;color:#f6f7f7;cursor:pointer;touch-action:manipulation}.nx-nav button:hover,.nx-nav button:focus-visible{background:#ffffff16;outline:2px solid #91e6b7}.nx-lucide{width:24px;height:24px;display:block}.nx-mark{width:43px!important;height:43px!important;margin-right:clamp(34px,18vw,190px);color:#9ce8bc}.nx-mark svg{width:34px;height:34px;filter:drop-shadow(0 0 8px #87e5ae55)}' +
+    '.nx-wrap{position:relative;z-index:1;width:min(760px,94vw);margin:clamp(105px,25vh,290px) auto 56px;text-align:center;padding:0 12px}.nx-title{display:flex;align-items:center;justify-content:center;gap:13px;margin:0 0 31px;font-size:clamp(37px,7vw,55px);font-weight:850;letter-spacing:-1.6px;text-shadow:0 5px 24px #ffffff20}.nx-title-mark{width:44px;height:44px;color:#95e8b7;filter:drop-shadow(0 0 12px #6de6a955)}' +
+    '.nx-apps{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin:0 auto 25px}.nx-app{width:94px;height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid #ffffff0b;border-radius:16px;color:#fff;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 24px #0006;transition:transform .12s,filter .12s}.nx-app:hover{transform:translateY(-3px);filter:brightness(1.15)}.nx-brand-icon{width:46px;height:46px;display:block}.nx-label{font-size:13px;font-weight:700}.ig{background:linear-gradient(135deg,#8134af,#dd2a7b 50%,#feda77)}.movies{background:#230a35}.tt{background:#050505}.tw{background:#9146ff}.yt{background:#f20d19}.dc{background:#283bd4}' +
+    '.nx-search{display:flex;width:min(410px,92vw);height:60px;margin:20px auto 0;padding:5px;border:1px solid #ffffff16;border-radius:999px;background:#050505e8;box-shadow:0 8px 32px #0008}.nx-search input{flex:1;min-width:0;padding:0 17px;border:0;outline:0;background:transparent;color:#fff;font:600 16px system-ui,sans-serif;text-align:center}.nx-search input::placeholder{color:#aaa}.nx-search button{width:50px;border:0;border-radius:50%;background:#9de8bb;color:#0b110d;cursor:pointer;touch-action:manipulation}.nx-search button:hover{background:#b7f2ce}' +
+    '.nx-recent{margin:34px auto 0;text-align:left}.nx-recent h2{margin:0 0 10px;color:#aaa;font-size:13px;text-transform:uppercase;letter-spacing:1px}.nx-recent-list{display:grid;gap:7px}.nx-recent-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:1px solid #ffffff12;border-radius:12px;background:#161719;color:#fff;text-align:left;cursor:pointer}.nx-recent-item:hover{background:#202225}.nx-letter{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#282b2d;color:#a0e9bd;font-weight:900}.nx-recent-item small{display:block;margin-top:3px;color:#9b9b9b}' +
+    '@media(max-width:520px){.nx-nav{gap:4px}.nx-mark{margin-right:8vw}.nx-app{width:82px;height:88px}.nx-wrap{margin-top:22vh}.nx-search{height:56px}}' +
+    '</style></head><body class="' + bg + '">' + rain + helper +
+    '<header class="nx-top"><nav class="nx-nav" aria-label="Nexus shortcuts">' +
+    '<button type="button" class="nx-mark" aria-label="Nexus home" title="Nexus home" onclick="window.__nexusAction(\'home\')"><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3 34 11v18l-14 8L6 29V11z"/><path d="M13 27V13l14 14V13"/></svg></button>' +
+    '<button type="button" aria-label="Games" title="Games" onclick="window.__nexusAction(\'games\')">' + nxIcon('gamepad-2') + '</button>' +
+    '<button type="button" aria-label="Apps" title="Apps" onclick="window.__nexusAction(\'apps\')">' + nxIcon('layout-grid') + '</button>' +
+    '<button type="button" aria-label="Community" title="Community" onclick="window.__nexusAction(\'community\')">' + nxIcon('handshake') + '</button>' +
+    '<button type="button" aria-label="New tab" title="New tab" onclick="window.__nexusAction(\'newTab\')">' + nxIcon('plus') + '</button>' +
+    '</nav></header><main class="nx-wrap"><h1 class="nx-title"><svg class="nx-title-mark" viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3 34 11v18l-14 8L6 29V11z"/><path d="M13 27V13l14 14V13"/></svg>Nexus</h1>' +
     '<section id="nxApps" class="nx-apps" aria-label="Favorite sites">' + tiles + '</section>' +
-    '<form class="nx-search" onsubmit="event.preventDefault();top.__proxyNavigate(document.getElementById(\'nxQuery\').value)">' +
+    '<form class="nx-search" onsubmit="event.preventDefault();window.__nexusGo(document.getElementById(\'nxQuery\').value)">' +
     '<input id="nxQuery" aria-label="Search or enter a website" placeholder="search anything…" autocomplete="off" spellcheck="false">' +
-    '<button type="submit" aria-label="Search">↗</button></form>' + recentHtml +
+    '<button type="submit" aria-label="Search">' + nxIcon('search') + '</button></form>' + recentHtml +
     '</main></body></html>';
 }
 
@@ -1040,7 +1044,7 @@ function newTab(url, opts) {
   const id = 't' + (++tabSeq);
   const tab = {
     id, name: 'px-tab-' + id + '-' + Date.now().toString(36),
-    url: '', title: 'New Tab', fav: '', opts: null,
+    url: '', title: 'Nexus', fav: '', opts: null,
     hist: [], hIdx: -1, renderSeq: 0, loadSeq: 0, pendingUrl: null, iframe: null
   };
   tab.iframe = makeFrame(tab);
@@ -1124,7 +1128,7 @@ function syncChrome(tab, skipDoc) {
   backBtn.disabled = tab.hIdx <= 0;
   fwdBtn.disabled = tab.hIdx < 0 || tab.hIdx >= tab.hist.length - 1;
   reloadBtn.disabled = !tab.url;
-  document.title = (tab.title && tab.title !== 'New Tab' ? tab.title + ' — ' : '') + 'Nexus';
+  document.title = (tab.title && tab.title !== 'New Tab' && tab.title !== 'Nexus' ? tab.title + ' — ' : '') + 'Nexus';
   if (!skipDoc) try {
     const d = tab.iframe.contentDocument;
     if (d) {
@@ -1303,7 +1307,7 @@ function goHome(tab) {
   tab = tab || activeTab();
   if (!tab) return;
   tab.url = ''; tab.opts = null; tab.pendingUrl = null;
-  tab.title = 'New Tab'; tab.fav = '';
+  tab.title = 'Nexus'; tab.fav = '';
   renderInto(tab, homePage(), () => syncChrome(tab));
   if (tab.id === activeTabId) clearDeepLink();
   renderStrip();
@@ -1374,7 +1378,14 @@ function pageRuntime() {
   try { __pxTabId = window.__pxTabId || window.name || ''; } catch (e) {}
   var __pxDepth = 0;
   try { var __w = window; while (__w !== __w.top && __pxDepth < 10) { __pxDepth++; __w = __w.parent; } } catch (e) {}
-  function isTopFrame() { try { return window.parent === window.top; } catch (e) { return true; } }
+  function isTopFrame() {
+    try {
+      // Treat the proxy shell as the navigation top even when a launcher embeds
+      // the whole proxy page in another iframe (e.g. srcdoc/bootstrap shells).
+      if (BR && window.parent === BR && typeof BR.__proxyNavigate === 'function') return true;
+      return window.parent === window.top;
+    } catch (e) { return false; }
+  }
   function __pxSetURL(u) {
     __pxURL = u;
     if (isTopFrame()) { try { BR.__proxyUrlChanged(u, __pxTabId); } catch (e) {} }
@@ -1389,7 +1400,17 @@ function pageRuntime() {
     try {
       var base = __pxURL;
       try { if (document.baseURI && /^https?:/.test(document.baseURI)) base = document.baseURI; } catch (e) {}
-      return new URL(u, base).href;
+      var parsed = new URL(u, base);
+      // srcdoc keeps the launcher origin. If site code builds an absolute
+      // same-origin URL from that physical origin (common for analytics/API
+      // endpoints), translate its path back onto the proxied site's origin.
+      try {
+        var virtualOrigin = new URL(__pxURL).origin;
+        var shellOrigin = window.parent && window.parent.location && window.parent.location.origin;
+        if (shellOrigin && parsed.origin === shellOrigin && virtualOrigin !== shellOrigin)
+          parsed = new URL(parsed.pathname + parsed.search + parsed.hash, virtualOrigin);
+      } catch (e) {}
+      return parsed.href;
     } catch (e) { return String(u); }
   }
   function sanitizeMethod(m, hasBody) {
@@ -2549,6 +2570,9 @@ function pageRuntime() {
     }
     defProp('href', function () { return __pxURL; }, function (v) { pxNavigate(String(v)); });
     defProp('origin', function () { var u = locParts(); return u ? u.origin : ''; }, function () {});
+    // Window.origin is configurable even though Location.origin is an
+    // unforgeable browser property; expose the virtual origin where possible.
+    try { Object.defineProperty(window, 'origin', { get: function () { var u = locParts(); return u ? u.origin : 'null'; }, configurable: true }); } catch (e) {}
     defProp('protocol', function () { var u = locParts(); return u ? u.protocol : ''; }, function (v) { navFromParts(function (u) { u.protocol = v; }); });
     defProp('host', function () { var u = locParts(); return u ? u.host : ''; }, function (v) { navFromParts(function (u) { u.host = v; }); });
     defProp('hostname', function () { var u = locParts(); return u ? u.hostname : ''; }, function (v) { navFromParts(function (u) { u.hostname = v; }); });
@@ -3049,7 +3073,7 @@ function pageRuntime() {
     } else scanIframes(document);
   } catch (e) {}
 
-  try { window.__px = window.__px || {}; window.__px.version = '3.5.0'; } catch (e) {}
+  try { window.__px = window.__px || {}; window.__px.version = '3.6.1'; } catch (e) {}
 
   window.addEventListener('unhandledrejection', function (ev) {
     var m = ev && ev.reason && (ev.reason.message || String(ev.reason));
@@ -3120,6 +3144,13 @@ wsModeSel.addEventListener('change', () => {
 });
 engineSel.value = ENGINE;
 engineSel.addEventListener('change', () => { ENGINE = engineSel.value; store.set('engine', ENGINE); });
+homeBgSel.value = store.get('homebg', 'stars') === 'matrix' ? 'matrix' : 'stars';
+homeBgSel.addEventListener('change', () => {
+  const v = homeBgSel.value === 'matrix' ? 'matrix' : 'stars';
+  store.set('homebg', v);
+  const t = activeTab();
+  if (t && !t.url) goHome(t);
+});
 clearCookiesBtn.addEventListener('click', () => {
   cookieJar.clear();
   toast('Cookies cleared.', 'ok');
@@ -3302,5 +3333,5 @@ async function boot(isRetry) {
 }
 boot(false);
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a416086bfe3a5c14',t:'MTc5MDQ2NTE3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
