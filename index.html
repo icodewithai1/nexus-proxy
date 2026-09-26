@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>Proxy</title>
+<title>Nexus</title>
 <style>
   :root {
     --bg: #0b0e14;
@@ -23,7 +23,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; margin: 0; }
   body {
-    display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
+    display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden;
     background: var(--bg); color: var(--txt);
     font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
@@ -188,7 +188,7 @@
 
   <div id="tabstrip">
     <div id="tabs"></div>
-    <button id="newTabBtn" title="New tab (Alt+T)">+</button>
+    <button id="newTabBtn" type="button" title="New tab (Alt+T)">+</button>
   </div>
 
   <div id="toolbar">
@@ -200,7 +200,7 @@
       <span id="omniIcon">🌐</span>
       <input id="urlInput" type="text" placeholder="Search or enter URL" autocomplete="off"
              autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url">
-      <button id="goBtn" disabled>Go</button>
+      <button id="goBtn" type="button">Go</button>
     </div>
     <button id="serverPill" class="bad" title="Wisp server — click for settings"><span class="dot"></span><span id="serverHost">…</span></button>
     <button class="tbtn" id="settingsBtn" title="Settings">⚙</button>
@@ -247,7 +247,7 @@
 <script>
 'use strict';
 /* ============================================================================
- *  PROXY v3.4 — Epoxy-first; libcurl.js fallback; WebKit/Safari-safe sandbox
+ *  Nexus — Epoxy-first; libcurl.js fallback; Chrome/WebKit fixes
  *  Engine: proven v2 core (bridge, cookies, runtime). Shell: rewritten.
  * ==========================================================================*/
 
@@ -272,7 +272,7 @@ const ENGINES = {
   duckduckgo: 'https://duckduckgo.com/?q=%s',
   bing: 'https://www.bing.com/search?q=%s'
 };
-const PROXY_VERSION = '3.4.0';
+const PROXY_VERSION = '3.5.0';
 const REQ_TIMEOUT_MS = 45000;
 const MAX_TABS_RESTORE = 8;
 
@@ -654,7 +654,7 @@ async function autoConnect() {
 function noteFetch(ok) {
   if (ok) { consecFails = 0; return; }
   consecFails++;
-  if (consecFails >= 6 && !failingOver && libcurlReady) {
+  if (consecFails >= 6 && !failingOver && (libcurlReady || epoxyModule)) {
     failingOver = true;
     backgroundFailover().finally(() => { failingOver = false; });
   }
@@ -740,6 +740,25 @@ async function bridgeFetch(url, opts) {
       throw err;
     }
     pxReleaseFetch();
+    // YouTube's media URLs can return an HTML 403 through one transport. Retry that
+    // media request through the other engine before the player receives the error body.
+    let responseStatus = Number(res.status) || 0;
+    let mediaHost = false;
+    try { mediaHost = /(^|\.)googlevideo\.com$/i.test(new URL(cur).hostname); } catch (e) {}
+    if (epoxyReady && activeTransport === 'Epoxy' && mediaHost && responseStatus >= 400 &&
+        libcurlReady && typeof libcurl !== 'undefined' && libcurl.fetch) {
+      try {
+        await pxAcquireFetch();
+        let alt;
+        try { alt = await withTimeout(libcurl.fetch(cur, { method, headers, body }), REQ_TIMEOUT_MS, 'libcurl media retry'); }
+        finally { pxReleaseFetch(); }
+        if (alt && alt.status >= 200 && alt.status < 400) {
+          res = alt;
+          responseStatus = Number(alt.status) || responseStatus;
+          activeTransport = 'libcurl.js';
+        }
+      } catch (e) { console.warn('[proxy] YouTube media retry failed:', e && e.message || e); }
+    }
     captureCookies(cur, res);
     const st = Number(res.status) || 0;
     let loc = null;
@@ -939,62 +958,62 @@ function bumpRecent(url, title) {
   store.setJSON('recents', r.slice(0, 12));
 }
 function homePage() {
-  const tiles = [
-    ['YouTube', '▶', 'https://www.youtube.com/'],
-    ['now.gg', '🎮', 'https://now.gg/'],
-    ['TikTok', '♪', 'https://www.tiktok.com/'],
-    ['Google', 'G', 'https://www.google.com/'],
-    ['Discord', '💬', 'https://discord.com/app'],
-    ['ChatGPT', '✦', 'https://chatgpt.com/'],
-    ['Reddit', '◉', 'https://www.reddit.com/'],
-    ['Twitch', '▶', 'https://www.twitch.tv/'],
-    ['X', '𝕏', 'https://x.com/'],
-    ['Instagram', '◈', 'https://www.instagram.com/'],
-    ['Spotify', '♫', 'https://open.spotify.com/'],
-    ['Wikipedia', 'W', 'https://www.wikipedia.org/']
+  const sites = [
+    ['Instagram','◎','https://www.instagram.com/','ig'],
+    ['Movies','▶','https://www.youtube.com/','movies'],
+    ['TikTok','♪','https://www.tiktok.com/','tt'],
+    ['Twitch','▣','https://www.twitch.tv/','tw'],
+    ['YouTube','▶','https://www.youtube.com/','yt'],
+    ['Discord','◉','https://discord.com/app','dc']
   ];
-  let t = '';
-  for (const [name, icon, u] of tiles)
-    t += '<button class="tile" onclick="top.__proxyNavigate(\'' + u + '\')"><span>' + icon + '</span>' + name + '</button>';
+  const tiles = sites.map(([name, icon, url, cls]) =>
+    '<button type="button" class="nx-app ' + cls + '" onclick="top.__proxyNavigate(\'' + url + '\')">' +
+    '<span class="nx-icon">' + icon + '</span><span class="nx-label">' + name + '</span></button>'
+  ).join('');
   const recents = getRecents();
-  let rh = '';
+  let recentHtml = '';
   if (recents.length) {
-    rh = '<h2>Recent</h2><div class="recent">';
-    for (const r of recents) {
-      const letter = escapeHtml((r.t || '?').charAt(0).toUpperCase());
-      rh += '<button class="ritem" onclick="top.__proxyNavigate(\'' + escapeHtml(r.u) + '\')">' +
-        '<span class="rlet">' + letter + '</span><span class="rtx"><b>' + escapeHtml(r.t || r.u) +
-        '</b><i>' + escapeHtml(hostOf(r.u)) + '</i></span></button>';
+    recentHtml = '<section class="nx-recent"><h2>Recently opened</h2><div class="nx-recent-list">';
+    for (const r of recents.slice(0, 6)) {
+      recentHtml += '<button type="button" class="nx-recent-item" onclick="top.__proxyNavigate(\'' + escapeHtml(r.u) + '\')">' +
+        '<span class="nx-letter">' + escapeHtml((r.t || '?').charAt(0).toUpperCase()) + '</span>' +
+        '<span><b>' + escapeHtml(r.t || r.u) + '</b><small>' + escapeHtml(hostOf(r.u)) + '</small></span></button>';
     }
-    rh += '</div>';
+    recentHtml += '</div></section>';
   }
-  const hour = new Date().getHours();
-  const greet = hour < 5 ? 'Up late?' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  return '<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_self"><title>New Tab</title><style>' +
-    'body{margin:0;background:#0b0e14;color:#e6ebf4;font-family:sans-serif;min-height:100vh}' +
-    '.wrap{max-width:780px;margin:0 auto;padding:56px 22px 40px}' +
-    'h1{font-size:30px;margin:0}h1 span{color:#818cf8}' +
-    'p.sub{color:#8b94a7;margin:6px 0 26px;font-size:14px}' +
-    '.q{display:flex;gap:8px;margin-bottom:30px}' +
-    '.q input{flex:1;background:#141922;border:1px solid #262f40;border-radius:999px;padding:13px 20px;color:#e6ebf4;font-size:14px;outline:none}' +
-    '.q input:focus{border-color:#818cf8}' +
-    '.q button{background:#818cf8;color:#0b0e14;border:0;border-radius:999px;padding:13px 26px;font-weight:700;cursor:pointer;font-size:14px}' +
-    'h2{font-size:13px;color:#8b94a7;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px}' +
-    '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:30px}' +
-    '.tile{background:#141922;border:1px solid #262f40;color:#e6ebf4;border-radius:12px;padding:18px 8px;font-size:13px;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:center}' +
-    '.tile:hover{border-color:#818cf8;background:#1b2230}.tile span{font-size:24px}' +
-    '.recent{display:flex;flex-direction:column;gap:6px}' +
-    '.ritem{display:flex;align-items:center;gap:12px;background:#141922;border:1px solid #262f40;color:#e6ebf4;border-radius:10px;padding:9px 14px;cursor:pointer;text-align:left}' +
-    '.ritem:hover{border-color:#818cf8}' +
-    '.rlet{width:30px;height:30px;border-radius:8px;background:#1b2230;color:#818cf8;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}' +
-    '.rtx{display:flex;flex-direction:column;min-width:0}.rtx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '.rtx i{font-style:normal;font-size:11px;color:#8b94a7}' +
-    '</style></head><body><div class="wrap"><h1>' + greet + '. <span>Where to?</span></h1>' +
-    '<p class="sub">Traffic is TLS-encrypted end-to-end through Wisp.</p>' +
-    '<div class="q"><input id="q" placeholder="Search or enter URL…" onkeydown="if(event.key===\'Enter\')top.__proxyNavigate(this.value)">' +
-    '<button onclick="top.__proxyNavigate(document.getElementById(\'q\').value)">Go</button></div>' +
-    '<h2>Quick links</h2><div class="grid">' + t + '</div>' + rh +
-    '</div></body></html>';
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus</title><style>' +
+    '*{box-sizing:border-box}html,body{margin:0;min-height:100%;color:#f4f4f5;font-family:ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif}' +
+    'body{min-height:100vh;background-color:#090a0c;background-image:radial-gradient(circle at 12% 30%,rgba(255,255,255,.12) 0 1px,transparent 2px),radial-gradient(circle at 77% 18%,rgba(255,255,255,.09) 0 1px,transparent 2px),radial-gradient(circle at 49% 70%,rgba(255,255,255,.08) 0 1.5px,transparent 2.5px),radial-gradient(circle at 88% 80%,rgba(255,255,255,.1) 0 1px,transparent 2px);background-size:230px 190px,310px 280px,270px 250px,370px 330px}' +
+    '.nx-top{position:sticky;top:0;z-index:5;display:flex;justify-content:center;padding:12px 14px;background:linear-gradient(#090a0c 70%,transparent)}' +
+    '.nx-nav{display:flex;align-items:center;gap:12px;padding:9px 14px;border:1px solid rgba(255,255,255,.05);border-radius:24px;background:rgba(27,27,29,.92);box-shadow:0 12px 40px #0007}' +
+    '.nx-brand{width:48px;height:42px;display:grid;place-items:center;margin-right:clamp(40px,22vw,220px);font-size:23px;font-weight:950;letter-spacing:-2px;color:#9de6bb;text-shadow:0 0 18px #57d98f66}' +
+    '.nx-nav button{width:42px;height:42px;border:0;border-radius:12px;background:transparent;color:#f7f7f8;font-size:24px;font-weight:750;cursor:pointer;touch-action:manipulation}' +
+    '.nx-nav button:hover,.nx-nav button:focus-visible{background:#ffffff17;outline:2px solid #9de6bb}' +
+    '.nx-wrap{width:min(720px,94vw);margin:clamp(120px,27vh,300px) auto 60px;text-align:center;padding:0 12px}' +
+    '.nx-title{margin:0 0 32px;font-size:clamp(36px,7vw,54px);font-weight:850;letter-spacing:-1.5px;text-shadow:0 5px 24px #ffffff18}' +
+    '.nx-apps{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin:0 auto 26px}' +
+    '.nx-app{width:94px;height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid #ffffff0b;border-radius:16px;color:white;cursor:pointer;touch-action:manipulation;box-shadow:0 8px 24px #0006;transition:transform .12s,filter .12s}' +
+    '.nx-app:hover{transform:translateY(-3px);filter:brightness(1.13)}.nx-icon{font-size:44px;font-weight:900;line-height:1}.nx-label{font-size:13px;font-weight:700}' +
+    '.ig{background:linear-gradient(135deg,#8134af,#dd2a7b 48%,#feda77)}.movies{background:#37005b}.tt{background:#050505}.tw{background:#9146ff}.yt{background:#f20d19}.dc{background:#283bd4}' +
+    '.nx-search{display:flex;width:min(400px,92vw);height:62px;margin:20px auto 0;padding:5px;border:1px solid #ffffff12;border-radius:999px;background:#050505dd;box-shadow:0 8px 32px #0008}' +
+    '.nx-search input{flex:1;min-width:0;padding:0 20px;border:0;outline:0;background:transparent;color:#fff;font:600 17px system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center}.nx-search input::placeholder{color:#aaa}' +
+    '.nx-search button{width:52px;border:0;border-radius:50%;background:#a0e9bd;color:#08110b;font-size:19px;font-weight:800;cursor:pointer;touch-action:manipulation}' +
+    '.nx-recent{margin:34px auto 0;text-align:left}.nx-recent h2{margin:0 0 10px;color:#aaa;font-size:13px;text-transform:uppercase;letter-spacing:1px}.nx-recent-list{display:grid;gap:7px}' +
+    '.nx-recent-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:1px solid #ffffff12;border-radius:12px;background:#161719;color:#fff;text-align:left;cursor:pointer}.nx-recent-item:hover{background:#202225}' +
+    '.nx-letter{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#282b2d;color:#a0e9bd;font-weight:900}.nx-recent-item small{display:block;margin-top:3px;color:#9b9b9b}' +
+    '@media(max-width:520px){.nx-nav{gap:4px}.nx-brand{margin-right:8vw}.nx-app{width:82px;height:88px}.nx-wrap{margin-top:22vh}.nx-search{height:56px}}' +
+    '</style></head><body><header class="nx-top"><nav class="nx-nav" aria-label="Nexus shortcuts">' +
+    '<button type="button" class="nx-brand" aria-label="Nexus home" onclick="top.proxyAPI.home()">N</button>' +
+    '<button type="button" aria-label="Games" title="Open now.gg" onclick="top.__proxyNavigate(\'https://now.gg/\')">🎮</button>' +
+    '<button type="button" aria-label="Apps" title="Jump to apps" onclick="document.getElementById(\'nxApps\').scrollIntoView({behavior:\'smooth\'})">▦</button>' +
+    '<button type="button" aria-label="Community" title="Open Discord" onclick="top.__proxyNavigate(\'https://discord.com/app\')">♧</button>' +
+    '<button type="button" aria-label="New tab" title="New tab" onclick="top.proxyAPI.newTab()">+</button>' +
+    '</nav></header><main class="nx-wrap"><h1 class="nx-title">Nexus</h1>' +
+    '<section id="nxApps" class="nx-apps" aria-label="Favorite sites">' + tiles + '</section>' +
+    '<form class="nx-search" onsubmit="event.preventDefault();top.__proxyNavigate(document.getElementById(\'nxQuery\').value)">' +
+    '<input id="nxQuery" aria-label="Search or enter a website" placeholder="search anything…" autocomplete="off" spellcheck="false">' +
+    '<button type="submit" aria-label="Search">↗</button></form>' + recentHtml +
+    '</main></body></html>';
 }
 
 // ---------------- Tabs ----------------
@@ -1011,7 +1030,7 @@ function makeFrame(tab) {
   const f = document.createElement('iframe');
   f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock allow-top-navigation-by-user-activation');
   f.setAttribute('referrerpolicy', 'unsafe-url');
-  f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-read; clipboard-write; accelerometer; gyroscope; magnetometer; camera; microphone; display-capture; web-share; geolocation; midi; payment; usb; xr-spatial-tracking');
+  f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-read; clipboard-write; accelerometer; gyroscope; magnetometer; camera; microphone; display-capture; geolocation; midi; payment; usb; xr-spatial-tracking');
   f.dataset.tab = tab.id;
   framesEl.appendChild(f);
   return f;
@@ -1105,7 +1124,7 @@ function syncChrome(tab, skipDoc) {
   backBtn.disabled = tab.hIdx <= 0;
   fwdBtn.disabled = tab.hIdx < 0 || tab.hIdx >= tab.hist.length - 1;
   reloadBtn.disabled = !tab.url;
-  document.title = (tab.title && tab.title !== 'New Tab' ? tab.title + ' — ' : '') + 'Proxy';
+  document.title = (tab.title && tab.title !== 'New Tab' ? tab.title + ' — ' : '') + 'Nexus';
   if (!skipDoc) try {
     const d = tab.iframe.contentDocument;
     if (d) {
@@ -1181,7 +1200,13 @@ function pushHist(tab, url, opts) {
 async function loadUrl(tab, rawUrl, options) {
   options = options || {};
   if (!tab || !tabs.get(tab.id)) return;
-  if (!libcurlReady || !wispOK) { toast('Not connected — reconnecting…', 'warn'); boot(true); return; }
+  if ((!libcurlReady && !epoxyReady) || !wispOK) {
+    tab.pendingNavigation = { url: rawUrl, options: Object.assign({}, options) };
+    goBtn.disabled = false;
+    toast('Not connected — saving this address and reconnecting…', 'warn', 4500);
+    boot(true);
+    return;
+  }
   const resolved = resolveInput(rawUrl);
   if (!resolved) return;
   const url = resolved;
@@ -2687,6 +2712,8 @@ function pageRuntime() {
   /* ---------- resource fallback: direct-first, proxy-on-error ---------- */
   function fetchBlob(u) {
     return bridge(u, { method: 'GET', headers: {} }).then(function (r) {
+      if (!r || r.status < 200 || r.status >= 300)
+        throw new Error('Resource HTTP ' + (r && r.status || 0) + ': ' + u);
       var ct = 'application/octet-stream';
       for (var k in r.headers) if (String(k).toLowerCase() === 'content-type') ct = String(r.headers[k]).split(';')[0];
       return new Blob([r.body], { type: ct });
@@ -2694,6 +2721,8 @@ function pageRuntime() {
   }
   function fetchText(u) {
     return bridge(u, { method: 'GET', headers: {} }).then(function (r) {
+      if (!r || r.status < 200 || r.status >= 300)
+        throw new Error('Script/style HTTP ' + (r && r.status || 0) + ': ' + u);
       return { text: new TextDecoder('utf-8').decode(r.body), finalUrl: r.finalUrl || u };
     });
   }
@@ -3020,7 +3049,7 @@ function pageRuntime() {
     } else scanIframes(document);
   } catch (e) {}
 
-  try { window.__px = window.__px || {}; window.__px.version = '3.4.0'; } catch (e) {}
+  try { window.__px = window.__px || {}; window.__px.version = '3.5.0'; } catch (e) {}
 
   window.addEventListener('unhandledrejection', function (ev) {
     var m = ev && ev.reason && (ev.reason.message || String(ev.reason));
@@ -3200,7 +3229,8 @@ async function boot(isRetry) {
   const libcurlLoaded = bootResults[1].status === 'fulfilled' && bootResults[1].value;
   libcurlReady = !!libcurlLoaded;
   if (!epoxyLoaded && !libcurlReady) {
-    toast('Both transport engines failed to load.', 'err', 8000);
+    goBtn.disabled = false;
+    toast('Both transport engines failed to load. Toolbar buttons are still available; check the network or reconnect.', 'err', 8000);
     const t = activeTab() || newTab(null);
     renderInto(t, errorPage('(engine failed)', 'Epoxy and libcurl.js could not load. Check your connection/adblocker and retry.'), null);
     return;
@@ -3208,7 +3238,8 @@ async function boot(isRetry) {
   const connected = await autoConnect();
   goBtn.disabled = false;
   if (!connected) {
-    toast('No server reachable — open ⚙ Settings.', 'err', 8000);
+    goBtn.disabled = false;
+    toast('No server reachable — open ⚙ Settings or try again later.', 'err', 8000);
     const t = activeTab() || newTab(null);
     renderInto(t, errorPage('(offline)', 'All Wisp servers failed. Reconnect or add a custom server.'), null);
     return;
@@ -3224,6 +3255,13 @@ async function boot(isRetry) {
   if (deep) {
     const t = activeTab() || newTab(null);
     loadUrl(t, deep, { pushHistory: true });
+    return;
+  }
+  const pendingTab = activeTab();
+  if (pendingTab && pendingTab.pendingNavigation) {
+    const nav = pendingTab.pendingNavigation;
+    pendingTab.pendingNavigation = null;
+    loadUrl(pendingTab, nav.url, nav.options);
     return;
   }
   if (isRetry) {
@@ -3264,5 +3302,5 @@ async function boot(isRetry) {
 }
 boot(false);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a415bc356f36bebb',t:'MTc5MDQ2MjA1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
