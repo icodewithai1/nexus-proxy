@@ -247,11 +247,16 @@
 <script>
 'use strict';
 /* ============================================================================
- *  PROXY v3 — tabbed single-file libcurl.js + Wisp web proxy
+ *  PROXY v3.4 — Epoxy-first; libcurl.js fallback; WebKit/Safari-safe sandbox
  *  Engine: proven v2 core (bridge, cookies, runtime). Shell: rewritten.
  * ==========================================================================*/
 
 // ---------------- Config ----------------
+const EPOXY_VERSION = '2.1.19-1';
+const EPOXY_CDNS = [
+  'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-tls@' + EPOXY_VERSION + '/full/epoxy-bundled.js',
+  'https://unpkg.com/@mercuryworkshop/epoxy-tls@' + EPOXY_VERSION + '/full/epoxy-bundled.js'
+];
 const LIBCURL_CDNS = [
   'https://cdn.jsdelivr.net/npm/libcurl.js@latest/libcurl_full.js',
   'https://unpkg.com/libcurl.js@latest/libcurl_full.js'
@@ -267,7 +272,7 @@ const ENGINES = {
   duckduckgo: 'https://duckduckgo.com/?q=%s',
   bing: 'https://www.bing.com/search?q=%s'
 };
-const PROXY_VERSION = '3.2.0';
+const PROXY_VERSION = '3.4.0';
 const REQ_TIMEOUT_MS = 45000;
 const MAX_TABS_RESTORE = 8;
 
@@ -291,6 +296,8 @@ const tabsEl = $('tabs'), framesEl = $('frames'), urlInput = $('urlInput'), goBt
 const UA = navigator.userAgent;
 
 let libcurlReady = false, wispOK = false;
+let epoxyModule = null, epoxyClient = null, epoxyReady = false, epoxyLoadPromise = null;
+let activeTransport = 'none';
 let WISP_URL = store.get('wisp', DEFAULT_WISP[0]);
 let WS_MODE = store.get('wsmode', 'auto');
 let ENGINE = store.get('engine', 'google');
@@ -381,7 +388,7 @@ function pill() {
   serverHost.textContent = wispOK ? hostOf(WISP_URL) : 'offline';
   serverPill.className = wispOK ? 'on' : 'bad';
   serverPill.id = 'serverPill';
-  setNote.textContent = 'Active: ' + WISP_URL + (wispOK ? '' : ' (unreachable)');
+  setNote.textContent = 'Active: ' + WISP_URL + (wispOK ? ' · ' + activeTransport : ' (unreachable)');
 }
 
 // ---------------- Cookie jar ----------------
@@ -512,10 +519,56 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+async function ensureEpoxy() {
+  if (epoxyModule && epoxyModule.EpoxyClient) return true;
+  if (epoxyLoadPromise) return epoxyLoadPromise;
+  epoxyLoadPromise = (async () => {
+    let lastErr = null;
+    for (const cdn of EPOXY_CDNS) {
+      try {
+        const mod = await withTimeout(import(cdn), 25000, 'Epoxy CDN load');
+        if (!mod || !mod.EpoxyClient || !mod.EpoxyClientOptions) throw new Error('Epoxy exports missing');
+        if (typeof mod.default === 'function') await withTimeout(Promise.resolve(mod.default()), 25000, 'Epoxy WASM init');
+        epoxyModule = mod;
+        createEpoxyClient(WISP_URL);
+        console.info('[proxy] Epoxy ' + EPOXY_VERSION + ' ready');
+        return true;
+      } catch (e) {
+        lastErr = e;
+        console.warn('[proxy] Epoxy CDN failed:', cdn, e && e.message || e);
+      }
+    }
+    if (lastErr) console.warn('[proxy] Epoxy unavailable; libcurl.js will be used.', lastErr);
+    return false;
+  })().finally(() => { epoxyLoadPromise = null; });
+  return epoxyLoadPromise;
+}
+function createEpoxyClient(url) {
+  if (!epoxyModule || !epoxyModule.EpoxyClient) return null;
+  const normalized = String(url || WISP_URL).replace(/\/?$/, '/');
+  try {
+    const opts = new epoxyModule.EpoxyClientOptions();
+    opts.user_agent = UA;
+    opts.wisp_v2 = false; // our public Wisp endpoints negotiate the broadly compatible v1 handshake
+    opts.udp_extension_required = false;
+    opts.redirect_limit = 20;
+    const next = new epoxyModule.EpoxyClient(normalized, opts);
+    const old = epoxyClient;
+    epoxyClient = next;
+    if (old && old !== next) { try { old.free(); } catch (e) {} }
+    epoxyReady = false;
+    return epoxyClient;
+  } catch (e) {
+    console.warn('[proxy] Could not create Epoxy client:', e && e.message || e);
+    epoxyClient = null;
+    epoxyReady = false;
+    return null;
+  }
+}
 async function ensureLibcurl() {
   if (typeof libcurl !== 'undefined' && libcurl.fetch) return true;
   for (const cdn of LIBCURL_CDNS) {
-    toast('Loading engine…', 'info', 2000);
+    toast('Loading fallback engine…', 'info', 2000);
     try {
       await loadScript(cdn);
       if (typeof libcurl !== 'undefined') break;
@@ -535,19 +588,47 @@ function setWisp(url) {
   if (url.charAt(url.length - 1) !== '/') url += '/';
   WISP_URL = url;
   store.set('wisp', url);
-  try { libcurl.set_websocket(url); } catch (e) { console.warn('set_websocket', e); }
+  try { if (typeof libcurl !== 'undefined' && libcurl.set_websocket) libcurl.set_websocket(url); } catch (e) { console.warn('set_websocket', e); }
+  if (epoxyModule) createEpoxyClient(url);
   refreshWispUI();
   pill();
 }
 async function healthCheck(url, ms) {
   setWisp(url);
-  const r = await withTimeout(
-    libcurl.fetch('https://www.google.com/generate_204', { method: 'GET', headers: { 'User-Agent': UA } }),
-    ms || 8000, 'Wisp check'
-  );
-  if (!r || (r.status !== 204 && r.status !== 200 && r.status !== 404)) throw new Error('bad status ' + (r && r.status));
-  try { await r.arrayBuffer(); } catch (e) {}
-  return true;
+  let epoxyErr = null;
+  if (epoxyClient) {
+    try {
+      const er = await withTimeout(epoxyClient.fetch('https://www.google.com/generate_204', {
+        method: 'GET', headers: { 'User-Agent': UA }
+      }), ms || 8000, 'Epoxy Wisp check');
+      if (!er || (er.status !== 204 && er.status !== 200 && er.status !== 404)) throw new Error('bad Epoxy status ' + (er && er.status));
+      try { await er.arrayBuffer(); } catch (e) {}
+      epoxyReady = true;
+      activeTransport = 'Epoxy';
+      return true;
+    } catch (e) {
+      epoxyErr = e;
+      epoxyReady = false;
+      console.warn('[proxy] Epoxy health check failed; trying libcurl.js:', e && e.message || e);
+    }
+  }
+  if (libcurlReady || (typeof libcurl !== 'undefined' && libcurl.fetch)) {
+    try {
+      const r = await withTimeout(
+        libcurl.fetch('https://www.google.com/generate_204', { method: 'GET', headers: { 'User-Agent': UA } }),
+        ms || 8000, 'Wisp check'
+      );
+      if (!r || (r.status !== 204 && r.status !== 200 && r.status !== 404)) throw new Error('bad status ' + (r && r.status));
+      try { await r.arrayBuffer(); } catch (e) {}
+      activeTransport = 'libcurl.js';
+      return true;
+    } catch (e) {
+      if (epoxyErr) throw new Error('Epoxy: ' + (epoxyErr.message || epoxyErr) + '; libcurl.js: ' + (e.message || e));
+      throw e;
+    }
+  }
+  if (epoxyErr) throw epoxyErr;
+  throw new Error('No transport engine available');
 }
 function wispOrder() {
   const order = [];
@@ -562,7 +643,7 @@ async function autoConnect() {
       await healthCheck(url, 8000);
       wispOK = true;
       pill();
-      toast('Connected via ' + hostOf(url), 'ok');
+      toast('Connected via ' + hostOf(url) + ' (' + activeTransport + ')', 'ok');
       return true;
     } catch (e) { console.warn('wisp failed:', url, e && e.message); }
   }
@@ -637,7 +718,22 @@ async function bridgeFetch(url, opts) {
     let res;
     await pxAcquireFetch();
     try {
-      res = await withTimeout(libcurl.fetch(cur, { method, headers, body }), REQ_TIMEOUT_MS, 'Fetch');
+      if (epoxyReady && epoxyClient) {
+        try {
+          res = await withTimeout(epoxyClient.fetch(cur, { method, headers, body }), REQ_TIMEOUT_MS, 'Epoxy fetch');
+          activeTransport = 'Epoxy';
+        } catch (epoxyErr) {
+          epoxyReady = false;
+          console.warn('[proxy] Epoxy request failed; falling back to libcurl.js:', epoxyErr && epoxyErr.message || epoxyErr);
+          if (!libcurlReady || typeof libcurl === 'undefined' || !libcurl.fetch) throw epoxyErr;
+          res = await withTimeout(libcurl.fetch(cur, { method, headers, body }), REQ_TIMEOUT_MS, 'libcurl fallback');
+          activeTransport = 'libcurl.js';
+        }
+      } else {
+        if (!libcurlReady || typeof libcurl === 'undefined' || !libcurl.fetch) throw new Error('No active transport engine');
+        res = await withTimeout(libcurl.fetch(cur, { method, headers, body }), REQ_TIMEOUT_MS, 'Fetch');
+        activeTransport = 'libcurl.js';
+      }
     } catch (err) {
       noteFetch(false);
       pxReleaseFetch();
@@ -913,7 +1009,7 @@ function tabByName(name) {
 }
 function makeFrame(tab) {
   const f = document.createElement('iframe');
-  f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock allow-presentation allow-orientation-lock allow-top-navigation-by-user-activation allow-storage-access-by-user-activation');
+  f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock allow-top-navigation-by-user-activation');
   f.setAttribute('referrerpolicy', 'unsafe-url');
   f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-read; clipboard-write; accelerometer; gyroscope; magnetometer; camera; microphone; display-capture; web-share; geolocation; midi; payment; usb; xr-spatial-tracking');
   f.dataset.tab = tab.id;
@@ -2924,7 +3020,7 @@ function pageRuntime() {
     } else scanIframes(document);
   } catch (e) {}
 
-  try { window.__px = window.__px || {}; window.__px.version = '3.2.0'; } catch (e) {}
+  try { window.__px = window.__px || {}; window.__px.version = '3.4.0'; } catch (e) {}
 
   window.addEventListener('unhandledrejection', function (ev) {
     var m = ev && ev.reason && (ev.reason.message || String(ev.reason));
@@ -3099,14 +3195,16 @@ async function boot(isRetry) {
   booted = true;
   refreshWispUI();
   pill();
-  const ok = await ensureLibcurl();
-  if (!ok) {
-    toast('Engine failed to load — check connection/adblock.', 'err', 8000);
+  const bootResults = await Promise.allSettled([ensureEpoxy(), ensureLibcurl()]);
+  const epoxyLoaded = bootResults[0].status === 'fulfilled' && bootResults[0].value;
+  const libcurlLoaded = bootResults[1].status === 'fulfilled' && bootResults[1].value;
+  libcurlReady = !!libcurlLoaded;
+  if (!epoxyLoaded && !libcurlReady) {
+    toast('Both transport engines failed to load.', 'err', 8000);
     const t = activeTab() || newTab(null);
-    renderInto(t, errorPage('(engine failed)', 'All libcurl.js CDNs failed. Disable adblockers and retry.'), null);
+    renderInto(t, errorPage('(engine failed)', 'Epoxy and libcurl.js could not load. Check your connection/adblocker and retry.'), null);
     return;
   }
-  libcurlReady = true;
   const connected = await autoConnect();
   goBtn.disabled = false;
   if (!connected) {
@@ -3166,5 +3264,5 @@ async function boot(isRetry) {
 }
 boot(false);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4157ab1ec8d6417',t:'MTc5MDQ1OTM3NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a415bc356f36bebb',t:'MTc5MDQ2MjA1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
