@@ -1,1504 +1,827 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Learning management portal">
-<title>Access Denied</title>
-<link id="favi" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f1f3f4'/%3E%3Ccircle cx='8' cy='8' r='4' fill='none' stroke='%239aa0a6' stroke-width='1.5'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>libcurl.js Proxy</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0a0a0f; --panel:#101018; --panel2:#14141f;
-  --border:rgba(255,255,255,.08);
-  --accent:#8b5cf6; --accent2:#a78bfa; --accent3:#c4b5fd;
-  --green:#34d399; --red:#f87171; --amber:#fbbf24;
-  --text:#ececf4; --dim:#8f8fa8;
-  --f-display:'Space Grotesk',sans-serif;
-  --f-body:'Outfit',system-ui,sans-serif;
-  --f-mono:'JetBrains Mono',monospace;
-}
-html,body{height:100%}
-body{font-family:var(--f-body);background:var(--bg);color:var(--text);overflow:hidden;font-size:15px}
-button{font-family:var(--f-body)}
-::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
-::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2);background-clip:padding-box;border:2px solid transparent}
-::-webkit-scrollbar-track{background:transparent}
-
-/* ---------- CLOAK: fake chrome error page ---------- */
-#cloak{position:fixed;inset:0;background:#fff;color:#202124;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;z-index:9999;display:flex;align-items:center;justify-content:center;user-select:none}
-#cloak[hidden]{display:none}
-.cl-inner{max-width:600px;width:100%;padding:34px;text-align:center}
-.cl-face{width:84px;height:84px;margin:0 auto 26px;display:block;color:#9aa0a6}
-.cl-inner h1{font-size:24px;font-weight:400;margin-bottom:14px;color:#202124;letter-spacing:.1px}
-.cl-msg{font-size:14px;line-height:1.65;color:#5f6368;margin-bottom:20px}
-.cl-code{display:inline-block;font-size:12px;color:#5f6368;background:#f1f3f4;border-radius:6px;padding:6px 12px;margin-bottom:24px;font-family:'Courier New',monospace}
-.cl-btns{display:flex;gap:10px;justify-content:center}
-.cl-btn{font-family:inherit;font-size:13px;border:1px solid #dadce0;background:#fff;color:#3c4043;padding:9px 20px;border-radius:4px;cursor:pointer}
-.cl-btn:hover{background:#f8f9fa}
-.cl-detail{margin-top:22px;font-size:12.5px;color:#5f6368;text-align:left;background:#f8f9fa;border-radius:8px;padding:14px 16px;line-height:1.7}
-.cl-detail b{color:#3c4043;font-weight:600}
-
-/* ---------- APP SHELL ---------- */
-#app{display:flex;height:100vh}
-#app[hidden]{display:none}
-#side{width:234px;min-width:234px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 14px 14px;gap:6px}
-.logo{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.16em;padding:2px 8px 16px;color:var(--text)}
-.logo svg{filter:drop-shadow(0 0 9px rgba(139,92,246,.85))}
-.logo em{font-style:normal;color:var(--accent2)}
-nav{display:flex;flex-direction:column;gap:4px}
-.navbtn{display:flex;align-items:center;gap:12px;background:transparent;border:1px solid transparent;color:var(--dim);font-size:14.5px;font-weight:500;padding:11px 13px;border-radius:10px;cursor:pointer;text-align:left;width:100%;transition:all .15s}
-.navbtn:hover{background:rgba(255,255,255,.04);color:var(--text)}
-.navbtn.active{background:linear-gradient(90deg,rgba(139,92,246,.2),rgba(139,92,246,.04));border-color:rgba(139,92,246,.35);color:var(--accent3)}
-.navbtn svg{width:18px;height:18px;flex:none}
-.side-fill{flex:1}
-.sysbox{border:1px solid var(--border);border-radius:12px;padding:11px 13px;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.02);margin-bottom:10px}
-.sysrow{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--dim);font-family:var(--f-mono);white-space:nowrap;overflow:hidden}
-.sysrow span:last-child{overflow:hidden;text-overflow:ellipsis}
-.sdot{width:7px;height:7px;border-radius:50%;background:#4b5563;flex:none;transition:background .3s}
-.sdot.ok{background:var(--green);box-shadow:0 0 7px rgba(52,211,153,.8)}
-.sdot.warn{background:var(--amber);box-shadow:0 0 7px rgba(251,191,36,.7)}
-.sdot.bad{background:var(--red);box-shadow:0 0 7px rgba(248,113,113,.7)}
-.lockbtn{display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.06);color:#fca5a5;font-size:13.5px;font-weight:500;padding:10px;border-radius:10px;cursor:pointer;transition:all .15s}
-.lockbtn:hover{background:rgba(248,113,113,.14)}
-.lockbtn svg{width:16px;height:16px}
-
-#main{flex:1;overflow:hidden;position:relative;background:
-  radial-gradient(1100px 480px at 18% -8%, rgba(139,92,246,.16), transparent 62%),
-  radial-gradient(900px 420px at 92% 108%, rgba(96,165,250,.09), transparent 55%),
-  var(--bg)}
-.view{height:100%;overflow-y:auto;padding:36px 42px;display:none}
-.view.on{display:block}
-
-/* ---------- HOME ---------- */
-.hero{max-width:660px;margin:6vh auto 0;text-align:center}
-.hero h1{font-family:var(--f-display);font-size:44px;font-weight:700;letter-spacing:-.01em;margin-bottom:10px}
-.hero h1 .accent{color:var(--accent2)}
-.hero .sub{color:var(--dim);font-size:15.5px;font-weight:300;margin-bottom:26px}
-.bigsearch{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:6px 8px 6px 16px;transition:border-color .2s, box-shadow .2s}
-.bigsearch:focus-within{border-color:rgba(139,92,246,.55);box-shadow:0 0 0 3px rgba(139,92,246,.15), 0 0 24px rgba(139,92,246,.12)}
-.bigsearch svg{width:18px;height:18px;color:var(--dim);flex:none}
-.bigsearch input{flex:1;background:transparent;border:0;outline:0;color:var(--text);font-family:var(--f-body);font-size:15.5px;height:42px;min-width:0}
-.bigsearch input::placeholder{color:#6b6b85}
-.bigsearch button{border:0;background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;font-weight:600;font-size:14px;padding:10px 22px;border-radius:10px;cursor:pointer;transition:filter .15s;flex:none}
-.bigsearch button:hover{filter:brightness(1.12)}
-.chips{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
-.chip{font-size:12px;font-family:var(--f-mono);color:var(--dim);border:1px solid var(--border);border-radius:999px;padding:5px 12px;cursor:pointer;background:rgba(255,255,255,.02);transition:all .15s}
-.chip:hover{color:var(--text);border-color:rgba(255,255,255,.2)}
-.chip.sel{color:var(--accent3);border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.12)}
-.sect{max-width:920px;margin:44px auto 0}
-.sect h2{font-family:var(--f-display);font-size:15px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:16px}
-.apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:12px}
-.atile{display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:16px 8px 13px;cursor:pointer;transition:all .16s}
-.atile:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.07);box-shadow:0 8px 26px rgba(0,0,0,.35), 0 0 18px rgba(139,92,246,.1)}
-.atile img{width:44px;height:44px;border-radius:11px;object-fit:cover;background:#fff}
-.atile .aimg{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;font-family:var(--f-display);color:#111;background:#e5e7eb}
-.atile span{font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.statcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;max-width:920px;margin:44px auto 0}
-.scard{display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:15px 17px}
-.scard svg{width:20px;height:20px;color:var(--accent2);flex:none}
-.scard b{display:block;font-family:var(--f-mono);font-size:14.5px;font-weight:600}
-.scard span{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
-</style>
-<style>
-/* ---------- BROWSER VIEW ---------- */
-#view-browser{padding:0;display:none;flex-direction:column}
-#view-browser.on{display:flex}
-.tb{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(16,16,24,.75);backdrop-filter:blur(8px)}
-.tbtn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;border-radius:9px;color:var(--dim);cursor:pointer;transition:all .15s;flex:none}
-.tbtn:hover{background:rgba(255,255,255,.06);color:var(--text)}
-.tbtn:disabled{opacity:.35;cursor:default}
-.tbtn svg{width:17px;height:17px}
-.urlwrap{flex:1;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.045);border:1px solid var(--border);border-radius:10px;padding:0 14px;height:38px;min-width:0}
-.urlwrap:focus-within{border-color:rgba(139,92,246,.5)}
-.urlwrap svg{width:14px;height:14px;color:var(--dim);flex:none}
-.urlwrap input{flex:1;background:transparent;border:0;outline:0;color:var(--text);font-size:13.5px;font-family:var(--f-mono);min-width:0}
-.engine-badge{font-size:10.5px;font-family:var(--f-mono);color:var(--accent3);border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);border-radius:999px;padding:5px 11px;flex:none;white-space:nowrap}
-.progress{height:2px;background:transparent;position:relative;overflow:hidden}
-#progFill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s ease;box-shadow:0 0 10px rgba(139,92,246,.8)}
-.progress.on #progFill{width:82%;transition:width 2.2s ease}
-.framebox{flex:1;position:relative;margin:14px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#fff;box-shadow:0 20px 50px rgba(0,0,0,.4)}
-#pframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
-.framewelcome{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--panel);color:var(--dim);text-align:center;padding:30px}
-.framewelcome svg{width:38px;height:38px;color:var(--accent2);opacity:.8}
-.framewelcome h3{color:var(--text);font-family:var(--f-display);font-weight:600;font-size:19px}
-.framewelcome[hidden],.frameerr[hidden]{display:none}
-.frameerr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--panel);color:var(--dim);text-align:center;padding:30px}
-.frameerr svg{width:40px;height:40px;color:var(--red);margin-bottom:6px}
-.frameerr h3{color:var(--text);font-family:var(--f-display);font-size:20px;font-weight:600}
-.frameerr p{font-size:13.5px;max-width:440px;line-height:1.6;font-family:var(--f-mono);word-break:break-all}
-.errbtns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center}
-
-/* ---------- GAMES ---------- */
-.ghead{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;flex-wrap:wrap}
-.ghead h1{font-family:var(--f-display);font-size:30px;font-weight:700}
-.gmeta{font-size:12px;font-family:var(--f-mono);color:var(--dim)}
-.gsearch{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:0 14px;height:44px;max-width:520px;margin:16px 0 22px}
-.gsearch:focus-within{border-color:rgba(139,92,246,.5)}
-.gsearch svg{width:16px;height:16px;color:var(--dim);flex:none}
-.gsearch input{flex:1;background:transparent;border:0;outline:0;color:var(--text);font-size:14.5px;min-width:0}
-.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:13px}
-.gtile{position:relative;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:all .16s}
-.gtile:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.5);box-shadow:0 10px 28px rgba(0,0,0,.4),0 0 18px rgba(139,92,246,.12)}
-.gtile .gimg{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:linear-gradient(135deg,#1b1b2b,#101018)}
-.gtile .gimgph{width:100%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1b1b2b,#101018);color:var(--accent2);font-family:var(--f-display);font-size:30px;font-weight:700}
-.gtile .glabel{padding:10px 11px 12px}
-.gtile .gname{font-size:12.8px;font-weight:500;line-height:1.35;max-height:2.7em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.gtile .gcat{font-size:10px;font-family:var(--f-mono);color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
-.gmorewrap{display:flex;justify-content:center;margin:26px 0 10px}
-.gempty{color:var(--dim);text-align:center;padding:50px 0;font-size:14px}
-
-/* ---------- SETTINGS ---------- */
-.set-wrap{max-width:640px}
-.set-wrap h1{font-family:var(--f-display);font-size:30px;font-weight:700;margin-bottom:22px}
-.card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:16px}
-.card h3{font-family:var(--f-display);font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:16px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 0;font-size:14px}
-.row>span:first-child{color:var(--text)}
-.tin{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--f-mono);font-size:12.5px;padding:9px 12px;outline:0;width:320px;max-width:55%}
-.tin:focus{border-color:rgba(139,92,246,.5)}
-select.tin{font-family:var(--f-body);font-size:13.5px;cursor:pointer}
-select.tin option{background:var(--panel2);color:var(--text)}
-.btns{display:flex;gap:9px;flex-wrap:wrap}
-.btn{border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-size:13.5px;font-weight:500;padding:9px 16px;border-radius:10px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
-.btn:hover{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.07)}
-.btn svg{width:14px;height:14px}
-.btn.solid{background:linear-gradient(135deg,var(--accent),#7c3aed);border-color:transparent;color:#fff}
-.btn.solid:hover{filter:brightness(1.12)}
-.btn.danger{border-color:rgba(248,113,113,.4);color:#fca5a5;background:rgba(248,113,113,.06)}
-.btn.danger:hover{background:rgba(248,113,113,.14)}
-.btn.sm{padding:7px 13px;font-size:12.5px}
-.hint{font-size:12.5px;color:var(--dim);line-height:1.7;margin-top:10px}
-.hint b{color:var(--accent3)}
-.hint code{font-family:var(--f-mono);background:rgba(255,255,255,.06);border-radius:5px;padding:1px 6px;font-size:11.5px}
-
-/* ---------- TOASTS ---------- */
-#toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:9px;z-index:9000;max-width:340px}
-.toast{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:11px;padding:11px 15px;font-size:13px;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.5);animation:tin .25s ease;line-height:1.5}
-.toast.ok{border-left-color:var(--green)}
-.toast.err{border-left-color:var(--red)}
-.toast.warn{border-left-color:var(--amber)}
-@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.verline{max-width:920px;margin:40px auto 10px;text-align:center;font-size:11px;font-family:var(--f-mono);color:#55556e}
-@media (max-width:860px){ #side{width:64px;min-width:64px;padding:14px 8px} .navbtn span,.logo span,.lockbtn span,.sysrow span:last-child{display:none} .navbtn,.lockbtn{justify-content:center} .logo{justify-content:center;padding-left:0;padding-right:0} .view{padding:22px} }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f0f0f; color: #e8eaed; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+  .toolbar { display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; background: #202124;
+    border-bottom: 1px solid #35363a; flex-shrink: 0; }
+  .toolbar button { background: #35363a; color: #e8eaed;
+    border: 1px solid #484b4f; border-radius: 6px;
+    padding: 7px 12px; font-size: 14px; cursor: pointer;
+    font-weight: 500; flex-shrink: 0; }
+  .toolbar button:hover:not(:disabled) { background: #484b4f; }
+  .toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .toolbar button.go { background: #8ab4f8; color: #202124;
+    border-color: #8ab4f8; font-weight: 600; }
+  .toolbar button.go:hover:not(:disabled) { background: #aecbfa; }
+  .toolbar input { flex: 1; min-width: 0; background: #2d2e31;
+    border: 1px solid #3c4043; border-radius: 20px;
+    padding: 8px 16px; color: #e8eaed; font-size: 14px; outline: none; }
+  .toolbar input:focus { border-color: #8ab4f8; background: #303134; }
+  #statusBar { padding: 5px 14px; font-size: 12px;
+    background: #202124; color: #9aa0a6;
+    border-bottom: 1px solid #35363a; flex-shrink: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: ui-monospace, Menlo, monospace; }
+  #statusBar.ok { color: #81c995; } #statusBar.err { color: #f28b82; }
+  #statusBar.warn { color: #fdd663; } #statusBar.info { color: #8ab4f8; }
+  #pageFrame { flex: 1; border: 0; width: 100%; background: #fff; display: block; }
+  #overlay { position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(32,33,36,0.94); color: #e8eaed;
+    padding: 18px 28px; border-radius: 12px; font-size: 14px;
+    pointer-events: none; opacity: 0; transition: opacity 0.2s;
+    border: 1px solid #3c4043; z-index: 9999; }
+  #overlay.visible { opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- CLOAK LAYER -->
-<div id="cloak">
-  <div class="cl-inner">
-    <svg class="cl-face" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-      <circle cx="24" cy="24" r="20" stroke="#9aa0a6"></circle>
-      <circle cx="17" cy="20" r="1.6" fill="#9aa0a6" stroke="none"></circle>
-      <circle cx="31" cy="20" r="1.6" fill="#9aa0a6" stroke="none"></circle>
-      <path d="M 15 33 Q 24 25.5 33 33" stroke="#9aa0a6"></path>
-    </svg>
-    <h1>Access denied</h1>
-    <p class="cl-msg">You do not have permission to view this page.<br>If you believe this is a mistake, contact your network administrator.</p>
-    <div class="cl-code">ERR_ACCESS_DENIED</div>
-    <div class="cl-btns">
-      <button class="cl-btn" id="clReload">Reload</button>
-      <button class="cl-btn" id="clDetails">Details</button>
-    </div>
-    <div class="cl-detail" id="clDetail" hidden>
-      <b>Diagnostic information:</b><br>
-      The request to this resource was blocked by policy enforcement on the local network.
-      Client address <b id="clIp">10.12.30.57</b> &middot; Rule set <b id="clPolicy">POL-000000</b> &middot; Category: <b>restricted</b>.
-      No further information is available for this error.
-    </div>
+  <div class="toolbar">
+    <button id="backBtn" title="Back" disabled>←</button>
+    <button id="reloadBtn" title="Reload" disabled>⟳</button>
+    <input id="urlInput" type="text" placeholder="Enter URL" autocomplete="off" spellcheck="false" value="https://www.youtube.com/shorts">
+    <button id="goBtn" class="go" disabled>Go</button>
   </div>
-</div>
 
-<!-- APP -->
-<div id="app" hidden>
-  <aside id="side">
-    <div class="logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linejoin="round">
-        <path d="M12 2 L21 7 V17 L12 22 L3 17 V7 Z"></path>
-        <path d="M8 16 V8 L16 16 V8" stroke="#c4b5fd"></path>
-      </svg>
-      <span>NEX<em>US</em></span>
-    </div>
-    <nav>
-      <button class="navbtn active" data-view="home"><i data-lucide="house"></i><span>Home</span></button>
-      <button class="navbtn" data-view="browser"><i data-lucide="globe-2"></i><span>Browser</span></button>
-      <button class="navbtn" data-view="games"><i data-lucide="gamepad-2"></i><span>Games</span></button>
-      <button class="navbtn" data-view="settings"><i data-lucide="sliders-horizontal"></i><span>Settings</span></button>
-    </nav>
-    <div class="side-fill"></div>
-    <div class="sysbox">
-      <div class="sysrow"><span class="sdot" id="dotRelay"></span><span id="txtRelay">relay: idle</span></div>
-      <div class="sysrow"><span class="sdot" id="dotEngine"></span><span id="txtEngine">engine: idle</span></div>
-      <div class="sysrow"><span class="sdot" id="dotGames"></span><span id="txtGames">games: 0</span></div>
-    </div>
-    <button class="lockbtn" id="lockNow"><i data-lucide="eye-off"></i><span>Lock screen</span></button>
-  </aside>
+  <div id="statusBar" class="info">Initializing libcurl.js…</div>
 
-  <main id="main">
-    <!-- HOME -->
-    <section class="view on" id="view-home">
-      <div class="hero">
-        <h1>Where to<span class="accent">?</span></h1>
-        <p class="sub">Type a link or search the web — traffic exits over wisp with end-to-end TLS.</p>
-        <form class="bigsearch" id="homeForm">
-          <i data-lucide="search"></i>
-          <input id="homeInput" autocomplete="off" spellcheck="false" placeholder="Search or enter address">
-          <button type="submit">Go</button>
-        </form>
-        <div class="chips" id="engineChips">
-          <span class="chip sel" data-eng="auto">auto</span>
-          <span class="chip" data-eng="curl">libcurl · wisp</span>
-          <span class="chip" data-eng="epoxy">epoxy TLS</span>
-          <span class="chip" data-eng="direct">direct</span>
-        </div>
-      </div>
-      <div class="sect">
-        <h2>Quick launch</h2>
-        <div class="apps-grid" id="appsGrid"></div>
-      </div>
-      <div class="statcards">
-        <div class="scard"><i data-lucide="zap"></i><div><b id="scEngine">idle</b><span>fetch engine</span></div></div>
-        <div class="scard"><i data-lucide="wifi"></i><div><b id="scPing">—</b><span>relay latency</span></div></div>
-        <div class="scard"><i data-lucide="database"></i><div><b id="scGames">0</b><span>games in IndexedDB</span></div></div>
-        <div class="scard"><i data-lucide="shield-check"></i><div><b id="scCloak">armed</b><span>cloak &amp; lock</span></div></div>
-      </div>
-      <div class="verline">nexus <span id="verSpan">1.0</span> · single-file build</div>
-    </section>
+  <iframe
+    id="pageFrame"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-pointer-lock allow-presentation allow-orientation-lock allow-top-navigation-by-user-activation"
+    referrerpolicy="unsafe-url"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-read; clipboard-write"
+  ></iframe>
 
-    <!-- BROWSER -->
-    <section class="view" id="view-browser">
-      <div class="tb">
-        <button class="tbtn" id="btnBack" title="Back"><i data-lucide="arrow-left"></i></button>
-        <button class="tbtn" id="btnFwd" title="Forward"><i data-lucide="arrow-right"></i></button>
-        <button class="tbtn" id="btnReload" title="Reload"><i data-lucide="rotate-cw"></i></button>
-        <button class="tbtn" id="btnHome" title="Home"><i data-lucide="house"></i></button>
-        <div class="urlwrap"><i data-lucide="lock"></i><input id="urlBar" spellcheck="false" autocomplete="off" placeholder="Enter address"></div>
-        <span class="engine-badge" id="engineBadge">idle</span>
-      </div>
-      <div class="progress" id="progWrap"><div id="progFill"></div></div>
-      <div class="framebox">
-        <iframe id="pframe" referrerpolicy="no-referrer" allow="autoplay; fullscreen; clipboard-write; gamepad; cross-origin-isolated"></iframe>
-        <div class="framewelcome" id="frameWelcome">
-          <i data-lucide="mouse-pointer-click"></i>
-          <h3>Nothing open yet</h3>
-          <p>Launch an app from Home or type an address above.</p>
-        </div>
-        <div class="frameerr" id="frameErr" hidden>
-          <i data-lucide="cloud-off"></i>
-          <h3>Couldn't load this page</h3>
-          <p id="errMsg"></p>
-          <div class="errbtns">
-            <button class="btn solid" id="errRetry">Retry</button>
-            <button class="btn" id="errEngine">Try other engine</button>
-          </div>
-        </div>
-      </div>
-    </section>
+  <div id="overlay">Loading…</div>
 
-    <!-- GAMES -->
-    <section class="view" id="view-games">
-      <div class="ghead">
-        <h1>Games</h1>
-        <span class="gmeta" id="gMeta">connecting to LuminSDK…</span>
-        <span style="flex:1"></span>
-        <button class="btn sm" id="gRefresh"><i data-lucide="refresh-cw"></i>Refresh</button>
-      </div>
-      <div class="gsearch"><i data-lucide="search"></i><input id="gInput" placeholder="Search games…" autocomplete="off" spellcheck="false"></div>
-      <div class="ggrid" id="gGrid"></div>
-      <div class="gmorewrap" id="gMoreWrap" hidden><button class="btn" id="gMoreBtn">Load more</button></div>
-    </section>
+  <script src="https://cdn.jsdelivr.net/npm/libcurl.js@latest/libcurl_full.js"></script>
 
-    <!-- SETTINGS -->
-    <section class="view" id="view-settings">
-      <div class="set-wrap">
-        <h1>Settings</h1>
-        <div class="card">
-          <h3>Network</h3>
-          <label class="row"><span>Wisp relay</span><input class="tin" id="setRelay" spellcheck="false"></label>
-          <label class="row"><span>Fetch engine</span>
-            <select class="tin" id="setEngine">
-              <option value="auto">Auto (libcurl → epoxy → direct)</option>
-              <option value="curl">libcurl.js only</option>
-              <option value="epoxy">Epoxy TLS only</option>
-              <option value="direct">Direct (no proxy)</option>
-            </select>
-          </label>
-          <div class="row"><span></span><div class="btns">
-            <button class="btn sm" id="btnTestRelay">Test relay</button>
-            <button class="btn sm" id="btnTestFetch">Test fetch</button>
-            <button class="btn solid sm" id="btnSaveNet">Apply</button>
-          </div></div>
-          <p class="hint" id="netHint">libcurl.js and epoxy run fully in your browser; TCP+TLS is tunneled through the wisp relay over a single WebSocket.</p>
-        </div>
-        <div class="card">
-          <h3>Cloak</h3>
-          <label class="row"><span>Error screen on load &amp; when returning to the tab</span><input type="checkbox" id="setLockSwitch" checked></label>
-          <label class="row"><span>Innocent tab title &amp; favicon while unlocked</span><input type="checkbox" id="setCloakTab" checked></label>
-          <p class="hint">Press <b>~</b> (backtick) on the error screen to continue. The screen mentions nothing about this software or how to pass it.</p>
-        </div>
-        <div class="card">
-          <h3>Data</h3>
-          <div class="btns">
-            <button class="btn sm" id="btnClearCookies">Clear cookies</button>
-            <button class="btn sm" id="btnClearGames">Clear game cache</button>
-            <button class="btn danger sm" id="btnWipe">Wipe everything</button>
-          </div>
-          <p class="hint" id="dataStats">—</p>
-        </div>
-        <div class="card">
-          <h3>About</h3>
-          <p class="hint">Nexus fetches every page in-browser with <b>libcurl.js</b> (WASM curl over wisp) or <b>epoxy TLS</b>, then rewrites the HTML/CSS and injects runtime hooks so apps and scripts keep working — no server of its own is contacted.</p>
-          <p class="hint" id="aboutHonesty"></p>
-        </div>
-      </div>
-    </section>
-  </main>
-</div>
+  <script>
+  /* ============================================================================
+   *  PARENT — proxy shell
+   * ==========================================================================*/
+  const WISP_SERVER = 'wss://wisp.mercurywork.shop/';
+  const UA = navigator.userAgent;
 
-<div id="toasts"></div>
-<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
-<script>
-'use strict';
-/* ============ NEXUS core ============ */
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const VERSION='1.0.0';
-const DEFAULT_RELAY='wss://wisp.mercurywork.shop/';
-const INNOCENT_FAV='https://www.google.com/s2/favicons?domain=classroom.google.com&sz=64';
-const store={
-  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
-  del(k){try{localStorage.removeItem(k)}catch(e){}}
-};
-const cfg=Object.assign({
-  relay:DEFAULT_RELAY, engine:'auto', lockOnLoad:true, lockOnSwitch:true, cloakTab:true,
-  innocentTitle:'Google Classroom', lastUrl:''
-},store.get('nx_cfg_v1',{}));
-const saveCfg=()=>store.set('nx_cfg_v1',cfg);
+  const urlInput  = document.getElementById('urlInput');
+  const goBtn     = document.getElementById('goBtn');
+  const backBtn   = document.getElementById('backBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const statusBar = document.getElementById('statusBar');
+  const pageFrame = document.getElementById('pageFrame');
+  const overlay   = document.getElementById('overlay');
 
-function toast(msg,kind='',ms=3800){
-  const t=document.createElement('div');t.className='toast '+kind;t.textContent=msg;
-  $('#toasts').appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),320)},ms);
-}
-function icons(){ if(window.lucide) try{lucide.createIcons()}catch(e){} }
-function setDot(id,cls){const el=$(id);if(el){el.className='sdot '+cls}}
-function sys(relay,eng,games){
-  if(relay!==undefined){$('#txtRelay').textContent='relay: '+relay;}
-  if(eng!==undefined){$('#txtEngine').textContent='engine: '+eng;$('#engineBadge').textContent=eng;$('#scEngine').textContent=eng;}
-  if(games!==undefined){$('#txtGames').textContent='games: '+games;$('#scGames').textContent=games;}
-}
-function loadScriptOnce(src,id){
-  return new Promise((res,rej)=>{
-    const old=document.getElementById(id);
-    if(old){ if(old.dataset.ok==='1')return res(); old.addEventListener('load',()=>res()); old.addEventListener('error',()=>rej(new Error('load fail '+src))); return; }
-    const s=document.createElement('script');s.id=id;s.src=src;s.async=true;
-    s.onload=()=>{s.dataset.ok='1';res()};
-    s.onerror=()=>{ s.remove(); rej(new Error('failed to load '+src)); };
-    document.head.appendChild(s);
-  });
-}
-async function loadResilient(id,sources,tries=3){
-  let lastErr=null;
-  for(let t=0;t<tries;t++){
-    for(const src of sources){
-      try{ await loadScriptOnce(src+(t?'?nxr='+t:''),id); return src }
-      catch(e){ lastErr=e }
-    }
-    await new Promise(r=>setTimeout(r,800*(t+1)));
+  let libcurlReady = false;
+  let currentUrl   = '';
+  let currentOpts  = null;
+  const history    = [];
+  let historyIdx   = -1;
+
+  /* ---------- Cookie jar ---------- */
+  const cookieJar = new Map();
+  function getCookiesFor(url) {
+    try {
+      const host = new URL(url).hostname;
+      const out = [];
+      for (const [domain, jar] of cookieJar) {
+        const d = domain.replace(/^\./, '');
+        if (host === d || host.endsWith('.' + d))
+          for (const [k, v] of jar) out.push(k + '=' + v);
+      }
+      return out.join('; ');
+    } catch { return ''; }
   }
-  throw lastErr||new Error('all sources failed for '+id);
-}
-const normRelay=u=>{u=(u||'').trim();if(!u)return DEFAULT_RELAY;if(!u.endsWith('/'))u+='/';return u};
-
-/* ============ cookie jar (epoxy/direct lanes + document.cookie emulation) ============ */
-const CookieJar={
-  jar:store.get('nx_jar_v1',[]),
-  persist(){store.set('nx_jar_v1',this.jar)},
-  clear(){this.jar=[];store.del('nx_jar_v1');if(Engine.session){try{Engine.session.close()}catch(e){}Engine.session=null;Engine._mkSession()}},
-  _parseOne(sc,host){
-    const parts=sc.split(';');const nv=parts.shift();const i=nv.indexOf('=');if(i<1)return null;
-    const name=nv.slice(0,i).trim(),value=nv.slice(i+1).trim();
-    const c={n:name,v:value,d:host,hs:true,p:'/',s:host.startsWith('https')||location.protocol==='https:',exp:0};
-    for(const at of parts){
-      const [k,...r]=at.trim().split('=');const kk=k.trim().toLowerCase(),vv=r.join('=').trim();
-      if(kk==='domain'&&vv){c.d=vv.replace(/^\./,'');c.hs=false}
-      else if(kk==='path'&&vv)c.p=vv||'/';
-      else if(kk==='secure')c.s=true;
-      else if(kk==='expires'){const t=Date.parse(vv);if(t)c.exp=t}
-      else if(kk==='max-age'){const n=parseInt(vv,10);if(!isNaN(n))c.exp=n<0?1:Date.now()+n*1000}
+  function storeCookies(url, setCookie) {
+    if (!setCookie) return;
+    const list = Array.isArray(setCookie) ? setCookie : [setCookie];
+    let host;
+    try { host = new URL(url).hostname; } catch { return; }
+    for (const sc of list) {
+      if (!sc) continue;
+      const parts = sc.split(';');
+      const eq = parts[0].indexOf('=');
+      if (eq < 0) continue;
+      const name = parts[0].slice(0, eq).trim();
+      const value = parts[0].slice(eq + 1);
+      let domain = host;
+      for (const p of parts.slice(1)) {
+        const kv = p.trim();
+        if (/^domain=/i.test(kv)) domain = kv.slice(7).trim().replace(/^\./, '');
+      }
+      if (!cookieJar.has(domain)) cookieJar.set(domain, new Map());
+      if (/max-age=0|expires=Thu, 01 Jan 1970/i.test(sc)) cookieJar.get(domain).delete(name);
+      else cookieJar.get(domain).set(name, value);
     }
-    return c;
-  },
-  update(url,list){
-    if(!list||!list.length)return;
-    let host;try{host=new URL(url).hostname}catch(e){return}
-    let changed=false;
-    for(const sc of list){
-      const c=this._parseOne(sc,host);if(!c)continue;
-      this.jar=this.jar.filter(x=>!(x.n===c.n&&x.d===c.d&&x.p===c.p));
-      if(!c.exp||c.exp>Date.now()){this.jar.push(c);changed=true}
-    }
-    const now=Date.now();this.jar=this.jar.filter(x=>!x.exp||x.exp>now);
-    if(changed)this.persist();
-  },
-  match(url){
-    let u;try{u=new URL(url)}catch(e){return ''}
-    const host=u.hostname,path=u.pathname||'/',secure=u.protocol==='https:';
-    const now=Date.now();
-    const hits=this.jar.filter(c=>{
-      if(c.exp&&c.exp<now)return false;
-      if(c.s&&!secure&&!(host==='localhost'||host.endsWith('.localhost')))return false;
-      const dm=c.hs?(host===c.d):(host===c.d||host.endsWith('.'+c.d));
-      if(!dm)return false;
-      if(path===c.p)return true;
-      if(path.startsWith(c.p)&&(c.p.endsWith('/')||path[c.p.length]==='/'))return true;
-      return false;
-    });
-    return hits.map(c=>c.n+'='+c.v).join('; ');
-  },
-  count(){const now=Date.now();this.jar=this.jar.filter(x=>!x.exp||x.exp>now);return this.jar.length}
-};
+  }
 
-/* ============ fetch engine: libcurl.js (wisp) -> epoxy TLS (wisp) -> direct ============ */
-const Engine={
-  curl:null, session:null, curlReady:false,
-  ET:null, epoxyClient:null, epoxyReady:false,
-  mode:'idle', _init:null, _mkd:false,
-  order(){
-    const p=cfg.engine;
-    if(p==='direct')return['direct'];
-    const l=[];
-    if(p==='auto'||p==='curl')l.push('curl');
-    if(p==='auto'||p==='epoxy')l.push('epoxy');
-    l.push('direct');
-    return l;
-  },
-  _mkSession(){
-    if(!this.curl||this._mkd)return;
-    try{
-      const jar=store.get('nx_curl_jar','');
-      this.session=new this.curl.HTTPSession({enable_cookies:true, cookie_jar:jar||undefined});
-      this._mkd=true;
-    }catch(e){console.warn('HTTPSession fail',e)}
-  },
-  async init(force){
-    if(this._init&&!force)return this._init;
-    this._init=(async()=>{
-      sys(undefined,'starting…');
-      try{await this.loadCurl()}catch(e){console.warn('[nexus] libcurl.js unavailable:',e.message||e)}
-      try{await this.loadEpoxy()}catch(e){console.warn('[nexus] epoxy unavailable:',e.message||e)}
-      if(this.curlReady&&this.epoxyReady)sys(undefined,'ready · curl+epoxy');
-      else if(this.curlReady)sys(undefined,'ready · curl');
-      else if(this.epoxyReady)sys(undefined,'ready · epoxy');
-      else sys(undefined,'direct only');
-      return true;
-    })();
-    return this._init;
-  },
-  async loadCurl(){
-    if(this.curlReady)return;
-    const which=await loadResilient('nx-libcurl',[
-      'https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl_full.js',
-      'https://unpkg.com/libcurl.js@0.7.4/libcurl_full.js'
-    ]);
-    const lc=window.libcurl||((typeof libcurl!=='undefined')?libcurl:null);
-    if(!lc)throw new Error('libcurl global missing');
-    try{lc.stderr=()=>{}}catch(e){}
-    try{lc.logger=()=>{}}catch(e){}
-    lc.set_websocket(normRelay(cfg.relay));
-    await lc.load_wasm(which.includes('libcurl_full')?undefined:'https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.wasm');
-    this.curl=lc;this.curlReady=true;this._mkSession();
-    document.dispatchEvent(new Event('nx-curl'));
-  },
-  async loadEpoxy(){
-    if(this.epoxyReady)return;
-    await loadResilient('nx-epoxy',[
-      'https://unpkg.com/@mercuryworkshop/epoxy-transport@3/dist/index.js',
-      'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport@3/dist/index.js'
-    ]);
-    const rawET=window.EpoxyTransport||window.epoxyTransport;
-    let Client=null;
-    if(rawET&&typeof rawET.EpoxyClient==='function')Client=rawET.EpoxyClient;
-    else if(typeof rawET==='function')Client=rawET;
-    else if(rawET&&typeof rawET.default==='function')Client=rawET.default;
-    if(!Client)throw new Error('EpoxyTransport global missing');
-    this.ET=Client;
-    const r=normRelay(cfg.relay);
-    this.epoxyClient=new Client({wisp:r,wisp_url:r});
-    this.epoxyReady=true;
-  },
-  async reinitRelay(){
-    this._init=null;
-    if(this.curl){try{this.curl.set_websocket(normRelay(cfg.relay))}catch(e){}}
-    if(this.ET){try{const r=normRelay(cfg.relay);this.epoxyClient=new this.ET.EpoxyClient({wisp:r,wisp_url:r})}catch(e){}}
-    return this.init(true);
-  },
-  normReq(opt){
-    const o=Object.assign({method:'GET',headers:{},timeout:30000},opt);
-    const h=Object.assign({},o.headers);
-    const low=k=>k.toLowerCase();
-    const has=k=>Object.keys(h).some(x=>low(x)===k);
-    if(!has('user-agent'))h['User-Agent']=navigator.userAgent;
-    if(!has('accept-language'))h['Accept-Language']='en-US,en;q=0.9';
-    if(!has('accept'))h['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
-    if(o.body instanceof URLSearchParams){o.body=o.body.toString();if(!has('content-type'))h['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8'}
-    else if(o.body instanceof Blob){o.body=o.body}
-    o.headers=h;
+  /* ---------- Utilities ---------- */
+  const SAFE_METHODS = ['GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS'];
+  // NOTE: Do NOT drop Range / If-Range / Accept-Ranges — YouTube needs them.
+  const DROP_REQ_HEADERS = ['origin','host','connection','content-length','referer','accept-encoding','transfer-encoding','upgrade','via','te','trailer','expect'];
+
+  function sanitizeMethod(m, hasBody) {
+    m = String(m == null ? '' : m).toUpperCase().trim();
+    if (!m) return hasBody ? 'POST' : 'GET';
+    return SAFE_METHODS.indexOf(m) !== -1 ? m : (hasBody ? 'POST' : 'GET');
+  }
+  function headersToObj(h) {
+    const o = {};
+    if (!h) return o;
+    if (typeof Headers !== 'undefined' && h instanceof Headers) h.forEach((v, k) => { o[k] = v; });
+    else if (Array.isArray(h)) h.forEach(p => { if (p && p.length >= 2) o[p[0]] = p[1]; });
+    else if (typeof h === 'object') for (const k in h) if (Object.prototype.hasOwnProperty.call(h, k)) o[k] = h[k];
     return o;
-  },
-  rawToObj(raw){
-    const o={};const sc=[];
-    if(raw&&Array.isArray(raw)){for(const[k,v]of raw){const kk=k.toLowerCase();if(kk==='set-cookie'){sc.push(v);continue}if(o[kk]===undefined)o[kk]=v;else o[kk]+=', '+v}}
-    return{o,setCookies:sc};
-  },
-  headersToObj(h){
-    const o={};let sc=[];
-    if(!h)return{o,setCookies:sc};
-    try{ if(typeof h.getSetCookie==='function')sc=h.getSetCookie(); }catch(e){}
-    try{ h.forEach?h.forEach((v,k)=>{const kk=k.toLowerCase();if(kk==='set-cookie'){if(!sc.includes(v))sc.push(v);return}o[kk]=v}):null }catch(e){}
-    return{o,setCookies:sc};
-  },
-  async viaCurl(url,opt){
-    if(!this.curlReady)throw new Error('curl not ready');
-    this._mkSession();
-    const sess=this.session||this.curl;
-    const ac=new AbortController();const tm=setTimeout(()=>ac.abort(),opt.timeout||30000);
-    try{
-      const r=await sess.fetch(url,{method:opt.method,headers:opt.headers,body:opt.body===undefined?null:opt.body,signal:ac.signal,redirect:'follow'});
-      const buf=await r.arrayBuffer();
-      const nn=r.raw_headers?this.rawToObj(r.raw_headers):this.headersToObj(r.headers);
-      return{status:r.status,statusText:r.statusText||'',headers:nn.o,setCookies:nn.setCookies,body:new Uint8Array(buf),finalUrl:r.url||url,engine:'curl'};
-    }finally{clearTimeout(tm)}
-  },
-  async viaEpoxy(url,opt){
-    if(!this.epoxyReady)throw new Error('epoxy not ready');
-    const ac=new AbortController();const tm=setTimeout(()=>ac.abort(),opt.timeout||30000);
-    try{
-      const r=await this.epoxyClient.fetch(url,{method:opt.method,headers:opt.headers,body:opt.body===undefined?null:opt.body,signal:ac.signal,redirect:'follow'});
-      const buf=await r.arrayBuffer();
-      const nn=this.headersToObj(r.headers);
-      return{status:r.status,statusText:r.statusText||'',headers:nn.o,setCookies:nn.setCookies,body:new Uint8Array(buf),finalUrl:r.url||url,engine:'epoxy'};
-    }finally{clearTimeout(tm)}
-  },
-  async viaDirect(url,opt){
-    const ac=new AbortController();const tm=setTimeout(()=>ac.abort(),opt.timeout||30000);
-    try{
-      const r=await fetch(url,{method:opt.method,headers:opt.headers,body:opt.body===undefined?null:opt.body,signal:ac.signal,redirect:'follow'});
-      const buf=await r.arrayBuffer();
-      const nn=this.headersToObj(r.headers);
-      return{status:r.status,statusText:r.statusText||'',headers:nn.o,setCookies:nn.setCookies,body:new Uint8Array(buf),finalUrl:r.url||url,engine:'direct'};
-    }finally{clearTimeout(tm)}
-  },
-  async fetch(url,opt={}){
-    await this.init();
-    const o=this.normReq(opt);
-    const jar=CookieJar.match(url);
-    if(jar&&!Object.keys(o.headers).some(k=>k.toLowerCase()==='cookie'))o.headers['Cookie']=jar;
-    const chain=this.order().filter(e=>e==='direct'||(e==='curl'&&this.curlReady)||(e==='epoxy'&&this.epoxyReady));
-    let lastErr=null;
-    for(const e of chain){
-      try{
-        const res=await this['via'+e[0].toUpperCase()+e.slice(1)](url,o);
-        this.mode=e;sys(undefined,e);
-        if(res.setCookies&&res.setCookies.length)CookieJar.update(url,res.setCookies);
-        if(e==='curl'){try{const j=this.session&&this.session.export_cookies&&this.session.export_cookies();if(j)store.set('nx_curl_jar',j)}catch(x){}}
-        return res;
-      }catch(err){lastErr=err;console.warn('[nexus] engine "'+e+'" failed for '+url,(err&&err.message)||err)}
-    }
-    this.mode='failed';sys(undefined,'failed');
-    throw lastErr||new Error('all engines failed');
-  },
-  async ping(){
-    const t0=performance.now();
-    const r=await this.fetch('https://www.google.com/generate_204',{timeout:12000,headers:{'user-agent':navigator.userAgent}});
-    const ms=Math.round(performance.now()-t0);
-    return{ms,status:r.status,engine:r.engine};
   }
-};
-/* ============ injected page runtime (self-contained; runs inside proxied pages) ============ */
-function nxRuntime(){
-  const CFG=window.__NX||{base:'about:blank',cookies:''};
-  const BASE=CFG.base;
-  const TOP=(window.top===window)?window.parent:window.top;
-  let seq=0;const waits=new Map();
-  const send=m=>{try{TOP.postMessage(Object.assign({__nx:1},m),'*')}catch(e){}};
-  const call=m=>new Promise(res=>{const id=++seq;waits.set(id,res);try{window.__nxCalls=(window.__nxCalls||0)+1}catch(e){}send(Object.assign({id},m))});
-  window.addEventListener('message',e=>{
-    const d=e.data;
-    if(d&&d.__nxr){const r=waits.get(d.id);if(r){waits.delete(d.id);r(d)}}
-  });
-  try{window.__nxActive=1}catch(e){}
-  try{window.__nxErrs=[];window.addEventListener('error',e=>{try{window.__nxErrs.push(String((e&&e.message)||e).slice(0,200))}catch(x){}});window.addEventListener('unhandledrejection',e=>{try{window.__nxErrs.push('rej: '+String(e&&e.reason&&(e.reason.message||e.reason)).slice(0,200))}catch(x){}})}catch(e){}
-  try{window.__nxCalls=0}catch(e){}
-  const resolve=u=>{
-    try{
-      const a=new URL(u,BASE);
-      try{
-        if(a.origin===location.origin&&!/nexus\.html|nxframe|__runtime/.test(a.pathname)){
-          const b=new URL(BASE);
-          b.pathname=a.pathname;b.search=a.search;b.hash=a.hash;
-          return b.href;
-        }
-      }catch(x){}
-      return a.href;
-    }catch(e){return String(u)}
-  };
-  const proxiable=u=>/^https?:/i.test(u);
-  /* cookies */
-  let CK=CFG.cookies||'';
-  try{
-    Object.defineProperty(document,'cookie',{configurable:true,
-      get(){return CK},
-      set(v){CK=CK?CK+'; '+v:v;send({t:'setc',url:BASE,cookie:String(v)})}
+  function hasHeader(obj, name) {
+    const n = name.toLowerCase();
+    for (const k in obj) if (k.toLowerCase() === n) return true;
+    return false;
+  }
+  function setStatus(msg, cls) { statusBar.textContent = msg; statusBar.className = cls || ''; }
+  function showOverlay(txt) { overlay.textContent = txt || 'Loading…'; overlay.classList.add('visible'); }
+  function hideOverlay() { overlay.classList.remove('visible'); }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ---------- libcurl bootstrap ---------- */
+  function waitForLibcurl() {
+    return new Promise((resolve, reject) => {
+      if (typeof libcurl !== 'undefined') return resolve();
+      let tries = 0;
+      const iv = setInterval(() => {
+        if (typeof libcurl !== 'undefined') { clearInterval(iv); resolve(); }
+        else if (++tries > 150) { clearInterval(iv); reject(new Error('libcurl.js failed to load')); }
+      }, 100);
     });
-  }catch(e){}
-  /* fetch */
-  const nativeFetch=(typeof window.fetch==='function')?window.fetch.bind(window):null;
-  if(nativeFetch)window.fetch=function(input,init){
-    let url='';
-    try{url=(typeof input==='string')?input:(input&&input.url)||String(input)}catch(e){}
-    let abs;try{abs=new URL(url,BASE).href}catch(e){abs=url}
-    if(!proxiable(abs))return nativeFetch(input,init);
-    init=init||{};
-    const hdrs={};
-    const grab=h=>{try{new Headers(h).forEach((v,k)=>hdrs[k]=v)}catch(e){}};
-    if(init.headers)grab(init.headers);
-    if(!init.headers&&input&&input.headers)grab(input.headers);
-    let body=init.body;
-    if(body!==undefined&&body!==null){
-      if(body instanceof URLSearchParams)body=body.toString();
-      else if(body instanceof FormData){const us=new URLSearchParams();body.forEach((v,k)=>{if(typeof v==='string')us.append(k,v)});body=us.toString();if(!Object.keys(hdrs).some(k=>k.toLowerCase()==='content-type'))hdrs['Content-Type']='application/x-www-form-urlencoded;charset=UTF-8'}
-      else if(typeof body!=='string'&&!(body instanceof ArrayBuffer)&&!ArrayBuffer.isView(body)){try{body=JSON.stringify(body)}catch(e){body=String(body)}}
+  }
+  waitForLibcurl().then(() => {
+    libcurl.set_websocket(WISP_SERVER);
+    libcurlReady = true;
+    goBtn.disabled = false;
+    setStatus('Ready — enter a URL.', 'ok');
+    loadUrl(urlInput.value, { pushHistory: true });
+  }).catch(err => setStatus('❌ ' + err.message, 'err'));
+
+  /* ==========================================================================
+   *  __proxyFetch — parent side of the bridge
+   *  KEY CHANGES FOR MEDIA:
+   *   • Preserves Range/If-Range headers (video chunking)
+   *   • Preserves Accept-Ranges/Content-Range in the response
+   *   • Streams binary data through without text decoding
+   * ========================================================================*/
+  window.__proxyFetch = async function (url, opts) {
+    opts = opts || {};
+    const headers = headersToObj(opts.headers);
+
+    for (const k of Object.keys(headers)) {
+      if (DROP_REQ_HEADERS.indexOf(k.toLowerCase()) !== -1) delete headers[k];
     }
-    return call({t:'fetch',url:abs,opt:{method:String(init.method||'GET').toUpperCase(),headers:hdrs,body:body===undefined?null:body}}).then(r=>{
-      if(!r.ok)throw new TypeError('Failed to fetch');
-      return new Response(r.bytes?new Blob([r.bytes]):null,{status:r.status,statusText:r.statusText||'',headers:new Headers(r.headers||{})});
-    });
-  };
-  /* XHR */
-  const TextD=window.TextDecoder;
-  function NXHR(){this.__={m:'GET',u:'',h:{},s:0,st:0,resp:null,rt:'',rtxt:'',rh:{},ab:false,lh:{},wc:false,to:0}}
-  const P=NXHR.prototype;
-  const fire=(self,t)=>{try{
-    if(typeof self['on'+t]==='function')try{self['on'+t]({target:self,type:t,lengthComputable:true,loaded:1,total:1})}catch(e){}
-    const a=self.__.lh[t]||[];for(const f of a.slice()){try{f({target:self,type:t})}catch(e){}}
-  }catch(e){}};
-  P.open=function(m,u){this.__.m=String(m||'GET').toUpperCase();this.__.u=resolve(String(u));this.__.s=1;fire(this,'readystatechange')};
-  P.setRequestHeader=function(k,v){this.__.h[String(k).toLowerCase()]=String(v)};
-  P.abort=function(){this.__.ab=true;this.__.s=4;fire(this,'abort');fire(this,'loadend')};
-  P.getAllResponseHeaders=function(){let s='';for(const k in this.__.rh)s+=k+': '+this.__.rh[k]+'\r\n';return s};
-  P.getResponseHeader=function(k){const v=this.__.rh[String(k).toLowerCase()];return v===undefined?null:v};
-  P.overrideMimeType=function(){};
-  P.addEventListener=function(t,f){(this.__.lh[t]=this.__.lh[t]||[]).push(f)};
-  P.removeEventListener=function(t,f){const a=this.__.lh[t]||[];const i=a.indexOf(f);if(i>=0)a.splice(i,1)};
-  P.send=function(body){
-    const x=this.__;if(x.ab)return;
-    let b=body;
-    if(b instanceof FormData){const us=new URLSearchParams();b.forEach((v,k)=>{if(typeof v==='string')us.append(k,v)});b=us.toString();if(!x.h['content-type'])x.h['content-type']='application/x-www-form-urlencoded;charset=UTF-8'}
-    else if(b instanceof URLSearchParams){b=b.toString();if(!x.h['content-type'])x.h['content-type']='application/x-www-form-urlencoded;charset=UTF-8'}
-    else if(b!==undefined&&b!==null&&typeof b!=='string'&&!(b instanceof ArrayBuffer)&&!ArrayBuffer.isView(b)&&!(b instanceof Blob)){try{b=JSON.stringify(b)}catch(e){b=String(b)}}
-    call({t:'fetch',url:x.u,opt:{method:x.m,headers:x.h,body:b===undefined?null:b}}).then(r=>{
-      if(x.ab)return;
-      x.s=4;x.st=r.status;x.rh=r.headers||{};
-      const ct=x.rh['content-type']||'';const bytes=r.bytes;
-      if(x.rt==='arraybuffer')x.resp=bytes?bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength):null;
-      else if(x.rt==='blob')x.resp=bytes?new Blob([bytes],{type:ct}):null;
-      else if(x.rt==='json'){try{x.resp=JSON.parse(new TextD().decode(bytes||new Uint8Array()))}catch(e){x.resp=null}}
-      else{const t=bytes?new TextD().decode(bytes):'';x.rtxt=t;x.resp=t}
-      fire(this,'readystatechange');fire(this,'progress');fire(this,'load');fire(this,'loadend');
-    }).catch(()=>{if(x.ab)return;x.s=4;x.st=0;fire(this,'readystatechange');fire(this,'error');fire(this,'loadend')});
-  };
-  Object.defineProperties(P,{
-    readyState:{get(){return this.__.s}},status:{get(){return this.__.st}},
-    response:{get(){return this.__.resp}},responseText:{get(){return this.__.rtxt}},
-    responseType:{get(){return this.__.rt},set(v){this.__.rt=v}},
-    responseURL:{get(){return this.__.u}},statusText:{get(){return''}},
-    onreadystatechange:{get(){return(this.__.lh.onreadystatechange||[])[0]},set(f){this.__.lh.onreadystatechange=[f]}},
-    onload:{get(){return(this.__.lh.load||[])[0]},set(f){this.__.lh.load=[f]}},
-    onerror:{get(){return(this.__.lh.error||[])[0]},set(f){this.__.lh.error=[f]}},
-    onabort:{get(){return(this.__.lh.abort||[])[0]},set(f){this.__.lh.abort=[f]}},
-    onloadend:{get(){return(this.__.lh.loadend||[])[0]},set(f){this.__.lh.loadend=[f]}},
-    onprogress:{get(){return(this.__.lh.progress||[])[0]},set(f){this.__.lh.progress=[f]}},
-    ontimeout:{get(){return(this.__.lh.timeout||[])[0]},set(f){this.__.lh.timeout=[f]}},
-    onloadstart:{get(){return(this.__.lh.loadstart||[])[0]},set(f){this.__.lh.loadstart=[f]}},
-    timeout:{get(){return this.__.to},set(v){this.__.to=v}},
-    withCredentials:{get(){return this.__.wc},set(v){this.__.wc=v}},
-    upload:{value:{addEventListener(){},removeEventListener(){},dispatchEvent(){return false}}}
-  });
-  window.XMLHttpRequest=NXHR;
-  window.XMLHttpRequest.UNSENT=0;window.XMLHttpRequest.OPENED=1;window.XMLHttpRequest.HEADERS_RECEIVED=2;window.XMLHttpRequest.LOADING=3;window.XMLHttpRequest.DONE=4;
-  /* navigation */
-  document.addEventListener('click',e=>{
-    const a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
-    if(!a)return;
-    const href=a.getAttribute('href');
-    if(!href||href[0]==='#'||/^(javascript|mailto|tel):/i.test(href))return;
-    e.preventDefault();e.stopPropagation();
-    send({t:'nav',url:resolve(href),newTab:a.target==='_blank'});
-  },true);
-  document.addEventListener('submit',e=>{
-    const f=e.target;if(!f||f.tagName!=='FORM')return;
-    try{
-      const m=(f.getAttribute('method')||'get').toLowerCase();
-      const abs=resolve(f.getAttribute('action')||BASE);
-      e.preventDefault();
-      const fd=new FormData(f);const us=new URLSearchParams();
-      fd.forEach((v,k)=>{if(typeof v==='string')us.append(k,v)});
-      if(m==='get'){const q=us.toString();send({t:'nav',url:abs+(q?(abs.includes('?')?'&':'?')+q:'')})}
-      else send({t:'postnav',url:abs,opt:{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:us.toString()}});
-    }catch(err){}
-  },true);
-  window.open=function(u){if(u)send({t:'nav',url:resolve(String(u)),newTab:true});return null};
-  try{history.pushState=function(){};history.replaceState=function(){}}catch(e){}
-  try{if(navigator.serviceWorker){navigator.serviceWorker.register=()=>Promise.reject(new Error('blocked'));navigator.serviceWorker.getRegistrations=()=>Promise.resolve([])}}catch(e){}
-  try{navigator.sendBeacon=function(){return true}}catch(e){}
-  try{
-    const NW=window.WebSocket;
-    const WS=function(url){
-      const fake=new NW('wss://0.0.0.0/nx-unreachable'); // never connects; inherits real prototype
-      let opened=false;
-      const origSend=fake.send.bind(fake);
-      fake.send=function(){if(!opened)throw new Error('InvalidStateError');};
-      fake.close=function(){try{NW.prototype.close.call(fake)}catch(e){}};
-      send({t:'ws',url:resolve(String(url)).replace(/^http/,'ws')});
-      setTimeout(()=>{try{fake.dispatchEvent(new Event('error'));fake.dispatchEvent(new CloseEvent('close',{wasClean:true,code:1006}))}catch(e){}},80);
-      return fake;
-    };
-    WS.CONNECTING=0;WS.OPEN=1;WS.CLOSING=2;WS.CLOSED=3;WS.prototype=NW.prototype;
-    window.WebSocket=WS;
-  }catch(e){}
-  send({t:'hello',href:BASE});
-}
-const RUNTIME_SRC='('+nxRuntime.toString()+')();';
-/* ============ patcher ============ */
-function pool(items,limit,fn){
-  return new Promise(res=>{
-    let i=0,act=0,done=0;const n=items.length;
-    if(!n)return res();
-    const run=()=>{
-      if(done>=n)return res();
-      while(act<limit&&i<n){const it=items[i++];act++;
-        Promise.resolve().then(()=>fn(it)).catch(()=>{}).then(()=>{act--;done++;run()});
+
+    if (!hasHeader(headers, 'user-agent'))     headers['User-Agent'] = UA;
+    if (!hasHeader(headers, 'accept-language')) headers['Accept-Language'] = 'en-US,en;q=0.9';
+    // Accept-Ranges is critical for video: ask the server to support chunking.
+    if (!hasHeader(headers, 'accept'))          headers['Accept'] = '*/*';
+    if (!hasHeader(headers, 'accept-ranges'))   headers['Accept-Ranges'] = 'bytes';
+
+    const cookies = getCookiesFor(url);
+    if (cookies && !hasHeader(headers, 'cookie')) headers['Cookie'] = cookies;
+
+    const hasBody = opts.body != null;
+    const method  = sanitizeMethod(opts.method, hasBody);
+    const init    = { method, headers };
+    if (hasBody && method !== 'GET' && method !== 'HEAD') init.body = opts.body;
+
+    try {
+      const res = await libcurl.fetch(url, init);
+
+      // Capture Set-Cookie
+      let sc = null;
+      if (res.headers) {
+        if (typeof res.headers.get === 'function') sc = res.headers.get('set-cookie');
+        if (!sc && typeof res.headers.forEach === 'function') {
+          const list = [];
+          res.headers.forEach((v, k) => { if (k.toLowerCase() === 'set-cookie') list.push(v); });
+          if (list.length) sc = list;
+        }
       }
-    };
-    run();
-  });
-}
-const Patcher={
-  cache:new Map(),
-  dec(bytes,ct){
-    try{const m=/charset=([\w-]+)/i.exec(ct||'');return new TextDecoder(m?m[1]:'utf-8').decode(bytes)}
-    catch(e){return new TextDecoder('utf-8').decode(bytes)}
-  },
-  async asset(url,timeout){
-    if(this.cache.has(url))return this.cache.get(url);
-    try{
-      const r=await Engine.fetch(url,{timeout:timeout||20000});
-      if(!/^image|font|audio|video|application\/(font|octet)/i.test(r.headers['content-type']||'')&&!/(png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|otf)/i.test(url)){}
-      const blob=new Blob([r.body],{type:r.headers['content-type']||'application/octet-stream'});
-      const u=URL.createObjectURL(blob);
-      this.cache.set(url,u);
-      if(this.cache.size>400){const k=this.cache.keys().next().value;try{URL.revokeObjectURL(this.cache.get(k))}catch(e){}this.cache.delete(k)}
-      return u;
-    }catch(e){return null}
-  },
-  rewriteCss(css,base){
-    return css
-      .replace(/@charset[^;]+;/gi,'')
-      .replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi,(m,q,u)=>{
-        u=u.trim();
-        if(!u||/^(data:|blob:|about:|#)/i.test(u))return m;
-        try{return'url("'+new URL(u,base).href+'")'}catch(e){return m}
+      if (sc) storeCookies(url, sc);
+
+      // Pass through Range/Content-Range/Accept-Ranges to the iframe
+      const h = {};
+      if (res.headers && typeof res.headers.forEach === 'function') {
+        res.headers.forEach((v, k) => {
+          const lk = k.toLowerCase();
+          if (lk === 'set-cookie' || lk === 'content-encoding') return;
+          h[k] = v;
+        });
+      }
+
+      const buf = await res.arrayBuffer();
+      return { status: res.status, statusText: res.statusText || '', headers: h, body: buf };
+    } catch (err) {
+      console.warn('[__proxyFetch]', url, err && err.message);
+      return {
+        status: 502,
+        statusText: 'Proxy error',
+        headers: { 'content-type': 'text/plain' },
+        body: new TextEncoder().encode('Proxy error: ' + (err && err.message || err)).buffer
+      };
+    }
+  };
+
+  window.__proxyNavigate = function (url, opts) {
+    loadUrl(url, Object.assign({ pushHistory: true }, opts || {}));
+  };
+  window.__proxyUrlChanged = function (url) { currentUrl = url; urlInput.value = url; };
+
+  /* ==========================================================================
+   *  pageRuntime — injected at the top of every page's <head>
+   * ========================================================================*/
+  function pageRuntime() {
+    if (window.__pxInstalled) return;
+    window.__pxInstalled = true;
+
+    var SAFE = ['GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS'];
+    var nativeFetch = window.fetch ? window.fetch.bind(window) : null;
+
+    /* ---------------- Storage shims ---------------- */
+    function memStorage() {
+      var d = Object.create(null);
+      return {
+        getItem: k => k in d ? d[k] : null,
+        setItem: (k, v) => { d[k] = String(v); },
+        removeItem: k => { delete d[k]; },
+        clear: () => { d = Object.create(null); },
+        key: i => Object.keys(d)[i] || null,
+        get length() { return Object.keys(d).length; }
+      };
+    }
+    try { localStorage.setItem('__t__', '1'); localStorage.removeItem('__t__'); }
+    catch (e) { try { Object.defineProperty(window, 'localStorage', { value: memStorage(), configurable: true }); } catch (e2) {} }
+    try { sessionStorage.setItem('__t__', '1'); sessionStorage.removeItem('__t__'); }
+    catch (e) { try { Object.defineProperty(window, 'sessionStorage', { value: memStorage(), configurable: true }); } catch (e2) {} }
+
+    /* ---------------- Cookie shim ---------------- */
+    var __cookies = Object.create(null);
+    try {
+      Object.defineProperty(document, 'cookie', {
+        get: () => Object.keys(__cookies).map(k => k + '=' + __cookies[k]).join('; '),
+        set: v => {
+          var s = String(v), semi = s.indexOf(';');
+          var pair = (semi === -1 ? s : s.slice(0, semi)).trim();
+          var eq = pair.indexOf('='); if (eq < 0) return;
+          var name = pair.slice(0, eq).trim(), val = pair.slice(eq + 1);
+          if (!val || /max-age=0|expires=Thu, 01 Jan 1970/i.test(s)) delete __cookies[name];
+          else __cookies[name] = val;
+        },
+        configurable: true
       });
-  },
-  async fetchCss(css,base,depth){
-    const re=/@import\s+(?:url\(\s*(['"]?)([^'")]+)\1\s*\)|(['"])([^'"]+)\3)[^;]*;/gi;
-    const ms=[...css.matchAll(re)];
-    if(!ms.length)return this.rewriteCss(css,base);
-    let out=css;
-    await Promise.all(ms.map(async m=>{
-      const u=m[2]||m[4];
-      if(!u||/^(data:|blob:)/i.test(u))return;
-      try{
-        const a=new URL(u,base).href;
-        const r=await Engine.fetch(a,{timeout:15000});
-        let t=this.dec(r.body,r.headers['content-type']||'text/css');
-        t=depth<3?await this.fetchCss(t,a,depth+1):this.rewriteCss(t,a);
-        t=t.replace(/<\/(style)/gi,'<\\/$1');
-        out=out.replace(m[0],()=>'\n/*nx:'+a+'*/\n'+t+'\n');
-      }catch(e){out=out.replace(m[0],()=>'/*nx-fail:'+u+'*/')}
-    }));
-    return out;
-  },
-  async inlineModule(code,url,depth){
-    const map={};
-    const re=/(from\s*|import\s*\(\s*|import\s+)(['"])([^'"]+)\2/g;
-    const specs=new Set();
-    let m;while((m=re.exec(code))){const s=m[3];if(s&&!/^(\.|\/|https?:)/i.test(s))continue;specs.add(s)}
-    await Promise.all([...specs].map(async s=>{
-      if(depth>2)return;
-      try{
-        const a=new URL(s,url).href;
-        const r=await Engine.fetch(a,{timeout:20000});
-        let c=this.dec(r.body,r.headers['content-type']||'application/javascript');
-        if(depth<2)c=await this.inlineModule(c,a,depth+1);
-        const bu=URL.createObjectURL(new Blob([c],{type:'text/javascript'}));
-        map[s]=bu;
-      }catch(e){}
-    }));
-    return code.replace(re,(mm,pre,q,s)=>map[s]?pre+q+map[s]+q:mm);
-  },
-  absolutizeAttrs(doc,base){
-    const URLA=['src','href','action','poster','formaction','data-src','data-href','data-url','data-background','background','ping','dynsrc','lowsrc'];
-    const SKIP=/^(#|data:|blob:|about:|javascript:|mailto:|tel:|intent:|ws:|wss:)/i;
-    for(const el of doc.querySelectorAll('*')){
-      for(const a of URLA){
-        const v=el.getAttribute(a);
-        if(!v)continue;
-        const t=v.trim();
-        if(!t||SKIP.test(t))continue;
-        try{el.setAttribute(a,new URL(t,base).href)}catch(e){}
-      }
-      for(const a of ['srcset','data-srcset','imagesrcset']){
-        const v=el.getAttribute(a);
-        if(!v)continue;
-        try{
-          el.setAttribute(a,v.split(',').map(c=>{
-            const p=c.trim().split(/\s+/);
-            if(!p[0]||SKIP.test(p[0]))return c;
-            try{p[0]=new URL(p[0],base).href}catch(e){}
-            return p.join(' ');
-          }).join(', '));
-        }catch(e){}
-      }
-      if(el.hasAttribute('style')){
-        const v=el.getAttribute('style');
-        if(v&&v.includes('url('))el.setAttribute('style',this.rewriteCss(v,base));
-      }
-    }
-    for(const st of doc.querySelectorAll('style')){
-      if(st.textContent&&st.textContent.includes('url('))st.textContent=this.rewriteCss(st.textContent,base);
-    }
-  },
-  async inlineAssets(doc,base){
-    const links=[...doc.querySelectorAll('link[href]')].filter(l=>{
-      const rel=(l.getAttribute('rel')||'').toLowerCase();
-      const as=l.getAttribute('as');
-      return rel.includes('stylesheet')||as==='style';
-    });
-    for(const l of links){
-      const href=l.getAttribute('href');
-      if(!href||/^(data:|blob:)/i.test(href)){l.removeAttribute('href');continue}
-      try{
-        const a=new URL(href,base).href;
-        const r=await Engine.fetch(a,{timeout:20000});
-        let css=this.dec(r.body,r.headers['content-type']||'text/css');
-        css=await this.fetchCss(css,a,1);
-        const st=doc.createElement('style');
-        st.setAttribute('data-nx',a);
-        st.textContent=css;
-        l.replaceWith(st);
-      }catch(e){l.remove()}
-    }
-    for(const st of doc.querySelectorAll('style')){
-      if(st.textContent&&/@import/i.test(st.textContent)){
-        try{st.textContent=await this.fetchCss(st.textContent,base,1)}catch(e){}
-      }
-    }
-    const scripts=[...doc.querySelectorAll('script[src]')];
-    await pool(scripts,4,async sc=>{
-      sc.removeAttribute('integrity');sc.removeAttribute('crossorigin');sc.removeAttribute('nonce');
-      const src=sc.getAttribute('src');
-      if(!src||/^(data:|blob:)/i.test(src))return;
-      try{
-        const a=new URL(src,base).href;
-        const r=await Engine.fetch(a,{timeout:25000});
-        if(r.body.length>4*1024*1024)throw new Error('script too large');
-        let code=this.dec(r.body,r.headers['content-type']||'application/javascript');
-        const type=(sc.getAttribute('type')||'').toLowerCase();
-        if(code.includes('import')&&(type==='module'||/^\s*(import|export)\s/m.test(code)))code=await this.inlineModule(code,a,1);
-        code=code.replace(/<\/(script)/gi,'<\\/$1').replace(/<!--/g,'<\\!--');
-        const ns=doc.createElement('script');
-        if(type)ns.setAttribute('type',type);
-        ns.textContent=code+'\n//# sourceURL='+a;
-        sc.replaceWith(ns);
-      }catch(e){}
-    });
-    const imgs=[...doc.querySelectorAll('img')];
-    let n=0;const cap=80;
-    await pool(imgs,6,async img=>{
-      const u=(img.getAttribute('src')||'').trim();
-      if(!/^https?:/i.test(u))return;
-      if(n>=cap)return;
-      n++;
-      const b=await this.asset(u,15000);
-      if(b){img.setAttribute('src',b);img.removeAttribute('srcset');img.removeAttribute('data-srcset')}
-    });
-    for(const el of doc.querySelectorAll('img[data-src]')){
-      const u=el.getAttribute('data-src');
-      if(/^https?:/i.test(u)){const b=await this.asset(u,15000);if(b)el.setAttribute('src',b)}
-    }
-  },
-  inject(doc,base){
-    for(const m of [...doc.querySelectorAll('meta[http-equiv]')]){
-      const he=(m.getAttribute('http-equiv')||'').toLowerCase();
-      if(he==='content-security-policy')m.remove();
-      else if(he==='refresh'){
-        const c=m.getAttribute('content')||'';
-        const mm=/url\s*=\s*(.+)$/i.exec(c);
-        if(mm){
-          try{
-            const u=new URL(mm[1].trim().replace(/^['"]|['"]$/g,''),base).href;
-            m.setAttribute('content',c.slice(0,mm.index)+'url='+u);
-          }catch(e){}
-        }
-      }
-    }
-    const head=doc.head||doc.documentElement;
-    const b=doc.createElement('base');b.setAttribute('href',base);
-    head.insertBefore(b,head.firstChild);
-    const seed=doc.createElement('script');
-    seed.textContent='window.__NX={base:'+JSON.stringify(base)+',cookies:'+JSON.stringify(CookieJar.match(base))+'};';
-    head.insertBefore(seed,b.nextSibling);
-    const rt=doc.createElement('script');
-    rt.textContent=RUNTIME_SRC;
-    head.insertBefore(rt,seed.nextSibling);
-  },
-  async patch(html,base){
-    const doc=new DOMParser().parseFromString(html,'text/html');
-    for(const m of [...doc.querySelectorAll('meta[http-equiv]')]){
-      if((m.getAttribute('http-equiv')||'').toLowerCase()==='content-security-policy')m.remove();
-    }
-    for(const b of [...doc.querySelectorAll('base')])b.remove();
-    for(const el of doc.querySelectorAll('[integrity],[nonce],[crossorigin]')){
-      el.removeAttribute('integrity');el.removeAttribute('nonce');el.removeAttribute('crossorigin');
-    }
-    this.absolutizeAttrs(doc,base);
-    await this.inlineAssets(doc,base);
-    this.inject(doc,base);
-    return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
-  }
-};
+    } catch (e) {}
 
-/* ============ view manager ============ */
-const View={
-  hist:[],idx:-1,lastReq:0,
-  frameSrc(){
-    if(location.protocol==='file:')return null;
-    return location.origin+location.pathname+'?nxframe='+(Date.now());
-  },
-  renderFrame(out){
-    const fr=$('#pframe');
-    const fs=this.frameSrc();
-    if(!fs){fr.removeAttribute('src');fr.srcdoc=out;return Promise.resolve()}
-    return new Promise(res=>{
-      let done=false;
-      const on=()=>{
-        if(done)return;done=true;
-        fr.removeEventListener('load',on);
-        try{
-          const d=fr.contentDocument;
-          d.open();d.write(out);d.close();
-        }catch(e){fr.srcdoc=out}
-        res();
+    /* ---------------- Service Worker no-op ---------------- */
+    try {
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.register = () => Promise.reject(new Error('SW disabled'));
+        navigator.serviceWorker.getRegistration = () => Promise.resolve(null);
+        navigator.serviceWorker.getRegistrations = () => Promise.resolve([]);
+      }
+    } catch (e) {}
+
+    /* ---------------- Helpers ---------------- */
+    function abs(u) { try { return new URL(u, document.baseURI).href; } catch (e) { return String(u); } }
+    function headersToObj(h) {
+      var o = {};
+      if (!h) return o;
+      if (typeof Headers !== 'undefined' && h instanceof Headers) h.forEach((v, k) => { o[k] = v; });
+      else if (Array.isArray(h)) h.forEach(p => { if (p && p.length >= 2) o[p[0]] = p[1]; });
+      else if (typeof h === 'object') for (var k in h) if (Object.prototype.hasOwnProperty.call(h, k)) o[k] = h[k];
+      return o;
+    }
+    function bodyToSendable(body) {
+      if (body == null) return null;
+      if (typeof body === 'string') return body;
+      if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) return body;
+      if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) return body.toString();
+      if (typeof FormData !== 'undefined' && body instanceof FormData) {
+        var out = [];
+        body.forEach((v, k) => { out.push(encodeURIComponent(k) + '=' + encodeURIComponent(v)); });
+        return out.join('&');
+      }
+      if (typeof Blob !== 'undefined' && body instanceof Blob) return '';
+      try { return JSON.stringify(body); } catch (e) {}
+      return String(body);
+    }
+    function sanitizeMethod(m, hasBody) {
+      m = String(m == null ? '' : m).toUpperCase().trim();
+      if (!m) return hasBody ? 'POST' : 'GET';
+      return SAFE.indexOf(m) !== -1 ? m : (hasBody ? 'POST' : 'GET');
+    }
+    function bridge(url, opts) {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__proxyFetch === 'function') return p.__proxyFetch(url, opts);
+      return Promise.reject(new Error('Proxy bridge unavailable'));
+    }
+
+    /* ---------------- window.fetch ----------------
+       Handles: string / URL / Request input, AbortSignal, streaming body */
+    window.fetch = function (input, init) {
+      init = init || {};
+      var url, opts, signal = null;
+      if (typeof input === 'string') { url = input; opts = init; }
+      else if (typeof URL !== 'undefined' && input instanceof URL) { url = input.href; opts = init; }
+      else if (input && typeof input === 'object' && input.url) {
+        url = input.url;
+        signal = input.signal || init.signal;
+        opts = {
+          method: init.method || input.method || 'GET',
+          headers: init.headers || input.headers,
+          body: init.body !== undefined ? init.body : undefined
+        };
+      } else { url = String(input); opts = init; }
+      if (!signal) signal = opts.signal;
+
+      var a = abs(url);
+      var hasBody = opts.body != null;
+      var method = sanitizeMethod(opts.method, hasBody);
+
+      var fetchPromise = bridge(a, {
+        method: method,
+        headers: headersToObj(opts.headers),
+        body: bodyToSendable(opts.body)
+      }).then(function (r) {
+        return new Response(r.body, {
+          status: r.status,
+          statusText: r.statusText || '',
+          headers: r.headers || {}
+        });
+      });
+
+      if (signal) {
+        if (signal.aborted) return Promise.reject(new DOMException('Aborted', 'AbortError'));
+        return new Promise(function (resolve, reject) {
+          signal.addEventListener('abort', function () {
+            reject(new DOMException('Aborted', 'AbortError'));
+          }, { once: true });
+          fetchPromise.then(resolve, reject);
+        });
+      }
+      return fetchPromise;
+    };
+
+    /* ---------------- XMLHttpRequest ---------------- */
+    function ProxyXHR() {
+      this.readyState = 0; this.status = 0; this.statusText = '';
+      this.response = ''; this.responseText = ''; this.responseType = '';
+      this.responseURL = ''; this.responseXML = null;
+      this.withCredentials = false; this.timeout = 0;
+      this.upload = { addEventListener: function(){}, removeEventListener: function(){} };
+      this._method = 'GET'; this._url = ''; this._headers = {};
+      this._respHeaders = {}; this._listeners = {}; this._aborted = false;
+      this.onreadystatechange = this.onload = this.onerror =
+      this.onloadend = this.onabort = this.ontimeout =
+      this.onprogress = this.onloadstart = null;
+    }
+    ProxyXHR.UNSENT = 0; ProxyXHR.OPENED = 1; ProxyXHR.HEADERS_RECEIVED = 2;
+    ProxyXHR.LOADING = 3; ProxyXHR.DONE = 4;
+    ['UNSENT','OPENED','HEADERS_RECEIVED','LOADING','DONE'].forEach(n => {
+      ProxyXHR.prototype[n] = ProxyXHR[n];
+    });
+    ProxyXHR.prototype.open = function (m, u) {
+      this._method = m || 'GET'; this._url = u;
+      this.readyState = 1; this._fire('readystatechange');
+    };
+    ProxyXHR.prototype.setRequestHeader = function (k, v) { this._headers[k] = v; };
+    ProxyXHR.prototype.getResponseHeader = function (n) {
+      var k = String(n).toLowerCase();
+      return this._respHeaders[k] !== undefined ? this._respHeaders[k] : null;
+    };
+    ProxyXHR.prototype.getAllResponseHeaders = function () {
+      var lines = [];
+      for (var k in this._respHeaders)
+        if (Object.prototype.hasOwnProperty.call(this._respHeaders, k))
+          lines.push(k + ': ' + this._respHeaders[k]);
+      return lines.join('\r\n');
+    };
+    ProxyXHR.prototype.addEventListener = function (t, fn) {
+      (this._listeners[t] = this._listeners[t] || []).push(fn);
+    };
+    ProxyXHR.prototype.removeEventListener = function (t, fn) {
+      if (this._listeners[t]) this._listeners[t] = this._listeners[t].filter(f => f !== fn);
+    };
+    ProxyXHR.prototype._fire = function (t, ev) {
+      ev = ev || {}; ev.type = t; ev.target = this; ev.currentTarget = this;
+      var h = this['on' + t];
+      if (typeof h === 'function') { try { h.call(this, ev); } catch (e) {} }
+      var l = this._listeners[t];
+      if (l) for (var i = 0; i < l.length; i++) { try { l[i].call(this, ev); } catch (e) {} }
+    };
+    ProxyXHR.prototype.abort = function () {
+      this._aborted = true; this.readyState = 0;
+      this._fire('abort'); this._fire('loadend'); this._fire('readystatechange');
+    };
+    ProxyXHR.prototype.send = function (body) {
+      var self = this;
+      this._aborted = false;
+      this._fire('loadstart');
+      var a = abs(this._url);
+      var hasBody = body != null;
+      var method = sanitizeMethod(this._method, hasBody);
+
+      bridge(a, {
+        method: method,
+        headers: this._headers,
+        body: bodyToSendable(body)
+      }).then(function (r) {
+        if (self._aborted) return;
+        self.status = r.status; self.statusText = r.statusText;
+        self.responseURL = a;
+        for (var k in r.headers) self._respHeaders[k.toLowerCase()] = r.headers[k];
+        self.readyState = 2; self._fire('readystatechange');
+        self.readyState = 3; self._fire('readystatechange'); self._fire('progress');
+
+        var rt = (self.responseType || '').toLowerCase();
+        if (rt === 'arraybuffer') self.response = r.body;
+        else if (rt === 'blob')   self.response = new Blob([r.body], { type: self.getResponseHeader('content-type') || '' });
+        else if (rt === 'json') {
+          self.responseText = new TextDecoder('utf-8').decode(r.body);
+          try { self.response = JSON.parse(self.responseText); } catch (e) { self.response = null; }
+        } else if (rt === 'document') {
+          self.responseText = new TextDecoder('utf-8').decode(r.body);
+          try { self.responseXML = new DOMParser().parseFromString(self.responseText, 'text/html'); }
+          catch (e) { self.responseXML = null; }
+          self.response = self.responseXML;
+        } else {
+          self.responseText = new TextDecoder('utf-8').decode(r.body);
+          self.response = self.responseText;
+        }
+        self.readyState = 4;
+        self._fire('readystatechange'); self._fire('load'); self._fire('loadend');
+      }).catch(function (err) {
+        if (self._aborted) return;
+        self.status = 0; self.statusText = ''; self.readyState = 4;
+        self._fire('readystatechange');
+        self._fire('error', { error: err, message: err && err.message });
+        self._fire('loadend');
+      });
+    };
+    window.XMLHttpRequest = ProxyXHR;
+
+    /* ---------------- Worker shim ----------------
+       Fetches the worker script through the bridge, prepends a fetch
+       prelude so the worker's own fetch calls postMessage back here,
+       then instantiates from a same-origin Blob URL. */
+    try {
+      var OrigWorker = window.Worker;
+      if (OrigWorker) {
+        window.Worker = function (url, opts) {
+          try {
+            if (typeof url !== 'string') return new OrigWorker(url, opts);
+            var a = abs(url);
+            var bootstrap =
+              'self.__pxFetch=function(u,i){return new Promise(function(res,rej){' +
+              'var id=Math.random().toString(36).slice(2);' +
+              'function on(e){var d=e.data;if(!d||d.__pxId!==id)return;' +
+              'self.removeEventListener("message",on);' +
+              'if(d.error)return rej(new Error(d.error));' +
+              'var b=d.body?new Uint8Array(d.body):new Uint8Array(0);' +
+              'res(new Response(b,{status:d.status,statusText:d.statusText||"",headers:d.headers||{}}));}' +
+              'self.addEventListener("message",on);' +
+              'var init=i||{};var hdr=init.headers||{};var h2={};' +
+              'if(hdr&&typeof hdr.forEach==="function")hdr.forEach(function(v,k){h2[k]=v;});' +
+              'else if(hdr)for(var k in hdr)if(Object.prototype.hasOwnProperty.call(hdr,k))h2[k]=hdr[k];' +
+              'self.postMessage({__pxReq:true,id:id,url:u,opts:{method:init.method||"GET",headers:h2,body:init.body==null?null:String(init.body)}});' +
+              '});};' +
+              'self.fetch=self.__pxFetch;' +
+              '(async function(){try{var r=await self.__pxFetch(' + JSON.stringify(a) + ',{method:"GET"});' +
+              'var s=await r.text();(0,eval)(s);}catch(e){self.postMessage({__pxErr:String(e)});}})();';
+            var blob = new Blob([bootstrap], { type: 'application/javascript' });
+            var bUrl = URL.createObjectURL(blob);
+            var w = new OrigWorker(bUrl, opts);
+            w.addEventListener('message', function (e) {
+              var d = e.data;
+              if (!d || !d.__pxReq) return;
+              window.parent.__proxyFetch(d.url, d.opts).then(function (r) {
+                try { w.postMessage({ __pxId: d.id, status: r.status, statusText: r.statusText, headers: r.headers, body: r.body }, [r.body]); }
+                catch (x) { w.postMessage({ __pxId: d.id, status: r.status, statusText: r.statusText, headers: r.headers, body: r.body }); }
+              }).catch(function (err) {
+                w.postMessage({ __pxId: d.id, error: String(err && err.message || err) });
+              });
+            });
+            return w;
+          } catch (e) { console.warn('[Worker shim]', e); }
+          return new OrigWorker(url, opts);
+        };
+      }
+    } catch (e) {}
+
+    /* ---------------- MediaSource passthrough ----------------
+       Native MediaSource works fine — the segments YouTube fetches go
+       through our fetch override, which forwards the Range header.
+       We just make sure URL.createObjectURL(mediaSource) keeps working. */
+    try {
+      var origCreateObjectURL = URL.createObjectURL.bind(URL);
+      var origRevokeObjectURL = URL.revokeObjectURL.bind(URL);
+      URL.createObjectURL = function (obj) {
+        try { return origCreateObjectURL(obj); } catch (e) { throw e; }
       };
-      fr.addEventListener('load',on);
-      fr.removeAttribute('srcdoc');
-      fr.src=fs;
-      setTimeout(on,7000);
-    });
-  },
-  show(name){
-    $$('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-    $$('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+name));
-    if(name==='games')Games.wake();
-    if(name==='settings')Settings.refreshStats();
-  },
-  url(u){$('#urlBar').value=u},
-  progress(on){
-    const w=$('#progWrap'),f=$('#progFill');
-    w.classList.toggle('on',on);
-    if(!on){f.style.width='100%';setTimeout(()=>{f.style.width='0'},380)}
-    else f.style.width='12%';
-  },
-  async go(url,opts){
-    opts=opts||{};
-    this.show('browser');
-    $('#frameWelcome').hidden=true;
-    $('#frameErr').hidden=true;
-    this.url(url);this.progress(true);
-    const my=++this.lastReq;
-    try{
-      const r=await Engine.fetch(url,{timeout:30000});
-      if(my!==this.lastReq)return;
-      const ct=(r.headers['content-type']||'').toLowerCase();
-      const fr=$('#pframe');
-      if(/html|xml/.test(ct)||!ct){
-        const base=r.finalUrl||url;
-        const html=Patcher.dec(r.body,ct);
-        const out=await Patcher.patch(html,base);
-        if(my!==this.lastReq)return;
-        await this.renderFrame(out);
-      }else{
-        const blob=new Blob([r.body],{type:ct||'application/octet-stream'});
-        fr.removeAttribute('srcdoc');
-        fr.src=URL.createObjectURL(blob);
-      }
-      if(opts.push!==false){
-        this.hist=this.hist.slice(0,this.idx+1);
-        this.hist.push(url);
-        this.idx=this.hist.length-1;
-      }
-      cfg.lastUrl=url;saveCfg();
-      sys(undefined,Engine.mode);
-    }catch(err){
-      if(my!==this.lastReq)return;
-      $('#frameErr').hidden=false;
-      $('#errMsg').textContent=((err&&err.message)||String(err))+'  ·  '+url;
-    }finally{
-      if(my===this.lastReq)this.progress(false);
-    }
-  },
-  back(){if(this.idx>0){this.idx--;this.go(this.hist[this.idx],{push:false})}},
-  fwd(){if(this.idx<this.hist.length-1){this.idx++;this.go(this.hist[this.idx],{push:false})}},
-  reload(){if(this.idx>=0)this.go(this.hist[this.idx],{push:false})},
-  home(){this.show('home')}
-};
-
-/* ============ parent bridge (serves runtime requests from proxied pages) ============ */
-window.addEventListener('message',async e=>{
-  const d=e.data;
-  if(!d||!d.__nx)return;
-  try{window.__nxLog=window.__nxLog||[];if(window.__nxLog.length<50)window.__nxLog.push((d.t||'?')+' '+(d.url||'').slice(0,90))}catch(x){}
-  const src=e.source;
-  try{if(!src||!src.__nxActive)return}catch(err){return}
-  const reply=(payload,transfer)=>{
-    try{src.postMessage(Object.assign({__nxr:1,id:d.id},payload),'*',transfer||[])}
-    catch(err){try{src.postMessage(Object.assign({__nxr:1,id:d.id},payload),'*')}catch(e2){}}
-  };
-  try{
-    if(d.t==='fetch'){
-      let body=d.opt&&d.opt.body;
-      if(body instanceof Object&&!(body instanceof ArrayBuffer)&&body.byteLength===undefined&&typeof body!=='string')body=null;
-      const r=await Engine.fetch(d.url,{method:(d.opt&&d.opt.method)||'GET',headers:(d.opt&&d.opt.headers)||{},body:body===undefined?null:body,timeout:45000});
-      const buf=r.body.buffer.slice(r.body.byteOffset,r.body.byteOffset+r.body.byteLength);
-      reply({ok:true,status:r.status,statusText:r.statusText,headers:r.headers,bytes:buf},[buf]);
-    }else if(d.t==='setc'){
-      CookieJar.update(d.url||d.href,[d.cookie]);
-    }else if(d.t==='nav'){
-      if(d.newTab)toast('Opened: '+d.url.slice(0,80));
-      View.go(d.url);
-    }else if(d.t==='postnav'){
-      const r=await Engine.fetch(d.url,{method:'POST',headers:d.opt.headers,body:d.opt.body,timeout:30000});
-      const ct=(r.headers['content-type']||'').toLowerCase();
-      if(/html/.test(ct)){
-        const out=await Patcher.patch(Patcher.dec(r.body,ct),r.finalUrl||d.url);
-        await View.renderFrame(out);
-        View.show('browser');View.url(d.url);
-      }else View.go(d.url);
-    }else if(d.t==='hello'){/* frame is alive */}
-  }catch(err){
-    if(d.t==='fetch')reply({ok:false,error:String((err&&err.message)||err)});
-    else if(d.t!=='setc')toast('Page error: '+String((err&&err.message)||err).slice(0,90),'err');
-  }
-});
-/* ============ apps (real branding via favicon services) ============ */
-const APPS=[
-  {n:'YouTube',u:'https://www.youtube.com/',d:'youtube.com'},
-  {n:'TikTok',u:'https://www.tiktok.com/',d:'tiktok.com'},
-  {n:'now.gg',u:'https://now.gg/',d:'now.gg'},
-  {n:'duck.ai',u:'https://duck.ai/',d:'duckduckgo.com'},
-  {n:'Discord',u:'https://discord.com/app',d:'discord.com'},
-  {n:'Spotify',u:'https://open.spotify.com/',d:'spotify.com'},
-  {n:'Instagram',u:'https://www.instagram.com/',d:'instagram.com'},
-  {n:'Reddit',u:'https://www.reddit.com/',d:'reddit.com'},
-  {n:'X',u:'https://x.com/',d:'x.com'},
-  {n:'Twitch',u:'https://www.twitch.tv/',d:'twitch.tv'},
-  {n:'Google',u:'https://www.google.com/',d:'google.com'},
-  {n:'Roblox',u:'https://www.roblox.com/',d:'roblox.com'}
-];
-function renderApps(){
-  const g=$('#appsGrid');
-  g.innerHTML='';
-  for(const a of APPS){
-    const t=document.createElement('div');
-    t.className='atile';
-    t.innerHTML='<img loading="lazy" alt="'+a.n+'"><span>'+a.n+'</span>';
-    const img=t.querySelector('img');
-    img.src='https://icons.duckduckgo.com/ip3/'+a.d+'.ico';
-    img.onerror=()=>{img.onerror=()=>{img.style.display='none'};img.src='https://www.google.com/s2/favicons?domain='+a.d+'&sz=64'};
-    t.onclick=()=>View.go(a.u);
-    g.appendChild(t);
-  }
-}
-function normalizeInput(q){
-  q=(q||'').trim();
-  if(!q)return null;
-  if(/^https?:\/\//i.test(q))return q;
-  if(/^[\w-]+(\.[\w-]+)+(:\d+)?(\/|$|\?|#)/.test(q))return'https://'+q;
-  return'https://duckduckgo.com/?q='+encodeURIComponent(q);
-}
-
-/* ============ games: IndexedDB + LuminSDK ============ */
-const Games={
-  _db:null,_sdk:null,ready:false,list:[],shown:0,filter:'',
-  db(){
-    if(this._db)return this._db;
-    this._db=new Promise((res,rej)=>{
-      const r=indexedDB.open('nexus-db',1);
-      r.onupgradeneeded=e=>{
-        const d=e.target.result;
-        if(!d.objectStoreNames.contains('games'))d.createObjectStore('games',{keyPath:'id'});
-        if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta');
+      URL.revokeObjectURL = function (u) {
+        try { return origRevokeObjectURL(u); } catch (e) {}
       };
-      r.onsuccess=()=>res(r.result);
-      r.onerror=()=>rej(r.error);
-    });
-    return this._db;
-  },
-  async idbAll(){
-    const d=await this.db();
-    return new Promise((res,rej)=>{
-      const rq=d.transaction('games','readonly').objectStore('games').getAll();
-      rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error);
-    });
-  },
-  async idbPut(g){
-    const d=await this.db();
-    return new Promise((res,rej)=>{
-      const tx=d.transaction('games','readwrite');
-      tx.objectStore('games').put(g);
-      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
-    });
-  },
-  async idbClear(){
-    const d=await this.db();
-    return new Promise((res,rej)=>{
-      const tx=d.transaction('games','readwrite');
-      tx.objectStore('games').clear();
-      tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);
-    });
-  },
-  async count(){
-    try{const all=await this.idbAll();return all.length}catch(e){return 0}
-  },
-  sdk(){
-    if(this._sdk)return this._sdk;
-    this._sdk=(async()=>{
-      await loadResilient('nx-lumin',[
-        'https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js',
-        'https://rawcdn.githack.com/luminsdk/script/main/lumin.min.js'
-      ]);
-      const L=window.Lumin||window.lumin;
-      if(!L||typeof L.init!=='function')throw new Error('LuminSDK global missing');
-      await L.init({headless:true});
-      return L;
-    })();
-    this._sdk.catch(()=>{this._sdk=null});
-    return this._sdk;
-  },
-  meta(msg){$('#gMeta').textContent=msg},
-  async wake(){
-    const all=await this.idbAll();
-    if(all.length){
-      this.list=this.sortList(all);
-      sys(undefined,undefined,all.length);
-      this.render();
-      this.meta(all.length+' games cached (IndexedDB)');
-      if(!this.ready)this.refresh(false);
-    }else{
-      this.render();
-      await this.refresh(true);
-    }
-    Settings.refreshStats();
-  },
-  sortList(l){return l.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''))},
-  async refresh(full){
-    this.meta('loading from LuminSDK…');
-    try{
-      const L=await this.sdk();
-      this.ready=true;
-      let page=1,total=0;
-      while(page<=15){
-        const r=await L.getGames({page,limit:100});
-        if(!r||!Array.isArray(r.games))break;
-        for(const g of r.games){
-          await this.idbPut({id:String(g.id),name:g.name||g.title||String(g.id),category:g.category||'',token:g.image_token||'',img:null,ts:Date.now()});
-          total++;
+    } catch (e) {}
+
+    /* ---------------- Link click interception ---------------- */
+    document.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var el = e.target;
+      while (el && el !== document && (el.tagName || '').toUpperCase() !== 'A') el = el.parentNode;
+      if (!el || el === document) return;
+      var href = el.getAttribute('href');
+      if (!href) return;
+      if (/^(javascript:|mailto:|tel:|data:|blob:|#)/i.test(href)) return;
+      if (el.target && el.target !== '_self' && el.target !== '') return;
+      e.preventDefault();
+      if (window.parent && window.parent.__proxyNavigate) window.parent.__proxyNavigate(abs(href));
+    }, true);
+
+    /* ---------------- Form submit interception ---------------- */
+    function handleFormSubmit(form) {
+      try {
+        var method = String(form.getAttribute('method') || 'GET').toUpperCase() === 'POST' ? 'POST' : 'GET';
+        var action;
+        try { action = new URL(form.getAttribute('action') || document.baseURI, document.baseURI).href; }
+        catch (e) { action = document.baseURI; }
+        var fd = new FormData(form);
+        if (method === 'GET') {
+          var u = new URL(action);
+          fd.forEach((v, k) => u.searchParams.append(k, v));
+          if (window.parent && window.parent.__proxyNavigate) window.parent.__proxyNavigate(u.href);
+        } else {
+          if (window.parent && window.parent.__proxyNavigate) window.parent.__proxyNavigate(action, { method: 'POST', body: fd });
         }
-        if(r.games.length<100)break;
-        if(r.pages&&page>=r.pages)break;
-        page++;
+      } catch (e) { console.warn('[form]', e); }
+    }
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || (form.tagName || '').toUpperCase() !== 'FORM') return;
+      e.preventDefault(); e.stopPropagation();
+      handleFormSubmit(form);
+    }, true);
+    try {
+      var fp = HTMLFormElement.prototype;
+      fp.submit = function () { handleFormSubmit(this); };
+      if (fp.requestSubmit) {
+        fp.requestSubmit = function () {
+          try {
+            var evt = new Event('submit', { bubbles: true, cancelable: true });
+            this.dispatchEvent(evt);
+            if (!evt.defaultPrevented) handleFormSubmit(this);
+          } catch (e) { handleFormSubmit(this); }
+        };
       }
-      this.list=this.sortList(await this.idbAll());
-      sys(undefined,undefined,this.list.length);
-      this.meta(this.list.length+' games · cached '+new Date().toLocaleTimeString()+' (IndexedDB)');
-      this.shown=0;this.render();
-      toast('Games cached: '+total+' entries in IndexedDB','ok');
-    }catch(e){
-      this.meta('LuminSDK unreachable — showing cached data');
-      toast('LuminSDK failed: '+String((e&&e.message)||e).slice(0,90),'err');
-      this.list=this.sortList(await this.idbAll());
-      sys(undefined,undefined,this.list.length);
-      this.render();
+    } catch (e) {}
+
+    /* ---------------- Location + history ---------------- */
+    try {
+      var lp = Location.prototype, oA = lp.assign, oR = lp.replace;
+      lp.assign = function (u) {
+        if (window.parent && window.parent.__proxyNavigate) window.parent.__proxyNavigate(abs(u));
+        else oA.call(location, u);
+      };
+      lp.replace = function (u) {
+        if (window.parent && window.parent.__proxyNavigate) window.parent.__proxyNavigate(abs(u));
+        else oR.call(location, u);
+      };
+    } catch (e) {}
+    try {
+      history.pushState = function (s, t, u) {
+        if (u && window.parent && window.parent.__proxyUrlChanged)
+          try { window.parent.__proxyUrlChanged(abs(u)); } catch (e) {}
+      };
+      history.replaceState = function (s, t, u) {
+        if (u && window.parent && window.parent.__proxyUrlChanged)
+          try { window.parent.__proxyUrlChanged(abs(u)); } catch (e) {}
+      };
+    } catch (e) {}
+
+    /* ---------------- sendBeacon ---------------- */
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon = function (url, data) {
+          try { window.fetch(abs(url), { method: 'POST', body: data, keepalive: true }).catch(() => {}); return true; }
+          catch (e) { return false; }
+        };
+      }
+    } catch (e) {}
+
+    /* ---------------- Swallow network-related rejections ---------------- */
+    window.addEventListener('unhandledrejection', function (ev) {
+      var m = ev && ev.reason && (ev.reason.message || String(ev.reason));
+      if (m && /fetch|xhr|network|proxy|serviceworker|worker/i.test(m)) ev.preventDefault();
+    });
+
+    console.log('[proxy-runtime] installed');
+  }
+
+  /* ==========================================================================
+   *  patchHTML
+   * ========================================================================*/
+  function patchHTML(html, pageUrl) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    doc.querySelectorAll('meta[http-equiv]').forEach(m => {
+      const eq = (m.getAttribute('http-equiv') || '').toLowerCase();
+      if (eq === 'content-security-policy' || eq === 'content-security-policy-report-only' ||
+          eq === 'x-frame-options' || eq === 'refresh') m.remove();
+    });
+
+    doc.querySelectorAll('[integrity]').forEach(el => el.removeAttribute('integrity'));
+    doc.querySelectorAll('[crossorigin]').forEach(el => el.removeAttribute('crossorigin'));
+    doc.querySelectorAll('script[referrerpolicy]').forEach(el => el.removeAttribute('referrerpolicy'));
+    doc.querySelectorAll('link[referrerpolicy]').forEach(el => el.removeAttribute('referrerpolicy'));
+    doc.querySelectorAll('iframe[referrerpolicy]').forEach(el => el.removeAttribute('referrerpolicy'));
+
+    if (doc.head) {
+      let rm = doc.head.querySelector('meta[name="referrer"]');
+      if (!rm) { rm = doc.createElement('meta'); doc.head.insertBefore(rm, doc.head.firstChild); }
+      rm.setAttribute('name', 'referrer');
+      rm.setAttribute('content', 'unsafe-url');
     }
-    Settings.refreshStats();
-  },
-  visible(){
-    const f=this.filter.toLowerCase().trim();
-    let l=this.list;
-    if(f)l=l.filter(g=>(g.name||'').toLowerCase().includes(f)||(g.category||'').toLowerCase().includes(f));
-    return l;
-  },
-  render(){
-    const grid=$('#gGrid');
-    const vis=this.visible();
-    if(!this.shown)this.shown=0;
-    const end=Math.min(this.shown+48,vis.length);
-    const slice=vis.slice(0,end);
-    grid.innerHTML='';
-    if(!slice.length){
-      grid.innerHTML='<div class="gempty">No games'+(this.filter?' matching "'+this.filter+'"':'')+'. Hit Refresh to pull the catalog.</div>';
-      $('#gMoreWrap').hidden=true;
-      return;
+    if (doc.head && !doc.querySelector('meta[charset]')) {
+      const m = doc.createElement('meta'); m.setAttribute('charset', 'utf-8');
+      doc.head.insertBefore(m, doc.head.firstChild);
     }
-    for(const g of slice){
-      const t=document.createElement('div');
-      t.className='gtile';
-      const initial=(g.name||'?').trim().charAt(0).toUpperCase();
-      t.innerHTML='<div class="gimgph">'+initial+'</div><div class="glabel"><div class="gname"></div>'+(g.category?'<div class="gcat"></div>':'')+'</div>';
-      t.querySelector('.gname').textContent=g.name||g.id;
-      if(g.category)t.querySelector('.gcat').textContent=g.category;
-      const imgEl=t.querySelector('.gimgph');
-      this.resolveImage(g,imgEl,t);
-      t.onclick=()=>this.play(g);
-      grid.appendChild(t);
+
+    const head = doc.head || doc.documentElement;
+
+    let base = doc.querySelector('base');
+    if (base) {
+      base.setAttribute('href', pageUrl);
+      base.setAttribute('target', '_self');
+    } else {
+      base = doc.createElement('base');
+      base.setAttribute('href', pageUrl);
+      base.setAttribute('target', '_self');
+      head.insertBefore(base, head.firstChild);
     }
-    this.shown=end;
-    $('#gMoreWrap').hidden=end>=vis.length;
-  },
-  async resolveImage(g,ph,tile){
-    let src=null;
-    if(g.img){
-      src=(typeof Blob!=='undefined'&&g.img instanceof Blob)?URL.createObjectURL(g.img):g.img;
-    }
-    if(!src&&g.token){
-      try{
-        const L=await this.sdk();
-        const bu=await L.getImageUrl(g.token);
-        if(bu){
-          try{
-            const blob=await fetch(bu).then(x=>x.blob());
-            g.img=blob;
-            this.idbPut(g).catch(()=>{});
-            src=URL.createObjectURL(blob);
-          }catch(e){src=bu}
+
+    const rt = doc.createElement('script');
+    rt.textContent = '(' + pageRuntime.toString() + ')();';
+    head.insertBefore(rt, head.firstChild);
+
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
+
+  /* ==========================================================================
+   *  renderInIframe
+   * ========================================================================*/
+  let renderSeq = 0;
+  function renderInIframe(patchedHtml, onDone) {
+    const seq = ++renderSeq;
+    pageFrame.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>';
+    requestAnimationFrame(() => {
+      if (seq !== renderSeq) return;
+      let doc;
+      try { doc = pageFrame.contentDocument; } catch (e) { doc = null; }
+      if (!doc) { pageFrame.srcdoc = patchedHtml; if (onDone) onDone(); return; }
+      try {
+        doc.open();
+        doc.write(patchedHtml);
+        doc.close();
+      } catch (e) {
+        console.warn('[render] falling back to srcdoc', e);
+        pageFrame.srcdoc = patchedHtml;
+      }
+      if (onDone) {
+        const w = pageFrame.contentWindow;
+        if (w) {
+          try {
+            w.addEventListener('load', function once() {
+              w.removeEventListener('load', once);
+              onDone();
+            });
+            setTimeout(onDone, 5000);
+          } catch (e) { setTimeout(onDone, 500); }
+        } else setTimeout(onDone, 500);
+      }
+    });
+  }
+
+  /* ==========================================================================
+   *  loadUrl
+   * ========================================================================*/
+  async function loadUrl(rawUrl, options) {
+    options = options || {};
+    if (!libcurlReady) { setStatus('libcurl.js not ready.', 'warn'); return; }
+
+    let url = (rawUrl || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    try { new URL(url); } catch (e) { setStatus('Invalid URL: ' + rawUrl, 'err'); return; }
+
+    goBtn.disabled = true; reloadBtn.disabled = true;
+    showOverlay('Loading ' + url + '…');
+    setStatus('Fetching ' + url + ' …', 'info');
+    urlInput.value = url;
+
+    try {
+      let body = options.body;
+      const hasBody = body != null;
+      const method = sanitizeMethod(options.method, hasBody);
+
+      const init = {
+        method,
+        headers: {
+          'User-Agent': UA,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9'
         }
-      }catch(e){}
-    }
-    if(!src)return;
-    const im=document.createElement('img');
-    im.className='gimg';im.alt=g.name||'';
-    im.src=src;
-    im.onload=()=>{ph.replaceWith(im)};
-  },
-  async play(g){
-    try{
-      const L=await this.sdk();
-      const r=await L.getGameUrl(String(g.id));
-      if(!r||!r.url)throw new Error('no url returned');
-      toast('Launching '+g.name+'…');
-      View.go(r.url);
-    }catch(e){
-      toast('Could not launch game: '+String((e&&e.message)||e).slice(0,80),'err');
-    }
-  }
-};
-
-/* ============ settings ============ */
-const Settings={
-  refreshStats(){
-    const c=CookieJar.count();
-    $('#dataStats').textContent=CookieJar.count()+' cookies jarred · '+Games.list.length+' games cached · curl session: '+(Engine.curlReady?'active':'inactive');
-  },
-  bind(){
-    $('#setRelay').value=cfg.relay;
-    $('#setEngine').value=cfg.engine;
-    $('#setLockSwitch').checked=cfg.lockOnSwitch;
-    $('#setCloakTab').checked=cfg.cloakTab;
-    $('#btnSaveNet').onclick=async()=>{
-      cfg.relay=normRelay($('#setRelay').value);
-      cfg.engine=$('#setEngine').value;
-      saveCfg();
-      renderChips();
-      toast('Saved. Re-initializing engines…');
-      Engine._init=null;
-      await Engine.init(true);
-      updateRelayUi();
-      this.refreshStats();
-    };
-    $('#btnTestRelay').onclick=async()=>{
-      $('#netHint').textContent='Testing relay websocket…';
-      try{
-        await Engine.init();
-        const p=await Engine.ping();
-        $('#netHint').textContent='Relay OK — engine "'+p.engine+'" returned HTTP '+p.status+' in '+p.ms+' ms.';
-        setDot('#dotRelay','ok');setDot('#dotEngine','ok');
-        $('#scPing').textContent=p.ms+' ms';
-        toast('Relay test passed ('+p.ms+' ms)','ok');
-      }catch(e){
-        $('#netHint').textContent='Relay test failed: '+String((e&&e.message)||e);
-        setDot('#dotRelay','bad');
-        toast('Relay test failed','err');
+      };
+      const cookies = getCookiesFor(url);
+      if (cookies) init.headers['Cookie'] = cookies;
+      if (hasBody && method !== 'GET' && method !== 'HEAD') {
+        if (typeof FormData !== 'undefined' && body instanceof FormData) {
+          const p = new URLSearchParams();
+          body.forEach((v, k) => p.append(k, v));
+          init.body = p.toString();
+          init.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        } else init.body = body;
       }
-    };
-    $('#btnTestFetch').onclick=async()=>{
-      try{
-        await Engine.init();
-        const r=await Engine.fetch('https://example.com/',{timeout:15000});
-        $('#netHint').textContent='Fetch test: HTTP '+r.status+' via '+r.engine+', '+r.body.length+' bytes received.';
-        toast('Fetch test OK via '+r.engine,'ok');
-      }catch(e){toast('Fetch test failed: '+String((e&&e.message)||e).slice(0,70),'err')}
-    };
-    $('#btnClearCookies').onclick=()=>{CookieJar.clear();store.del('nx_curl_jar');toast('Cookies cleared');this.refreshStats()};
-    $('#btnClearGames').onclick=async()=>{await Games.idbClear();Games.list=[];Games.shown=0;Games.render();sys(undefined,undefined,0);Games.meta('cache cleared');toast('Game cache cleared');this.refreshStats()};
-    $('#btnWipe').onclick=()=>{
-      localStorage.clear();
-      indexedDB.deleteDatabase('nexus-db');
-      toast('Wiped. Reloading…');
-      setTimeout(()=>location.reload(),900);
-    };
-    $('#setLockSwitch').onchange=e=>{cfg.lockOnSwitch=e.target.checked;saveCfg();updateCloakStat()};
-    $('#setCloakTab').onchange=e=>{cfg.cloakTab=e.target.checked;saveCfg();Cloak.applyTab();updateCloakStat()};
-  }
-};
 
-/* ============ cloak ============ */
-const Cloak={
-  locked:true,
-  policy:'POL-'+Math.floor(100000+Math.random()*900000),
-  applyTab(){
-    if(cfg.cloakTab){
-      document.title=this.locked?'Access Denied':cfg.innocentTitle;
-      const f=$('#favi');
-      f.href=this.locked
-        ?"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f1f3f4'/%3E%3Ccircle cx='8' cy='8' r='4' fill='none' stroke='%239aa0a6' stroke-width='1.5'/%3E%3C/svg%3E"
-        :INNOCENT_FAV;
-    }else{
-      document.title='Nexus';
-    }
-  },
-  lock(){
-    this.locked=true;
-    $('#cloak').hidden=false;
-    $('#clPolicy').textContent=this.policy;
-    this.applyTab();
-  },
-  unlock(){
-    this.locked=false;
-    $('#cloak').hidden=true;
-    $('#app').hidden=false;
-    this.applyTab();
-    Engine.init().catch(()=>{});
-    Games.wake().catch(()=>{});
-    updateRelayUi();
-  }
-};
-function updateCloakStat(){$('#scCloak').textContent=cfg.lockOnSwitch&&cfg.cloakTab?'armed':'partial'}
-function updateRelayUi(){
-  setDot('#dotRelay','warn');$('#txtRelay').textContent='relay: '+cfg.relay.replace('wss://','').replace('ws://','').slice(0,26);
-  Engine.init().then(()=>{
-    Engine.ping().then(p=>{
-      setDot('#dotRelay','ok');setDot('#dotEngine','ok');
-      $('#scPing').textContent=p.ms+' ms';
-      $('#netHint').textContent='Last test: HTTP '+p.status+' via '+p.engine+' in '+p.ms+' ms.';
-    }).catch(()=>{setDot('#dotRelay','bad');setDot('#dotEngine','bad')});
-  }).catch(()=>{});
-}
+      const res = await libcurl.fetch(url, init);
+      let sc = null;
+      if (res.headers) {
+        if (typeof res.headers.get === 'function') sc = res.headers.get('set-cookie');
+        if (sc) storeCookies(url, sc);
+      }
 
-/* ============ boot ============ */
-function renderChips(){
-  $$('#engineChips .chip').forEach(c=>c.classList.toggle('sel',c.dataset.eng===cfg.engine));
-}
-const IS_FRAME=/[?&]nxframe/.test(location.search);
-function boot(){
-  if(IS_FRAME){
-    /* same-origin blank shell used as the iframe document base */
-    try{document.title='';}catch(e){}
-    document.documentElement.innerHTML='<head></head><body></body>';
-    return;
-  }
-  $('#verSpan').textContent=VERSION;
-  $('#clPolicy').textContent=Cloak.policy;
-  icons();
-  renderApps();
-  renderChips();
-  Settings.bind();
-  /* nav */
-  $$('.navbtn').forEach(b=>b.onclick=()=>View.show(b.dataset.view));
-  $('#lockNow').onclick=()=>Cloak.lock();
-  /* home search */
-  $('#homeForm').onsubmit=e=>{
-    e.preventDefault();
-    const u=normalizeInput($('#homeInput').value);
-    if(u)View.go(u);
-  };
-  $$('#engineChips .chip').forEach(c=>c.onclick=()=>{
-    cfg.engine=c.dataset.eng;saveCfg();
-    renderChips();
-    $('#setEngine').value=cfg.engine;
-    Engine._init=null;Engine.init(true).catch(()=>{});
-    toast('Engine set to '+cfg.engine);
-  });
-  /* browser toolbar */
-  $('#btnBack').onclick=()=>View.back();
-  $('#btnFwd').onclick=()=>View.fwd();
-  $('#btnReload').onclick=()=>View.reload();
-  $('#btnHome').onclick=()=>View.home();
-  $('#urlBar').addEventListener('keydown',e=>{
-    if(e.key==='Enter'){
-      const u=normalizeInput($('#urlBar').value);
-      if(u)View.go(u);
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      if (ct && !ct.includes('text/html') && !ct.includes('application/xhtml')) {
+        const text = await res.text();
+        pageFrame.srcdoc =
+          '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:monospace;padding:16px;white-space:pre-wrap;word-break:break-all;background:#fff;color:#111;}</style></head><body>' +
+          escapeHtml(text) + '</body></html>';
+        setStatus('Loaded non-HTML (' + ct + ') — ' + res.status, 'warn');
+        hideOverlay(); goBtn.disabled = false; reloadBtn.disabled = false;
+        return;
+      }
+
+      const charsetM = (res.headers.get('content-type') || '').match(/charset=([^;]+)/i);
+      const charset = charsetM ? charsetM[1].trim().toLowerCase() : 'utf-8';
+      const buf = await res.arrayBuffer();
+      let html;
+      try { html = new TextDecoder(charset).decode(buf); }
+      catch { html = new TextDecoder('utf-8').decode(buf); }
+
+      const patched = patchHTML(html, url);
+
+      currentUrl = url; currentOpts = options;
+      if (options.pushHistory) {
+        history.splice(historyIdx + 1);
+        history.push({ url, opts: { method: options.method, body: options.body } });
+        historyIdx = history.length - 1;
+      }
+
+      setStatus('✓ ' + res.status + '  ' + url + '  — rendering…', 'ok');
+      renderInIframe(patched, () => {
+        setStatus('✓ ' + res.status + '  ' + url, 'ok');
+        hideOverlay(); goBtn.disabled = false; reloadBtn.disabled = false;
+        backBtn.disabled = historyIdx <= 0;
+      });
+    } catch (err) {
+      console.error('[loadUrl]', err);
+      setStatus('❌ ' + (err && err.message || err), 'err');
+      hideOverlay(); goBtn.disabled = false; reloadBtn.disabled = false;
     }
+  }
+
+  goBtn.addEventListener('click', () => loadUrl(urlInput.value, { pushHistory: true }));
+  urlInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); loadUrl(urlInput.value, { pushHistory: true }); }
   });
-  $('#errRetry').onclick=()=>View.reload();
-  $('#errEngine').onclick=()=>{
-    const seq=['auto','curl','epoxy','direct'];
-    const i=seq.indexOf(cfg.engine);
-    cfg.engine=seq[(i+1)%seq.length];
-    saveCfg();renderChips();$('#setEngine').value=cfg.engine;
-    Engine._init=null;Engine.init(true).then(()=>View.reload());
-    toast('Switched engine to '+cfg.engine);
-  };
-  /* games */
-  $('#gRefresh').onclick=()=>Games.refresh(true);
-  $('#gMoreBtn').onclick=()=>Games.render();
-  $('#gInput').addEventListener('input',e=>{
-    Games.filter=e.target.value;
-    Games.shown=0;
-    Games.render();
+  backBtn.addEventListener('click', () => {
+    if (historyIdx <= 0) return;
+    historyIdx--;
+    const e = history[historyIdx];
+    loadUrl(e.url, Object.assign({}, e.opts, { pushHistory: false }));
+    backBtn.disabled = historyIdx <= 0;
   });
-  /* cloak */
-  $('#clReload').onclick=()=>location.reload();
-  $('#clDetails').onclick=()=>{$('#clDetail').hidden=!$('#clDetail').hidden};
-  document.addEventListener('keydown',e=>{
-    if(Cloak.locked&&(e.key==='~'||e.key==='`')){e.preventDefault();Cloak.unlock()}
+  reloadBtn.addEventListener('click', () => {
+    if (!currentUrl) return;
+    loadUrl(currentUrl, Object.assign({}, currentOpts || {}, { pushHistory: false }));
   });
-  document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&cfg.lockOnSwitch&&!Cloak.locked)Cloak.lock();
-  });
-  if(cfg.lastUrl){$('#urlBar').value=cfg.lastUrl;$('#homeInput').value=''}
-  $('#aboutHonesty').innerHTML='Known limits of a fully serverless build: complex SPAs (YouTube video playback, TikTok, now.gg native games) may render partially — service workers, WebSockets and some module loaders cannot be fully emulated without a server-side relay. Sign-in works on many sites thanks to cookie jar + form handling, but OAuth popups that require a separate window can still fail.';
-  $('#scCloak').textContent='armed';
-  Games.db().then(()=>Games.idbAll()).then(all=>{sys(undefined,undefined,all.length)}).catch(()=>{});
-  Cloak.lock();
-}
-document.addEventListener('DOMContentLoaded',boot);
-</script>
+
+  window.addEventListener('beforeunload', () => { pageFrame.srcdoc = ''; });
+  </script>
 </body>
 </html>
