@@ -179,7 +179,6 @@ body{
 .re-title{position:absolute;top:34%;left:0;right:0;text-align:center;
   font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:1.5em;letter-spacing:.06em;line-height:1.25;
   color:#ece7df;text-shadow:0 0 .5em rgba(220,40,25,.75)}
-/* Nexus browser tile */
 .t-nexus{background:radial-gradient(80% 70% at 50% 30%, #1b2a4a 0%, #0b1220 60%, #05070d 100%)}
 .nx-globe{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:42%;aspect-ratio:1;border-radius:50%;
   background:radial-gradient(circle at 34% 30%, #4da3ff, #1c5fb8 55%, #0a2b5e 100%);box-shadow:0 0 2em rgba(64,140,255,.5)}
@@ -216,13 +215,26 @@ body{
   color:#eef3f8;font-size:1.9vh;outline:none;font-family:inherit}
 #nxUrl:focus{border-color:#2f80ed}
 #nxStage{font-size:1.5vh;letter-spacing:.12em;color:#8fa0b0;min-width:6ch;text-align:right}
-#nxBadge{font-size:1.6vh;font-weight:800;letter-spacing:.06em;color:#39d98a;background:#0d1a13;
-  border:1px solid #1d3a2a;border-radius:1vh;padding:.7vh .9vw;cursor:pointer;white-space:nowrap}
+#nxBadge{font-size:1.6vh;font-weight:800;letter-spacing:.06em;color:#f0b429;background:#1a1408;
+  border:1px solid #3a2d10;border-radius:1vh;padding:.7vh .9vw;cursor:pointer;white-space:nowrap}
 #nxTitle{font-size:1.6vh;color:#8fa0b0;max-width:20vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nx-main{position:relative;flex:1;display:flex;min-height:0}
 .nx-viewport{position:relative;flex:1;background:#0b0e13;overflow:hidden}
 .nx-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0e13}
 #nxProg{position:absolute;top:0;left:0;height:.45vh;width:0;z-index:5;
   background:linear-gradient(90deg,#2f80ed,#9b59f6);transition:width .4s ease}
+
+/* ---------- NEXUS BOOTSTRAP OVERLAY ---------- */
+#nxBoot{position:absolute;inset:0;z-index:8;display:none;align-items:center;justify-content:center;background:#05070c}
+#nxBoot.show{display:flex}
+.bbox{width:min(580px,90vw);background:#0b1119;border:1px solid #223046;border-radius:14px;padding:26px 28px}
+.bttl{letter-spacing:.35em;font-size:13px;color:#8fb8ea;font-weight:800;margin-bottom:14px}
+.blog{font:12px/1.75 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#8fa0b0;max-height:36vh;overflow-y:auto}
+.bl.ok{color:#39d98a}.bl.warn{color:#f0b429}.bl.err{color:#ff6b6b}
+.bacts{display:flex;gap:10px;margin-top:18px}
+.bacts button{padding:10px 20px;border-radius:999px;border:0;background:#2f80ed;color:#fff;font-weight:700;
+  cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:.06em}
+.bacts button.alt{background:#223046}
 </style>
 </head>
 <body>
@@ -420,18 +432,30 @@ body{
     <button class="nx-btn" id="nxHome" title="Home">⌂</button>
     <input id="nxUrl" spellcheck="false" placeholder="Search, paste a URL, or a YouTube / Shorts link… (yt: query = YouTube search)">
     <span id="nxStage"></span>
-    <span id="nxBadge" title="Active transport — click to change the wisp relay">BOOT</span>
+    <span id="nxBadge" title="Transport — click to change the wisp relay">BOOT</span>
     <span id="nxTitle"></span>
   </div>
-  <div class="nx-viewport" id="nxViewport"></div>
+  <div class="nx-main">
+    <div class="nx-viewport" id="nxViewport"></div>
+    <div id="nxBoot">
+      <div class="bbox">
+        <div class="bttl">NEXUS · BOOTSTRAP</div>
+        <div class="blog" id="bootLog"></div>
+        <div class="bacts" id="bootActs"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
 /* ============================================================
-   PS5 UI (unchanged behaviour) + NEXUS BROWSER
-   - transport: epoxy -> libcurl.js -> direct fetch (per-request fallback)
-   - runtime: whole "nexus" is built as a string, base64-encoded,
-     and booted as a blob: document inside a sandboxed iframe
+   PS5 UI + NEXUS BROWSER
+   - transport: epoxy -> libcurl.js   (NO direct fallback)
+   - bootstrap: both transports are loaded from mirror CDNs,
+     health-checked against the wisp relay, and every
+     navigation is gated until the boot log says READY
+   - runtime: whole "nexus" is base64-encoded and booted as a
+     blob: document inside a sandboxed iframe
    - pipeline: FETCH (transport) -> PATCH (html rewrite) -> RENDER
 ============================================================ */
 const bgA = document.getElementById('bgA'), bgB = document.getElementById('bgB');
@@ -460,15 +484,12 @@ function setTheme(key){
   front.style.opacity = '0';
   front = back;
 }
-
 function layout(){
   const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
   let x = 0;
   for (let i = 0; i < selected; i++) x += slots[i].offsetWidth + gap;
-  const target = window.innerWidth * 0.10;
-  row.style.transform = `translateX(${target - x}px)`;
+  row.style.transform = `translateX(${window.innerWidth * 0.10 - x}px)`;
 }
-
 function select(i, silent){
   selected = Math.max(0, Math.min(slots.length - 1, i));
   slots.forEach((s, k) => s.classList.toggle('selected', k === selected));
@@ -477,7 +498,7 @@ function select(i, silent){
 }
 
 /* ============================================================
-   NEXUS RUNTIME SOURCE (String.raw keeps regex backslashes intact)
+   NEXUS RUNTIME SOURCE (booted as base64 -> blob)
 ============================================================ */
 const NEXUS_BODY = String.raw`<!doctype html><html><head><meta charset="utf-8"><title>NEXUS</title>
 <style>
@@ -508,7 +529,7 @@ addEventListener("message", function(e){
   if(d && d.__nxr){
     if(d.k === "res"){ var p = pend[d.id]; if(p){ delete pend[d.id]; if(d.ok){ p.res(d); } else { p.rej(new Error(d.err || ("HTTP " + d.status))); } } }
     else if(d.k === "push"){ renderPush(d.html); }
-  } else if(d && d.__nx && d.k){ send(d); } /* forward messages from nested docs */
+  } else if(d && d.__nx && d.k){ send(d); }
 });
 function rawFetch(url, opts){
   return new Promise(function(res, rej){
@@ -518,16 +539,11 @@ function rawFetch(url, opts){
 }
 function dec(buf){ try{ return new TextDecoder("utf-8").decode(buf); }catch(e){ return ""; } }
 function nxUrl(u){ try{ return new URL(u, BASE || location.href).href; }catch(e){ return u; } }
+/* proxy transport only — no direct fetch fallback */
 function nxFetch(u, opts){
   var abs = nxUrl(u);
   return rawFetch(abs, opts).then(function(r){
     return { ok:r.ok, status:r.status, ct:r.ct, buf:r.buf, url:abs, text:function(){ return dec(r.buf); } };
-  }, function(){
-    return fetch(abs, opts).then(function(r){
-      return r.arrayBuffer().then(function(b){
-        return { ok:r.ok, status:r.status, ct:(r.headers.get("content-type") || ""), buf:b, url:abs, text:function(){ return dec(b); } };
-      });
-    });
   });
 }
 /* hook fetch + XHR so rendered page scripts also go through the proxy transport */
@@ -553,7 +569,7 @@ XMLHttpRequest.prototype.send = function(b){
       x.dispatchEvent(new Event("readystatechange"));
       x.dispatchEvent(new ProgressEvent("load"));
     }catch(e){}
-  }, function(){ try{ _send.call(x, b); }catch(e){} });
+  }).catch(function(){ try{ x.dispatchEvent(new ProgressEvent("error")); }catch(e){} });
 };
 function esc(s){ return String(s).replace(/[<>&]/g, function(c){ return { "<":"&lt;", ">":"&gt;", "&":"&amp;" }[c]; }); }
 function rx(u, base){
@@ -614,8 +630,8 @@ function frame(){
 function killBoot(){ var b = document.getElementById("boot"); if(b) b.remove(); }
 function renderErr(msg){
   killBoot();
-  document.body.innerHTML = '<div class="card"><h1>NEXUS</h1><p style="opacity:.75;font-size:13px">Could not fetch / render through the proxy.</p><code>' + esc(msg) + '</code><button id="d">Try direct</button><button id="h" class="alt">Home</button></div>';
-  document.getElementById("d").onclick = function(){ send({ k:"nav", url:BASE, direct:true }); };
+  document.body.innerHTML = '<div class="card"><h1>NEXUS</h1><p style="opacity:.75;font-size:13px">Proxy transport failed (epoxy → libcurl, no direct fallback).</p><code>' + esc(msg) + '</code><button id="r">Retry</button><button id="h" class="alt">Home</button></div>';
+  document.getElementById("r").onclick = function(){ send({ k:"nav", url:BASE }); };
   document.getElementById("h").onclick = function(){ send({ k:"nav", url:"nexus://home" }); };
   stage("error");
 }
@@ -662,92 +678,212 @@ if(MODE === "web"){ renderWeb(); } else { stage("idle"); }
 `;
 const NEXUS_SRC = NEXUS_BODY + '</scr' + 'ipt></body></html>';
 
-/* base64-encode the whole runtime and boot it as a blob URL */
+/* base64 the whole nexus and boot it as a blob URL */
 let NXBLOB = null;
 function ensureBlob(){
   if(NXBLOB) return NXBLOB;
-  const b64 = btoa(unescape(encodeURIComponent(NEXUS_SRC)));   // base64 the whole nexus
-  window.NEXUS_B64 = b64;                                      // exposed if you want it
-  const html = decodeURIComponent(escape(atob(b64)));          // decode back into the blob
+  const b64 = btoa(unescape(encodeURIComponent(NEXUS_SRC)));
+  window.NEXUS_B64 = b64;
+  const html = decodeURIComponent(escape(atob(b64)));
   NXBLOB = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
   return NXBLOB;
 }
 
 /* ============================================================
-   TRANSPORT: epoxy -> libcurl.js -> direct (auto fallback)
+   BOOTSTRAP — epoxy + libcurl.js, health-checked, NO direct
 ============================================================ */
+const bootOverlay = document.getElementById('nxBoot');
+const bootLogEl   = document.getElementById('bootLog');
+const bootActs    = document.getElementById('bootActs');
+function blog(msg, cls){
+  const d = document.createElement('div');
+  d.className = 'bl ' + (cls || '');
+  d.textContent = msg;
+  bootLogEl.appendChild(d);
+  bootLogEl.scrollTop = bootLogEl.scrollHeight;
+}
+function showBoot(){ bootOverlay.classList.add('show'); }
+function hideBoot(){ bootOverlay.classList.remove('show'); }
+
 const NX = {
   wisp: (function(){ try{ return localStorage.getItem('nx_wisp') || 'wss://wisp.mercurywork.shop/'; }catch(e){ return 'wss://wisp.mercurywork.shop/'; } })(),
-  epoxy: null, curl: null, kind: 'DIRECT',
+  epoxy: null, curl: null, epoxyOK: false, curlOK: false,
+  kind: 'BOOT', ready: false, bootPromise: null,
+  /* transport chain: epoxy -> libcurl. nothing else. */
   async fetch(url, opts){
+    await bootstrapNX();
     const chain = [];
-    if(this.epoxy && this.epoxy.fetch) chain.push(['EPOXY',   (u,o) => this.epoxy.fetch(u,o)]);
-    if(this.curl  && this.curl.fetch)  chain.push(['LIBCURL', (u,o) => this.curl.fetch(u,o)]);
-    chain.push(['DIRECT', (u,o) => fetch(u, { method:(o&&o.method)||'GET', body:(o&&o.body)||undefined, mode:'cors', cache:'no-store' })]);
+    if(this.epoxy) chain.push(['EPOXY',   u => this.epoxy.fetch(u, opts)]);
+    if(this.curl)  chain.push(['LIBCURL', u => this.curl.fetch(u, opts)]);
+    if(!chain.length) throw new Error('no proxy transport available (bootstrap failed)');
     let lastErr;
     for(const [name, fn] of chain){
       try{
-        const r = await Promise.race([
-          fn(url, opts),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 60000))
-        ]);
-        if(this.kind !== name){ this.kind = name; setBadge(name); }
+        const r = await withTimeout(fn(url), 60000);
+        if(!r) throw new Error('empty response');
+        this.kind = name; setBadge(name);
         return r;
       }catch(e){ lastErr = e; }
     }
-    throw lastErr || new Error('no transport available');
+    throw lastErr || new Error('transport failure');
   }
 };
 
+const EPOXY_URLS = [
+  'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy/bundle/epoxy.min.js',
+  'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy',
+  'https://unpkg.com/@mercuryworkshop/epoxy',
+  'https://unpkg.com/@mercuryworkshop/epoxy/bundle/epoxy.min.js'
+];
+const EPOXY_ESM = [
+  'https://esm.sh/@mercuryworkshop/epoxy',
+  'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy/+esm'
+];
+const CURL_URLS = [
+  'https://cdn.jsdelivr.net/npm/libcurl.js',
+  'https://cdn.jsdelivr.net/npm/libcurl.js/libcurl.js',
+  'https://unpkg.com/libcurl.js',
+  'https://cdn.jsdelivr.net/npm/libcurl.js@latest/index.js'
+];
+const CURL_ESM = ['https://esm.sh/libcurl.js'];
+
+function withTimeout(p, ms){
+  return Promise.race([Promise.resolve(p), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout ' + ms + 'ms')), ms))]);
+}
 function loadScript(src){
   return new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = src; s.onload = () => res(true); s.onerror = () => rej(new Error('load fail'));
+    const t = setTimeout(() => { s.remove(); rej(new Error('timeout')); }, 20000);
+    s.src = src;
+    s.onload  = () => { clearTimeout(t); res(true); };
+    s.onerror = () => { clearTimeout(t); rej(new Error('load fail')); };
     document.head.appendChild(s);
   });
 }
-async function tryScripts(list, check){
-  for(const u of list){ try{ await loadScript(u); if(check()) return true; }catch(e){} }
+async function tryScripts(urls, check){
+  for(const u of urls){ try{ await loadScript(u); if(check()) return true; }catch(e){} }
+  return check();
+}
+async function tryImports(urls, assign){
+  for(const u of urls){ try{ const m = await import(u); if(assign(m)) return true; }catch(e){} }
   return false;
 }
-async function bootTransports(){
-  setBadge('BOOT');
-  if(!window.epoxy){
-    await tryScripts([
-      'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy',
-      'https://unpkg.com/@mercuryworkshop/epoxy',
-      'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy/bundle/epoxy.min.js'
-    ], () => !!window.epoxy);
-  }
-  if(window.epoxy) NX.epoxy = window.epoxy;
-  else {
-    for(const u of ['https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy/bundle/epoxy.mjs','https://esm.sh/@mercuryworkshop/epoxy']){
-      try{
-        const m = await import(u);
-        const e = (m && m.fetch) ? m : (m && m.default);
-        if(e && e.fetch){ NX.epoxy = e; break; }
-      }catch(e){}
+function makeEpoxy(){
+  const E = window.epoxy || window.__epoxyESM;
+  if(!E) return null;
+  const C = E.EpoxyClient || (E.default && E.default.EpoxyClient);
+  try{
+    if(C){
+      let c;
+      try{ c = new C(NX.wisp); }
+      catch(e){ c = new C({ wisp: NX.wisp }); }
+      if(c && c.set_websocket_url){ try{ c.set_websocket_url(NX.wisp); }catch(e){} }
+      if(c && typeof c.fetch === 'function') return { fetch: (u, o) => c.fetch(u, o) };
     }
-  }
-  if(!window.libcurl){
-    await tryScripts([
-      'https://cdn.jsdelivr.net/npm/libcurl.js',
-      'https://unpkg.com/libcurl.js',
-      'https://cdn.jsdelivr.net/npm/libcurl.js/libcurl.js'
-    ], () => !!window.libcurl);
-  }
-  if(window.libcurl) NX.curl = window.libcurl.default || window.libcurl;
-  try{ NX.epoxy && NX.epoxy.set_websocket && NX.epoxy.set_websocket(NX.wisp); }catch(e){}
-  try{ NX.curl  && NX.curl.set_websocket  && NX.curl.set_websocket(NX.wisp);  }catch(e){}
-  NX.kind = NX.epoxy ? 'EPOXY' : (NX.curl ? 'LIBCURL' : 'DIRECT');
-  setBadge(NX.kind);
+    if(typeof E.fetch === 'function'){
+      try{ E.set_websocket && E.set_websocket(NX.wisp); }catch(e){}
+      return { fetch: (u, o) => E.fetch(u, o) };
+    }
+  }catch(e){}
+  return null;
 }
+function makeCurl(){
+  const L = window.libcurl || window.__curlESM;
+  if(!L) return null;
+  const c = (L.default && typeof L.default.fetch === 'function') ? L.default : L;
+  try{ c.set_websocket && c.set_websocket(NX.wisp); }catch(e){}
+  if(typeof c.fetch === 'function') return { fetch: (u, o) => c.fetch(u, o) };
+  return null;
+}
+async function healthCheck(tr){
+  try{
+    const r = await withTimeout(tr.fetch('https://example.com/', {}), 15000);
+    const st = r ? (typeof r.status === 'number' ? r.status : 0) : 0;
+    return st >= 200 && st < 400;
+  }catch(e){ return false; }
+}
+
+function showFatal(){
+  bootActs.innerHTML = '';
+  const r = document.createElement('button'); r.textContent = 'RETRY BOOT';
+  r.onclick = () => { bootActs.innerHTML = ''; NX.bootPromise = null; NX.ready = false; bootstrapNX(); };
+  const w = document.createElement('button'); w.textContent = 'SET RELAY'; w.className = 'alt';
+  w.onclick = () => {
+    const p = prompt('Wisp relay URL:', NX.wisp);
+    if(p && p.trim()){
+      NX.wisp = p.trim();
+      try{ localStorage.setItem('nx_wisp', NX.wisp); }catch(e){}
+      bootActs.innerHTML = ''; bootLogEl.innerHTML = '';
+      blog('relay changed — rebooting…');
+      NX.bootPromise = null; NX.ready = false; bootstrapNX();
+    }
+  };
+  bootActs.appendChild(r); bootActs.appendChild(w);
+}
+
+async function bootstrapNX(){
+  if(NX.bootPromise) return NX.bootPromise;
+  NX.bootPromise = (async () => {
+    blog('nexus bootstrap started');
+    blog('wisp relay: ' + NX.wisp);
+
+    blog('loading epoxy-t…');
+    let okE = await tryScripts(EPOXY_URLS, () => !!(window.epoxy || window.__epoxyESM));
+    if(!okE) okE = await tryImports(EPOXY_ESM, m => {
+      if(m && (m.EpoxyClient || (m.default && m.default.EpoxyClient))){ window.__epoxyESM = m; return true; }
+      return false;
+    });
+    NX.epoxy = makeEpoxy();
+    if(NX.epoxy){
+      blog('epoxy loaded — health check…', 'ok');
+      NX.epoxyOK = await healthCheck(NX.epoxy);
+      blog(NX.epoxyOK ? 'epoxy online' : 'epoxy check failed (kept in chain)', NX.epoxyOK ? 'ok' : 'warn');
+    } else blog('epoxy unavailable', 'warn');
+
+    blog('loading libcurl.js…');
+    let okC = await tryScripts(CURL_URLS, () => !!(window.libcurl || window.__curlESM));
+    if(!okC) okC = await tryImports(CURL_ESM, m => {
+      const d = m && (m.default || m);
+      if(d && typeof d.fetch === 'function'){ window.__curlESM = d; return true; }
+      return false;
+    });
+    NX.curl = makeCurl();
+    if(NX.curl){
+      blog('libcurl loaded — health check…', 'ok');
+      NX.curlOK = await healthCheck(NX.curl);
+      blog(NX.curlOK ? 'libcurl online' : 'libcurl check failed (kept in chain)', NX.curlOK ? 'ok' : 'warn');
+    } else blog('libcurl unavailable', 'warn');
+
+    if(NX.epoxyOK || NX.curlOK){
+      NX.ready = true;
+      NX.kind = NX.epoxyOK ? 'EPOXY' : 'LIBCURL';
+      setBadge(NX.kind);
+      blog('bootstrap complete — transport: ' + NX.kind, 'ok');
+      if(nxEl.classList.contains('open')){ hideBoot(); if(nxHist.length === 0) nxGo('nexus://home', true); }
+    } else if(NX.epoxy || NX.curl){
+      /* libraries loaded but relay unreachable — stay proxy-only, let requests fail loudly */
+      NX.ready = true;
+      NX.kind = NX.epoxy ? 'EPOXY' : 'LIBCURL';
+      setBadge(NX.kind);
+      blog('relay unhealthy — transports loaded but unverified', 'warn');
+      if(nxEl.classList.contains('open')){ hideBoot(); if(nxHist.length === 0) nxGo('nexus://home', true); }
+    } else {
+      NX.ready = false; NX.kind = 'FAIL'; setBadge('FAIL');
+      blog('bootstrap FAILED — no proxy transport available', 'err');
+      if(nxEl.classList.contains('open')) showFatal();
+    }
+  })();
+  return NX.bootPromise;
+}
+
 function setBadge(k){
   const b = document.getElementById('nxBadge');
   if(!b) return;
   b.textContent = k;
-  b.title = 'Transport: ' + k + ' — relay: ' + NX.wisp + ' (click to change)';
-  b.style.color = k === 'DIRECT' ? '#f0b429' : (k === 'LIBCURL' ? '#5ad7f0' : '#39d98a');
+  b.title = 'Transport: ' + k + ' — relay: ' + NX.wisp + ' — no direct fallback (click to change relay)';
+  b.style.color = k === 'DIRECT' ? '#f0b429' : k === 'FAIL' ? '#ff6b6b' : k === 'LIBCURL' ? '#5ad7f0' : k === 'BOOT' ? '#f0b429' : '#39d98a';
+  b.style.background = k === 'FAIL' ? '#1a0c0c' : k === 'BOOT' ? '#1a1408' : '#0d1a13';
+  b.style.borderColor = k === 'FAIL' ? '#3a1616' : '#1d3a2a';
 }
 function setStage(s){
   const st = document.getElementById('nxStage');
@@ -761,7 +897,7 @@ function setStage(s){
 }
 
 /* ============================================================
-   NAVIGATION / YOUTUBE / SEARCH
+   NAVIGATION / YOUTUBE / SEARCH (gated on bootstrap)
 ============================================================ */
 let nxHist = [], nxIdx = -1, nxPendingPush = null, nxBooted = false;
 
@@ -805,6 +941,16 @@ function nxNormalize(raw){
   return { mode:'web', url:'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(s), display:s };
 }
 
+/* gate: nothing transport-dependent runs until bootstrap says so */
+async function nxGate(){
+  if(NX.ready){ hideBoot(); return true; }
+  showBoot();
+  await bootstrapNX();
+  if(NX.ready){ hideBoot(); return true; }
+  showFatal();
+  return false;
+}
+
 function bootNexus(mode, url, pushHtml){
   nxPendingPush = pushHtml || null;
   const vp = document.getElementById('nxViewport');
@@ -828,17 +974,6 @@ function bootEmbed(url){
   setStage('done');
   document.getElementById('nxTitle').textContent = 'YouTube player';
 }
-function bootDirect(url){
-  const vp = document.getElementById('nxViewport');
-  vp.innerHTML = '<div class="nx-progress" id="nxProg" style="width:100%"></div>';
-  const f = document.createElement('iframe');
-  f.className = 'nx-frame';
-  f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation');
-  f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
-  f.src = url;
-  vp.appendChild(f);
-  setStage('done');
-}
 
 async function nxGo(input, push = true){
   const nav = nxNormalize(input);
@@ -846,11 +981,10 @@ async function nxGo(input, push = true){
   document.getElementById('nxUrl').value = nav.display;
   document.getElementById('nxTitle').textContent = '';
   if(push){ nxHist = nxHist.slice(0, nxIdx + 1); nxHist.push(nav); nxIdx = nxHist.length - 1; }
-  if(nav.mode === 'home')         bootNexus('push', '', homeHtml());
-  else if(nav.mode === 'embed')   bootEmbed(nav.url);
-  else if(nav.mode === 'ytsearch'){ await nxSearch(nav.q); }
-  else if(nav.mode === 'direct')  bootDirect(nav.url);
-  else { bootNexus('web', nav.url); setStage('fetch'); }
+  if(nav.mode === 'home')          bootNexus('push', '', homeHtml());
+  else if(nav.mode === 'embed')    bootEmbed(nav.url);
+  else if(nav.mode === 'ytsearch'){ if(await nxGate()) await nxSearch(nav.q); }
+  else { if(await nxGate()){ bootNexus('web', nav.url); setStage('fetch'); } }
 }
 
 /* ---------- YouTube search via Piped instances ---------- */
@@ -876,7 +1010,7 @@ async function nxSearch(q){
   setStage('fetch');
   const items = await ytSearch(q);
   if(!items){
-    bootNexus('push', '', errHtml('YouTube search failed — Piped API instances unreachable. Edit the PIPEDS list, or type a direct URL.'));
+    bootNexus('push', '', errHtml('YouTube search failed — Piped API unreachable through the proxy transport. Type a direct URL instead.'));
     return;
   }
   bootNexus('push', '', resultsHtml(items.slice(0, 36)));
@@ -902,7 +1036,7 @@ button.go{padding:14px 22px;border-radius:999px;border:0;background:#2f80ed;colo
 .q:hover{background:#16202e}
 .hint{margin-top:26px;opacity:.4;font-size:12px;text-align:center;line-height:1.8}
 </style></head><body>
-<h1>NEXUS</h1><p class="sub">BLOB RUNTIME · EPOXY → LIBCURL → DIRECT</p>
+<h1>NEXUS</h1><p class="sub">BLOB RUNTIME · EPOXY → LIBCURL · NO DIRECT FALLBACK</p>
 <div class="bar"><input id="q" placeholder="Search, or paste a URL / YouTube / Shorts link…"><button class="go" id="g">GO</button></div>
 <div class="quick">
 <div class="q" data-u="https://www.youtube.com/">▶ YouTube</div>
@@ -911,7 +1045,7 @@ button.go{padding:14px 22px;border-radius:999px;border:0;background:#2f80ed;colo
 <div class="q" data-u="https://www.wikipedia.org/">📚 Wikipedia</div>
 <div class="q" data-u="https://news.ycombinator.com/">🟠 Hacker News</div>
 </div>
-<p class="hint">fetch → patch → render runs entirely inside a base64-encoded blob.<br>watch / shorts links open in the native embed player · Esc closes the browser</p>
+<p class="hint">fetch → patch → render runs entirely inside a base64-encoded blob.<br>transport is proxied end-to-end (epoxy → libcurl) — direct requests are disabled.<br>watch / shorts links open in the native embed player · Esc closes the browser</p>
 <script>
 function nav(u){ parent.postMessage({ __nx:1, k:'nav', url:u }, '*'); }
 document.getElementById('g').onclick = function(){ nav(document.getElementById('q').value); };
@@ -971,7 +1105,7 @@ addEventListener('message', async e => {
   } else if(d.k === 'ready'){
     if(nxPendingPush && src){ const p = nxPendingPush; nxPendingPush = null; src.postMessage({ __nxr:1, k:'push', html:p }, '*'); }
   } else if(d.k === 'nav'){
-    if(d.direct) bootDirect(d.url); else nxGo(d.url, true);
+    nxGo(d.url, true);
   } else if(d.k === 'stage'){
     setStage(d.s);
   } else if(d.k === 'title'){
@@ -983,7 +1117,14 @@ addEventListener('message', async e => {
 function openBrowser(){
   nxEl.classList.add('open');
   ensureBlob();
-  if(!nxBooted){ nxBooted = true; nxGo('nexus://home', true); bootTransports(); }
+  bootstrapNX();                                  /* start / continue boot */
+  if(NX.ready){
+    hideBoot();
+    if(nxHist.length === 0) nxGo('nexus://home', true);
+  } else {
+    showBoot();                                   /* shows live log, or fatal buttons if boot died */
+    if(nxHist.length === 0 && NX.kind === 'BOOT') nxGo('nexus://home', true); /* optimistic home push; gate re-runs on nav */
+  }
   document.getElementById('nxUrl').focus();
 }
 function closeBrowser(){ nxEl.classList.remove('open'); }
@@ -994,14 +1135,15 @@ document.getElementById('nxFwd').onclick = () => { if(nxIdx < nxHist.length - 1)
 document.getElementById('nxReload').onclick = () => { const c = nxHist[nxIdx]; if(c) nxGo(c.display, false); };
 document.getElementById('nxHome').onclick = () => nxGo('nexus://home', true);
 document.getElementById('nxUrl').addEventListener('keydown', e => { if(e.key === 'Enter') nxGo(e.target.value, true); });
-document.getElementById('nxBadge').onclick = async () => {
-  const w = prompt('Wisp relay URL (used by epoxy / libcurl):', NX.wisp);
-  if(w && w.trim()){
+document.getElementById('nxBadge').onclick = () => {
+  const w = prompt('Wisp relay URL (epoxy / libcurl tunnel — direct is disabled):', NX.wisp);
+  if(w && w.trim() && w.trim() !== NX.wisp){
     NX.wisp = w.trim();
     try{ localStorage.setItem('nx_wisp', NX.wisp); }catch(e){}
-    try{ NX.epoxy && NX.epoxy.set_websocket && NX.epoxy.set_websocket(NX.wisp); }catch(e){}
-    try{ NX.curl  && NX.curl.set_websocket  && NX.curl.set_websocket(NX.wisp);  }catch(e){}
-    setBadge(NX.kind);
+    NX.bootPromise = null; NX.ready = false; NX.kind = 'BOOT';
+    setBadge('BOOT'); bootLogEl.innerHTML = '';
+    if(nxEl.classList.contains('open')) showBoot();
+    bootstrapNX();
   }
 };
 
@@ -1011,13 +1153,11 @@ document.getElementById('nxBadge').onclick = async () => {
 slots.forEach((s, i) => s.addEventListener('click', () => {
   (i === selected) ? playSelected() : select(i);
 }));
-
 document.querySelectorAll('#catList li').forEach(li => li.addEventListener('click', () => {
   document.querySelector('#catList li.active')?.classList.remove('active');
   li.classList.add('active');
   if(li.dataset.app === 'browser') openBrowser();
 }));
-
 function playSelected(){
   const s = slots[selected];
   if(s.dataset.app === 'browser'){ openBrowser(); return; }
@@ -1030,7 +1170,6 @@ function playSelected(){
 document.querySelectorAll('.hint').forEach(h => h.addEventListener('click', () => {
   if(h.dataset.action === 'play') playSelected();
 }));
-
 document.addEventListener('keydown', e => {
   const tag = (e.target && e.target.tagName || '').toLowerCase();
   if(nxEl.classList.contains('open')){
@@ -1053,10 +1192,13 @@ function tick(){
 }
 tick(); setInterval(tick, 5000);
 
-/* init */
+/* init shelf */
 row.style.transition = 'none';
 select(1, true);
 requestAnimationFrame(() => requestAnimationFrame(() => { row.style.transition = ''; }));
+
+/* auto-bootstrap in the background so transports are warm before you open the browser */
+setTimeout(bootstrapNX, 800);
 </script>
 </body>
 </html>
