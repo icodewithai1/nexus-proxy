@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PS5 Home UI & Browser</title>
+    <title>PS5 UI & Browser</title>
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Note: In a real implementation, you would load Epoxy and Libcurl.js here -->
-    <!-- <script src="path/to/epoxy.js"></script> -->
-    <!-- <script src="path/to/libcurl.js"></script> -->
-
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -36,21 +32,8 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            background-image: url('https://image.tmdb.org/t/p/original/5fc2A9gC6Fj3zX2Qx6y5q4X3e2.jpg'); /* Placeholder for Ellie BG */
-            background-size: cover;
-            background-position: center;
-        }
-
-        /* Dark overlay for background image */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.6) 50%, rgba(11, 15, 25, 0.8) 100%);
-            z-index: 0;
+            /* Dark gradient background to match the PS5 UI vibe */
+            background: radial-gradient(circle at 70% 30%, #1c2536 0%, #0b0f19 80%);
         }
 
         /* Top Bar */
@@ -178,11 +161,18 @@
             transition: transform 0.3s, box-shadow 0.3s;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             background-color: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .game-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .game-card.selected {
+            outline: 2px solid var(--text-color);
+            transform: scale(1.05);
         }
 
         .game-card img {
@@ -195,11 +185,6 @@
 
         .game-card:hover img {
             opacity: 1;
-        }
-
-        .game-card.selected {
-            outline: 2px solid var(--text-color);
-            transform: scale(1.05);
         }
 
         /* Bottom Action Bar */
@@ -272,6 +257,10 @@
             font-size: 14px;
         }
 
+        .browser-header input:focus {
+            border-color: var(--highlight-color);
+        }
+
         .browser-header button {
             background: var(--highlight-color);
             border: none;
@@ -280,6 +269,7 @@
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
+            transition: background 0.2s;
         }
 
         .browser-header button:hover {
@@ -291,7 +281,7 @@
             width: 100%;
             height: 100%;
             border: none;
-            background: white; /* Default web page background */
+            background: #ffffff;
         }
 
         .close-browser {
@@ -299,6 +289,10 @@
             color: #ff4d4d;
             font-size: 20px;
             padding: 0 10px !important;
+        }
+
+        .close-browser:hover {
+            color: #ff1a1a;
         }
     </style>
 </head>
@@ -336,35 +330,39 @@
         <div class="nav-item" id="browser-tab-btn" style="color: #0070d1; margin-left: auto;">BROWSER</div>
     </div>
 
-    <!-- Game Carousel -->
+    <!-- Game Carousel (Using CSS gradients as placeholders for the game art) -->
     <div class="carousel-container">
-        <!-- Placeholder images representing the games in the screenshot -->
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/silent_hill_2.jpg" alt="Silent Hill 2" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=Silent+Hill+2'">
+        <!-- Silent Hill 2 -->
+        <div class="game-card" style="background: linear-gradient(45deg, #1a1a1a, #3a3a3a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">SILENT HILL 2</div>
         </div>
-        <div class="game-card selected">
-            <img src="https://image.tmdb.org/t/p/w500/tlou2.jpg" alt="The Last of Us Part II" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=The+Last+of+Us+Part+II'">
+        <!-- The Last of Us Part II (Selected) -->
+        <div class="game-card selected" style="background: linear-gradient(45deg, #2b1b1b, #4a2a2a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 16px; text-shadow: 1px 1px 3px #000;">THE LAST<br>OF US<br>PART II</div>
         </div>
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/death_stranding.jpg" alt="Death Stranding" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=Death+Stranding'">
+        <!-- Death Stranding -->
+        <div class="game-card" style="background: linear-gradient(45deg, #1b2b1b, #2a4a2a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">DEATH<br>STRANDING</div>
         </div>
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/ff7_remake.jpg" alt="Final Fantasy VII Remake" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=FF7+Remake'">
+        <!-- FF7 Remake -->
+        <div class="game-card" style="background: linear-gradient(45deg, #2b2b1b, #4a4a2a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">FINAL FANTASY<br>VII REMAKE</div>
         </div>
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/ghost_tsushima.jpg" alt="Ghost of Tsushima" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=Ghost+of+Tsushima'">
+        <!-- Ghost of Tsushima -->
+        <div class="game-card" style="background: linear-gradient(45deg, #1b1b2b, #2a2a4a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">GHOST OF<br>TSUSHIMA</div>
         </div>
-        <div class="game-card">
-            <img src="https://via.placeholder.com/200x260/0070d1/ffffff?text=PlayStation+Store" alt="PS Store">
+        <!-- PlayStation Store -->
+        <div class="game-card" style="background: #0070d1;">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">PlayStation<br>Store</div>
         </div>
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/chrono_cross.jpg" alt="Chrono Cross" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=Chrono+Cross'">
+        <!-- Chrono Cross -->
+        <div class="game-card" style="background: linear-gradient(45deg, #2b1b2b, #4a2a4a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">CHRONO<br>CROSS</div>
         </div>
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/shadow_colossus.jpg" alt="Shadow of the Colossus" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=Shadow+of+the+Colossus'">
-        </div>
-        <div class="game-card">
-            <img src="https://image.tmdb.org/t/p/w500/resident_evil.jpg" alt="Resident Evil" onerror="this.src='https://via.placeholder.com/200x260/1a1e26/ffffff?text=Resident+Evil'">
+        <!-- Shadow of the Colossus -->
+        <div class="game-card" style="background: linear-gradient(45deg, #1b2b2b, #2a4a4a);">
+            <div style="position: absolute; bottom: 10px; left: 10px; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 3px #000;">SHADOW OF THE<br>COLOSSUS</div>
         </div>
     </div>
 
@@ -380,7 +378,7 @@
     <div id="browser-overlay">
         <div class="browser-header">
             <button class="close-browser" onclick="closeBrowser()"><i class="fas fa-times"></i></button>
-            <input type="text" id="url-input" placeholder="Enter URL (e.g., https://www.youtube.com)" onkeypress="handleUrlEnter(event)">
+            <input type="text" id="url-input" placeholder="Enter URL (e.g., https://www.wikipedia.org)" onkeypress="handleUrlEnter(event)">
             <button onclick="navigate()">Go</button>
         </div>
         <iframe id="render-frame" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
@@ -393,132 +391,41 @@
         const renderFrame = document.getElementById('render-frame');
         const urlInput = document.getElementById('url-input');
 
+        // Open Browser
         browserTabBtn.addEventListener('click', () => {
             browserOverlay.style.display = 'flex';
             urlInput.focus();
         });
 
+        // Close Browser
         function closeBrowser() {
             browserOverlay.style.display = 'none';
-            renderFrame.src = 'about:blank'; // Clear frame to stop background processes
+            // Clear the iframe source to stop any background processes/videos
+            renderFrame.src = 'about:blank'; 
         }
 
+        // Handle Enter key in the URL bar
         function handleUrlEnter(event) {
             if (event.key === 'Enter') {
                 navigate();
             }
         }
 
-        // --- Browser Logic (Epoxy + Libcurl.js + Blob Rendering) ---
-
-        // Mock Epoxy implementation
-        async function fetchViaEpoxy(url) {
-            console.log(`[Epoxy] Attempting to fetch: ${url}`);
-            // In a real scenario with Epoxy loaded, it would look something like:
-            // return await epoxy.fetch(url).then(res => res.text());
-            
-            // For this demo, we simulate a successful fetch by throwing an error 
-            // to test the fallback, unless it's a simple same-origin request.
-            if (url.startsWith(window.location.origin)) {
-                return await fetch(url).then(res => res.text());
-            }
-            throw new Error("Epoxy failed or not loaded. Falling back to Libcurl.");
-        }
-
-        // Mock Libcurl.js fallback implementation
-        async function fetchViaLibCurl(url) {
-            console.log(`[Libcurl.js] Fallback fetching: ${url}`);
-            // In a real scenario with Libcurl.js WASM loaded:
-            // await libcurl.init();
-            // const response = await libcurl.fetch(url);
-            // return await response.text();
-            
-            // For this demo, we will just throw an error because we don't actually have a proxy backend running.
-            throw new Error("Libcurl.js fallback failed. A backend proxy server is required to bypass CORS.");
-        }
-
-        // Function to patch HTML before rendering in the blob
-        function patchHtml(html, originalUrl) {
-            // Ensure the URL has a protocol for the base tag
-            let baseUrl = originalUrl;
-            if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-                baseUrl = 'https://' + baseUrl;
-            }
-            
-            // Inject a <base> tag to fix relative paths (CSS, JS, Images)
-            // This is crucial for the Blob URL to correctly resolve resources.
-            const baseTag = `<base href="${baseUrl}">`;
-            
-            // If there's a <head>, inject right after it. Otherwise, prepend.
-            if (html.includes('<head>')) {
-                html = html.replace('<head>', `<head>\n${baseTag}`);
-            } else {
-                html = baseTag + html;
-            }
-
-            // Note: Real proxies do extensive URL rewriting here, including 
-            // intercepting window.fetch, XMLHttpRequest, and WebSockets 
-            // to route them through the proxy backend.
-            
-            return html;
-        }
-
-        async function navigate() {
+        // Navigate to the URL
+        function navigate() {
             let url = urlInput.value.trim();
             if (!url) return;
 
-            // Basic URL formatting
+            // Simple URL formatting: add https:// if missing
             if (!url.startsWith('http://') && !url.startsWith('https://')) {
                 url = 'https://' + url;
                 urlInput.value = url;
             }
 
-            renderFrame.src = 'about:blank'; // Clear frame
-            document.body.style.cursor = 'wait';
-
-            try {
-                let htmlContent;
-                
-                // 1. Try Epoxy
-                try {
-                    htmlContent = await fetchViaEpoxy(url);
-                } catch (epoxyError) {
-                    console.warn(epoxyError.message);
-                    // 2. Fallback to Libcurl.js
-                    htmlContent = await fetchViaLibCurl(url);
-                }
-
-                // 3. Patch the HTML
-                const patchedHtml = patchHtml(htmlContent, url);
-
-                // 4. Create a Blob and render it
-                const blob = new Blob([patchedHtml], { type: 'text/html' });
-                const blobUrl = URL.createObjectURL(blob);
-                
-                console.log(`[Renderer] Rendering blob URL: ${blobUrl}`);
-                renderFrame.src = blobUrl;
-
-            } catch (error) {
-                console.error("Navigation failed:", error);
-                // Render an error page inside the iframe
-                const errorHtml = `
-                    <html>
-                        <body style="background:#1a1e26; color:#fff; font-family:sans-serif; padding:40px; text-align:center;">
-                            <h2 style="color:#ff4d4d;">Proxy Error</h2>
-                            <p>Failed to load: <strong>${url}</strong></p>
-                            <p style="color:#aaa; max-width:600px; margin: 20px auto; line-height: 1.6;">
-                                Note: Pure frontend browsers cannot fetch cross-origin websites (like YouTube) without a dedicated backend proxy server (e.g., Wisp, Ultraviolet, or a custom Node.js Epoxy server). 
-                                <br><br>
-                                The browser attempted to use Epoxy, then fell back to Libcurl.js, but both require a running proxy backend to bypass CORS and CSP headers.
-                            </p>
-                        </body>
-                    </html>
-                `;
-                const blob = new Blob([errorHtml], { type: 'text/html' });
-                renderFrame.src = URL.createObjectURL(blob);
-            } finally {
-                document.body.style.cursor = 'default';
-            }
+            console.log(`Navigating to: ${url}`);
+            
+            // Set the iframe source
+            renderFrame.src = url;
         }
     </script>
 </body>
