@@ -1,629 +1,988 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nexus</title>
+<meta name="description" content="Nexus — games and apps.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b2b2b'/%3E%3Cpath d='M17 47V17h8l14 17.5V17h8v30h-8L25 29.5V47z' fill='%23e8e8e8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { height:100%; overflow:hidden; }
+  /* ================= base ================= */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
   body {
-    background:#0a0a0f;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    position:relative;
+    font-family:"Inter","Segoe UI",Roboto,system-ui,sans-serif;
+    background:#1a1a1a;
+    color:#d4d4d4;
+    font-size:14px;
+    display:flex;
+    overflow:hidden;
   }
-  .starfield { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
-  .star {
-    position:absolute; border-radius:50%; background:#fff;
-    animation:twinkle var(--dur) ease-in-out infinite;
+  a { color:#8ab4d8; text-decoration:none; }
+  a:hover { color:#b6d4ea; }
+  button { font-family:inherit; cursor:pointer; border:0; color:inherit; background:none; }
+  input, select {
+    font-family:inherit; color:#e0e0e0;
+    background:#242424; border:1px solid #3a3a3a; border-radius:6px;
+    padding:8px 10px; outline:none;
   }
-  @keyframes twinkle {
-    0%,100% { opacity:0; transform:scale(.7); }
-    50% { opacity:var(--max); transform:scale(1); }
-  }
+  input:focus, select:focus { border-color:#6c9cc4; }
+  ::placeholder { color:#707070; }
+  .mono { font-family:"JetBrains Mono",ui-monospace,Consolas,monospace; }
 
-  /* Top nav */
-  .top-nav {
-    position:fixed; top:16px; left:50%; transform:translateX(-50%);
-    z-index:100;
-    background:rgba(30,30,38,.85);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    border-radius:16px; padding:8px 16px;
+  /* ================= sidebar ================= */
+  .sidebar {
+    width:220px; min-width:220px; height:100vh;
+    background:#202020;
+    border-right:1px solid #2e2e2e;
+    display:flex; flex-direction:column;
+  }
+  .brand {
+    display:flex; align-items:center; gap:11px;
+    padding:18px 18px 16px;
+    border-bottom:1px solid #2e2e2e;
+  }
+  .brand svg { width:30px; height:30px; }
+  .brand .name { font-size:17px; font-weight:700; letter-spacing:2.5px; color:#ececec; }
+  .nav { padding:12px 0; flex:1; }
+  .nav button {
     display:flex; align-items:center; gap:12px;
-    border:1px solid rgba(255,255,255,.06);
-    box-shadow:0 4px 24px rgba(0,0,0,.4);
-    max-width:90vw;
+    width:100%; text-align:left;
+    padding:11px 18px;
+    color:#a8a8a8; font-size:14px; font-weight:500;
+    border-left:3px solid transparent;
   }
-  .nav-left, .nav-right { display:flex; align-items:center; gap:4px; }
-  .nav-left { margin-right:auto; gap:8px; }
-  .nav-icon {
-    width:36px; height:36px; border-radius:10px;
-    display:flex; align-items:center; justify-content:center;
-    background:transparent; border:none; cursor:pointer; color:#e0e0e0;
-    transition:background .15s; flex-shrink:0;
+  .nav button:hover { background:#262626; color:#dcdcdc; }
+  .nav button.active {
+    background:#2a2a2a; color:#fff;
+    border-left-color:#6c9cc4;
   }
-  .nav-icon:hover { background:rgba(255,255,255,.1); }
-  .nav-icon svg { width:20px; height:20px; fill:currentColor; }
-  .frog-icon { color:#7dd3fc; }
+  .nav .ico { width:18px; text-align:center; opacity:.9; }
+  .side-foot {
+    padding:14px 18px; border-top:1px solid #2e2e2e;
+    color:#6e6e6e; font-size:11px; line-height:1.7;
+  }
 
-  /* Main */
+  /* ================= main ================= */
   .main {
-    position:relative; z-index:10;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:40px; width:100%; max-width:640px; padding:24px;
-    animation:fadeIn .6s ease-out;
+    flex:1; height:100vh; display:flex; flex-direction:column; min-width:0;
   }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
-  .title {
-    font-size:clamp(26px,6vw,40px); font-weight:700; letter-spacing:-.02em;
-    text-align:center; user-select:none; line-height:1.15;
-    text-shadow:0 2px 20px rgba(167,139,250,.3);
+  .topbar {
+    height:56px; min-height:56px;
+    display:flex; align-items:center; gap:14px;
+    padding:0 26px;
+    border-bottom:1px solid #2e2e2e;
+    background:#1d1d1d;
   }
-  .title span {
-    background:linear-gradient(135deg,#a78bfa,#7dd3fc);
-    -webkit-background-clip:text; background-clip:text;
-    -webkit-text-fill-color:transparent; color:transparent;
+  .topbar h1 { font-size:16px; font-weight:600; color:#ececec; }
+  .topbar .crumb { color:#767676; font-size:13px; }
+  .content {
+    flex:1; overflow-y:auto; padding:26px;
   }
+  .view { display:none; }
+  .view.active { display:block; }
 
-  /* Apps */
-  .apps {
+  .sec-title { font-size:20px; font-weight:600; color:#ececec; margin-bottom:4px; }
+  .sec-note { color:#8a8a8a; font-size:13px; margin-bottom:20px; }
+
+  /* ================= cards ================= */
+  .cards { display:flex; flex-wrap:wrap; gap:18px; }
+  .card {
+    width:300px;
+    background:#222; border:1px solid #303030; border-radius:10px;
+    overflow:hidden;
+    transition:border-color .15s, background .15s;
+  }
+  .card:hover { border-color:#484848; background:#252525; }
+  .card .thumb {
+    width:100%; aspect-ratio:16/9; object-fit:cover; display:block;
+    background:#161616;
+  }
+  .card .thumb-icon {
+    width:100%; aspect-ratio:16/9;
+    background:#161616;
     display:flex; align-items:center; justify-content:center;
-    gap:14px; flex-wrap:wrap;
   }
-  .app {
-    width:52px; height:52px; border-radius:14px;
+  .card .thumb-icon svg { width:74px; height:74px; }
+  .card .body { padding:14px 16px 16px; }
+  .card .body h3 { font-size:15px; font-weight:600; color:#ececec; }
+  .card .body p { color:#8a8a8a; font-size:12.5px; margin:6px 0 12px; line-height:1.55; min-height:38px; }
+  .btn {
+    display:inline-flex; align-items:center; gap:8px;
+    background:#2f2f2f; color:#dcdcdc;
+    border:1px solid #3d3d3d; border-radius:6px;
+    padding:8px 16px; font-size:13px; font-weight:500;
+  }
+  .btn:hover { background:#383838; color:#fff; }
+  .btn.primary { background:#46739c; border-color:#46739c; color:#fff; }
+  .btn.primary:hover { background:#5184b1; }
+  .btn.small { padding:6px 11px; font-size:12px; }
+
+  /* home tiles */
+  .tiles { display:flex; gap:18px; flex-wrap:wrap; margin-top:22px; }
+  .tile {
+    width:240px; padding:20px;
+    background:#222; border:1px solid #303030; border-radius:10px;
+    cursor:pointer;
+  }
+  .tile:hover { border-color:#484848; background:#252525; }
+  .tile .t-ico {
+    width:38px; height:38px; border-radius:8px; background:#2c2c2c;
     display:flex; align-items:center; justify-content:center;
-    cursor:pointer; border:none; outline:none; padding:0;
-    transition:transform .18s, box-shadow .18s;
-    box-shadow:0 4px 14px rgba(0,0,0,.35);
-    flex-shrink:0;
+    font-size:17px; margin-bottom:12px;
   }
-  .app:hover { transform:translateY(-3px) scale(1.05); }
-  .app:active { transform:translateY(0) scale(.97); }
-  .app svg { width:26px; height:26px; fill:#fff; }
-  .a-ig { background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
-  .a-mv { background:linear-gradient(135deg,#4a1d8e,#2d0a5e); }
-  .a-tt { background:#000; border:1px solid #333; }
-  .a-tw { background:#9146ff; }
-  .a-yt { background:#ff0000; }
-  .a-dc { background:#5865f2; }
+  .tile h3 { font-size:14px; color:#ececec; font-weight:600; }
+  .tile p { color:#8a8a8a; font-size:12px; margin-top:5px; line-height:1.5; }
 
-  /* Search */
-  .search-wrap { width:100%; max-width:520px; }
-  .search {
-    width:100%;
-    background:rgba(30,30,38,.85);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:28px; padding:16px 24px;
-    color:#fff; font-size:16px; outline:none;
-    transition:border-color .25s, box-shadow .25s;
-    box-shadow:0 4px 24px rgba(0,0,0,.3);
-    font-family:inherit;
+  /* ================= browser ================= */
+  #view-browser { height:100%; }
+  .browser-wrap {
+    display:flex; flex-direction:column;
+    height:calc(100vh - 56px - 52px); /* minus topbar + content padding */
+    margin:-26px; /* bleed into content padding */
   }
-  .search::placeholder { color:#888; }
-  .search:focus {
-    border-color:#a78bfa;
-    box-shadow:0 0 0 3px rgba(167,139,250,.15), 0 4px 24px rgba(0,0,0,.3);
-  }
-
-  /* Status */
-  .status {
-    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-    z-index:100;
-    display:flex; align-items:center; gap:8px;
-    padding:8px 18px;
-    background:rgba(30,30,38,.85);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    border-radius:20px; border:1px solid rgba(255,255,255,.06);
-    font-size:12px; color:#aaa;
-    box-shadow:0 4px 24px rgba(0,0,0,.3);
-    max-width:90vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:#666; }
-  .dot.ready { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,.5); }
-  .dot.loading { background:#facc15; animation:pulse 1s ease-in-out infinite; }
-  .dot.error { background:#f87171; box-shadow:0 0 8px rgba(248,113,113,.5); }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
-
-  /* Browser view */
-  .browser { position:fixed; inset:0; z-index:200; background:#0a0a0f; display:none; flex-direction:column; }
-  .browser.on { display:flex; }
-  .bbar {
-    display:flex; align-items:center; gap:8px;
+  .br-toolbar {
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
     padding:10px 14px;
-    background:#1a1a24; border-bottom:1px solid rgba(255,255,255,.06);
-    flex-shrink:0;
+    background:#1f1f1f; border-bottom:1px solid #2e2e2e;
   }
-  .bbar input {
-    flex:1; min-width:0;
-    background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:20px; padding:10px 16px;
-    color:#fff; font-size:14px; outline:none; font-family:inherit;
+  .br-toolbar .nav-btn {
+    width:32px; height:32px; border-radius:6px;
+    background:#2a2a2a; border:1px solid #383838; color:#c8c8c8;
+    font-size:14px; display:flex; align-items:center; justify-content:center;
   }
-  .bbar input:focus { border-color:#a78bfa; }
-  .bbtn {
-    width:36px; height:36px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    background:transparent; border:none; color:#ccc; cursor:pointer;
-    transition:background .15s; flex-shrink:0;
+  .br-toolbar .nav-btn:hover { background:#333; color:#fff; }
+  .br-toolbar .nav-btn:disabled { opacity:.4; cursor:default; }
+  .br-url {
+    flex:1; min-width:220px;
+    font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;
+    font-size:12.5px;
+    padding:8px 12px;
+    background:#161616; border:1px solid #343434; border-radius:6px;
+    color:#d8d8d8;
   }
-  .bbtn:hover { background:rgba(255,255,255,.1); }
-  .bbtn svg { width:18px; height:18px; fill:currentColor; }
-  .bframe { flex:1; width:100%; border:none; background:#fff; }
+  .br-pill {
+    display:flex; align-items:center; gap:7px;
+    font-size:11.5px; color:#a5a5a5;
+    background:#242424; border:1px solid #363636; border-radius:20px;
+    padding:6px 12px; white-space:nowrap;
+  }
+  .br-pill .dot { width:7px; height:7px; border-radius:50%; background:#666; }
+  .br-pill .dot.ok { background:#7fb069; }
+  .br-pill .dot.busy { background:#c9a227; }
+  .br-pill .dot.err { background:#b2564d; }
+  .br-bar2 {
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:8px 14px;
+    background:#1c1c1c; border-bottom:1px solid #2e2e2e;
+  }
+  .br-bar2 label { font-size:11px; color:#8a8a8a; display:flex; align-items:center; gap:6px; }
+  .br-bar2 input, .br-bar2 select { padding:5px 8px; font-size:11.5px; }
+  .br-bar2 .wisp-input { width:230px; font-family:"JetBrains Mono",monospace; font-size:11px; }
+  .br-bar2 .spacer { flex:1; }
+  .br-main { flex:1; display:flex; min-height:0; }
+  .br-stage { flex:1; position:relative; min-width:0; background:#141414; }
+  .br-stage iframe {
+    width:100%; height:100%; border:0; background:#fff;
+    display:block;
+  }
+  .br-loading {
+    position:absolute; inset:0;
+    background:rgba(20,20,20,.75);
+    display:none; align-items:center; justify-content:center;
+    color:#bbb; font-size:13px; letter-spacing:.5px;
+  }
+  .br-loading.show { display:flex; }
+  .br-log {
+    width:320px; min-width:320px;
+    background:#181818; border-left:1px solid #2e2e2e;
+    display:flex; flex-direction:column;
+  }
+  .br-log .log-head {
+    padding:10px 12px; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    color:#8a8a8a; border-bottom:1px solid #2e2e2e;
+    display:flex; align-items:center; gap:8px;
+  }
+  .br-log .log-body {
+    flex:1; overflow-y:auto; padding:8px 12px;
+    font-family:"JetBrains Mono",monospace; font-size:10.5px; line-height:1.75;
+    color:#9c9c9c; white-space:pre-wrap; word-break:break-word;
+  }
+  .log-line.ok { color:#8db87a; }
+  .log-line.warn { color:#c9a227; }
+  .log-line.err { color:#c76b61; }
+  .log-line.info { color:#8ab4d8; }
 
-  /* Loading overlay */
-  .overlay {
-    position:fixed; inset:0; z-index:300;
-    background:rgba(10,10,15,.92);
-    display:none; flex-direction:column; align-items:center; justify-content:center;
-    gap:20px;
+  @media (max-width:1150px) {
+    .br-log { display:none; }
   }
-  .overlay.on { display:flex; }
-  .spinner {
-    width:44px; height:44px;
-    border:3px solid rgba(167,139,250,.15);
-    border-top-color:#a78bfa; border-radius:50%;
-    animation:spin .8s linear infinite;
-  }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  .overlay p { color:#aaa; font-size:14px; max-width:80vw; text-align:center; word-break:break-word; }
-
-  .hidden { display:none !important; }
-
-  @media (max-width:480px) {
-    .top-nav { top:10px; padding:6px 10px; gap:6px; }
-    .nav-icon { width:32px; height:32px; }
-    .nav-icon svg { width:18px; height:18px; }
-    .app { width:46px; height:46px; border-radius:12px; }
-    .app svg { width:22px; height:22px; }
-    .main { gap:30px; padding:16px; }
+  @media (max-width:760px) {
+    .sidebar { width:62px; min-width:62px; }
+    .brand .name, .nav button span.lbl, .side-foot { display:none; }
+    .nav button { justify-content:center; padding:13px 0; }
+    .card { width:100%; }
   }
 </style>
 </head>
 <body>
 
-<div class="starfield" id="starfield"></div>
-
-<nav class="top-nav">
-  <div class="nav-left">
-    <button class="nav-icon frog-icon" id="navHome" title="Home">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93z"/></svg>
-    </button>
+<!-- ================= SIDEBAR ================= -->
+<aside class="sidebar">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="12" fill="#2b2b2b"/>
+      <path d="M17 47V17h8l14 17.5V17h8v30h-8L25 29.5V47z" fill="#e8e8e8"/>
+    </svg>
+    <span class="name">NEXUS</span>
   </div>
-  <div class="nav-right">
-    <button class="nav-icon" id="navDiscord" title="Discord">
-      <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.07.07 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.08.08 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.08.08 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.08.08 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.08.08 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.08.08 0 0 1-.008-.128c.12-.098.246-.198.372-.292a.07.07 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.07.07 0 0 1 .078.01c.12.098.246.198.373.292a.08.08 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.08.08 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.08.08 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.08.08 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.06.06 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-    </button>
-    <button class="nav-icon" title="Apps">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
-    </button>
-    <button class="nav-icon" title="Extensions">
-      <svg viewBox="0 0 24 24"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20a2 2 0 0 0 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg>
-    </button>
-    <button class="nav-icon" title="Add">
-      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-    </button>
+  <nav class="nav" id="mainNav">
+    <button data-view="home" class="active"><span class="ico">&#9633;</span><span class="lbl">Home</span></button>
+    <button data-view="games"><span class="ico">&#9654;</span><span class="lbl">Games</span></button>
+    <button data-view="apps"><span class="ico">&#9638;</span><span class="lbl">Apps</span></button>
+    <button data-view="browser"><span class="ico">&#8853;</span><span class="lbl">Browser</span></button>
+  </nav>
+  <div class="side-foot">
+    Nexus v1.0<br>
+    simple launcher
   </div>
-</nav>
+</aside>
 
-<main class="main" id="main">
-  <h1 class="title">frogie's <span>arcade</span> v4</h1>
-
-  <div class="apps" id="apps">
-    <button class="app a-ig" data-url="https://www.instagram.com" title="Instagram">
-      <svg viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.17 8.8 2.16 12 2.16zm0-2.16C8.74 0 8.33.01 7.05.07 2.7.27.27 2.7.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98 1.28.06 1.69.07 4.95.07s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95C23.73 2.7 21.3.27 16.95.07 15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>
-    </button>
-    <button class="app a-mv" data-url="https://www.youtube.com" title="Movies">
-      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    </button>
-    <button class="app a-tt" data-url="https://www.tiktok.com" title="TikTok">
-      <svg viewBox="0 0 24 24"><path d="M12.53.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-    </button>
-    <button class="app a-tw" data-url="https://www.twitch.tv" title="Twitch">
-      <svg viewBox="0 0 24 24"><path d="M11.57 4.71h1.72v5.14h-1.72zm4.72 0h1.71v5.14h-1.71zM6 0 1.71 4.29v15.43h5.15V24l4.28-4.29h3.43L22.29 12V0zm14.57 11.14-3.43 3.43h-3.43l-3 3v-3H6.86V1.71h13.71z"/></svg>
-    </button>
-    <button class="app a-yt" data-url="https://www.youtube.com" title="YouTube">
-      <svg viewBox="0 0 24 24"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.2C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>
-    </button>
-    <button class="app a-dc" data-url="https://discord.com" title="Discord">
-      <svg viewBox="0 0 24 24"><path d="M20.32 4.37a19.8 19.8 0 0 0-4.89-1.51.07.07 0 0 0-.07.03c-.21.38-.45.86-.61 1.25a18.27 18.27 0 0 0-5.49 0c-.16-.39-.4-.87-.61-1.25a.07.07 0 0 0-.08-.04 19.74 19.74 0 0 0-4.88 1.52.06.06 0 0 0-.03.02C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.11 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13c.13-.1.25-.2.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01c.12.1.25.2.37.29a.08.08 0 0 1-.01.13 12.3 12.3 0 0 1-1.87.89.08.08 0 0 0-.04.11c.36.7.77 1.36 1.22 1.99a.08.08 0 0 0 .09.03 19.84 19.84 0 0 0 6-3.03.08.08 0 0 0 .03-.05c.5-5.18-.84-9.68-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.34-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.08-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.34-.95 2.42-2.16 2.42z"/></svg>
-    </button>
+<!-- ================= MAIN ================= -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Home</h1>
+    <span class="crumb" id="pageCrumb">welcome</span>
   </div>
 
-  <div class="search-wrap">
-    <input type="text" class="search" id="search" placeholder="search anything..." autocomplete="off" spellcheck="false" />
-  </div>
-</main>
+  <div class="content" id="content">
 
-<div class="status" id="status">
-  <span class="dot loading" id="dot"></span>
-  <span id="statusText">booting...</span>
+    <!-- HOME -->
+    <section class="view active" id="view-home">
+      <div class="sec-title">Welcome to Nexus</div>
+      <div class="sec-note">Pick something below.</div>
+      <div class="tiles">
+        <div class="tile" data-view="games">
+          <div class="t-ico">&#9654;</div>
+          <h3>Games</h3>
+          <p>1 game installed</p>
+        </div>
+        <div class="tile" data-view="apps">
+          <div class="t-ico">&#9638;</div>
+          <h3>Apps</h3>
+          <p>1 app installed</p>
+        </div>
+        <div class="tile" data-view="browser">
+          <div class="t-ico">&#8853;</div>
+          <h3>Browser</h3>
+          <p>Fetch sites over epoxy / libcurl</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAMES -->
+    <section class="view" id="view-games">
+      <div class="sec-title">Games</div>
+      <div class="sec-note">Click a game to play it in a new tab.</div>
+      <div class="cards">
+        <div class="card">
+          <img class="thumb" id="lethalApeIcon" alt="Lethal Ape" src="data:image/jpeg;base64,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">
+          <div class="body">
+            <h3>Lethal Ape</h3>
+            <p>Party co-op chaos. Watch out for the apes.</p>
+            <a class="btn primary" href="https://gn-math.dev/?id=793" target="_blank" rel="noopener">&#9654;&nbsp; Play</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPS -->
+    <section class="view" id="view-apps">
+      <div class="sec-title">Apps</div>
+      <div class="sec-note">Utilities installed on Nexus.</div>
+      <div class="cards">
+        <div class="card">
+          <div class="thumb-icon">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <rect width="64" height="64" rx="12" fill="#2b2b2b"/>
+              <circle cx="32" cy="32" r="16" fill="none" stroke="#e8e8e8" stroke-width="3.5"/>
+              <ellipse cx="32" cy="32" rx="7.5" ry="16" fill="none" stroke="#e8e8e8" stroke-width="2.6"/>
+              <line x1="16" y1="32" x2="48" y2="32" stroke="#e8e8e8" stroke-width="2.6"/>
+              <line x1="18.5" y1="23" x2="45.5" y2="23" stroke="#e8e8e8" stroke-width="2.2"/>
+              <line x1="18.5" y1="41" x2="45.5" y2="41" stroke="#e8e8e8" stroke-width="2.2"/>
+            </svg>
+          </div>
+          <div class="body">
+            <h3>Nexus Browser</h3>
+            <p>Fetch browser with HTML/JS/CSS patching. Tunnels through epoxy-tls over Wisp, with libcurl.js fallback.</p>
+            <button class="btn primary" data-view="browser">Open</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BROWSER -->
+    <section class="view" id="view-browser">
+      <div class="browser-wrap">
+        <div class="br-toolbar">
+          <button class="nav-btn" id="brBack" title="back" disabled>&#8592;</button>
+          <button class="nav-btn" id="brFwd" title="forward" disabled>&#8594;</button>
+          <button class="nav-btn" id="brReload" title="reload">&#8635;</button>
+          <input class="br-url" id="brUrl" type="text" spellcheck="false"
+                 placeholder="https://example.com" aria-label="url">
+          <button class="btn primary small" id="brGo">Go</button>
+          <div class="br-pill"><span class="dot" id="trDot"></span><span id="trName">transport: idle</span></div>
+        </div>
+        <div class="br-bar2">
+          <label>transport
+            <select id="trMode">
+              <option value="auto">auto (epoxy &rarr; libcurl &rarr; direct)</option>
+              <option value="epoxy">epoxy only</option>
+              <option value="libcurl">libcurl only</option>
+              <option value="direct">direct only</option>
+            </select>
+          </label>
+          <label>wisp
+            <select id="wispPreset">
+              <option value="wss://wisp.mercurywork.shop/">Mercury Workshop demo</option>
+              <option value="custom">custom (Anura / self-hosted)</option>
+            </select>
+          </label>
+          <input class="wisp-input" id="wispUrl" type="text" spellcheck="false"
+                 value="wss://wisp.mercurywork.shop/" aria-label="wisp server url">
+          <div class="spacer"></div>
+          <button class="btn small" data-test="youtube">test youtube</button>
+          <button class="btn small" data-test="shorts">test shorts</button>
+          <button class="btn small" id="brRunTests">run all tests</button>
+        </div>
+        <div class="br-main">
+          <div class="br-stage">
+            <iframe id="brFrame" title="Nexus Browser"
+                    sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+            <div class="br-loading" id="brLoading">loading&hellip;</div>
+          </div>
+          <div class="br-log">
+            <div class="log-head">log <button class="btn small" id="logClear" style="margin-left:auto">clear</button></div>
+            <div class="log-body" id="logBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
 </div>
 
-<div class="browser" id="browser">
-  <div class="bbar">
-    <button class="bbtn" id="bBack" title="Back">
-      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-    </button>
-    <button class="bbtn" id="bRefresh" title="Refresh">
-      <svg viewBox="0 0 24 24"><path d="M17.65 6.35A8 8 0 1 0 19.73 14h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-    </button>
-    <input type="text" id="bUrl" placeholder="Enter URL..." autocomplete="off" spellcheck="false" />
-    <button class="bbtn" id="bGo" title="Go">
-      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    </button>
-  </div>
-  <iframe class="bframe" id="bFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-popups-to-escape-sandbox"></iframe>
-</div>
+<script>
+/* ============================================================
+   Nexus Browser engine
+   transports: epoxy-tls (wasm, over wisp) -> libcurl.js (wasm)
+   -> direct fetch (CORS-limited fallback)
+   rendering: fetch page -> patch html/css/js -> run in iframe
+   ============================================================ */
 
-<div class="overlay" id="overlay">
-  <div class="spinner"></div>
-  <p id="overlayText">Connecting to relay...</p>
-</div>
+"use strict";
 
-<!-- Import map: tells the browser where to find the ESM modules -->
-<script type="importmap">
-{
-  "imports": {
-    "@mercuryworkshop/epoxy-transport": "https://unpkg.com/@mercuryworkshop/epoxy-transport@3.0.5/dist/index.mjs",
-    "@mercuryworkshop/libcurl-transport": "https://unpkg.com/@mercuryworkshop/libcurl-transport@2.0.1/dist/index.mjs"
-  }
-}
-</script>
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-<script type="module">
-// ============================================================
-//  Nexus — Wisp proxy frontend
-//  Transport: Epoxy (primary) -> libcurl.js (fallback)
-// ============================================================
-
-const CONFIG = {
-  fallbackRelays: [
-    "wss://wisp.mercurywork.shop/",
-    "wss://glseries.net/wisp/",
-    "wss://nebulaservices.org/wisp/",
-    "wss://nebulaproxy.io/wisp/"
-  ],
-  relaySources: [
-    "https://raw.githubusercontent.com/MercuryWorkshop/wisp-protocol/main/servers.json"
-  ],
-  timeout: 8000
+/* ---------------- view routing ---------------- */
+const TITLES = {
+  home: ["Home", "welcome"],
+  games: ["Games", "your library"],
+  apps: ["Apps", "installed apps"],
+  browser: ["Browser", "nexus fetch browser"]
 };
+function showView(name) {
+  $$(".view").forEach(v => v.classList.remove("active"));
+  $("#view-" + name).classList.add("active");
+  $$("#mainNav button").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  $("#pageTitle").textContent = TITLES[name][0];
+  $("#pageCrumb").textContent = TITLES[name][1];
+}
+$$("#mainNav button").forEach(b => b.addEventListener("click", () => showView(b.dataset.view)));
+$$(".tile[data-view]").forEach(t => t.addEventListener("click", () => showView(t.dataset.view)));
+$$("button[data-view]").forEach(b => {
+  if (!b.closest("#mainNav")) b.addEventListener("click", () => showView(b.dataset.view));
+});
 
+/* ---------------- logging ---------------- */
+const logBody = $("#logBody");
+function log(msg, cls) {
+  const t = new Date().toTimeString().slice(0, 8);
+  const line = document.createElement("div");
+  line.className = "log-line" + (cls ? " " + cls : "");
+  line.textContent = "[" + t + "] " + msg;
+  logBody.appendChild(line);
+  while (logBody.childNodes.length > 200) logBody.removeChild(logBody.firstChild);
+  logBody.scrollTop = logBody.scrollHeight;
+}
+$("#logClear").addEventListener("click", () => { logBody.innerHTML = ""; });
+
+/* ---------------- transport state ---------------- */
 const state = {
-  epoxy: null,
-  libcurl: null,
-  relay: null,
-  transport: null,   // "epoxy" | "libcurl"
-  ready: false,
+  mode: "auto",
+  wisp: "wss://wisp.mercurywork.shop/",
+  engines: {},          // lazily created: {epoxy, libcurl, direct}
+  active: null,         // engine in use
   history: [],
   hIndex: -1
 };
 
-const $ = (id) => document.getElementById(id);
-const dom = {
-  starfield: $("starfield"),
-  main: $("main"),
-  apps: $("apps"),
-  search: $("search"),
-  status: $("status"),
-  dot: $("dot"),
-  statusText: $("statusText"),
-  browser: $("browser"),
-  bFrame: $("bFrame"),
-  bUrl: $("bUrl"),
-  bBack: $("bBack"),
-  bRefresh: $("bRefresh"),
-  bGo: $("bGo"),
-  overlay: $("overlay"),
-  overlayText: $("overlayText"),
-  navHome: $("navHome"),
-  navDiscord: $("navDiscord")
-};
-
-// ---------- Stars ----------
-(function stars() {
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < 120; i++) {
-    const s = document.createElement("div");
-    s.className = "star";
-    const sz = Math.random() * 2.4 + 0.4;
-    s.style.width = sz + "px";
-    s.style.height = sz + "px";
-    s.style.left = Math.random() * 100 + "%";
-    s.style.top = Math.random() * 100 + "%";
-    s.style.setProperty("--dur", (2 + Math.random() * 4) + "s");
-    s.style.setProperty("--max", (0.3 + Math.random() * 0.7).toString());
-    s.style.animationDelay = (Math.random() * 5) + "s";
-    frag.appendChild(s);
-  }
-  dom.starfield.appendChild(frag);
-})();
-
-// ---------- Status helpers ----------
-function setStatus(kind, text) {
-  dom.dot.className = "dot " + kind;
-  dom.statusText.textContent = text;
+function setTransportUI(name, status) {
+  const dot = $("#trDot");
+  $("#trName").textContent = "transport: " + name + (status ? " · " + status : "");
+  dot.className = "dot" + (status === "err" ? " err" : status === "busy" ? " busy" : " ok");
 }
-function showOverlay(text) {
-  dom.overlayText.textContent = text;
-  dom.overlay.classList.add("on");
-}
-function hideOverlay() { dom.overlay.classList.remove("on"); }
 
-// ---------- Import libraries (with dynamic fallback) ----------
-async function loadEpoxy() {
+function flattenHeaders(h) {
+  const out = {};
+  if (!h) return out;
   try {
-    const mod = await import("@mercuryworkshop/epoxy-transport");
-    return mod.EpoxyClient || mod.default;
-  } catch (e) {
-    console.warn("[Nexus] epoxy import failed:", e);
-    return null;
-  }
-}
-async function loadLibcurl() {
-  try {
-    const mod = await import("@mercuryworkshop/libcurl-transport");
-    return mod.LibcurlClient || mod.default;
-  } catch (e) {
-    console.warn("[Nexus] libcurl import failed:", e);
-    return null;
-  }
+    if (typeof h.forEach === "function" && typeof h.get === "function") {
+      h.forEach((v, k) => { out[k.toLowerCase()] = v; });
+    } else if (typeof h.entries === "function") {
+      for (const [k, v] of h.entries()) out[String(k).toLowerCase()] = v;
+    } else {
+      for (const k of Object.keys(h)) out[k.toLowerCase()] = h[k];
+    }
+  } catch (e) { /* ignore */ }
+  return out;
 }
 
-// ---------- Relay discovery ----------
-async function discoverRelays() {
-  for (const src of CONFIG.relaySources) {
-    try {
-      const r = await fetch(src, { signal: AbortSignal.timeout(5000) });
-      if (!r.ok) continue;
-      const data = await r.json();
-      let list = [];
-      if (Array.isArray(data)) list = data;
-      else if (data && typeof data === "object") {
-        list = data.servers || data.relays || data.wisp || [];
+function bufToB64(buf) {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
+}
+
+/* encode a transport response into {status, headers, body, b64} */
+async function encodeResult(status, headers, raw) {
+  const ct = (headers["content-type"] || "").toLowerCase();
+  const textual = !ct || /text|json|javascript|xml|svg|html|urlencoded/.test(ct);
+  if (textual) {
+    let body = "";
+    try { body = await raw.text(); } catch (e) { body = ""; }
+    return { status, headers, body, b64: false };
+  }
+  let body = "";
+  try { body = bufToB64(await raw.arrayBuffer()); } catch (e) {
+    try { body = bufToB64(await (await raw.blob()).arrayBuffer()); } catch (e2) {}
+  }
+  return { status, headers, body, b64: true };
+}
+
+/* ---- engine: epoxy-tls (WASM over Wisp) ---- */
+async function initEpoxy() {
+  if (state.engines.epoxy) return state.engines.epoxy;
+  log("loading epoxy-tls (wasm)…", "info");
+  const mod = await import("https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-tls/epoxy-bundled/+esm");
+  if (typeof mod.default === "function") {
+    try { await mod.default(); } catch (e) { /* wasm already ready */ }
+  }
+  const opts = new mod.EpoxyClientOptions();
+  try { opts.user_agent = navigator.userAgent; } catch (e) {}
+  try { opts.wisp_v2 = true; } catch (e) {}
+  try { opts.udp_extension_required = false; } catch (e) {}
+  const wisp = state.wisp.trim().replace(/\/+$/, "");
+  const client = new mod.EpoxyClient(wisp, opts);
+  log("epoxy-tls ready (wisp: " + wisp + ")", "ok");
+  state.engines.epoxy = {
+    name: "epoxy",
+    async fetch(url, init) {
+      init = init || {};
+      let res;
+      try {
+        res = await client.fetch(url, {
+          method: init.method || "GET",
+          headers: init.headers || {},
+          body: init.body || undefined
+        });
+      } catch (e) {
+        res = await client.fetch(url); /* some builds only take a url */
+        if ((init.method || "GET").toUpperCase() !== "GET") throw e;
       }
-      const urls = list
-        .map(x => typeof x === "string" ? x : (x && (x.url || x.wisp)))
-        .filter(u => typeof u === "string" && (u.startsWith("wss://") || u.startsWith("ws://")));
-      if (urls.length) return urls;
+      return encodeResult(res.status || 200, flattenHeaders(res.headers), res);
+    }
+  };
+  return state.engines.epoxy;
+}
+
+/* ---- engine: libcurl.js (WASM over Wisp) ---- */
+async function initLibcurl() {
+  if (state.engines.libcurl) return state.engines.libcurl;
+  log("loading libcurl.js (wasm)…", "info");
+  const mod = await import("https://cdn.jsdelivr.net/npm/libcurl.js/+esm");
+  let libcurl = mod.default || mod.libcurl;
+  if (libcurl && typeof libcurl.then === "function") libcurl = await libcurl;
+  if (typeof libcurl.load_libcurl === "function" && !libcurl.__nxLoaded) {
+    try { await libcurl.load_libcurl(); libcurl.__nxLoaded = true; } catch (e) {}
+  }
+  const wisp = state.wisp.trim();
+  if (typeof libcurl.set_websocket !== "function") throw new Error("libcurl.js: no set_websocket");
+  libcurl.set_websocket(wisp);
+  log("libcurl.js ready (wisp: " + wisp + ")", "ok");
+  state.engines.libcurl = {
+    name: "libcurl",
+    async fetch(url, init) {
+      init = init || {};
+      const res = await libcurl.fetch(url, {
+        method: init.method || "GET",
+        headers: init.headers || {},
+        body: init.body || undefined
+      });
+      return encodeResult(res.status || 200, flattenHeaders(res.headers), res);
+    }
+  };
+  return state.engines.libcurl;
+}
+
+/* ---- engine: direct fetch (last resort) ---- */
+state.engines.direct = {
+  name: "direct",
+  async fetch(url, init) {
+    init = init || {};
+    try {
+      const res = await fetch(url, {
+        method: init.method || "GET",
+        headers: init.headers || {},
+        body: init.body || undefined,
+        credentials: "omit"
+      });
+      return encodeResult(res.status, flattenHeaders(res.headers), res);
     } catch (e) {
-      console.warn("[Nexus] relay source failed:", src, e.message);
+      /* transparent CORS fallback so the demo still renders something */
+      const proxied = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+      const res = await fetch(proxied);
+      return encodeResult(res.status, flattenHeaders(res.headers), res);
     }
   }
-  return CONFIG.fallbackRelays;
+};
+
+/* ---- engine selection with fallback chain ---- */
+async function getEngine() {
+  const order = state.mode === "auto" ? ["epoxy", "libcurl", "direct"] : [state.mode];
+  let lastErr = null;
+  for (const name of order) {
+    try {
+      let eng;
+      if (name === "direct") eng = state.engines.direct;
+      else if (name === "epoxy") eng = await initEpoxy();
+      else eng = await initLibcurl();
+      state.active = eng;
+      setTransportUI(eng.name, "ready");
+      return eng;
+    } catch (e) {
+      lastErr = e;
+      log("transport \"" + name + "\" unavailable: " + (e && e.message ? e.message : e), "warn");
+    }
+  }
+  setTransportUI("none", "err");
+  throw lastErr || new Error("no transport available");
 }
 
-// ---------- Transport bootstrap ----------
-async function testClient(client) {
-  if (!client || typeof client.fetch !== "function") return false;
+/* fetch with automatic transport fallback */
+async function smartFetch(url, init) {
+  const order = state.mode === "auto" ? ["epoxy", "libcurl", "direct"] : [state.mode, "direct"];
+  let lastErr = null;
+  for (const name of order) {
+    try {
+      let eng;
+      if (name === "direct") eng = state.engines.direct;
+      else if (name === "epoxy") eng = await initEpoxy();
+      else eng = await initLibcurl();
+      state.active = eng;
+      setTransportUI(eng.name, "ready");
+      const t0 = performance.now();
+      const result = await eng.fetch(url, init);
+      result.via = eng.name;
+      result.ms = Math.round(performance.now() - t0);
+      return result;
+    } catch (e) {
+      lastErr = e;
+      log("fetch via " + name + " failed: " + (e && e.message ? e.message : e), "warn");
+    }
+  }
+  throw lastErr || new Error("fetch failed");
+}
+
+/* ---------------- html / css / js patching ---------------- */
+const SHIM_SOURCE = [
+  "(function(){",
+  "  if (window.__nexusShim) return; window.__nexusShim = true;",
+  "  var seq = 0, pending = {};",
+  "  function send(msg){ msg.__nexus = 1; try { parent.postMessage(msg, '*'); } catch(e){} }",
+  "  window.addEventListener('message', function(e){",
+  "    var d = e.data; if (!d || d.__nexus !== 1) return;",
+  "    if (d.type === 'nx-res' && pending[d.id]) { pending[d.id](d); delete pending[d.id]; }",
+  "  });",
+  "  function b64ToBody(b64){",
+  "    try {",
+  "      var bin = atob(b64), arr = new Uint8Array(bin.length);",
+  "      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);",
+  "      return arr.buffer;",
+  "    } catch(e) { return b64; }",
+  "  }",
+  "  function toResponse(d){",
+  "    var body = d.b64 ? b64ToBody(d.body) : d.body;",
+  "    return new Response(body, { status: d.status || 200, headers: d.headers || {} });",
+  "  }",
+  "  function nxRequest(url, init){",
+  "    return new Promise(function(resolve, reject){",
+  "      var id = ++seq;",
+  "      pending[id] = function(d){ d.ok ? resolve(d) : reject(new Error(d.error || 'request failed')); };",
+  "      send({ type: 'nx-fetch', id: id, url: url, init: {",
+  "        method: (init && init.method) || 'GET',",
+  "        headers: (init && init.headers) || {},",
+  "        body: (init && typeof init.body === 'string') ? init.body : null",
+  "      }});",
+  "      setTimeout(function(){ if (pending[id]) { delete pending[id]; reject(new Error('timeout')); } }, 45000);",
+  "    });",
+  "  }",
+  "  function abs(u){ try { return new URL(u, document.baseURI).href; } catch(e) { return u; } }",
+  "  /* fetch */",
+  "  var realFetch = window.fetch ? window.fetch.bind(window) : null;",
+  "  window.fetch = function(input, init){",
+  "    try {",
+  "      var url = typeof input === 'string' ? input : (input && input.url);",
+  "      if (!url || !/^https?:/i.test(url)) {",
+  "        if (realFetch) return realFetch(input, init);",
+  "        return Promise.reject(new Error('no fetch'));",
+  "      }",
+  "      return nxRequest(abs(url), init).then(toResponse);",
+  "    } catch (e) {",
+  "      return realFetch ? realFetch(input, init) : Promise.reject(e);",
+  "    }",
+  "  };",
+  "  /* XMLHttpRequest */",
+  "  function NXHR(){ this.readyState = 0; this.status = 0; this.responseText = ''; this.response = ''; this.__headers = {}; }",
+  "  NXHR.prototype.open = function(m, u){ this.__m = m || 'GET'; this.__u = u; this.readyState = 1; };",
+  "  NXHR.prototype.setRequestHeader = function(){};",
+  "  NXHR.prototype.getAllResponseHeaders = function(){",
+  "    var s = ''; for (var k in this.__headers) s += k + ': ' + this.__headers[k] + '\\r\\n'; return s;",
+  "  };",
+  "  NXHR.prototype.getResponseHeader = function(n){ return this.__headers[String(n).toLowerCase()] || null; };",
+  "  NXHR.prototype.abort = function(){};",
+  "  NXHR.prototype.overrideMimeType = function(){};",
+  "  NXHR.prototype.send = function(body){",
+  "    var self = this;",
+  "    self.readyState = 2;",
+  "    if (self.onreadystatechange) try { self.onreadystatechange(); } catch(e){}",
+  "    nxRequest(abs(self.__u), { method: self.__m, body: body }).then(function(d){",
+  "      self.status = d.status; self.__headers = d.headers || {};",
+  "      self.responseText = d.b64 ? '' : d.body;",
+  "      self.response = self.responseText;",
+  "      self.readyState = 4;",
+  "      if (self.onreadystatechange) try { self.onreadystatechange(); } catch(e){}",
+  "      if (self.onload) try { self.onload(); } catch(e){}",
+  "    }).catch(function(err){",
+  "      self.readyState = 4;",
+  "      if (self.onerror) try { self.onerror(err); } catch(e){}",
+  "    });",
+  "  };",
+  "  window.XMLHttpRequest = NXHR;",
+  "  /* navigation: links, forms, window.open -> parent browser */",
+  "  document.addEventListener('click', function(e){",
+  "    var el = e.target;",
+  "    while (el && el.tagName !== 'A') el = el.parentElement;",
+  "    if (!el) return;",
+  "    var href = el.getAttribute('href') || '';",
+  "    if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0 || href.indexOf('mailto:') === 0) return;",
+  "    e.preventDefault();",
+  "    send({ type: 'nx-nav', url: abs(el.href) });",
+  "  }, true);",
+  "  document.addEventListener('submit', function(e){",
+  "    try {",
+  "      e.preventDefault();",
+  "      var f = e.target, method = (f.method || 'get').toLowerCase();",
+  "      var url = new URL(f.getAttribute('action') || document.baseURI, document.baseURI);",
+  "      if (method === 'get') {",
+  "        var fd = new FormData(f);",
+  "        fd.forEach(function(v, k){ url.searchParams.set(k, v); });",
+  "        send({ type: 'nx-nav', url: url.href });",
+  "      } else {",
+  "        var data = {};",
+  "        new FormData(f).forEach(function(v, k){ data[k] = v; });",
+  "        send({ type: 'nx-form', url: url.href, method: method, data: data });",
+  "      }",
+  "    } catch(err) {}",
+  "  }, true);",
+  "  var realOpen = window.open;",
+  "  window.open = function(u){",
+  "    if (u) send({ type: 'nx-nav', url: abs(String(u)) });",
+  "    return null;",
+  "  };",
+  "  /* websocket notice (not tunneled) */",
+  "  if (window.WebSocket) {",
+  "    var RealWS = window.WebSocket;",
+  "    window.WebSocket = function(u, p){",
+  "      send({ type: 'nx-log', text: 'WebSocket requested: ' + u + ' (not tunneled in demo)' });",
+  "      return new RealWS(u, p);",
+  "    };",
+  "  }",
+  "  send({ type: 'nx-log', text: 'shim installed on ' + location.pathname });",
+  "})();"
+].join("\n");
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+}
+
+function patchHtml(html, pageUrl) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  /* strip things that break the sandbox */
+  doc.querySelectorAll(
+    'meta[http-equiv="Content-Security-Policy" i], meta[http-equiv="refresh" i], base'
+  ).forEach(el => el.remove());
+  doc.querySelectorAll("[integrity]").forEach(el => el.removeAttribute("integrity"));
+  /* resolve relative assets against the real site (img/script/css load natively) */
+  const base = doc.createElement("base");
+  base.setAttribute("href", pageUrl);
+  /* install our js/css/xhr patch shim before any site script runs */
+  const shim = doc.createElement("script");
+  shim.textContent = SHIM_SOURCE;
+  doc.head.insertBefore(shim, doc.head.firstChild);
+  doc.head.insertBefore(base, doc.head.firstChild);
+  return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+}
+
+const START_PAGE = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body{background:#141414;color:#d4d4d4;font-family:"Inter","Segoe UI",sans-serif;
+       display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+  .box{text-align:center}
+  h1{font-size:34px;letter-spacing:10px;font-weight:700;color:#e8e8e8;margin-bottom:26px}
+  input{width:min(560px,80vw);padding:13px 16px;font-size:15px;border-radius:8px;
+        background:#1f1f1f;border:1px solid #383838;color:#ddd;outline:none}
+  input:focus{border-color:#6c9cc4}
+  p{color:#6e6e6e;font-size:12px;margin-top:18px}
+  button{margin-top:16px;background:#46739c;color:#fff;border:0;border-radius:8px;
+         padding:11px 26px;font-size:14px;cursor:pointer}
+</style></head><body>
+<div class="box">
+  <h1>NEXUS</h1>
+  <input id="q" placeholder="enter a url — https://youtube.com" autofocus>
+  <br>
+  <button id="go">Go</button>
+  <p>fetch browser &middot; epoxy-tls / libcurl.js over wisp &middot; html+js+css patching</p>
+</div>
+<script>
+  function go(){ var v=document.getElementById('q').value.trim();
+    if(!v) return; if(!/^https?:/i.test(v)) v='https://'+v;
+    parent.postMessage({__nexus:1,type:'nx-nav',url:v},'*'); }
+  document.getElementById('go').onclick=go;
+  document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
+<\/script></body></html>`;
+
+/* ---------------- browser core ---------------- */
+const frame = $("#brFrame");
+const urlInput = $("#brUrl");
+
+function normalizeUrl(raw) {
+  let u = (raw || "").trim();
+  if (!u) return null;
+  if (!/^https?:/i.test(u)) u = "https://" + u;
+  try { return new URL(u).href; } catch (e) { return null; }
+}
+
+function setBusy(on) {
+  $("#brLoading").classList.toggle("show", !!on);
+  $("#brGo").disabled = !!on;
+}
+
+function renderResult(result, url) {
+  const ct = (result.headers && result.headers["content-type"] || "").toLowerCase();
+  const looksHtml = /html|xml/.test(ct) || /^\s*<(!doctype|html)/i.test(result.body || "");
+  if (result.b64) {
+    frame.removeAttribute("srcdoc");
+    frame.src = "data:" + (ct || "application/octet-stream") + ";base64," + result.body;
+    return;
+  }
+  if (looksHtml) {
+    frame.srcdoc = patchHtml(result.body, url);
+    return;
+  }
+  if (/css/.test(ct)) {
+    frame.srcdoc = '<!DOCTYPE html><html><body style="background:#1b1b1b;color:#cfcfcf;' +
+      'font-family:monospace;font-size:12px;padding:18px;white-space:pre-wrap">' +
+      escapeHtml(result.body) + "</body></html>";
+    return;
+  }
+  frame.srcdoc = '<!DOCTYPE html><html><body style="background:#1b1b1b;color:#cfcfcf;' +
+    'font-family:monospace;font-size:12px;padding:18px;white-space:pre-wrap">' +
+    escapeHtml(result.body || "(empty response)") + "</body></html>";
+}
+
+function pushHistory(url) {
+  state.history = state.history.slice(0, state.hIndex + 1);
+  state.history.push(url);
+  state.hIndex = state.history.length - 1;
+  syncHistoryButtons();
+}
+function syncHistoryButtons() {
+  $("#brBack").disabled = state.hIndex <= 0;
+  $("#brFwd").disabled = state.hIndex >= state.history.length - 1;
+}
+
+async function browserGo(raw, opts) {
+  opts = opts || {};
+  const url = normalizeUrl(raw);
+  if (!url) { log("bad url: " + raw, "err"); return; }
+  urlInput.value = url;
+  setBusy(true);
+  setTransportUI(state.active ? state.active.name : "…", "busy");
+  log("GET " + url);
   try {
-    const res = await Promise.race([
-      client.fetch("https://www.google.com/generate_204", { method: "GET" }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), CONFIG.timeout))
-    ]);
-    return !!(res && (res.ok || res.status === 204 || res.status === 200 || res.status === 302));
+    const result = await smartFetch(url, opts.init);
+    log(result.via + " → " + result.status + " (" + result.ms + " ms, " +
+      (result.headers["content-type"] || "?") + ")", result.status < 400 ? "ok" : "warn");
+    if (result.status >= 400) log("warning: http " + result.status, "warn");
+    renderResult(result, url);
+    if (opts.push !== false) pushHistory(url);
   } catch (e) {
-    console.warn("[Nexus] test failed:", e.message);
+    log("failed: " + (e && e.message ? e.message : e), "err");
+    frame.srcdoc = '<!DOCTYPE html><html><body style="background:#1b1b1b;color:#c76b61;' +
+      'font-family:monospace;font-size:13px;padding:24px">failed to load page<br><br>' +
+      escapeHtml(String(e && e.message || e)) + "</body></html>";
+    setTransportUI(state.active ? state.active.name : "none", "err");
+  }
+  setBusy(false);
+}
+
+$("#brGo").addEventListener("click", () => browserGo(urlInput.value));
+urlInput.addEventListener("keydown", e => { if (e.key === "Enter") browserGo(urlInput.value); });
+$("#brReload").addEventListener("click", () => {
+  if (state.hIndex >= 0) browserGo(state.history[state.hIndex], { push: false });
+});
+$("#brBack").addEventListener("click", () => {
+  if (state.hIndex > 0) { state.hIndex--; syncHistoryButtons(); browserGo(state.history[state.hIndex], { push: false }); }
+});
+$("#brFwd").addEventListener("click", () => {
+  if (state.hIndex < state.history.length - 1) { state.hIndex++; syncHistoryButtons(); browserGo(state.history[state.hIndex], { push: false }); }
+});
+
+/* transport / wisp config */
+$("#trMode").addEventListener("change", e => {
+  state.mode = e.target.value;
+  log("transport mode: " + state.mode, "info");
+});
+$("#wispUrl").addEventListener("change", e => {
+  state.wisp = e.target.value.trim();
+  state.engines.epoxy = null;
+  state.engines.libcurl = null;
+  log("wisp server: " + state.wisp, "info");
+});
+$("#wispPreset").addEventListener("change", e => {
+  if (e.target.value === "custom") {
+    $("#wispUrl").focus();
+    log("enter your Anura / self-hosted wisp url", "info");
+  } else {
+    state.wisp = e.target.value;
+    $("#wispUrl").value = state.wisp;
+    state.engines.epoxy = null;
+    state.engines.libcurl = null;
+    log("wisp preset: " + state.wisp, "info");
+  }
+});
+
+/* iframe bridge: patched pages fetch/navigate through us */
+window.addEventListener("message", async (e) => {
+  const d = e.data;
+  if (!d || d.__nexus !== 1) return;
+  if (e.source !== frame.contentWindow) return;
+
+  if (d.type === "nx-fetch") {
+    try {
+      const result = await smartFetch(d.url, d.init || {});
+      e.source.postMessage({
+        __nexus: 1, type: "nx-res", id: d.id, ok: true,
+        status: result.status, headers: result.headers,
+        body: result.body, b64: result.b64
+      }, "*");
+    } catch (err) {
+      e.source.postMessage({
+        __nexus: 1, type: "nx-res", id: d.id, ok: false,
+        error: String(err && err.message || err)
+      }, "*");
+    }
+    return;
+  }
+  if (d.type === "nx-form") {
+    try {
+      const body = JSON.stringify(d.data || {});
+      const result = await smartFetch(d.url, {
+        method: (d.method || "POST").toUpperCase(),
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: Object.keys(d.data || {}).map(k =>
+          encodeURIComponent(k) + "=" + encodeURIComponent(d.data[k])
+        ).join("&")
+      });
+      log("form POST → " + result.status, "ok");
+      renderResult(result, d.url);
+      pushHistory(d.url);
+    } catch (err) {
+      log("form failed: " + err.message, "err");
+    }
+    return;
+  }
+  if (d.type === "nx-nav") { browserGo(d.url); return; }
+  if (d.type === "nx-log") { log("page: " + d.text); }
+});
+
+/* ---------------- site tests ---------------- */
+const TESTS = {
+  youtube: { name: "YouTube home", url: "https://www.youtube.com/", expect: /youtube/i },
+  shorts:  { name: "YouTube Shorts", url: "https://www.youtube.com/shorts", expect: /shorts|youtube/i },
+  m:       { name: "YouTube mobile", url: "https://m.youtube.com/", expect: /youtube/i },
+  example: { name: "Example.com", url: "https://example.com/", expect: /example/i }
+};
+
+async function runTest(key, render) {
+  const t = TESTS[key];
+  log("TEST " + t.name + " — " + t.url, "info");
+  try {
+    const result = await smartFetch(t.url);
+    const pass = result.status < 400 && t.expect.test(result.body || "");
+    if (pass) {
+      log("PASS " + t.name + " (" + result.via + ", " + result.ms + " ms)", "ok");
+    } else {
+      log("FAIL " + t.name + " — http " + result.status + " via " + result.via +
+        (result.status < 400 ? " (unexpected content)" : ""), "err");
+    }
+    if (render && pass) {
+      renderResult(result, t.url);
+      urlInput.value = t.url;
+      pushHistory(t.url);
+    }
+    return pass;
+  } catch (e) {
+    log("FAIL " + t.name + " — " + (e && e.message ? e.message : e), "err");
     return false;
   }
 }
 
-async function tryRelay(url, EpoxyClient, LibcurlClient) {
-  // 1) try Epoxy
-  if (EpoxyClient) {
-    try {
-      setStatus("loading", "epoxy: " + shortWisp(url));
-      const client = new EpoxyClient({ wisp: url });
-      if (await testClient(client)) {
-        return { client, transport: "epoxy" };
-      }
-    } catch (e) {
-      console.warn("[Nexus] epoxy connect failed for", url, e.message);
-    }
+$$("button[data-test]").forEach(btn =>
+  btn.addEventListener("click", () => runTest(btn.dataset.test, true))
+);
+$("#brRunTests").addEventListener("click", async () => {
+  log("— running all tests —", "info");
+  let pass = 0;
+  for (const key of ["example", "youtube", "shorts", "m"]) {
+    if (await runTest(key, false)) pass++;
   }
-  // 2) fallback to libcurl
-  if (LibcurlClient) {
-    try {
-      setStatus("loading", "libcurl: " + shortWisp(url));
-      const client = new LibcurlClient({ websocket: url });
-      if (await testClient(client)) {
-        return { client, transport: "libcurl" };
-      }
-    } catch (e) {
-      console.warn("[Nexus] libcurl connect failed for", url, e.message);
-    }
-  }
-  return null;
-}
-
-function shortWisp(u) {
-  try { return new URL(u).host; } catch { return u; }
-}
-
-async function boot() {
-  showOverlay("Loading transport libraries...");
-
-  const [EpoxyClient, LibcurlClient] = await Promise.all([loadEpoxy(), loadLibcurl()]);
-
-  if (!EpoxyClient && !LibcurlClient) {
-    setStatus("error", "no transport libraries loaded");
-    hideOverlay();
-    return;
-  }
-
-  showOverlay("Discovering relays...");
-  setStatus("loading", "discovering relays...");
-  const relays = await discoverRelays();
-
-  for (let i = 0; i < relays.length; i++) {
-    const r = relays[i];
-    showOverlay(`Trying relay ${i + 1}/${relays.length}\n${shortWisp(r)}`);
-    const result = await tryRelay(r, EpoxyClient, LibcurlClient);
-    if (result) {
-      state.relay = r;
-      state.transport = result.transport;
-      if (result.transport === "epoxy") state.epoxy = result.client;
-      else state.libcurl = result.client;
-      state.ready = true;
-
-      setStatus("ready", `connected via ${result.transport} • ${shortWisp(r)}`);
-      hideOverlay();
-      dom.search.focus();
-      console.log("[Nexus] ready", { relay: r, transport: result.transport });
-      return;
-    }
-  }
-
-  setStatus("error", "all relays failed — check console");
-  hideOverlay();
-}
-
-// ---------- Proxy fetch ----------
-async function pfetch(url) {
-  const client = state.epoxy || state.libcurl;
-  if (!client) throw new Error("no transport ready");
-  return client.fetch(url);
-}
-window.__nexusFetch = pfetch;
-
-// ---------- HTML rewriting ----------
-function rewriteHtml(html, baseUrl) {
-  const inject = `
-<script>
-(function(){
-  var BASE = ${JSON.stringify(baseUrl)};
-  var abs = function(u){ try { return new URL(u, BASE).href; } catch(e){ return u; } };
-
-  // fetch
-  var of = window.fetch;
-  window.fetch = function(input, init){
-    var url = typeof input === "string" ? input : (input && input.url);
-    url = abs(url);
-    if (window.parent && window.parent.__nexusFetch) return window.parent.__nexusFetch(url);
-    return of.call(this, url, init);
-  };
-
-  // XHR
-  var OX = window.XMLHttpRequest;
-  window.XMLHttpRequest = function(){
-    var x = new OX();
-    var oo = x.open;
-    x.open = function(m, u){ return oo.call(this, m, abs(u), arguments[2], arguments[3], arguments[4]); };
-    return x;
-  };
-})();
-<\/script>`;
-  if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + inject);
-  if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, m => m + "<head>" + inject + "</head>");
-  return inject + html;
-}
-
-// ---------- Navigation ----------
-function normalizeUrl(input) {
-  input = input.trim();
-  if (!input) return null;
-  if (/^https?:\/\//i.test(input)) return input;
-  // looks like a domain?
-  if (/^[^\s]+\.[^\s]{2,}/.test(input) && !input.includes(" ")) return "https://" + input;
-  return "https://duckduckgo.com/?q=" + encodeURIComponent(input);
-}
-
-async function navigate(rawUrl) {
-  if (!state.ready) { setStatus("error", "not connected"); return; }
-  const url = normalizeUrl(rawUrl);
-  if (!url) return;
-
-  showOverlay("Loading " + url);
-  setStatus("loading", "fetching " + shortWisp(url));
-
-  try {
-    const res = await pfetch(url);
-    const text = await res.text();
-    const rewritten = rewriteHtml(text, url);
-    const blob = new Blob([rewritten], { type: "text/html" });
-    const blobUrl = URL.createObjectURL(blob);
-
-    dom.bFrame.src = blobUrl;
-    dom.bUrl.value = url;
-
-    state.history = state.history.slice(0, state.hIndex + 1);
-    state.history.push(url);
-    state.hIndex = state.history.length - 1;
-
-    dom.main.classList.add("hidden");
-    dom.browser.classList.add("on");
-
-    setStatus("ready", `connected via ${state.transport} • ${shortWisp(state.relay)}`);
-    hideOverlay();
-  } catch (e) {
-    console.error("[Nexus] nav error:", e);
-    setStatus("error", "fetch failed: " + e.message);
-    hideOverlay();
-    const err = `<!doctype html><html><body style="background:#0a0a0f;color:#f87171;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:20px"><div><h2 style="font-weight:400">Failed to load</h2><p style="color:#888;font-size:14px;margin-top:8px">${(e.message||"").replace(/</g,"&lt;")}</p></div></body></html>`;
-    dom.bFrame.src = "data:text/html;charset=utf-8," + encodeURIComponent(err);
-    dom.main.classList.add("hidden");
-    dom.browser.classList.add("on");
-  }
-}
-
-// ---------- UI events ----------
-dom.search.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    const v = dom.search.value.trim();
-    if (v) navigate(v);
-  }
+  log("— tests done: " + pass + "/4 passed —", pass === 4 ? "ok" : "warn");
 });
 
-dom.apps.addEventListener("click", e => {
-  const btn = e.target.closest(".app");
-  if (btn && btn.dataset.url) navigate(btn.dataset.url);
-});
-
-dom.bBack.addEventListener("click", () => {
-  if (state.hIndex > 0) {
-    state.hIndex--;
-    navigate(state.history[state.hIndex]);
-  }
-});
-dom.bRefresh.addEventListener("click", () => {
-  if (state.hIndex >= 0) navigate(state.history[state.hIndex]);
-});
-dom.bGo.addEventListener("click", () => {
-  const v = dom.bUrl.value.trim();
-  if (v) navigate(v);
-});
-dom.bUrl.addEventListener("keydown", e => {
-  if (e.key === "Enter") { const v = dom.bUrl.value.trim(); if (v) navigate(v); }
-});
-
-function goHome() {
-  dom.main.classList.remove("hidden");
-  dom.browser.classList.remove("on");
-  dom.bFrame.src = "about:blank";
-  dom.bUrl.value = "";
-  dom.search.value = "";
-  state.history = [];
-  state.hIndex = -1;
-  dom.search.focus();
-}
-dom.navHome.addEventListener("click", goHome);
-dom.navDiscord.addEventListener("click", () => navigate("https://discord.com"));
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") goHome();
-});
-
-// ---------- Go ----------
-boot().catch(e => {
-  console.error("[Nexus] boot failure:", e);
-  setStatus("error", "boot failed: " + e.message);
-  hideOverlay();
-});
+/* ---------------- boot ---------------- */
+frame.srcdoc = START_PAGE;
+setTransportUI("idle");
+log("nexus browser ready — transport chain: epoxy-tls → libcurl.js → direct");
+log("wisp default: " + state.wisp);
+syncHistoryButtons();
 </script>
 </body>
 </html>
