@@ -1,725 +1,1062 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="dark"/>
+<title>PlayStation 5 — Home + Nexus Browser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--tile:20vh;--tile-sel:24vh;--ink:#f3f6f8}
+html,body{height:100%}
+body{
+  font-family:'Inter','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:#04060a;color:var(--ink);
+  overflow:hidden;user-select:none;-webkit-user-select:none;cursor:default;
+}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+/* ---------- background ---------- */
+.bglayer{position:fixed;inset:0;overflow:hidden;transition:opacity .55s ease}
+#bgA{z-index:0;
+  background:
+    radial-gradient(120vh 90vh at 72% 42%, rgba(96,118,134,.55), rgba(96,118,134,0) 60%),
+    linear-gradient(105deg,#05080d 0%,#0a1118 45%,#16222c 72%,#0a1016 100%);}
+#bgB{z-index:1;opacity:0}
+.smoke{position:fixed;inset:-10%;z-index:2;pointer-events:none;
+  background:radial-gradient(42% 32% at 62% 44%, rgba(150,170,180,.10), transparent 70%);
+  animation:drift 26s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate3d(-2.5%,0,0)}to{transform:translate3d(2.5%,-1.5%,0)}}
+.vignette{position:fixed;inset:0;z-index:3;pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0) 16%),
+    linear-gradient(0deg, rgba(0,0,0,.5), rgba(0,0,0,0) 20%),
+    linear-gradient(90deg, rgba(0,0,0,.4), rgba(0,0,0,0) 24%);}
 
-        body {
-            background-color: #0f1014;
-            color: #ffffff;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+.figure{position:absolute;right:-6vw;top:-8vh;width:58vw;height:116vh;pointer-events:none;filter:blur(2px)}
+.f-hair{position:absolute;right:0;top:0;width:80%;height:100%;
+  background:radial-gradient(50% 46% at 56% 38%, rgba(11,14,17,.92), rgba(11,14,17,.5) 55%, rgba(11,14,17,0) 78%)}
+.f-face{position:absolute;right:15%;top:17%;width:42%;height:50%;
+  background:radial-gradient(50% 50% at 48% 42%, rgba(160,175,180,.6), rgba(120,140,148,.32) 52%, rgba(120,140,148,0) 76%);
+  border-radius:48% 52% 50% 50%/58% 58% 42% 42%}
+.f-bangs{position:absolute;right:10%;top:12%;width:52%;height:28%;
+  background:radial-gradient(65% 95% at 52% 15%, rgba(9,12,15,.85), rgba(9,12,15,0) 74%)}
+.f-body{position:absolute;right:-12%;bottom:-4%;width:120%;height:42%;
+  background:radial-gradient(58% 100% at 55% 100%, rgba(5,7,9,.92), rgba(5,7,9,0) 72%)}
 
-        /* Background Simulation */
-        .bg-gradient {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 60% 40%, rgba(40, 50, 70, 0.4) 0%, rgba(15, 16, 20, 1) 100%);
-            z-index: 0;
-        }
+/* ---------- top bar ---------- */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;padding:4vh 3vw 0 3.2vw}
+.top-left{display:flex;align-items:center;gap:.9vw;font-size:2.3vh;font-weight:600}
+.top-left svg{height:2.4vh;width:auto}
+.top-center{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:1.8vw}
+.pad{display:flex;flex-direction:column;align-items:center;gap:.3vh}
+.pad svg{height:2.5vh;width:auto;opacity:.95}
+.pad b{font-size:1.5vh;font-weight:700;opacity:.95}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:1.7vw}
+.notif{display:flex;align-items:center;gap:.55vw;font-size:2vh;font-weight:600}
+.notif svg{height:2.5vh;width:auto}
+.plus-logo svg{height:3vh;width:auto;display:block}
+.profile{display:flex;align-items:center;gap:.8vw}
+.avatar{position:relative;width:4.6vh;height:4.6vh;border-radius:50%;
+  background:radial-gradient(80% 80% at 35% 30%, #3a4550, #1a2128 70%);
+  display:flex;align-items:center;justify-content:center}
+.avatar svg{height:3vh;width:3vh;opacity:.9}
+.status-dot{position:absolute;right:-.2vh;bottom:-.2vh;width:1.4vh;height:1.4vh;border-radius:50%;
+  background:#2f9dff;border:.3vh solid #0b1016}
+.profile-info{display:flex;flex-direction:column;gap:.4vh}
+.username{font-size:2.1vh;font-weight:700}
+.trophy-row{display:flex;align-items:center;gap:.45vw;font-size:1.7vh;font-weight:600;opacity:.95}
+.trophy-row svg{height:1.8vh;width:auto}
 
-        /* Top Bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 40px;
-            z-index: 10;
-            font-size: 14px;
-            font-weight: 600;
-        }
+/* ---------- categories ---------- */
+.cats{position:fixed;top:14.2vh;left:7vw;right:0;z-index:20;display:flex;align-items:center;gap:2.2vw;overflow:hidden}
+.shoulder{font-size:1.75vh;font-weight:700;color:#e9eef2;border:.28vh solid rgba(240,244,247,.75);
+  border-radius:2.6vh;padding:.55vh 1.05vw;opacity:.9;white-space:nowrap}
+.cats ul{display:flex;align-items:center;gap:2.4vw;list-style:none}
+.cats li{font-size:2.05vh;font-weight:800;letter-spacing:.14em;color:#f2f5f8;white-space:nowrap;cursor:pointer;
+  padding:.9vh 1.15vw;border:.28vh solid transparent;border-radius:3vh;transition:border-color .2s}
+.cats li:hover{color:#fff}
+.cats li.active{border-color:#fff}
+.cats li[data-app]{color:#8fd4ff}
 
-        .top-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: #d1d5db;
-        }
+/* ---------- game shelf ---------- */
+.shelf-vp{position:fixed;left:0;right:0;top:76.5vh;transform:translateY(-50%);z-index:10}
+.shelf-row{display:flex;align-items:center;gap:2.6vh;will-change:transform;
+  transition:transform .5s cubic-bezier(.22,.7,.25,1)}
+.slot{position:relative;flex:0 0 auto;width:var(--tile);height:var(--tile);
+  font-size:calc(var(--tile)/20);cursor:pointer;
+  transition:width .3s ease,height .3s ease,font-size .3s ease}
+.slot.selected{width:var(--tile-sel);height:var(--tile-sel);font-size:calc(var(--tile-sel)/20);cursor:default}
+.tile{width:100%;height:100%;border-radius:.6vh;overflow:hidden;position:relative;background:#0a0d10;
+  box-shadow:0 1.6vh 3.6vh rgba(0,0,0,.5);transition:filter .2s ease,box-shadow .3s ease}
+.slot:not(.selected):hover .tile{filter:brightness(1.14)}
+.slot.selected .tile{box-shadow:0 2vh 5vh rgba(0,0,0,.62)}
+.ps5-tag{position:absolute;top:calc(100% + 1.5vh);left:.3em;font-size:1.9vh;font-weight:700;
+  letter-spacing:.08em;color:#a7b0b8;opacity:0;transition:opacity .3s ease .1s}
+.slot.selected .ps5-tag{opacity:.95}
 
-        .top-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            color: #d1d5db;
-        }
+/* --- tile artwork --- */
+.t-sh2{background:radial-gradient(95% 72% at 50% 40%, #ccd1d4 0%, #8b9295 42%, #3c4042 78%, #161718 100%)}
+.sh2-fog{position:absolute;inset:0;filter:blur(2px);
+  background:radial-gradient(60% 34% at 50% 78%, rgba(235,238,239,.5), rgba(235,238,239,0) 70%)}
+.sh2-title{position:absolute;left:0;right:0;top:42%;transform:translateY(-50%);text-align:center;
+  font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:1.8em;letter-spacing:.1em;color:#f6f8f8;
+  text-shadow:0 .06em .35em rgba(20,22,24,.55)}
+.t-tlou{background:#060606}
+.tl-hair{position:absolute;right:-16%;top:-20%;width:96%;height:135%;
+  background:radial-gradient(52% 44% at 58% 40%, rgba(7,7,8,1) 0%, rgba(7,7,8,.8) 52%, rgba(7,7,8,0) 76%)}
+.tl-face{position:absolute;right:3%;top:15%;width:58%;height:72%;
+  background:radial-gradient(52% 46% at 46% 44%, rgba(151,162,153,.95) 0%, rgba(103,114,106,.72) 52%, rgba(60,70,64,0) 78%);
+  border-radius:50% 50% 48% 52%/58% 58% 42% 42%}
+.tl-bangs{position:absolute;right:-2%;top:6%;width:66%;height:36%;
+  background:radial-gradient(68% 92% at 55% 18%, rgba(5,5,6,.95) 0%, rgba(5,5,6,0) 72%)}
+.tl-body{position:absolute;right:-10%;bottom:-18%;width:80%;height:50%;
+  background:radial-gradient(60% 90% at 55% 100%, rgba(3,3,4,.95), rgba(3,3,4,0) 70%)}
+.tl-title{position:absolute;left:7%;top:8%;font-family:'Oswald',Impact,'Arial Narrow',sans-serif;
+  font-weight:600;font-size:3.7em;line-height:.95;letter-spacing:.02em;color:#fff;
+  text-shadow:0 .04em .5em rgba(0,0,0,.55)}
+.t-ds{background:linear-gradient(165deg,#0b1315 0%,#0e1f24 55%,#152c33 100%)}
+.ds-glow{position:absolute;left:10%;top:12%;width:46%;height:40%;filter:blur(2px);
+  background:radial-gradient(50% 50% at 50% 50%, rgba(255,186,100,.30), rgba(255,186,100,0) 72%)}
+.ds-wires{position:absolute;right:6%;top:5%;width:36%;height:64%;transform:skewX(-14deg);
+  background:repeating-linear-gradient(90deg, rgba(140,220,235,.14) 0, rgba(140,220,235,.14) .12vh, transparent .12vh, transparent 1.6vh)}
+.ds-title{position:absolute;left:0;right:0;bottom:10%;text-align:center;
+  font-size:1.15em;font-weight:600;letter-spacing:.5em;text-indent:.5em;color:#eef4f6;line-height:1.7}
+.t-ff7{background:radial-gradient(130% 100% at 50% 26%, #17191d 0%, #0a0b0d 58%, #050506 100%)}
+.ff7-top{position:absolute;top:22%;left:0;right:0;text-align:center;
+  font-size:.95em;font-weight:700;letter-spacing:.42em;text-indent:.42em;color:#dfe5ea}
+.ff7-vii{position:absolute;top:33%;left:0;right:0;text-align:center;
+  font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:3em;letter-spacing:.04em;
+  background:linear-gradient(180deg,#f4f7fa 0%,#c6cfd7 38%,#77828c 62%,#e6ebf0 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.ff7-blade{position:absolute;left:12%;bottom:9%;width:76%;height:2px;transform:rotate(-7deg);
+  background:linear-gradient(90deg, transparent, rgba(200,215,225,.55), transparent)}
+.ff7-sub{position:absolute;top:66%;left:0;right:0;text-align:center;
+  font-size:.9em;font-weight:600;letter-spacing:.65em;text-indent:.65em;color:#cdd4db}
+.t-ghost{background:
+  radial-gradient(85% 55% at 50% 14%, rgba(214,229,236,.85) 0%, rgba(140,160,170,.35) 48%, rgba(140,160,170,0) 74%),
+  linear-gradient(180deg,#8c9da6 0%,#5b6e78 42%,#222d33 100%)}
+.ghost-title{position:absolute;top:7%;left:0;right:0;text-align:center;font-size:2.9em;font-weight:700;
+  letter-spacing:.26em;text-indent:.26em;color:#f7fafb;text-shadow:0 .05em .3em rgba(10,20,24,.35)}
+.ghost-o{display:inline-block;width:.56em;height:.56em;border:.09em solid #e03a2f;border-radius:50%;margin:0 .05em}
+.ghost-sub{position:absolute;top:31%;left:0;right:0;text-align:center;font-size:.8em;font-weight:600;
+  letter-spacing:.5em;text-indent:.5em;color:#f0f4f6;text-shadow:0 1px 4px rgba(10,20,24,.3)}
+.samurai{position:absolute;bottom:-2%;left:50%;transform:translateX(-50%);height:60%;width:auto}
+.t-store{background:
+  linear-gradient(150deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 38%),
+  linear-gradient(155deg,#3f8bec 0%,#2159c2 55%,#153e8d 100%)}
+.bag{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:44%}
+.bag svg{display:block;width:100%;height:auto;filter:drop-shadow(0 .6vh 1vh rgba(10,25,60,.35))}
+.bag-shapes{position:absolute;left:0;right:0;top:52%;text-align:center;font-size:1.05em;font-weight:700;
+  letter-spacing:.34em;text-indent:.34em;color:#1d4fae}
+.store-title{position:absolute;bottom:9%;left:0;right:0;text-align:center;font-size:1.5em;font-weight:700;
+  color:#fff;text-shadow:0 1px 6px rgba(8,24,60,.4)}
+.store-title span{font-weight:400}
+.t-chrono{background:
+  radial-gradient(75% 62% at 18% 80%, rgba(235,130,40,.75), rgba(235,130,40,0) 60%),
+  radial-gradient(75% 62% at 82% 22%, rgba(45,125,225,.85), rgba(45,125,225,0) 62%),
+  linear-gradient(140deg,#0a2a60 0%,#0e4f9c 48%,#a85f1e 100%)}
+.chrono-ring{position:absolute;top:9%;left:50%;transform:translateX(-50%);width:52%;aspect-ratio:1;
+  border:.28vh dashed rgba(255,255,255,.55);border-radius:50%}
+.chrono-title{position:absolute;top:21%;left:0;right:0;text-align:center;
+  font-family:'Arial Black','Inter',sans-serif;font-style:italic;font-weight:800;line-height:.95}
+.chrono-a{display:block;font-size:2.2em;color:#fff;text-shadow:0 .07em 0 rgba(10,40,90,.85), 0 0 .6em rgba(0,0,0,.35)}
+.chrono-b{display:block;font-size:2.2em;color:#ffb544;-webkit-text-stroke:.025em rgba(255,255,255,.9);
+  text-shadow:0 .07em 0 rgba(90,40,5,.85), 0 0 .6em rgba(0,0,0,.3)}
+.t-sotc{background:
+  radial-gradient(110% 66% at 50% 8%, rgba(228,234,229,.95) 0%, rgba(168,180,172,.5) 46%, rgba(168,180,172,0) 78%),
+  linear-gradient(180deg,#a7b3ac 0%,#74817a 46%,#3c4642 78%,#1b201e 100%)}
+.sotc-colossus{position:absolute;bottom:-4%;left:50%;transform:translateX(-50%);width:88%;height:48%;filter:blur(1px);
+  background:radial-gradient(58% 92% at 50% 100%, rgba(14,18,17,.96) 0%, rgba(14,18,17,.65) 55%, rgba(14,18,17,0) 100%);
+  border-radius:46% 54% 0 0/72% 72% 0 0}
+.sotc-title{position:absolute;top:10%;left:0;right:0;text-align:center;color:#fbfdfc;
+  text-shadow:0 1px 8px rgba(30,40,36,.55)}
+.sotc-title b{display:block;font-size:1.5em;font-weight:600;letter-spacing:.5em;text-indent:.5em}
+.sotc-title i{display:block;font-style:normal;font-size:.75em;letter-spacing:.32em;text-indent:.32em;margin:.5em 0 .55em;opacity:.95}
+.t-re{background:radial-gradient(95% 75% at 42% 42%, rgba(140,24,18,.9) 0%, rgba(70,12,9,.95) 55%, rgba(14,5,4,1) 100%)}
+.re-title{position:absolute;top:34%;left:0;right:0;text-align:center;
+  font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:1.5em;letter-spacing:.06em;line-height:1.25;
+  color:#ece7df;text-shadow:0 0 .5em rgba(220,40,25,.75)}
+/* Nexus browser tile */
+.t-nexus{background:radial-gradient(80% 70% at 50% 30%, #1b2a4a 0%, #0b1220 60%, #05070d 100%)}
+.nx-globe{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:42%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%, #4da3ff, #1c5fb8 55%, #0a2b5e 100%);box-shadow:0 0 2em rgba(64,140,255,.5)}
+.nx-orbit{position:absolute;top:12%;left:50%;transform:translateX(-50%) rotate(-18deg);width:64%;aspect-ratio:1;
+  border:.14em solid rgba(140,190,255,.55);border-radius:50%;border-top-color:transparent}
+.nx-name{position:absolute;bottom:20%;left:0;right:0;text-align:center;font-weight:800;letter-spacing:.3em;font-size:1.5em;color:#fff}
+.nx-sub{position:absolute;bottom:11%;left:0;right:0;text-align:center;letter-spacing:.5em;font-size:.85em;color:#8fb8ea}
 
-        .icons {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
+/* ---------- bottom hints ---------- */
+.hints{position:fixed;right:3.4vw;bottom:3.4vh;z-index:20;display:flex;align-items:center;gap:2.7vw}
+.hint{display:flex;align-items:center;gap:.7vw;font-size:1.9vh;font-weight:600;letter-spacing:.14em;color:#f2f5f8}
+.hint svg{height:2.3vh;width:auto;display:block}
+.hint[data-action]{cursor:pointer}
+.icon-pill{width:2.7vh;height:1.35vh;border-radius:.9vh;background:#f2f5f8;display:block}
 
-        .icon {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
+/* ---------- play overlay ---------- */
+#playOverlay{position:fixed;inset:0;z-index:50;background:rgba(2,4,8,.88);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh;
+  opacity:0;pointer-events:none;transition:opacity .35s ease}
+#playOverlay.show{opacity:1;pointer-events:auto}
+.spinner{width:5vh;height:5vh;border:.5vh solid rgba(255,255,255,.18);border-top-color:#fff;
+  border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#playTitle{font-size:2.6vh;font-weight:600;letter-spacing:.08em}
 
-        .badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background-color: transparent;
-            color: #fff;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-
-        .avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f5a623, #d0021b);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        /* Navigation */
-        .nav {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            padding: 0 40px;
-            margin-top: 10px;
-            z-index: 10;
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .trigger {
-            border: 1px solid #6b7280;
-            border-radius: 20px;
-            padding: 2px 8px;
-            font-size: 11px;
-            color: #9ca3af;
-            cursor: pointer;
-        }
-
-        .nav-item {
-            color: #9ca3af;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            padding: 6px 16px;
-            border-radius: 20px;
-        }
-
-        .nav-item.active {
-            background-color: #0070d1;
-            color: #ffffff;
-        }
-
-        .nav-item:hover:not(.active) {
-            color: #ffffff;
-        }
-
-        /* Content Row */
-        .content-row {
-            position: absolute;
-            bottom: 120px;
-            width: 100%;
-            display: flex;
-            gap: 20px;
-            padding: 0 40px;
-            overflow-x: auto;
-            z-index: 10;
-            scrollbar-width: none; /* Firefox */
-            min-height: 220px;
-            align-items: flex-end;
-        }
-
-        .content-row::-webkit-scrollbar {
-            display: none; /* Chrome */
-        }
-
-        /* Game Card */
-        .game-card {
-            flex: 0 0 auto;
-            width: 180px;
-            height: 180px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #1f2937, #111827);
-            border: 1px solid #374151;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: #e5e7eb;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
-            text-decoration: none;
-        }
-
-        .game-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            border-color: #0070d1;
-            box-shadow: 0 15px 30px rgba(0, 112, 209, 0.3);
-        }
-
-        .game-card span {
-            position: relative;
-            z-index: 2;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .game-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 100%);
-            z-index: 1;
-        }
-
-        .game-icon {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            z-index: 0;
-        }
-
-        .provider-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #00c3e3;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 9px;
-            font-weight: 600;
-            z-index: 3;
-            letter-spacing: 0.5px;
-        }
-
-        /* Loading & Error states */
-        .loading-state {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 180px;
-            color: #9ca3af;
-            font-size: 14px;
-            font-weight: 600;
-            width: 100%;
-        }
-
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #374151;
-            border-top: 3px solid #0070d1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 12px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Bottom Bar */
-        .bottom-bar {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 40px;
-            z-index: 10;
-            font-size: 12px;
-            font-weight: 600;
-            color: #9ca3af;
-        }
-
-        .ps-logo {
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: #d1d5db;
-        }
-
-        .controls {
-            display: flex;
-            gap: 25px;
-            align-items: center;
-        }
-
-        .control-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .control-item:hover {
-            color: #ffffff;
-        }
-
-        .btn-icon {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: 2px solid #9ca3af;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .btn-icon.triangle { border-color: #00c3e3; color: #00c3e3; }
-        .btn-icon.square { border-color: #e5007d; color: #e5007d; }
-        .btn-icon.cross { border-color: #8bc53f; color: #8bc53f; }
-        .btn-icon.options { border-radius: 4px; border: 2px solid #9ca3af; }
-
-    </style>
+/* ---------- NEXUS BROWSER ---------- */
+#nx{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;background:#05070c}
+#nx.open{display:flex}
+.nx-bar{display:flex;align-items:center;gap:.6vw;padding:1.4vh 1.2vw;background:#0a0f17;border-bottom:1px solid #182230}
+.nx-btn{width:3.4vh;height:3.4vh;min-width:3.4vh;border-radius:50%;border:1px solid #223045;background:#0e1622;
+  color:#dfe7ef;font-size:1.7vh;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.nx-btn:hover{background:#16233a}
+#nxUrl{flex:1;height:3.8vh;padding:0 1.2vw;border-radius:3vh;border:1px solid #223045;background:#0b1119;
+  color:#eef3f8;font-size:1.9vh;outline:none;font-family:inherit}
+#nxUrl:focus{border-color:#2f80ed}
+#nxStage{font-size:1.5vh;letter-spacing:.12em;color:#8fa0b0;min-width:6ch;text-align:right}
+#nxBadge{font-size:1.6vh;font-weight:800;letter-spacing:.06em;color:#39d98a;background:#0d1a13;
+  border:1px solid #1d3a2a;border-radius:1vh;padding:.7vh .9vw;cursor:pointer;white-space:nowrap}
+#nxTitle{font-size:1.6vh;color:#8fa0b0;max-width:20vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nx-viewport{position:relative;flex:1;background:#0b0e13;overflow:hidden}
+.nx-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0e13}
+#nxProg{position:absolute;top:0;left:0;height:.45vh;width:0;z-index:5;
+  background:linear-gradient(90deg,#2f80ed,#9b59f6);transition:width .4s ease}
+</style>
 </head>
 <body>
 
-    <div class="bg-gradient"></div>
+<div class="bglayer" id="bgA">
+  <div class="figure" aria-hidden="true">
+    <div class="f-hair"></div><div class="f-face"></div><div class="f-bangs"></div><div class="f-body"></div>
+  </div>
+</div>
+<div class="bglayer" id="bgB"></div>
+<div class="smoke" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
 
-    <!-- Top Bar -->
-    <header class="top-bar">
-        <div class="top-left">
-            <span>21:35</span>
-            <div class="icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-            </div>
-        </div>
-        <div class="top-right">
-            <div class="icons">
-                <div class="icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    <span class="badge">12</span>
-                </div>
-                <div class="icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                    <span class="badge">9</span>
-                </div>
-                <div class="icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span class="badge">14</span>
-                </div>
-            </div>
-            <div class="user-profile">
-                <div class="avatar">F</div>
-                <span>FallingStickman</span>
-            </div>
-        </div>
-    </header>
+<!-- ================= TOP BAR ================= -->
+<header class="topbar">
+  <div class="top-left">
+    <span id="clock">21:35</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#f2f5f8" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+      <path d="M2.8 9.2a14.5 14.5 0 0 1 18.4 0"/><path d="M5.8 12.6a10 10 0 0 1 12.4 0"/>
+      <path d="M8.9 15.9a5.4 5.4 0 0 1 6.2 0"/><circle cx="12" cy="19.3" r="1.5" fill="#f2f5f8" stroke="none"/>
+    </svg>
+  </div>
+  <div class="top-center">
+    <div class="pad">
+      <svg viewBox="0 0 28 18" fill="#f2f5f8" aria-hidden="true">
+        <path d="M7.4 1.2h13.2c3.6 0 6.1 3 6.3 6.9.14 3-.9 6.7-3.2 6.7-2.5 0-2.8-3.5-4.8-3.5H9.1c-2 0-2.3 3.5-4.8 3.5-2.3 0-3.34-3.7-3.2-6.7C1.3 4.2 3.8 1.2 7.4 1.2z"/>
+        <circle cx="20.3" cy="6.6" r="1.15" fill="#0d1218"/><circle cx="23" cy="9" r="1.15" fill="#0d1218"/>
+      </svg><b>1</b>
+    </div>
+    <div class="pad">
+      <svg viewBox="0 0 28 18" fill="#f2f5f8" aria-hidden="true">
+        <path d="M7.4 1.2h13.2c3.6 0 6.1 3 6.3 6.9.14 3-.9 6.7-3.2 6.7-2.5 0-2.8-3.5-4.8-3.5H9.1c-2 0-2.3 3.5-4.8 3.5-2.3 0-3.34-3.7-3.2-6.7C1.3 4.2 3.8 1.2 7.4 1.2z"/>
+        <circle cx="20.3" cy="6.6" r="1.15" fill="#0d1218"/><circle cx="23" cy="9" r="1.15" fill="#0d1218"/>
+      </svg><b>2</b>
+    </div>
+  </div>
+  <div class="top-right">
+    <div class="notif">
+      <svg viewBox="0 0 24 24" fill="#f2f5f8" aria-hidden="true">
+        <path d="M12 2.2a6.3 6.3 0 0 0-6.3 6.3c0 4.6-1.5 6.2-2.4 7h17.4c-.9-.8-2.4-2.4-2.4-7A6.3 6.3 0 0 0 12 2.2z"/>
+        <path d="M9.7 17.8a2.4 2.4 0 0 0 4.6 0z"/>
+      </svg><span>12</span>
+    </div>
+    <div class="notif">
+      <svg viewBox="0 0 24 24" fill="#f2f5f8" aria-hidden="true">
+        <rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/>
+        <rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>
+      </svg><span>9</span>
+    </div>
+    <div class="plus-logo">
+      <svg viewBox="0 0 24 24" fill="#f2c40f" aria-hidden="true">
+        <path d="M9.2 2.5h5.6v6.7h6.7v5.6h-6.7v6.7H9.2v-6.7H2.5V9.2h6.7z"/>
+      </svg>
+    </div>
+    <div class="profile">
+      <div class="avatar">
+        <svg viewBox="0 0 24 24" fill="#c7cfd6" aria-hidden="true">
+          <circle cx="12" cy="8.6" r="3.6"/><path d="M4.5 20c1-3.8 4-5.8 7.5-5.8s6.5 2 7.5 5.8z"/>
+        </svg>
+        <span class="status-dot"></span>
+      </div>
+      <div class="profile-info">
+        <span class="username">FallingStickman</span>
+        <span class="trophy-row">
+          <svg viewBox="0 0 24 24" fill="#f2f5f8" aria-hidden="true">
+            <path d="M5 3h14v2h4v2.5A5.5 5.5 0 0 1 17.6 13 7 7 0 0 1 13 16.7V19h3.5v2.5h-9V19H11v-2.3A7 7 0 0 1 6.4 13 5.5 5.5 0 0 1 1 7.5V5h4zm0 4.5H3.5A3 3 0 0 0 6 10.4V7.5zm14 0v2.9a3 3 0 0 0 2.5-2.9z"/>
+          </svg>14
+        </span>
+      </div>
+    </div>
+  </div>
+</header>
 
-    <!-- Navigation -->
-    <nav class="nav">
-        <span class="trigger">L1</span>
-        <span class="nav-item active">ALL</span>
-        <span class="nav-item">RACING</span>
-        <span class="nav-item">ROLEPLAYING</span>
-        <span class="nav-item">SPORTS</span>
-        <span class="nav-item">ONLINE</span>
-        <span class="nav-item">SHOOTE</span>
-        <span class="trigger">R1</span>
-    </nav>
+<!-- ================= CATEGORIES ================= -->
+<nav class="cats">
+  <span class="shoulder">L1</span>
+  <ul id="catList">
+    <li class="active">ALL</li><li>RACING</li><li>ROLEPLAYING</li><li>SPORTS</li><li>ONLINE</li><li>SHOOTER</li>
+    <li data-app="browser">BROWSER</li>
+  </ul>
+  <span class="shoulder">R1</span>
+</nav>
 
-    <!-- Games Row (Dynamically Populated) -->
-    <main class="content-row" id="games-container">
-        <div class="loading-state" id="loading-indicator">
-            <div class="spinner"></div>
-            Loading game libraries...
-        </div>
-    </main>
+<!-- ================= GAME SHELF ================= -->
+<div class="shelf-vp"><div class="shelf-row" id="row">
 
-    <!-- Bottom Bar -->
-    <footer class="bottom-bar">
-        <div class="ps-logo">PS5</div>
-        <div class="controls">
-            <div class="control-item">
-                <div class="btn-icon options"></div>
-                <span>OPTIONS</span>
-            </div>
-            <div class="control-item">
-                <div class="btn-icon triangle">&#9651;</div>
-                <span>TOP MENU</span>
-            </div>
-            <div class="control-item">
-                <div class="btn-icon square">&#9633;</div>
-                <span>DETAILS</span>
-            </div>
-            <div class="control-item">
-                <div class="btn-icon cross">&#10005;</div>
-                <span>PLAY</span>
-            </div>
-        </div>
-    </footer>
+  <div class="slot" data-theme="sh2" data-name="Silent Hill 2">
+    <div class="tile t-sh2"><div class="sh2-fog"></div><div class="sh2-title">SILENT&nbsp;HILL&nbsp;2</div></div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-    <!-- Game Library Integration & Blob Execution Script -->
-    <script>
-        (function() {
-            'use strict';
+  <div class="slot selected" data-theme="tlou" data-name="The Last of Us Part II">
+    <div class="tile t-tlou">
+      <div class="tl-face"></div><div class="tl-hair"></div><div class="tl-bangs"></div><div class="tl-body"></div>
+      <div class="tl-title">THE<br>LAST<br>OF&nbsp;US<br>PART&nbsp;II</div>
+    </div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-            /**
-             * ============================================================
-             *  NEXUS GAME PROVIDER MODULE
-             * ============================================================
-             *  Fetches game data (icon, name, htmlUrl) from multiple
-             *  providers. Each provider has a different API structure,
-             *  so we normalize the results into a common format:
-             *  { name, icon, htmlUrl, provider }
-             * ============================================================
-             */
+  <div class="slot" data-theme="ds" data-name="Death Stranding">
+    <div class="tile t-ds"><div class="ds-glow"></div><div class="ds-wires"></div>
+      <div class="ds-title">DEATH<br>STRANDING</div></div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-            const GameProvider = {
-                // ---- CONFIGURATION ------------------------------------
-                config: {
-                    // Add your GameMonetize Hash/ID here if you have one.
-                    // Get it from your GameMonetize control panel.
-                    gameMonetizeHash: 'YOUR_GAMEMONETIZE_HASH_HERE',
+  <div class="slot" data-theme="ff7" data-name="Final Fantasy VII Remake">
+    <div class="tile t-ff7">
+      <div class="ff7-top">FINAL&nbsp;FANTASY</div><div class="ff7-vii">VII</div>
+      <div class="ff7-blade"></div><div class="ff7-sub">REMAKE</div>
+    </div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-                    // Add your GamePix SID here if you have one.
-                    // Get it from your GamePix developer dashboard.
-                    gamePixSid: 'YOUR_GAMEPIX_SID_HERE',
+  <div class="slot" data-theme="ghost" data-name="Ghost of Tsushima">
+    <div class="tile t-ghost">
+      <div class="ghost-title">GH<span class="ghost-o"></span>ST</div>
+      <div class="ghost-sub">OF&nbsp;TSUSHIMA</div>
+      <svg class="samurai" viewBox="0 0 120 140" aria-hidden="true">
+        <g fill="#0b1014">
+          <circle cx="58" cy="15" r="10"/>
+          <path d="M45 26 H71 C79 33 85 45 87 60 L82 66 L72 59 L71 140 H45 L44 59 L34 66 L29 60 C31 45 37 33 45 26 Z"/>
+          <path d="M64 42 L78 58 L84 68 L74 73 L66 58 Z"/>
+        </g>
+        <path d="M78 62 L112 124" stroke="#0b1014" stroke-width="6" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-                    // GNMath CDN endpoint (public, no auth required)
-                    gnMathZonesUrl: 'https://cdn.jsdelivr.net/gh/gn-math/games/zones.json',
+  <div class="slot" data-theme="store" data-name="PlayStation Store">
+    <div class="tile t-store">
+      <div class="bag">
+        <svg viewBox="0 0 64 78" aria-hidden="true">
+          <path d="M21 28 V16 a11 11 0 0 1 22 0 V28" fill="none" stroke="#fff" stroke-width="5"/>
+          <path d="M8 28 L56 28 L61 72 Q61.5 76 57 76 L7 76 Q2.5 76 3 72 Z" fill="#fff"/>
+        </svg>
+        <div class="bag-shapes">△○✕□</div>
+      </div>
+      <div class="store-title">PlayStation&nbsp;<span>Store</span></div>
+    </div>
+  </div>
 
-                    // Lumin SDK endpoint (placeholder - update if you have a real one)
-                    luminSdkUrl: 'https://luminsdk.com/api/games',
+  <div class="slot" data-theme="chrono" data-name="Chrono Cross">
+    <div class="tile t-chrono">
+      <div class="chrono-ring"></div>
+      <div class="chrono-title"><span class="chrono-a">CHRONO</span><span class="chrono-b">CROSS</span></div>
+    </div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-                    // How many games to show from each provider
-                    gamesPerProvider: 8
-                },
+  <div class="slot" data-theme="sotc" data-name="Shadow of the Colossus">
+    <div class="tile t-sotc">
+      <div class="sotc-colossus"></div>
+      <div class="sotc-title"><b>SHADOW</b><i>of the</i><b>COLOSSUS</b></div>
+    </div>
+    <div class="ps5-tag">PS5</div>
+  </div>
 
-                // ---- UNIFIED FETCH METHODS ----------------------------
+  <div class="slot" data-theme="re" data-name="Resident Evil">
+    <div class="tile t-re"><div class="re-title">RESIDENT<br>EVIL</div></div>
+    <div class="ps5-tag">PS4</div>
+  </div>
 
-                /**
-                 * Fetch games from Lumin SDK.
-                 * Lumin SDK typically returns an array of game objects.
-                 * Expected fields: id, title, thumbnail, url
-                 */
-                async fetchLuminGames() {
-                    try {
-                        const res = await fetch(this.config.luminSdkUrl, {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        });
-                        if (!res.ok) throw new Error('Lumin SDK fetch failed');
-                        const data = await res.json();
+  <div class="slot" data-theme="nexus" data-name="Nexus Browser" data-app="browser">
+    <div class="tile t-nexus">
+      <div class="nx-globe"></div><div class="nx-orbit"></div>
+      <div class="nx-name">NEXUS</div><div class="nx-sub">BROWSER</div>
+    </div>
+    <div class="ps5-tag">APP</div>
+  </div>
 
-                        // Normalize: Lumin may return { games: [...] } or an array
-                        const games = Array.isArray(data) ? data : (data.games || []);
+</div></div>
 
-                        return games.slice(0, this.config.gamesPerProvider).map(g => ({
-                            name: g.title || g.name || 'Unknown Game',
-                            icon: g.thumbnail || g.icon || '',
-                            htmlUrl: g.url || g.gameUrl || '#',
-                            provider: 'LUMIN'
-                        }));
-                    } catch (err) {
-                        console.warn('[Nexus] Lumin SDK unavailable:', err.message);
-                        return [];
-                    }
-                },
+<!-- ================= BUTTON HINTS ================= -->
+<footer class="hints">
+  <div class="hint"><span class="icon-pill"></span>OPTIONS</div>
+  <div class="hint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M12 4.5 20.5 19.5 H3.5 Z"/></svg>TOP MENU</div>
+  <div class="hint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="4.5" y="4.5" width="15" height="15"/></svg>DETAILS</div>
+  <div class="hint" data-action="play">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5 17.5 17.5 M17.5 6.5 6.5 17.5"/></svg>PLAY</div>
+</footer>
 
-                /**
-                 * Fetch games from GameMonetize via their RSS/JSON feed.
-                 * The feed URL is: https://gamemonetize.com/rssfeed.php
-                 * You need a valid hash (GameID) from your control panel.
-                 */
-                async fetchGameMonetizeGames() {
-                    const hash = this.config.gameMonetizeHash;
-                    if (hash === 'YOUR_GAMEMONETIZE_HASH_HERE') {
-                        console.warn('[Nexus] GameMonetize hash not configured. Skipping.');
-                        return [];
-                    }
+<!-- ================= PLAY OVERLAY ================= -->
+<div id="playOverlay"><div class="spinner"></div><div id="playTitle"></div></div>
 
-                    try {
-                        // GameMonetize provides a JSON feed
-                        const url = `https://gamemonetize.com/rssfeed.php?format=json&num=${this.config.gamesPerProvider}&hash=${hash}`;
-                        const res = await fetch(url);
-                        if (!res.ok) throw new Error('GameMonetize fetch failed');
-                        const data = await res.json();
+<!-- ================= NEXUS BROWSER ================= -->
+<div id="nx">
+  <div class="nx-bar">
+    <button class="nx-btn" id="nxClose" title="Close (Esc)">✕</button>
+    <button class="nx-btn" id="nxBack" title="Back">‹</button>
+    <button class="nx-btn" id="nxFwd" title="Forward">›</button>
+    <button class="nx-btn" id="nxReload" title="Reload">⟳</button>
+    <button class="nx-btn" id="nxHome" title="Home">⌂</button>
+    <input id="nxUrl" spellcheck="false" placeholder="Search, paste a URL, or a YouTube / Shorts link… (yt: query = YouTube search)">
+    <span id="nxStage"></span>
+    <span id="nxBadge" title="Active transport — click to change the wisp relay">BOOT</span>
+    <span id="nxTitle"></span>
+  </div>
+  <div class="nx-viewport" id="nxViewport"></div>
+</div>
 
-                        // Normalize: typically returns { games: [...] }
-                        const games = data.games || data || [];
+<script>
+/* ============================================================
+   PS5 UI (unchanged behaviour) + NEXUS BROWSER
+   - transport: epoxy -> libcurl.js -> direct fetch (per-request fallback)
+   - runtime: whole "nexus" is built as a string, base64-encoded,
+     and booted as a blob: document inside a sandboxed iframe
+   - pipeline: FETCH (transport) -> PATCH (html rewrite) -> RENDER
+============================================================ */
+const bgA = document.getElementById('bgA'), bgB = document.getElementById('bgB');
+const row = document.getElementById('row');
+const slots = [...row.querySelectorAll('.slot')];
+const nxEl = document.getElementById('nx');
+let selected = 1, front = bgA, overlayTimer = null;
 
-                        return games.slice(0, this.config.gamesPerProvider).map(g => ({
-                            name: g.title || g.name || 'Unknown Game',
-                            icon: g.thumb || g.thumbnail || g.image || '',
-                            htmlUrl: g.url || g.game_url || '#',
-                            provider: 'MONETIZE'
-                        }));
-                    } catch (err) {
-                        console.warn('[Nexus] GameMonetize unavailable:', err.message);
-                        return [];
-                    }
-                },
+const themes = {
+  sh2:   "radial-gradient(120vh 90vh at 30% 45%, rgba(150,158,162,.5), rgba(150,158,162,0) 62%), linear-gradient(120deg,#101214 0%,#1a1d1f 50%,#0b0c0d 100%)",
+  tlou:  "radial-gradient(120vh 90vh at 72% 42%, rgba(96,118,134,.55), rgba(96,118,134,0) 60%), linear-gradient(105deg,#05080d 0%,#0a1118 45%,#16222c 72%,#0a1016 100%)",
+  ds:    "radial-gradient(115vh 85vh at 60% 40%, rgba(32,95,105,.45), rgba(32,95,105,0) 62%), linear-gradient(115deg,#04070a 0%,#08161a 55%,#0c2229 100%)",
+  ff7:   "radial-gradient(105vh 82vh at 55% 40%, rgba(60,80,112,.35), rgba(60,80,112,0) 66%), linear-gradient(120deg,#050607 0%,#0b0e12 60%,#07090c 100%)",
+  ghost: "radial-gradient(115vh 88vh at 70% 35%, rgba(170,196,206,.45), rgba(170,196,206,0) 60%), linear-gradient(110deg,#0a1216 0%,#18242b 55%,#0d171c 100%)",
+  store: "radial-gradient(115vh 88vh at 65% 45%, rgba(52,112,222,.4), rgba(52,112,222,0) 64%), linear-gradient(120deg,#060a12 0%,#0a1526 60%,#071120 100%)",
+  chrono:"radial-gradient(95vh 72vh at 76% 38%, rgba(222,132,52,.30), rgba(222,132,52,0) 60%), radial-gradient(95vh 72vh at 40% 55%, rgba(42,112,212,.34), rgba(42,112,212,0) 60%), linear-gradient(120deg,#05070e 0%,#0a1220 60%,#0c1626 100%)",
+  sotc:  "radial-gradient(120vh 90vh at 60% 28%, rgba(182,196,186,.36), rgba(182,196,186,0) 64%), linear-gradient(115deg,#0a0d0c 0%,#141a17 55%,#0b0f0d 100%)",
+  re:    "radial-gradient(115vh 88vh at 70% 45%, rgba(152,32,26,.42), rgba(152,32,26,0) 60%), linear-gradient(115deg,#070404 0%,#120807 60%,#0a0505 100%)",
+  nexus: "radial-gradient(110vh 84vh at 68% 40%, rgba(46,110,220,.42), rgba(46,110,220,0) 62%), linear-gradient(115deg,#04060d 0%,#081024 55%,#0c1a3a 100%)"
+};
 
-                /**
-                 * Fetch games from GamePix.
-                 * GamePix provides a games API at: https://games.gamepix.com/games
-                 * Requires a SID (publisher ID) from your developer dashboard.
-                 */
-                async fetchGamePixGames() {
-                    const sid = this.config.gamePixSid;
-                    if (sid === 'YOUR_GAMEPIX_SID_HERE') {
-                        console.warn('[Nexus] GamePix SID not configured. Skipping.');
-                        return [];
-                    }
+function setTheme(key){
+  const back = (front === bgA) ? bgB : bgA;
+  back.style.background = themes[key] || themes.tlou;
+  back.style.opacity = '1';
+  front.style.opacity = '0';
+  front = back;
+}
 
-                    try {
-                        const url = `https://games.gamepix.com/games?sid=${sid}&order=q&limit=${this.config.gamesPerProvider}`;
-                        const res = await fetch(url);
-                        if (!res.ok) throw new Error('GamePix fetch failed');
-                        const data = await res.json();
+function layout(){
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+  let x = 0;
+  for (let i = 0; i < selected; i++) x += slots[i].offsetWidth + gap;
+  const target = window.innerWidth * 0.10;
+  row.style.transform = `translateX(${target - x}px)`;
+}
 
-                        // Normalize: GamePix returns { data: [...] }
-                        const games = data.data || data.games || data || [];
+function select(i, silent){
+  selected = Math.max(0, Math.min(slots.length - 1, i));
+  slots.forEach((s, k) => s.classList.toggle('selected', k === selected));
+  if (!silent) setTheme(slots[selected].dataset.theme);
+  layout();
+}
 
-                        return games.slice(0, this.config.gamesPerProvider).map(g => ({
-                            name: g.title || g.name || 'Unknown Game',
-                            icon: g.image || g.icon || g.thumb || '',
-                            htmlUrl: g.url || g.gameUrl || g.link || '#',
-                            provider: 'GAMEPIX'
-                        }));
-                    } catch (err) {
-                        console.warn('[Nexus] GamePix unavailable:', err.message);
-                        return [];
-                    }
-                },
+/* ============================================================
+   NEXUS RUNTIME SOURCE (String.raw keeps regex backslashes intact)
+============================================================ */
+const NEXUS_BODY = String.raw`<!doctype html><html><head><meta charset="utf-8"><title>NEXUS</title>
+<style>
+body{margin:0;background:#0b0e13;color:#dfe7ef;font-family:Inter,system-ui,sans-serif}
+#boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vh;letter-spacing:.3em;font-size:12px;color:#5d7285}
+#boot .spin{width:34px;height:34px;border:3px solid rgba(255,255,255,.15);border-top-color:#8fb8ea;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.card{max-width:540px;margin:14vh auto;padding:26px 30px;background:#10161f;border:1px solid #223046;border-radius:14px;text-align:center}
+.card h1{letter-spacing:.35em;font-size:20px;margin:0 0 10px;color:#8fb8ea}
+.card code{display:block;font-size:12px;color:#f0a35e;word-break:break-all;margin:12px 0 18px}
+.card button{margin:0 6px;padding:10px 18px;border-radius:999px;border:0;background:#2f80ed;color:#fff;font-weight:700;cursor:pointer}
+.card button.alt{background:#223046}
+pre{white-space:pre-wrap;word-break:break-all;color:#cfd8de;font:13px/1.55 ui-monospace,monospace;padding:20px;margin:0}
+</style></head><body>
+<div id="boot"><div class="spin"></div><div>NEXUS · BLOB RUNTIME</div></div>
+<script>
+(function(){
+"use strict";
+var P = window.parent;
+var Q = new URLSearchParams(location.hash.slice(1));
+var MODE = Q.get("m") || "web";
+var BASE = Q.get("url") || "";
+var rid = 0, pend = {};
+function send(m){ try{ m.__nx = 1; P.postMessage(m, "*"); }catch(e){} }
+function stage(s){ send({ k:"stage", s:s }); }
+addEventListener("message", function(e){
+  var d = e.data;
+  if(d && d.__nxr){
+    if(d.k === "res"){ var p = pend[d.id]; if(p){ delete pend[d.id]; if(d.ok){ p.res(d); } else { p.rej(new Error(d.err || ("HTTP " + d.status))); } } }
+    else if(d.k === "push"){ renderPush(d.html); }
+  } else if(d && d.__nx && d.k){ send(d); } /* forward messages from nested docs */
+});
+function rawFetch(url, opts){
+  return new Promise(function(res, rej){
+    var id = "q" + (++rid); pend[id] = { res:res, rej:rej };
+    send({ k:"fetch", id:id, url:url, opts:{ method:(opts && opts.method) || "GET", body:(opts && opts.body) || null } });
+  });
+}
+function dec(buf){ try{ return new TextDecoder("utf-8").decode(buf); }catch(e){ return ""; } }
+function nxUrl(u){ try{ return new URL(u, BASE || location.href).href; }catch(e){ return u; } }
+function nxFetch(u, opts){
+  var abs = nxUrl(u);
+  return rawFetch(abs, opts).then(function(r){
+    return { ok:r.ok, status:r.status, ct:r.ct, buf:r.buf, url:abs, text:function(){ return dec(r.buf); } };
+  }, function(){
+    return fetch(abs, opts).then(function(r){
+      return r.arrayBuffer().then(function(b){
+        return { ok:r.ok, status:r.status, ct:(r.headers.get("content-type") || ""), buf:b, url:abs, text:function(){ return dec(b); } };
+      });
+    });
+  });
+}
+/* hook fetch + XHR so rendered page scripts also go through the proxy transport */
+var _fetch = window.fetch;
+window.fetch = function(input, init){
+  var u = (typeof input === "string") ? input : ((input && input.url) || String(input));
+  if(!/^https?:/i.test(u) && u.charAt(0) !== "/") return _fetch(input, init);
+  return nxFetch(u, init).then(function(r){
+    return new Response(r.buf, { status:r.status, headers:{ "content-type": r.ct || "text/plain" } });
+  });
+};
+var _open = XMLHttpRequest.prototype.open;
+var _send = XMLHttpRequest.prototype.send;
+XMLHttpRequest.prototype.open = function(m, u){ this.__nxu = nxUrl(u); this.__nxm = m; return _open.apply(this, arguments); };
+XMLHttpRequest.prototype.send = function(b){
+  var x = this;
+  nxFetch(x.__nxu, { method:x.__nxm, body:b }).then(function(r){
+    try{
+      Object.defineProperty(x, "readyState", { value:4, configurable:true });
+      Object.defineProperty(x, "status", { value:r.status, configurable:true });
+      Object.defineProperty(x, "responseText", { value:r.text(), configurable:true });
+      Object.defineProperty(x, "response", { value:r.buf, configurable:true });
+      x.dispatchEvent(new Event("readystatechange"));
+      x.dispatchEvent(new ProgressEvent("load"));
+    }catch(e){}
+  }, function(){ try{ _send.call(x, b); }catch(e){} });
+};
+function esc(s){ return String(s).replace(/[<>&]/g, function(c){ return { "<":"&lt;", ">":"&gt;", "&":"&amp;" }[c]; }); }
+function rx(u, base){
+  if(/^(data|blob|about|mailto|javascript|tel):/i.test(u)) return u;
+  try{ return new URL(u, base).href; }catch(e){ return u; }
+}
+function rewriteCss(css, base){
+  return css
+    .replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, function(m, q, u){ return 'url("' + rx(u.trim(), base) + '")'; })
+    .replace(/@import\s+(['"])([^'"]+)\1/gi, function(m, q, u){ return '@import "' + rx(u, base) + '"'; });
+}
+function stripUnsafe(doc){
+  var els, i, hv;
+  els = doc.querySelectorAll("meta[http-equiv]");
+  for(i = 0; i < els.length; i++){ hv = (els[i].getAttribute("http-equiv") || "").toLowerCase(); if(hv === "content-security-policy" || hv === "x-frame-options") els[i].remove(); }
+  els = doc.querySelectorAll("[integrity]");     for(i = 0; i < els.length; i++) els[i].removeAttribute("integrity");
+  els = doc.querySelectorAll("[nonce]");         for(i = 0; i < els.length; i++) els[i].removeAttribute("nonce");
+  els = doc.querySelectorAll("iframe[sandbox]"); for(i = 0; i < els.length; i++) els[i].removeAttribute("sandbox");
+}
+function inlineAssets(doc, base){
+  var links = Array.prototype.slice.call(doc.querySelectorAll('link[rel~="stylesheet" i][href]'));
+  var jobs = links.map(function(link){
+    var abs = nxUrl(link.getAttribute("href"));
+    return nxFetch(abs).then(function(r){
+      var st = doc.createElement("style");
+      st.textContent = rewriteCss(r.text(), abs);
+      link.replaceWith(st);
+    }, function(){ link.setAttribute("href", abs); });
+  });
+  var mods = Array.prototype.slice.call(doc.querySelectorAll('script[type="module"][src]'));
+  mods.forEach(function(s){
+    var abs = nxUrl(s.getAttribute("src"));
+    jobs.push(nxFetch(abs).then(function(r){
+      var ns = doc.createElement("script"); ns.type = "module"; ns.textContent = r.text(); s.replaceWith(ns);
+    }, function(){}));
+  });
+  return Promise.all(jobs).then(function(){
+    var styles = doc.querySelectorAll("style"), i, sets;
+    for(i = 0; i < styles.length; i++) styles[i].textContent = rewriteCss(styles[i].textContent, base);
+    sets = doc.querySelectorAll("[srcset]");
+    for(i = 0; i < sets.length; i++){
+      sets[i].setAttribute("srcset", sets[i].getAttribute("srcset").split(",").map(function(p){
+        p = p.trim().split(/\s+/); return rx(p[0], base) + (p[1] ? " " + p[1] : "");
+      }).join(", "));
+    }
+  });
+}
+function frame(){
+  document.addEventListener("click", function(e){
+    var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if(!a) return;
+    var h = a.getAttribute("href") || "";
+    if(/^(javascript:|#)/i.test(h)) return;
+    e.preventDefault();
+    send({ k:"nav", url:nxUrl(h) });
+  }, true);
+}
+function killBoot(){ var b = document.getElementById("boot"); if(b) b.remove(); }
+function renderErr(msg){
+  killBoot();
+  document.body.innerHTML = '<div class="card"><h1>NEXUS</h1><p style="opacity:.75;font-size:13px">Could not fetch / render through the proxy.</p><code>' + esc(msg) + '</code><button id="d">Try direct</button><button id="h" class="alt">Home</button></div>';
+  document.getElementById("d").onclick = function(){ send({ k:"nav", url:BASE, direct:true }); };
+  document.getElementById("h").onclick = function(){ send({ k:"nav", url:"nexus://home" }); };
+  stage("error");
+}
+function renderPush(html){
+  killBoot();
+  document.open(); document.write(html); document.close();
+  frame();
+}
+function renderWeb(){
+  stage("fetch");
+  nxFetch(BASE).then(function(r){
+    var ct = (r.ct || "").toLowerCase();
+    if(ct.indexOf("image/") === 0){
+      killBoot();
+      document.body.innerHTML = '<img style="max-width:100vw;max-height:100vh;display:block;margin:auto;object-fit:contain" src="' + BASE + '">';
+      stage("done"); return;
+    }
+    if(ct.indexOf("html") < 0 && ct.indexOf("xml") < 0){
+      killBoot();
+      document.body.innerHTML = '<pre>' + esc(r.text()) + '</pre>';
+      stage("done"); return;
+    }
+    stage("patch");
+    var doc = new DOMParser().parseFromString(r.text(), "text/html");
+    stripUnsafe(doc);
+    if(!doc.querySelector("meta[charset]")){ var mc = doc.createElement("meta"); mc.setAttribute("charset","utf-8"); (doc.head || doc.documentElement).prepend(mc); }
+    var b = doc.createElement("base"); b.setAttribute("href", BASE);
+    var head = doc.head || doc.documentElement; head.insertBefore(b, head.firstChild);
+    return inlineAssets(doc, BASE).then(function(){
+      stage("render");
+      var out = "<!doctype html>" + doc.documentElement.outerHTML;
+      killBoot();
+      document.open(); document.write(out); document.close();
+      frame();
+      send({ k:"title", t:document.title || BASE });
+      stage("done");
+    });
+  }, function(e){ renderErr("Fetch failed: " + (e && e.message ? e.message : e)); })
+  .catch(function(e){ renderErr("Render failed: " + (e && e.message ? e.message : e)); });
+}
+send({ k:"ready" });
+if(MODE === "web"){ renderWeb(); } else { stage("idle"); }
+})();
+`;
+const NEXUS_SRC = NEXUS_BODY + '</scr' + 'ipt></body></html>';
 
-                /**
-                 * Fetch games from GNMath.
-                 * GNMath hosts a zones.json file on jsDelivr CDN.
-                 * Each zone contains a list of games with id, name, and assets.
-                 */
-                async fetchGnMathGames() {
-                    try {
-                        const res = await fetch(this.config.gnMathZonesUrl);
-                        if (!res.ok) throw new Error('GNMath fetch failed');
-                        const zones = await res.json();
+/* base64-encode the whole runtime and boot it as a blob URL */
+let NXBLOB = null;
+function ensureBlob(){
+  if(NXBLOB) return NXBLOB;
+  const b64 = btoa(unescape(encodeURIComponent(NEXUS_SRC)));   // base64 the whole nexus
+  window.NEXUS_B64 = b64;                                      // exposed if you want it
+  const html = decodeURIComponent(escape(atob(b64)));          // decode back into the blob
+  NXBLOB = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  return NXBLOB;
+}
 
-                        // Flatten all zones into a single game list
-                        const allGames = zones.flatMap(zone =>
-                            (zone.games || []).map(g => ({
-                                name: g.name || g.title || 'Unknown Game',
-                                icon: g.icon || g.image || g.thumbnail || '',
-                                htmlUrl: g.url || g.html || g.link || '#',
-                                provider: 'GNMATH'
-                            }))
-                        );
+/* ============================================================
+   TRANSPORT: epoxy -> libcurl.js -> direct (auto fallback)
+============================================================ */
+const NX = {
+  wisp: (function(){ try{ return localStorage.getItem('nx_wisp') || 'wss://wisp.mercurywork.shop/'; }catch(e){ return 'wss://wisp.mercurywork.shop/'; } })(),
+  epoxy: null, curl: null, kind: 'DIRECT',
+  async fetch(url, opts){
+    const chain = [];
+    if(this.epoxy && this.epoxy.fetch) chain.push(['EPOXY',   (u,o) => this.epoxy.fetch(u,o)]);
+    if(this.curl  && this.curl.fetch)  chain.push(['LIBCURL', (u,o) => this.curl.fetch(u,o)]);
+    chain.push(['DIRECT', (u,o) => fetch(u, { method:(o&&o.method)||'GET', body:(o&&o.body)||undefined, mode:'cors', cache:'no-store' })]);
+    let lastErr;
+    for(const [name, fn] of chain){
+      try{
+        const r = await Promise.race([
+          fn(url, opts),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 60000))
+        ]);
+        if(this.kind !== name){ this.kind = name; setBadge(name); }
+        return r;
+      }catch(e){ lastErr = e; }
+    }
+    throw lastErr || new Error('no transport available');
+  }
+};
 
-                        return allGames.slice(0, this.config.gamesPerProvider);
-                    } catch (err) {
-                        console.warn('[Nexus] GNMath unavailable:', err.message);
-                        return [];
-                    }
-                },
+function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = () => res(true); s.onerror = () => rej(new Error('load fail'));
+    document.head.appendChild(s);
+  });
+}
+async function tryScripts(list, check){
+  for(const u of list){ try{ await loadScript(u); if(check()) return true; }catch(e){} }
+  return false;
+}
+async function bootTransports(){
+  setBadge('BOOT');
+  if(!window.epoxy){
+    await tryScripts([
+      'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy',
+      'https://unpkg.com/@mercuryworkshop/epoxy',
+      'https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy/bundle/epoxy.min.js'
+    ], () => !!window.epoxy);
+  }
+  if(window.epoxy) NX.epoxy = window.epoxy;
+  else {
+    for(const u of ['https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy/bundle/epoxy.mjs','https://esm.sh/@mercuryworkshop/epoxy']){
+      try{
+        const m = await import(u);
+        const e = (m && m.fetch) ? m : (m && m.default);
+        if(e && e.fetch){ NX.epoxy = e; break; }
+      }catch(e){}
+    }
+  }
+  if(!window.libcurl){
+    await tryScripts([
+      'https://cdn.jsdelivr.net/npm/libcurl.js',
+      'https://unpkg.com/libcurl.js',
+      'https://cdn.jsdelivr.net/npm/libcurl.js/libcurl.js'
+    ], () => !!window.libcurl);
+  }
+  if(window.libcurl) NX.curl = window.libcurl.default || window.libcurl;
+  try{ NX.epoxy && NX.epoxy.set_websocket && NX.epoxy.set_websocket(NX.wisp); }catch(e){}
+  try{ NX.curl  && NX.curl.set_websocket  && NX.curl.set_websocket(NX.wisp);  }catch(e){}
+  NX.kind = NX.epoxy ? 'EPOXY' : (NX.curl ? 'LIBCURL' : 'DIRECT');
+  setBadge(NX.kind);
+}
+function setBadge(k){
+  const b = document.getElementById('nxBadge');
+  if(!b) return;
+  b.textContent = k;
+  b.title = 'Transport: ' + k + ' — relay: ' + NX.wisp + ' (click to change)';
+  b.style.color = k === 'DIRECT' ? '#f0b429' : (k === 'LIBCURL' ? '#5ad7f0' : '#39d98a');
+}
+function setStage(s){
+  const st = document.getElementById('nxStage');
+  if(st) st.textContent = s.toUpperCase();
+  const p = document.getElementById('nxProg');
+  if(p){
+    const w = { fetch:'30%', patch:'62%', render:'86%', done:'100%', error:'100%', idle:'0%' }[s] || '0%';
+    p.style.width = w;
+    if(s === 'done' || s === 'error') setTimeout(() => { p.style.width = '0'; }, 800);
+  }
+}
 
-                // ---- AGGREGATOR ---------------------------------------
-                /**
-                 * Fetch games from ALL providers in parallel and return
-                 * a combined, shuffled list.
-                 */
-                async fetchAllGames() {
-                    const results = await Promise.allSettled([
-                        this.fetchLuminGames(),
-                        this.fetchGameMonetizeGames(),
-                        this.fetchGamePixGames(),
-                        this.fetchGnMathGames()
-                    ]);
+/* ============================================================
+   NAVIGATION / YOUTUBE / SEARCH
+============================================================ */
+let nxHist = [], nxIdx = -1, nxPendingPush = null, nxBooted = false;
 
-                    // Extract fulfilled results, ignore failures
-                    const allGames = results
-                        .filter(r => r.status === 'fulfilled')
-                        .flatMap(r => r.value);
+function ytEmbed(u){
+  try{
+    const url = new URL(u, 'https://www.youtube.com');
+    const h = url.hostname.replace(/^www\.|^m\./, '');
+    if(h === 'youtu.be') return 'https://www.youtube-nocookie.com/embed/' + url.pathname.split('/')[1] + '?autoplay=1&playsinline=1&rel=0';
+    if(h === 'youtube.com' || h === 'youtube-nocookie.com' || h === 'music.youtube.com'){
+      const v = url.searchParams.get('v');
+      const list = url.searchParams.get('list');
+      if(v) return 'https://www.youtube-nocookie.com/embed/' + v + '?autoplay=1&playsinline=1&rel=0';
+      if(list) return 'https://www.youtube-nocookie.com/embed/videoseries?list=' + list + '&autoplay=1&playsinline=1';
+      const m = url.pathname.match(/^\/(shorts|embed|live)\/([\w-]{6,})/);
+      if(m) return 'https://www.youtube-nocookie.com/embed/' + m[2] + '?autoplay=1&playsinline=1&rel=0';
+    }
+  }catch(e){}
+  return null;
+}
+function nxNormalize(raw){
+  const s = String(raw || '').trim();
+  if(!s) return null;
+  if(/^(nexus|nx)(:\/\/)?(home)?$/i.test(s)) return { mode:'home', display:'nexus://home' };
+  const emb = ytEmbed(s);
+  if(emb) return { mode:'embed', url:emb, display:s };
+  if(/^yt[:(]\s*/i.test(s)){ const q = s.replace(/^yt[:(]\s*/i, ''); return { mode:'ytsearch', q, display:'yt: ' + q }; }
+  if(/^https?:\/\//i.test(s)){
+    let u; try{ u = new URL(s); }catch(e){ return null; }
+    const hn = u.hostname.replace(/^www\.|^m\./, '');
+    if(hn === 'youtube.com' && u.pathname === '/results'){
+      const q = u.searchParams.get('search_query');
+      if(q) return { mode:'ytsearch', q, display:s };
+    }
+    if(/(^|\.)google\./.test(hn) && u.pathname === '/search'){
+      const q = u.searchParams.get('q');
+      if(q) return { mode:'web', url:'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(q), display:s };
+    }
+    return { mode:'web', url:u.href, display:u.href };
+  }
+  if(/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s)) return { mode:'web', url:'https://' + s, display:'https://' + s };
+  return { mode:'web', url:'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(s), display:s };
+}
 
-                    // Shuffle for variety (Fisher-Yates)
-                    for (let i = allGames.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [allGames[i], allGames[j]] = [allGames[j], allGames[i]];
-                    }
+function bootNexus(mode, url, pushHtml){
+  nxPendingPush = pushHtml || null;
+  const vp = document.getElementById('nxViewport');
+  vp.innerHTML = '<div class="nx-progress" id="nxProg"></div>';
+  const f = document.createElement('iframe');
+  f.className = 'nx-frame';
+  f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
+  f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+  f.src = ensureBlob() + '#m=' + encodeURIComponent(mode) + '&url=' + encodeURIComponent(url || '');
+  vp.appendChild(f);
+}
+function bootEmbed(url){
+  const vp = document.getElementById('nxViewport');
+  vp.innerHTML = '<div class="nx-progress" id="nxProg" style="width:100%"></div>';
+  const f = document.createElement('iframe');
+  f.className = 'nx-frame';
+  f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation allow-popups');
+  f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+  f.src = url;
+  vp.appendChild(f);
+  setStage('done');
+  document.getElementById('nxTitle').textContent = 'YouTube player';
+}
+function bootDirect(url){
+  const vp = document.getElementById('nxViewport');
+  vp.innerHTML = '<div class="nx-progress" id="nxProg" style="width:100%"></div>';
+  const f = document.createElement('iframe');
+  f.className = 'nx-frame';
+  f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation');
+  f.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+  f.src = url;
+  vp.appendChild(f);
+  setStage('done');
+}
 
-                    return allGames;
-                }
-            };
+async function nxGo(input, push = true){
+  const nav = nxNormalize(input);
+  if(!nav) return;
+  document.getElementById('nxUrl').value = nav.display;
+  document.getElementById('nxTitle').textContent = '';
+  if(push){ nxHist = nxHist.slice(0, nxIdx + 1); nxHist.push(nav); nxIdx = nxHist.length - 1; }
+  if(nav.mode === 'home')         bootNexus('push', '', homeHtml());
+  else if(nav.mode === 'embed')   bootEmbed(nav.url);
+  else if(nav.mode === 'ytsearch'){ await nxSearch(nav.q); }
+  else if(nav.mode === 'direct')  bootDirect(nav.url);
+  else { bootNexus('web', nav.url); setStage('fetch'); }
+}
 
-            /**
-             * ============================================================
-             *  UI RENDERER
-             * ============================================================
-             */
-            const NexusUI = {
-                container: null,
-                loadingIndicator: null,
+/* ---------- YouTube search via Piped instances ---------- */
+const PIPEDS = [
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.adminforge.de',
+  'https://api.piped.private.coffee',
+  'https://pipedapi.leptons.xyz',
+  'https://pipedapi.ducks.party'
+];
+async function ytSearch(q){
+  for(const inst of PIPEDS){
+    try{
+      const r = await NX.fetch(inst + '/search?q=' + encodeURIComponent(q) + '&filter=videos');
+      if(!r || !r.ok) continue;
+      const j = JSON.parse(new TextDecoder().decode(await r.arrayBuffer()));
+      if(j && Array.isArray(j.items) && j.items.length) return j.items;
+    }catch(e){}
+  }
+  return null;
+}
+async function nxSearch(q){
+  setStage('fetch');
+  const items = await ytSearch(q);
+  if(!items){
+    bootNexus('push', '', errHtml('YouTube search failed — Piped API instances unreachable. Edit the PIPEDS list, or type a direct URL.'));
+    return;
+  }
+  bootNexus('push', '', resultsHtml(items.slice(0, 36)));
+  document.getElementById('nxTitle').textContent = 'YouTube — ' + q;
+}
 
-                init() {
-                    this.container = document.getElementById('games-container');
-                    this.loadingIndicator = document.getElementById('loading-indicator');
-                },
+/* ---------- page builders (rendered inside the nexus blob) ---------- */
+function escH(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDur(s){ if(s == null || s < 0) return ''; s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(x).padStart(2,'0'); }
+function fmtN(n){ if(n == null || n < 0) return ''; if(n >= 1e9) return (n/1e9).toFixed(1) + 'B'; if(n >= 1e6) return (n/1e6).toFixed(1) + 'M'; if(n >= 1e3) return (n/1e3).toFixed(1) + 'K'; return String(n); }
 
-                /**
-                 * Render an array of normalized game objects as cards.
-                 */
-                renderGames(games) {
-                    if (!this.container) return;
+function homeHtml(){
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:radial-gradient(120vh 90vh at 70% 30%,#152238,#05070d);color:#eef2f6;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+h1{font-size:44px;letter-spacing:.35em;margin:0 0 6px;font-weight:800}
+p.sub{opacity:.55;margin:0 0 34px;letter-spacing:.22em;font-size:11px}
+.bar{display:flex;gap:10px;width:min(680px,86vw)}
+input{flex:1;padding:14px 18px;border-radius:999px;border:1px solid #2a3644;background:#0b1017;color:#fff;font-size:15px;outline:none}
+button.go{padding:14px 22px;border-radius:999px;border:0;background:#2f80ed;color:#fff;font-weight:700;cursor:pointer}
+.quick{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:30px}
+.q{padding:12px 18px;border-radius:12px;border:1px solid #2a3644;background:#0d1420;cursor:pointer;font-size:14px}
+.q:hover{background:#16202e}
+.hint{margin-top:26px;opacity:.4;font-size:12px;text-align:center;line-height:1.8}
+</style></head><body>
+<h1>NEXUS</h1><p class="sub">BLOB RUNTIME · EPOXY → LIBCURL → DIRECT</p>
+<div class="bar"><input id="q" placeholder="Search, or paste a URL / YouTube / Shorts link…"><button class="go" id="g">GO</button></div>
+<div class="quick">
+<div class="q" data-u="https://www.youtube.com/">▶ YouTube</div>
+<div class="q" data-u="yt: lofi hip hop">🎧 YT Search</div>
+<div class="q" data-u="https://example.com/">🌐 example.com</div>
+<div class="q" data-u="https://www.wikipedia.org/">📚 Wikipedia</div>
+<div class="q" data-u="https://news.ycombinator.com/">🟠 Hacker News</div>
+</div>
+<p class="hint">fetch → patch → render runs entirely inside a base64-encoded blob.<br>watch / shorts links open in the native embed player · Esc closes the browser</p>
+<script>
+function nav(u){ parent.postMessage({ __nx:1, k:'nav', url:u }, '*'); }
+document.getElementById('g').onclick = function(){ nav(document.getElementById('q').value); };
+document.getElementById('q').addEventListener('keydown', function(e){ if(e.key === 'Enter') nav(this.value); });
+addEventListener('click', function(e){ var b = e.target.closest ? e.target.closest('[data-u]') : null; if(b) nav(b.getAttribute('data-u')); });
+parent.postMessage({ __nx:1, k:'title', t:'Nexus — Home' }, '*');
+<\/script></body></html>`;
+}
 
-                    // Remove loading indicator
-                    if (this.loadingIndicator) {
-                        this.loadingIndicator.remove();
-                        this.loadingIndicator = null;
-                    }
+function resultsHtml(items){
+  const cards = items.map(it => {
+    const m = /[?&]v=([\w-]{6,})/.exec(it.url || '');
+    if(!m) return '';
+    const id = m[1];
+    return '<div class="c" data-u="https://www.youtube.com/watch?v=' + id + '">' +
+      '<div class="t"><img loading="lazy" src="https://i.ytimg.com/vi/' + id + '/mqdefault.jpg" alt="">' +
+      '<span>' + escH(fmtDur(it.duration)) + '</span></div>' +
+      '<b>' + escH(it.title) + '</b><i>' + escH(it.uploaderName) + ' · ' + fmtN(it.views) + ' views</i></div>';
+  }).join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;background:#0a0f16;color:#e8eef4;font-family:Inter,system-ui,sans-serif;padding:3vh 2.6vw}
+h2{font-size:17px;letter-spacing:.12em;margin:0 0 2.4vh;opacity:.7;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2.2vh 1.2vw}
+.c{cursor:pointer;border-radius:10px;padding:9px;background:#0e1520;border:1px solid #1b2735}
+.c:hover{background:#152134;border-color:#27395a}
+.t{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:16/9;background:#000;margin-bottom:8px}
+.t img{width:100%;height:100%;object-fit:cover;display:block}
+.t span{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.8);padding:2px 6px;border-radius:4px;font-size:11px}
+.c b{display:block;font-size:13px;line-height:1.35;font-weight:600}
+.c i{display:block;font-style:normal;font-size:11.5px;opacity:.55;margin-top:4px}
+</style></head><body><h2>YOUTUBE RESULTS</h2><div class="grid">${cards}</div>
+<script>
+addEventListener('click', function(e){ var b = e.target.closest ? e.target.closest('[data-u]') : null; if(b) parent.postMessage({ __nx:1, k:'nav', url:b.getAttribute('data-u') }, '*'); });
+parent.postMessage({ __nx:1, k:'title', t:'YouTube search' }, '*');
+<\/script></body></html>`;
+}
 
-                    if (games.length === 0) {
-                        this.showEmptyState();
-                        return;
-                    }
+function errHtml(msg){
+  return '<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#0b0e13;color:#dfe7ef;font-family:Inter,system-ui,sans-serif;display:grid;place-items:center;height:100vh}div{max-width:480px;text-align:center;padding:28px;background:#10161f;border:1px solid #223046;border-radius:14px}h1{letter-spacing:.3em;font-size:18px;color:#8fb8ea;margin:0 0 10px}code{color:#f0a35e;font-size:12px;word-break:break-all}</style></head><body><div><h1>NEXUS</h1><p style="opacity:.75;font-size:13px">' + escH(msg) + '</p></div></body></html>';
+}
 
-                    // Clear existing cards (keep loading indicator removed)
-                    const fragment = document.createDocumentFragment();
+/* ---------- parent <-> nexus messaging ---------- */
+addEventListener('message', async e => {
+  const d = e.data;
+  if(!d || !d.__nx) return;
+  const src = e.source;
+  if(d.k === 'fetch'){
+    try{
+      const r = await NX.fetch(d.url, d.opts || {});
+      const buf = await r.arrayBuffer();
+      let ct = ''; try{ ct = r.headers.get('content-type') || ''; }catch(err){}
+      src.postMessage({ __nxr:1, k:'res', id:d.id, ok:r.ok, status:r.status, ct, buf }, '*');
+    }catch(err){
+      src.postMessage({ __nxr:1, k:'res', id:d.id, ok:false, status:0, err:String((err && err.message) || err), buf:new ArrayBuffer(0) }, '*');
+    }
+  } else if(d.k === 'ready'){
+    if(nxPendingPush && src){ const p = nxPendingPush; nxPendingPush = null; src.postMessage({ __nxr:1, k:'push', html:p }, '*'); }
+  } else if(d.k === 'nav'){
+    if(d.direct) bootDirect(d.url); else nxGo(d.url, true);
+  } else if(d.k === 'stage'){
+    setStage(d.s);
+  } else if(d.k === 'title'){
+    document.getElementById('nxTitle').textContent = d.t || '';
+  }
+});
 
-                    games.forEach(game => {
-                        const card = this.createGameCard(game);
-                        fragment.appendChild(card);
-                    });
+/* ---------- browser UI wiring ---------- */
+function openBrowser(){
+  nxEl.classList.add('open');
+  ensureBlob();
+  if(!nxBooted){ nxBooted = true; nxGo('nexus://home', true); bootTransports(); }
+  document.getElementById('nxUrl').focus();
+}
+function closeBrowser(){ nxEl.classList.remove('open'); }
 
-                    this.container.innerHTML = '';
-                    this.container.appendChild(fragment);
-                },
+document.getElementById('nxClose').onclick = closeBrowser;
+document.getElementById('nxBack').onclick = () => { if(nxIdx > 0){ nxIdx--; nxGo(nxHist[nxIdx].display, false); } };
+document.getElementById('nxFwd').onclick = () => { if(nxIdx < nxHist.length - 1){ nxIdx++; nxGo(nxHist[nxIdx].display, false); } };
+document.getElementById('nxReload').onclick = () => { const c = nxHist[nxIdx]; if(c) nxGo(c.display, false); };
+document.getElementById('nxHome').onclick = () => nxGo('nexus://home', true);
+document.getElementById('nxUrl').addEventListener('keydown', e => { if(e.key === 'Enter') nxGo(e.target.value, true); });
+document.getElementById('nxBadge').onclick = async () => {
+  const w = prompt('Wisp relay URL (used by epoxy / libcurl):', NX.wisp);
+  if(w && w.trim()){
+    NX.wisp = w.trim();
+    try{ localStorage.setItem('nx_wisp', NX.wisp); }catch(e){}
+    try{ NX.epoxy && NX.epoxy.set_websocket && NX.epoxy.set_websocket(NX.wisp); }catch(e){}
+    try{ NX.curl  && NX.curl.set_websocket  && NX.curl.set_websocket(NX.wisp);  }catch(e){}
+    setBadge(NX.kind);
+  }
+};
 
-                /**
-                 * Create a single game card DOM element.
-                 */
-                createGameCard(game) {
-                    const card = document.createElement('a');
-                    card.className = 'game-card';
-                    card.href = game.htmlUrl;
-                    card.target = '_blank';
-                    card.rel = 'noopener noreferrer';
-                    card.title = game.name;
+/* ============================================================
+   PS5 UI wiring
+============================================================ */
+slots.forEach((s, i) => s.addEventListener('click', () => {
+  (i === selected) ? playSelected() : select(i);
+}));
 
-                    // Icon image
-                    if (game.icon) {
-                        const img = document.createElement('img');
-                        img.className = 'game-icon';
-                        img.src = game.icon;
-                        img.alt = game.name;
-                        img.loading = 'lazy';
-                        img.onerror = () => { img.style.display = 'none'; }; // hide broken images
-                        card.appendChild(img);
-                    }
+document.querySelectorAll('#catList li').forEach(li => li.addEventListener('click', () => {
+  document.querySelector('#catList li.active')?.classList.remove('active');
+  li.classList.add('active');
+  if(li.dataset.app === 'browser') openBrowser();
+}));
 
-                    // Provider badge
-                    const badge = document.createElement('span');
-                    badge.className = 'provider-badge';
-                    badge.textContent = game.provider;
-                    card.appendChild(badge);
+function playSelected(){
+  const s = slots[selected];
+  if(s.dataset.app === 'browser'){ openBrowser(); return; }
+  document.getElementById('playTitle').textContent = s.dataset.name;
+  const ov = document.getElementById('playOverlay');
+  ov.classList.add('show');
+  clearTimeout(overlayTimer);
+  overlayTimer = setTimeout(() => ov.classList.remove('show'), 1700);
+}
+document.querySelectorAll('.hint').forEach(h => h.addEventListener('click', () => {
+  if(h.dataset.action === 'play') playSelected();
+}));
 
-                    // Game name
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = game.name;
-                    card.appendChild(nameSpan);
+document.addEventListener('keydown', e => {
+  const tag = (e.target && e.target.tagName || '').toLowerCase();
+  if(nxEl.classList.contains('open')){
+    if(e.key === 'Escape' && tag !== 'input') closeBrowser();
+    return;
+  }
+  if(tag === 'input' || tag === 'textarea') return;
+  if(e.key === 'ArrowRight') select(selected + 1);
+  else if(e.key === 'ArrowLeft') select(selected - 1);
+  else if(e.key === 'Enter') playSelected();
+  else if(e.key === 'Escape') document.getElementById('playOverlay').classList.remove('show');
+});
+window.addEventListener('resize', layout);
 
-                    return card;
-                },
+/* live clock */
+const clock = document.getElementById('clock');
+function tick(){
+  const d = new Date();
+  clock.textContent = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+tick(); setInterval(tick, 5000);
 
-                showEmptyState() {
-                    if (!this.container) return;
-                    this.container.innerHTML = `
-                        <div class="loading-state">
-                            No games available. Check your API configuration.
-                        </div>
-                    `;
-                }
-            };
-
-            /**
-             * ============================================================
-             *  BOOTSTRAP
-             * ============================================================
-             */
-            async function boot() {
-                NexusUI.init();
-
-                // Attempt to fetch games from all providers
-                const games = await GameProvider.fetchAllGames();
-
-                // Render them
-                NexusUI.renderGames(games);
-
-                console.log(`[Nexus] Loaded ${games.length} games from ${[...new Set(games.map(g => g.provider))].join(', ')}`);
-
-                // ---- BLOB EXECUTION ----
-                // As requested, we take the entire HTML document, turn it
-                // into a Blob, and generate a URL. This literally "runs"
-                // the code from a Blob object.
-                const fullHtmlCode = document.documentElement.outerHTML;
-                const blob = new Blob([fullHtmlCode], { type: 'text/html' });
-                const blobUrl = URL.createObjectURL(blob);
-
-                console.log('[Nexus] Blob URL generated:', blobUrl);
-                // Uncomment the line below to open the UI in a new tab via the Blob URL:
-                // window.open(blobUrl, '_blank');
-            }
-
-            // Start the app when DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', boot);
-            } else {
-                boot();
-            }
-
-        })();
-    </script>
+/* init */
+row.style.transition = 'none';
+select(1, true);
+requestAnimationFrame(() => requestAnimationFrame(() => { row.style.transition = ''; }));
+</script>
 </body>
 </html>
