@@ -1,985 +1,1203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexus</title>
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexus</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-  <!-- Mercury Workshop Epoxy Transport & libcurl.js WebAssembly Transports -->
-  <script src="https://cdn.jsdelivr.net/npm/libcurl.js@0.7.1/libcurl.js"></script>
-  <script src="https://unpkg.com/@mercuryworkshop/epoxy-transport@2.1.3/dist/index.js"></script>
+        body {
+            background: #0a0a0f;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: #fff;
+        }
 
-  <style>
-    :root {
-      --bg-color: #08080a;
-      --capsule-bg: rgba(20, 20, 24, 0.82);
-      --capsule-border: rgba(255, 255, 255, 0.08);
-      --text-main: #ffffff;
-      --text-muted: #8e8e93;
-      --search-bg: rgba(22, 22, 26, 0.88);
-      --search-border: rgba(255, 255, 255, 0.07);
-      --brand-mint: #76e289;
-      --accent-glow: rgba(118, 226, 137, 0.25);
-    }
+        /* ===== STARFIELD ===== */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: #fff;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            opacity: 0;
+        }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: var(--maxOpacity); transform: scale(1); }
+        }
 
-    /* Starfield Background Canvas */
-    #stars-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
+        /* ===== TOP NAVIGATION BAR ===== */
+        .top-nav {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(30, 30, 38, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-width: 90vw;
+        }
 
-    /* Top Capsule Navbar */
-    .top-nav {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-width: 420px;
-      max-width: 90vw;
-      height: 52px;
-      padding: 0 18px;
-      background: var(--capsule-bg);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid var(--capsule-border);
-      border-radius: 9999px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: auto;
+        }
 
-    .top-nav:hover {
-      border-color: rgba(255, 255, 255, 0.14);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75);
-    }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-    }
+        .nav-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #e0e0e0;
+            background: transparent;
+            border: none;
+            outline: none;
+            flex-shrink: 0;
+        }
 
-    .mascot-icon {
-      width: 24px;
-      height: 24px;
-      fill: var(--brand-mint);
-      filter: drop-shadow(0 0 6px rgba(118, 226, 137, 0.4));
-      transition: transform 0.2s ease;
-    }
+        .nav-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
 
-    .nav-left:hover .mascot-icon {
-      transform: rotate(-10deg) scale(1.12);
-    }
+        .nav-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
+        .nav-icon.active {
+            color: #a78bfa;
+        }
 
-    .nav-btn {
-      background: transparent;
-      border: none;
-      color: #ffffff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px;
-      border-radius: 8px;
-      opacity: 0.88;
-      transition: all 0.2s ease;
-    }
+        .nav-icon.frog-icon {
+            color: #7dd3fc;
+        }
 
-    .nav-btn:hover {
-      opacity: 1;
-      transform: translateY(-1px) scale(1.08);
-      color: var(--brand-mint);
-    }
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            gap: 40px;
+            animation: fadeIn 0.6s ease-out;
+        }
 
-    .nav-btn svg {
-      width: 21px;
-      height: 21px;
-      fill: currentColor;
-    }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    /* Main Dashboard Layout */
-    .dashboard-container {
-      position: relative;
-      z-index: 10;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      padding-bottom: 7vh;
-      width: 100%;
-    }
+        .title {
+            font-size: clamp(28px, 6vw, 42px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 2px 20px rgba(167, 139, 250, 0.3);
+            line-height: 1.2;
+            user-select: none;
+        }
 
-    /* Title */
-    .hero-title {
-      font-size: 3rem;
-      font-weight: 800;
-      letter-spacing: -0.8px;
-      color: #ffffff;
-      margin-bottom: 34px;
-      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
-    }
+        .title span {
+            background: linear-gradient(135deg, #a78bfa, #7dd3fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    /* App Quick-Launch Row */
-    .app-grid {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-    }
+        /* ===== APP ICONS ROW ===== */
+        .app-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 8px 0;
+        }
 
-    .app-card {
-      width: 76px;
-      height: 76px;
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-      outline: none;
-    }
+        .app-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: none;
+            outline: none;
+            padding: 0;
+            background: transparent;
+        }
 
-    .app-card:hover {
-      transform: translateY(-7px) scale(1.06);
-      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.65);
-    }
+        .app-icon:hover {
+            transform: translateY(-3px) scale(1.05);
+        }
 
-    .app-card:active {
-      transform: scale(0.96);
-    }
+        .app-icon:active {
+            transform: translateY(0) scale(0.98);
+        }
 
-    /* Individual App Badges */
-    .app-card.instagram {
-      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-    }
+        .app-icon svg {
+            width: 28px;
+            height: 28px;
+        }
 
-    .app-card.movies {
-      background: linear-gradient(135deg, #2b1055 0%, #4c1d95 100%);
-      color: #ffffff;
-    }
+        .app-icon .label {
+            position: absolute;
+            bottom: -18px;
+            font-size: 8px;
+            color: #888;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
 
-    .app-card.tiktok {
-      background: #000000;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+        .app-icon:hover .label {
+            opacity: 1;
+        }
 
-    .app-card.twitch {
-      background: #9146ff;
-    }
+        /* Individual app colors */
+        .app-instagram {
+            background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        }
+        .app-movies {
+            background: linear-gradient(135deg, #4a1d8e, #2d0a5e);
+        }
+        .app-tiktok {
+            background: #000;
+            border: 1px solid #333;
+        }
+        .app-twitch {
+            background: #9146ff;
+        }
+        .app-youtube {
+            background: #ff0000;
+        }
+        .app-discord {
+            background: #5865f2;
+        }
 
-    .app-card.youtube {
-      background: #ff0000;
-    }
+        /* ===== SEARCH BAR ===== */
+        .search-container {
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+        }
 
-    .app-card.discord {
-      background: #5865f2;
-    }
+        .search-bar {
+            width: 100%;
+            background: rgba(30, 30, 38, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 28px;
+            padding: 16px 24px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
 
-    /* Movies Card Label */
-    .movies-badge-label {
-      font-size: 11px;
-      font-weight: 700;
-      margin-top: 4px;
-      letter-spacing: -0.2px;
-      color: #ffffff;
-    }
+        .search-bar::placeholder {
+            color: #888;
+            font-weight: 400;
+        }
 
-    /* Search Bar Capsule */
-    .search-box-wrapper {
-      position: relative;
-      width: 440px;
-      max-width: 90vw;
-    }
+        .search-bar:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15), 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
 
-    .search-input {
-      width: 100%;
-      height: 52px;
-      border-radius: 9999px;
-      background: var(--search-bg);
-      border: 1px solid var(--search-border);
-      color: #ffffff;
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 500;
-      text-align: center;
-      padding: 0 24px;
-      outline: none;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-      transition: all 0.25s ease;
-      user-select: text;
-    }
+        /* ===== STATUS INDICATOR ===== */
+        .status-bar {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(30, 30, 38, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 12px;
+            color: #aaa;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.3s, transform 0.3s;
+            max-width: 90vw;
+        }
 
-    .search-input::placeholder {
-      color: #8c8c93;
-      font-weight: 500;
-    }
+        .status-bar.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-50%) translateY(10px);
+        }
 
-    .search-input:focus {
-      border-color: rgba(255, 255, 255, 0.24);
-      background: rgba(28, 28, 34, 0.95);
-      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04), 0 12px 32px rgba(0, 0, 0, 0.7);
-    }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
 
-    /* In-App Browser Viewport Overlay */
-    #browser-view {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #0e0e12;
-      z-index: 100;
-      display: none;
-      flex-direction: column;
-    }
+        .status-dot.ready {
+            background: #4ade80;
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+        }
 
-    .browser-toolbar {
-      height: 56px;
-      background: #141418;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      gap: 12px;
-      z-index: 102;
-    }
+        .status-dot.loading {
+            background: #facc15;
+            animation: pulse 1s ease-in-out infinite;
+        }
 
-    .browser-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #ffffff;
-      border-radius: 8px;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+        .status-dot.error {
+            background: #f87171;
+            box-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+        }
 
-    .browser-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
 
-    .browser-omnibox {
-      flex: 1;
-      height: 36px;
-      background: #09090c;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 0 14px;
-      color: #ffffff;
-      font-family: inherit;
-      font-size: 0.9rem;
-      user-select: text;
-      outline: none;
-    }
+        /* ===== BROWSER VIEW (hidden by default) ===== */
+        .browser-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 200;
+            background: #0a0a0f;
+            display: none;
+            flex-direction: column;
+        }
 
-    .browser-omnibox:focus {
-      border-color: var(--brand-mint);
-    }
+        .browser-view.active {
+            display: flex;
+        }
 
-    .engine-status-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #34d399;
-      white-space: nowrap;
-    }
+        .browser-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: #1a1a24;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+        }
 
-    .engine-status-badge.libcurl {
-      background: rgba(6, 182, 212, 0.12);
-      border-color: rgba(6, 182, 212, 0.3);
-      color: #22d3ee;
-    }
+        .browser-bar input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
 
-    .engine-status-badge.loading {
-      background: rgba(234, 179, 8, 0.12);
-      border-color: rgba(234, 179, 8, 0.3);
-      color: #facc15;
-    }
+        .browser-bar input:focus {
+            border-color: #a78bfa;
+        }
 
-    #loading-indicator-bar {
-      height: 2px;
-      width: 0%;
-      background: linear-gradient(90deg, #76e289, #38bdf8);
-      transition: width 0.3s ease;
-    }
+        .browser-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
 
-    #sandbox-viewport {
-      flex: 1;
-      width: 100%;
-      height: calc(100% - 58px);
-      border: none;
-      background: #ffffff;
-    }
+        .browser-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
 
-    /* Modal System */
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      z-index: 50;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
+        .browser-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
 
-    .modal-card {
-      width: 540px;
-      max-width: 90vw;
-      max-height: 80vh;
-      background: #121316;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-      overflow-y: auto;
-    }
+        .browser-frame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #fff;
+        }
 
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+        /* ===== LOADING OVERLAY ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 10, 15, 0.92);
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
 
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
+        .loading-overlay.active {
+            display: flex;
+        }
 
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1.5rem;
-    }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(167, 139, 250, 0.15);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
-    .modal-close:hover {
-      color: #fff;
-    }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-    .relay-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: #18191e;
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+        .loading-text {
+            color: #aaa;
+            font-size: 14px;
+        }
 
-    .relay-item:hover, .relay-item.active {
-      border-color: var(--brand-mint);
-      background: #1f2128;
-    }
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .top-nav {
+                top: 10px;
+                padding: 6px 12px;
+                gap: 8px;
+            }
 
-    .relay-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
+            .nav-icon {
+                width: 32px;
+                height: 32px;
+            }
 
-    .relay-url {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
+            .nav-icon svg {
+                width: 18px;
+                height: 18px;
+            }
 
-    .relay-latency {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #34d399;
-      padding: 3px 8px;
-      background: rgba(52, 211, 153, 0.1);
-      border-radius: 6px;
-    }
-  </style>
+            .main-content {
+                gap: 32px;
+                padding: 16px;
+            }
+
+            .app-icon {
+                width: 46px;
+                height: 46px;
+                border-radius: 12px;
+            }
+
+            .app-icon svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .search-bar {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .app-icon {
+                width: 56px;
+                height: 56px;
+            }
+
+            .app-icon svg {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* ===== HIDDEN UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Starfield Canvas -->
-  <canvas id="stars-canvas"></canvas>
+    <!-- Starfield -->
+    <div class="starfield" id="starfield"></div>
 
-  <!-- Top Floating Capsule Navigation -->
-  <header class="top-nav">
-    <div class="nav-left" title="Nexus Home" onclick="closeBrowser()">
-      <!-- Mint Mascot Frog Icon -->
-      <svg class="mascot-icon" viewBox="0 0 24 24">
-        <path d="M7 2a3 3 0 0 0-3 3c0 .8.3 1.5.8 2C3.1 8 2 10 2 12.5 2 15 4 17 6.5 17c.5 0 1-.1 1.5-.2C9 18.2 10.4 19 12 19s3-.8 4-2.2c.5.1 1 .2 1.5.2 2.5 0 4.5-2 4.5-4.5 0-2.5-1.1-4.5-2.8-5.5.5-.5.8-1.2.8-2a3 3 0 0 0-3-3c-1.3 0-2.3.8-2.7 2H9.7C9.3 2.8 8.3 2 7 2zm0 2c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zm10 0c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zm-8.5 7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
-      </svg>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav" id="topNav">
+        <div class="nav-left">
+            <button class="nav-icon frog-icon" id="navHome" title="Home">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            </button>
+        </div>
+        <div class="nav-right">
+            <button class="nav-icon" id="navDiscord" title="Discord">
+                <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            </button>
+            <button class="nav-icon" id="navGrid" title="Apps">
+                <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
+            </button>
+            <button class="nav-icon" id="navExtensions" title="Extensions">
+                <svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
+            </button>
+            <button class="nav-icon" id="navAdd" title="Add">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <h1 class="title" id="mainTitle">frogie's <span>arcade</span> v4</h1>
+
+        <!-- App Icons Row -->
+        <div class="app-row" id="appRow">
+            <button class="app-icon app-instagram" data-url="https://www.instagram.com" title="Instagram">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                <span class="label">Instagram</span>
+            </button>
+            <button class="app-icon app-movies" data-url="https://www.youtube.com" title="Movies">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                <span class="label">Movies</span>
+            </button>
+            <button class="app-icon app-tiktok" data-url="https://www.tiktok.com" title="TikTok">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                <span class="label">TikTok</span>
+            </button>
+            <button class="app-icon app-twitch" data-url="https://www.twitch.tv" title="Twitch">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+                <span class="label">Twitch</span>
+            </button>
+            <button class="app-icon app-youtube" data-url="https://www.youtube.com" title="YouTube">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                <span class="label">YouTube</span>
+            </button>
+            <button class="app-icon app-discord" data-url="https://discord.com" title="Discord">
+                <svg viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                <span class="label">Discord</span>
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" class="search-bar" id="searchInput" placeholder="search anything..." autocomplete="off" spellcheck="false">
+        </div>
     </div>
 
-    <div class="nav-right">
-      <!-- Gamepad Icon (Games Library) -->
-      <button class="nav-btn" title="Games Library" onclick="openModal('games-modal')">
-        <svg viewBox="0 0 24 24">
-          <path d="M6 5h12a7 7 0 0 1 7 7c0 2.8-1.5 5.2-3.8 6.4-.9.5-2 .2-2.6-.6l-1.5-2.2c-.3-.4-.7-.6-1.1-.6H7c-.4 0-.8.2-1.1.6L4.4 17.8c-.6.8-1.7 1.1-2.6.6C-0.5 17.2-2 14.8-2 12a7 7 0 0 1 8-7zm2 5v4m-2-2h4m8-1.5a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zm2 3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z" stroke="currentColor" stroke-width="0.5"/>
-        </svg>
-      </button>
-
-      <!-- Grid Icon (Apps Catalog) -->
-      <button class="nav-btn" title="Apps" onclick="openModal('apps-modal')">
-        <svg viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7.5" height="7.5" rx="2" />
-          <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" />
-          <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" />
-          <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" />
-        </svg>
-      </button>
-
-      <!-- Handshake Icon (Wisp Relays) -->
-      <button class="nav-btn" title="Wisp Relays & Status" onclick="openModal('relays-modal')">
-        <svg viewBox="0 0 24 24">
-          <path d="M19.5 8.5l-3.2 3.2c-.4.4-1 .4-1.4 0l-2.1-2.1a1 1 0 0 0-1.4 0l-4.5 4.5c-.4.4-.4 1 0 1.4l1.4 1.4c.4.4 1 .4 1.4 0l3.8-3.8 2.1 2.1c.8.8 2 .8 2.8 0l4.5-4.5c.8-.8.8-2 0-2.8l-1.4-1.4c-.6-.7-1.4-.7-2.1 0zM4 14l3.5-3.5 1.4 1.4L5.4 15.4c-.8.8-2 .8-2.8 0L1.2 14c-.8-.8-.8-2 0-2.8L5.7 6.7c.8-.8 2-.8 2.8 0l3.5 3.5-1.4 1.4-3.5-3.5-3.1 3.1c-.4.4-.4 1 0 1.4L4 14z"/>
-        </svg>
-      </button>
-
-      <!-- Plus Icon (Settings / Custom Add) -->
-      <button class="nav-btn" title="Engine Settings" onclick="openModal('settings-modal')">
-        <svg viewBox="0 0 24 24">
-          <path d="M12 4v16m8-8H4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-      </button>
+    <!-- Status Bar -->
+    <div class="status-bar" id="statusBar">
+        <span class="status-dot loading" id="statusDot"></span>
+        <span id="statusText">initializing...</span>
     </div>
-  </header>
 
-  <!-- Central Dashboard Content -->
-  <main class="dashboard-container">
-    <h1 class="hero-title">nexus</h1>
-
-    <!-- App Quick Launch Badges -->
-    <section class="app-grid">
-      <!-- Instagram -->
-      <div class="app-card instagram" title="Instagram" onclick="launchApp('https://instagram.com')">
-        <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-        </svg>
-      </div>
-
-      <!-- movies -->
-      <div class="app-card movies" title="Movies" onclick="launchApp('https://fmoviesz.to')">
-        <svg viewBox="0 0 24 24" width="30" height="30" fill="url(#glossyPlayGrad)">
-          <defs>
-            <linearGradient id="glossyPlayGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#ffffff"/>
-              <stop offset="100%" stop-color="#c4b5fd"/>
-            </linearGradient>
-          </defs>
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-        <span class="movies-badge-label">movies</span>
-      </div>
-
-      <!-- TikTok -->
-      <div class="app-card tiktok" title="TikTok" onclick="launchApp('https://tiktok.com')">
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="#ffffff">
-          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.86.12V9.42a6.34 6.34 0 0 0-.86-.06A6.33 6.33 0 0 0 3 15.69 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.31V9.22a8.16 8.16 0 0 0 4.91 1.63V7.4a4.85 4.85 0 0 1-1-.71z"/>
-        </svg>
-      </div>
-
-      <!-- Twitch -->
-      <div class="app-card twitch" title="Twitch" onclick="launchApp('https://twitch.tv')">
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="#ffffff">
-          <path d="M2.15 2L1 6.57v13.72h5.71V24h3.71l3.72-3.71h4.86L23 16V2H2.15zm18.85 13.14l-3.43 3.43H12.7l-3.71 3.71v-3.71H4.43V4.29h16.57v10.85zm-4-6.85h-2.29v5.71H17V8.29zm-5.71 0H9v5.71h2.29V8.29z"/>
-        </svg>
-      </div>
-
-      <!-- YouTube -->
-      <div class="app-card youtube" title="YouTube" onclick="launchApp('https://youtube.com')">
-        <svg viewBox="0 0 24 24" width="38" height="38" fill="#ffffff">
-          <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1 31.4 31.4 0 0 0 .5-5.8 31.4 31.4 0 0 0-.5-5.8zm-14 9.3v-7l6.2 3.5-6.2 3.5z"/>
-        </svg>
-      </div>
-
-      <!-- Discord -->
-      <div class="app-card discord" title="Discord" onclick="launchApp('https://discord.com')">
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="#ffffff">
-          <path d="M20.32 4.37a19.8 19.8 0 0 0-4.9-1.52.07.07 0 0 0-.08.03c-.21.38-.45.87-.61 1.25a18.27 18.27 0 0 0-5.46 0 12.64 12.64 0 0 0-.62-1.25.08.08 0 0 0-.08-.03 19.74 19.74 0 0 0-4.9 1.52.07.07 0 0 0-.03.03C.53 9.03-.32 13.55.1 18a20 20 0 0 0 6.07 3.08.08.08 0 0 0 .09-.03c.47-.64.88-1.32 1.24-2.03a.08.08 0 0 0-.04-.11 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1 0-.13c.13-.1.25-.19.37-.29a.08.08 0 0 1 .08-.01c3.93 1.8 8.18 1.8 12.07 0a.08.08 0 0 1 .08.01c.12.1.25.2.37.3a.08.08 0 0 1 0 .12 12.28 12.28 0 0 1-1.87.9.08.08 0 0 0-.04.11c.36.71.78 1.39 1.24 2.03a.08.08 0 0 0 .09.03A19.9 19.9 0 0 0 23.9 18c.5-5.18-.85-9.68-3.55-13.6a.07.07 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.96 0c-1.18 0-2.15-1.09-2.15-2.42s.96-2.42 2.15-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/>
-        </svg>
-      </div>
-    </section>
-
-    <!-- Search Input -->
-    <div class="search-box-wrapper">
-      <input type="text" id="nexus-search-bar" class="search-input" placeholder="search anything..." autocomplete="off" spellcheck="false">
+    <!-- Browser View -->
+    <div class="browser-view" id="browserView">
+        <div class="browser-bar">
+            <button class="browser-btn" id="browserBack" title="Back">
+                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </button>
+            <button class="browser-btn" id="browserRefresh" title="Refresh">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            </button>
+            <input type="text" id="browserUrl" placeholder="Enter URL..." value="">
+            <button class="browser-btn" id="browserGo" title="Go">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+        </div>
+        <iframe class="browser-frame" id="browserFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"></iframe>
     </div>
-  </main>
 
-  <!-- In-App Proxied Browser Viewport -->
-  <div id="browser-view">
-    <div class="browser-toolbar">
-      <button class="browser-btn" title="Back" onclick="historyBack()">←</button>
-      <button class="browser-btn" title="Reload" onclick="reloadCurrent()">↻</button>
-      <button class="browser-btn" title="Home" onclick="closeBrowser()">⌂</button>
-      
-      <input type="text" id="browser-url-bar" class="browser-omnibox" spellcheck="false">
-      
-      <!-- Live Transport Engine Badge -->
-      <div id="engine-badge" class="engine-status-badge">
-        <span id="engine-badge-icon">⚡</span>
-        <span id="engine-badge-name">Epoxy (Wasm TLS)</span>
-      </div>
-
-      <button class="browser-btn" title="Close" onclick="closeBrowser()">✕</button>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Connecting to relay...</div>
     </div>
-    <div id="loading-indicator-bar"></div>
-    <iframe id="sandbox-viewport" sandbox="allow-scripts allow-forms allow-same-origin allow-modals"></iframe>
-  </div>
 
-  <!-- Relays Modal -->
-  <div id="relays-modal" class="modal-backdrop" onclick="closeModalOnBg(event, 'relays-modal')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 class="modal-title">Active Wisp Relays</h2>
-        <button class="modal-close" onclick="closeModal('relays-modal')">&times;</button>
-      </div>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-        Multiplexed TCP/TLS packets are tunneled via Wisp. Tap a relay below to activate it.
-      </p>
-      <div id="relays-list"></div>
-      <button onclick="pingAllRelays()" style="margin-top: 10px; padding: 10px; background: #22242c; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600;">
-        Ping All Relays
-      </button>
-    </div>
-  </div>
+    <!-- ===== SCRIPTS ===== -->
+    <!-- Epoxy Transport -->
+    <script src="https://unpkg.com/@mercuryworkshop/epoxy-transport@3/dist/index.js"></script>
+    <!-- libcurl Transport (fallback) -->
+    <script src="https://unpkg.com/@mercuryworkshop/libcurl-transport@2/dist/index.js"></script>
 
-  <!-- Games Modal -->
-  <div id="games-modal" class="modal-backdrop" onclick="closeModalOnBg(event, 'games-modal')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 class="modal-title">Nexus Games</h2>
-        <button class="modal-close" onclick="closeModal('games-modal')">&times;</button>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <button onclick="launchApp('https://play2048.co')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">2048</button>
-        <button onclick="launchApp('https://retrobowl.me')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">Retro Bowl</button>
-        <button onclick="launchApp('https://slopegame.online')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">Slope</button>
-        <button onclick="launchApp('https://flappybird.io')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">Flappy Bird</button>
-      </div>
-    </div>
-  </div>
+    <script>
+    (function() {
+        'use strict';
 
-  <!-- Apps Modal -->
-  <div id="apps-modal" class="modal-backdrop" onclick="closeModalOnBg(event, 'apps-modal')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 class="modal-title">Apps</h2>
-        <button class="modal-close" onclick="closeModal('apps-modal')">&times;</button>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <button onclick="launchApp('https://duckduckgo.com')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">DuckDuckGo</button>
-        <button onclick="launchApp('https://github.com')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">GitHub</button>
-        <button onclick="launchApp('https://wikipedia.org')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">Wikipedia</button>
-        <button onclick="launchApp('https://reddit.com')" style="padding: 14px; background: #1c1d22; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; color: #fff; cursor: pointer;">Reddit</button>
-      </div>
-    </div>
-  </div>
+        // =========================================================================
+        // CONFIGURATION
+        // =========================================================================
 
-  <!-- Settings Modal -->
-  <div id="settings-modal" class="modal-backdrop" onclick="closeModalOnBg(event, 'settings-modal')">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 class="modal-title">Nexus Settings</h2>
-        <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
-      </div>
-      <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; display: block;">Custom Wisp Relay URL:</label>
-      <input type="text" id="custom-relay-input" placeholder="wss://..." style="width: 100%; padding: 10px; background: #0b0b0e; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; margin-bottom: 14px;">
-      <button onclick="saveCustomRelay()" style="padding: 10px; background: var(--brand-mint); border: none; border-radius: 8px; color: #000; font-weight: 700; cursor: pointer;">
-        Save & Apply Relay
-      </button>
-    </div>
-  </div>
+        const CONFIG = {
+            // Hardcoded fallback relays (used if dynamic discovery fails)
+            fallbackRelays: [
+                'wss://wisp.mercurywork.shop/',
+                'wss://nebulaservices.org/wisp/',
+                'wss://glseries.net/wisp/',
+                'wss://nebulaproxy.io/wisp/'
+            ],
+            // Dynamic relay sources (fetched at runtime)
+            relaySources: [
+                'https://raw.githubusercontent.com/MercuryWorkshop/wisp-protocol/main/servers.json',
+                'https://cdn.jsdelivr.net/gh/MercuryWorkshop/wisp-protocol@main/servers.json'
+            ],
+            // Timeout for relay connection (ms)
+            relayTimeout: 8000,
+            // Default homepage for the browser
+            defaultHomepage: 'https://www.google.com'
+        };
 
-  <script>
-    /* =========================================================================
-       1. STARFIELD BACKGROUND ENGINE
-       ========================================================================= */
-    const canvas = document.getElementById('stars-canvas');
-    const ctx = canvas.getContext('2d');
-    let stars = [];
+        // =========================================================================
+        // STATE
+        // =========================================================================
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initStars();
-    }
+        const state = {
+            currentRelay: null,
+            epoxyClient: null,
+            libcurlClient: null,
+            isReady: false,
+            isFallback: false,
+            history: [],
+            historyIndex: -1
+        };
 
-    function initStars() {
-      stars = [];
-      const numStars = Math.floor((canvas.width * canvas.height) / 7000);
-      for (let i = 0; i < numStars; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 1.5 + 0.5,
-          alpha: Math.random() * 0.7 + 0.3,
-          speed: Math.random() * 0.015 + 0.005,
-          flickerDir: Math.random() > 0.5 ? 1 : -1
-        });
-      }
-    }
+        // =========================================================================
+        // DOM REFERENCES
+        // =========================================================================
 
-    function drawStars() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let s of stars) {
-        s.alpha += s.speed * s.flickerDir;
-        if (s.alpha > 0.9) { s.alpha = 0.9; s.flickerDir = -1; }
-        else if (s.alpha < 0.2) { s.alpha = 0.2; s.flickerDir = 1; }
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      requestAnimationFrame(drawStars);
-    }
+        const dom = {
+            starfield: $('#starfield'),
+            mainContent: $('#mainContent'),
+            mainTitle: $('#mainTitle'),
+            appRow: $('#appRow'),
+            searchInput: $('#searchInput'),
+            statusBar: $('#statusBar'),
+            statusDot: $('#statusDot'),
+            statusText: $('#statusText'),
+            browserView: $('#browserView'),
+            browserFrame: $('#browserFrame'),
+            browserUrl: $('#browserUrl'),
+            browserBack: $('#browserBack'),
+            browserRefresh: $('#browserRefresh'),
+            browserGo: $('#browserGo'),
+            loadingOverlay: $('#loadingOverlay'),
+            loadingText: $('#loadingText'),
+            topNav: $('#topNav'),
+            navHome: $('#navHome'),
+            navDiscord: $('#navDiscord'),
+            navGrid: $('#navGrid'),
+            navExtensions: $('#navExtensions'),
+            navAdd: $('#navAdd')
+        };
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    drawStars();
+        // =========================================================================
+        // STARFIELD GENERATION
+        // =========================================================================
 
-    /* =========================================================================
-       2. WISP RELAYS REGISTRY
-       ========================================================================= */
-    const WISP_RELAYS = [
-      { id: 'mw', name: 'Mercury Workshop Demo', url: 'wss://wisp.mercurywork.shop/', ping: null },
-      { id: 'anura', name: 'Anura Pro Relay', url: 'wss://anura.pro/', ping: null },
-      { id: 'ruby', name: 'Ruby Network', url: 'wss://ruby.rubynetwork.co/wisp/', ping: null },
-      { id: 'pydodge', name: 'PyDodge Wisp', url: 'wss://wisp.pydodge.com/', ping: null },
-      { id: 'shuttle', name: 'Shuttle Proxy', url: 'wss://mercury.shuttleproxy.com/', ping: null }
-    ];
+        function generateStarfield() {
+            const container = dom.starfield;
+            const fragment = document.createDocumentFragment();
+            const starCount = 120;
 
-    let currentRelayIndex = 0;
-
-    function renderRelays() {
-      const container = document.getElementById('relays-list');
-      container.innerHTML = '';
-      WISP_RELAYS.forEach((relay, idx) => {
-        const item = document.createElement('div');
-        item.className = `relay-item ${idx === currentRelayIndex ? 'active' : ''}`;
-        item.onclick = () => selectRelay(idx);
-        item.innerHTML = `
-          <div>
-            <div class="relay-name">${relay.name}</div>
-            <div class="relay-url">${relay.url}</div>
-          </div>
-          <div class="relay-latency">${relay.ping ? relay.ping + ' ms' : 'Select'}</div>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function selectRelay(index) {
-      currentRelayIndex = index;
-      renderRelays();
-      closeModal('relays-modal');
-    }
-
-    async function pingAllRelays() {
-      for (let r of WISP_RELAYS) {
-        const start = performance.now();
-        try {
-          const ws = new WebSocket(r.url);
-          await new Promise((resolve, reject) => {
-            ws.onopen = () => {
-              r.ping = Math.round(performance.now() - start);
-              ws.close();
-              resolve();
-            };
-            ws.onerror = reject;
-            setTimeout(() => { ws.close(); reject(new Error('Timeout')); }, 2500);
-          });
-        } catch {
-          r.ping = 'Offline';
-        }
-        renderRelays();
-      }
-    }
-
-    function saveCustomRelay() {
-      const val = document.getElementById('custom-relay-input').value.trim();
-      if (val.startsWith('wss://') || val.startsWith('ws://')) {
-        WISP_RELAYS.unshift({ id: 'custom', name: 'Custom Relay', url: val, ping: null });
-        currentRelayIndex = 0;
-        renderRelays();
-        closeModal('settings-modal');
-      }
-    }
-
-    renderRelays();
-
-    /* =========================================================================
-       3. TRANSPORT LAYER: EPOXY (Primary) -> LIBCURL.JS (Fallback)
-       ========================================================================= */
-    let currentNavUrl = '';
-    let navHistory = [];
-
-    async function fetchWithWispFallback(targetUrl) {
-      const activeRelay = WISP_RELAYS[currentRelayIndex].url;
-      updateLoadingBar(30);
-
-      // --- STEP 1: Attempt with Epoxy (Rustls WASM over Wisp) ---
-      try {
-        console.log(`[Nexus] Requesting ${targetUrl} via Epoxy on relay ${activeRelay}`);
-        if (window.EpoxyClient || (window.EpoxyTransport && window.EpoxyTransport.EpoxyClient)) {
-          const ClientClass = window.EpoxyClient || window.EpoxyTransport.EpoxyClient;
-          const epoxy = new ClientClass({ wisp: activeRelay });
-          
-          const res = await epoxy.fetch(targetUrl);
-          const html = await res.text();
-          return {
-            html,
-            engineName: 'Epoxy (Wasm TLS)',
-            isFallback: false
-          };
-        }
-      } catch (epoxyErr) {
-        console.warn('[Nexus] Epoxy fetch failed. Engaging libcurl.js fallback...', epoxyErr);
-      }
-
-      // --- STEP 2: Fallback to libcurl.js (WASM libcurl over Wisp) ---
-      updateLoadingBar(60);
-      try {
-        console.log(`[Nexus] Requesting ${targetUrl} via libcurl.js on relay ${activeRelay}`);
-        if (window.libcurl && typeof window.libcurl.fetch === 'function') {
-          window.libcurl.set_websocket(activeRelay.endsWith('/') ? activeRelay : activeRelay + '/');
-          window.libcurl.transport = 'wisp';
-
-          const res = await window.libcurl.fetch(targetUrl);
-          const html = await res.text();
-          return {
-            html,
-            engineName: 'libcurl.js (Wasm)',
-            isFallback: true
-          };
-        }
-      } catch (curlErr) {
-        console.error('[Nexus] libcurl.js fetch failed:', curlErr);
-      }
-
-      throw new Error(`Failed to load through both Epoxy and libcurl.js over ${activeRelay}`);
-    }
-
-    /* =========================================================================
-       4. HTML/CSS/JS RUNNER & REWRITER
-       ========================================================================= */
-    async function navigateTo(rawInput) {
-      let targetUrl = formatUrl(rawInput);
-      if (!targetUrl) return;
-
-      currentNavUrl = targetUrl;
-      navHistory.push(targetUrl);
-
-      // Open Browser UI
-      openBrowserUI(targetUrl);
-      setEngineStatus('Loading...', 'loading');
-      updateLoadingBar(10);
-
-      try {
-        const { html, engineName, isFallback } = await fetchWithWispFallback(targetUrl);
-        updateLoadingBar(85);
-
-        // Process and run HTML, CSS, JS
-        const processedHtml = executeSitePipeline(html, targetUrl);
-
-        // Render into sandboxed iframe
-        const iframe = document.getElementById('sandbox-viewport');
-        iframe.srcdoc = processedHtml;
-
-        setEngineStatus(engineName, isFallback ? 'libcurl' : 'epoxy');
-        updateLoadingBar(100);
-        setTimeout(() => updateLoadingBar(0), 400);
-
-      } catch (err) {
-        updateLoadingBar(0);
-        setEngineStatus('Error', 'libcurl');
-        const iframe = document.getElementById('sandbox-viewport');
-        iframe.srcdoc = `
-          <body style="background:#111;color:#eee;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;">
-            <h2 style="color:#f87171;">Connection Failed</h2>
-            <p style="color:#aaa;max-width:500px;text-align:center;">${err.message}</p>
-            <p style="color:#666;font-size:0.8rem;">Try switching to another Wisp relay via the handshake icon in Nexus.</p>
-          </body>
-        `;
-      }
-    }
-
-    function executeSitePipeline(rawHtml, targetUrl) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(rawHtml, 'text/html');
-
-      // 1. Inject <base> tag so relative CSS, JS, fonts, and images resolve
-      let baseTag = doc.querySelector('base');
-      if (!baseTag) {
-        baseTag = doc.createElement('base');
-        doc.head.insertBefore(baseTag, doc.head.firstChild);
-      }
-      baseTag.setAttribute('href', targetUrl);
-
-      // 2. Intercept clicked hyperlinks so navigation stays inside Nexus
-      const clientInterceptor = doc.createElement('script');
-      clientInterceptor.textContent = `
-        (function() {
-          document.addEventListener('click', function(e) {
-            const anchor = e.target.closest('a');
-            if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
-              e.preventDefault();
-              window.parent.postMessage({ type: 'NEXUS_LINK_CLICK', url: anchor.href }, '*');
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2.5 + 0.5;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--duration', (Math.random() * 4 + 2) + 's');
+                star.style.setProperty('--maxOpacity', (Math.random() * 0.7 + 0.3).toString());
+                star.style.animationDelay = Math.random() * 5 + 's';
+                fragment.appendChild(star);
             }
-          }, true);
 
-          // Prevent frame-busting scripts from breaking out of viewport
-          try {
-            window.top = window.self;
-            window.parent = window.self;
-          } catch(e) {}
-        })();
-      `;
-      doc.head.appendChild(clientInterceptor);
+            container.appendChild(fragment);
+        }
 
-      return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-    }
+        // =========================================================================
+        // STATUS MANAGEMENT
+        // =========================================================================
 
-    // Handle intercepted navigation from inside iframe
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'NEXUS_LINK_CLICK') {
-        navigateTo(event.data.url);
-      }
-    });
+        function setStatus(type, text) {
+            dom.statusDot.className = 'status-dot ' + type;
+            dom.statusText.textContent = text;
+        }
 
-    /* =========================================================================
-       5. URL FORMATTING & UI CONTROLS
-       ========================================================================= */
-    function formatUrl(val) {
-      val = val.trim();
-      if (!val) return '';
-      if (/^https?:\/\//i.test(val)) return val;
-      if (/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+/i.test(val)) return 'https://' + val;
-      return 'https://duckduckgo.com/html/?q=' + encodeURIComponent(val);
-    }
+        function showLoading(text) {
+            dom.loadingText.textContent = text || 'Connecting to relay...';
+            dom.loadingOverlay.classList.add('active');
+        }
 
-    function openBrowserUI(url) {
-      document.getElementById('browser-view').style.display = 'flex';
-      document.getElementById('browser-url-bar').value = url;
-    }
+        function hideLoading() {
+            dom.loadingOverlay.classList.remove('active');
+        }
 
-    function closeBrowser() {
-      document.getElementById('browser-view').style.display = 'none';
-      document.getElementById('sandbox-viewport').srcdoc = '';
-    }
+        // =========================================================================
+        // RELAY DISCOVERY
+        // =========================================================================
 
-    function setEngineStatus(label, variant) {
-      const badge = document.getElementById('engine-badge');
-      const badgeName = document.getElementById('engine-badge-name');
-      const badgeIcon = document.getElementById('engine-badge-icon');
+        async function discoverRelays() {
+            setStatus('loading', 'discovering relays...');
 
-      badge.className = `engine-status-badge ${variant}`;
-      badgeName.textContent = label;
-      badgeIcon.textContent = variant === 'epoxy' ? '⚡' : (variant === 'libcurl' ? '🔄' : '⌛');
-    }
+            // Try each dynamic source
+            for (const source of CONFIG.relaySources) {
+                try {
+                    const response = await fetch(source, { signal: AbortSignal.timeout(5000) });
+                    if (!response.ok) continue;
 
-    function updateLoadingBar(percent) {
-      document.getElementById('loading-indicator-bar').style.width = percent + '%';
-    }
+                    const data = await response.json();
 
-    function reloadCurrent() {
-      if (currentNavUrl) navigateTo(currentNavUrl);
-    }
+                    // Handle different possible JSON structures
+                    let relays = [];
+                    if (Array.isArray(data)) {
+                        relays = data.map(item => typeof item === 'string' ? item : item.url || item.wisp);
+                    } else if (data && typeof data === 'object') {
+                        // Could be { servers: [...] } or { relays: [...] }
+                        const list = data.servers || data.relays || data.wisp || Object.values(data);
+                        if (Array.isArray(list)) {
+                            relays = list.map(item => typeof item === 'string' ? item : item.url || item.wisp).filter(Boolean);
+                        }
+                    }
 
-    function historyBack() {
-      if (navHistory.length > 1) {
-        navHistory.pop(); // remove current
-        const prev = navHistory.pop();
-        navigateTo(prev);
-      }
-    }
+                    // Validate URLs
+                    relays = relays.filter(url => {
+                        return typeof url === 'string' && (url.startsWith('wss://') || url.startsWith('ws://'));
+                    });
 
-    function launchApp(url) {
-      navigateTo(url);
-    }
+                    if (relays.length > 0) {
+                        console.log('[Nexus] Discovered relays from', source, ':', relays.length);
+                        return relays;
+                    }
+                } catch (e) {
+                    console.warn('[Nexus] Failed to fetch relays from', source, e.message);
+                }
+            }
 
-    // Search bar submit
-    const searchInput = document.getElementById('nexus-search-bar');
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') navigateTo(searchInput.value);
-    });
+            console.log('[Nexus] Using fallback relays');
+            return CONFIG.fallbackRelays;
+        }
 
-    // Omnibox submit
-    const omnibox = document.getElementById('browser-url-bar');
-    omnibox.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') navigateTo(omnibox.value);
-    });
+        // =========================================================================
+        // TRANSPORT INITIALIZATION
+        // =========================================================================
 
-    // Modals
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function closeModalOnBg(e, id) { if (e.target.id === id) closeModal(id); }
-  </script>
+        async function initEpoxyClient(wispUrl) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const options = {
+                        wisp: wispUrl
+                    };
+
+                    // Try the global EpoxyTransport object (from the non-ESM build)
+                    if (typeof EpoxyTransport !== 'undefined' && EpoxyTransport.EpoxyClient) {
+                        const client = new EpoxyTransport.EpoxyClient(options);
+                        resolve(client);
+                    } else if (typeof EpoxyClient !== 'undefined') {
+                        // Direct EpoxyClient global
+                        const client = new EpoxyClient(options);
+                        resolve(client);
+                    } else {
+                        reject(new Error('EpoxyTransport not available'));
+                    }
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        async function initLibcurlClient(wispUrl) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const options = {
+                        websocket: wispUrl
+                    };
+
+                    if (typeof LibcurlTransport !== 'undefined' && LibcurlTransport.LibcurlClient) {
+                        const client = new LibcurlTransport.LibcurlClient(options);
+                        resolve(client);
+                    } else {
+                        reject(new Error('LibcurlTransport not available'));
+                    }
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        async function tryRelay(wispUrl) {
+            // Attempt Epoxy first
+            try {
+                setStatus('loading', 'trying epoxy...');
+                const client = await initEpoxyClient(wispUrl);
+
+                // Verify the client works with a simple request
+                const testRes = await Promise.race([
+                    client.fetch('https://www.google.com', { method: 'HEAD' }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), CONFIG.relayTimeout))
+                ]);
+
+                if (testRes && (testRes.status === 200 || testRes.status === 301 || testRes.status === 302)) {
+                    console.log('[Nexus] Epoxy connected to', wispUrl);
+                    return { client, type: 'epoxy', wisp: wispUrl };
+                }
+            } catch (e) {
+                console.warn('[Nexus] Epoxy failed for', wispUrl, e.message);
+            }
+
+            // Fallback to libcurl
+            try {
+                setStatus('loading', 'trying libcurl...');
+                const client = await initLibcurlClient(wispUrl);
+
+                const testRes = await Promise.race([
+                    client.fetch('https://www.google.com', { method: 'HEAD' }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), CONFIG.relayTimeout))
+                ]);
+
+                if (testRes && (testRes.status === 200 || testRes.status === 301 || testRes.status === 302)) {
+                    console.log('[Nexus] libcurl connected to', wispUrl);
+                    return { client, type: 'libcurl', wisp: wispUrl };
+                }
+            } catch (e) {
+                console.warn('[Nexus] libcurl failed for', wispUrl, e.message);
+            }
+
+            throw new Error('All transports failed for ' + wispUrl);
+        }
+
+        async function initializeTransport() {
+            showLoading('Discovering relays...');
+
+            try {
+                const relays = await discoverRelays();
+                console.log('[Nexus] Available relays:', relays);
+
+                // Try each relay until one works
+                for (let i = 0; i < relays.length; i++) {
+                    const relay = relays[i];
+                    setStatus('loading', `trying relay ${i + 1}/${relays.length}...`);
+
+                    try {
+                        const result = await tryRelay(relay);
+                        state.currentRelay = result.wisp;
+                        state.isFallback = result.type === 'libcurl';
+
+                        if (result.type === 'epoxy') {
+                            state.epoxyClient = result.client;
+                        } else {
+                            state.libcurlClient = result.client;
+                        }
+
+                        state.isReady = true;
+                        setStatus('ready', `connected (${result.type})`);
+                        hideLoading();
+                        return true;
+                    } catch (e) {
+                        console.warn(`[Nexus] Relay ${relay} failed:`, e.message);
+                    }
+                }
+
+                throw new Error('All relays failed');
+            } catch (e) {
+                console.error('[Nexus] Transport initialization failed:', e);
+                setStatus('error', 'connection failed');
+                hideLoading();
+                return false;
+            }
+        }
+
+        // =========================================================================
+        // PROXY FETCHING
+        // =========================================================================
+
+        async function proxyFetch(url) {
+            if (!state.isReady) {
+                throw new Error('Transport not ready');
+            }
+
+            const client = state.epoxyClient || state.libcurlClient;
+            if (!client) {
+                throw new Error('No client available');
+            }
+
+            const response = await client.fetch(url);
+            return response;
+        }
+
+        async function navigateTo(url) {
+            if (!state.isReady) {
+                console.warn('[Nexus] Not ready, cannot navigate');
+                return;
+            }
+
+            // Normalize URL
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                if (url.includes('.') && !url.includes(' ')) {
+                    url = 'https://' + url;
+                } else {
+                    url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+                }
+            }
+
+            showLoading('Loading ' + url + '...');
+            setStatus('loading', 'fetching page...');
+
+            try {
+                const response = await proxyFetch(url);
+                const html = await response.text();
+
+                // Rewrite the HTML to proxy all resources through our client
+                const rewrittenHtml = rewriteHtml(html, url);
+
+                // Create a blob URL for the rewritten HTML
+                const blob = new Blob([rewrittenHtml], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                // Display in iframe
+                dom.browserFrame.src = blobUrl;
+                dom.browserUrl.value = url;
+
+                // Update history
+                state.history = state.history.slice(0, state.historyIndex + 1);
+                state.history.push(url);
+                state.historyIndex = state.history.length - 1;
+
+                // Show browser view
+                dom.mainContent.classList.add('hidden');
+                dom.browserView.classList.add('active');
+
+                setStatus('ready', 'connected (' + (state.isFallback ? 'libcurl' : 'epoxy') + ')');
+                hideLoading();
+            } catch (e) {
+                console.error('[Nexus] Navigation failed:', e);
+                setStatus('error', 'fetch failed: ' + e.message);
+                hideLoading();
+
+                // Show error in the iframe
+                const errorHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head><style>
+                        body { background: #0a0a0f; color: #f87171; font-family: sans-serif; 
+                               display: flex; align-items: center; justify-content: center; 
+                               height: 100vh; margin: 0; text-align: center; padding: 20px; }
+                        h2 { font-weight: 400; }
+                        p { color: #888; font-size: 14px; margin-top: 8px; }
+                    </style></head>
+                    <body>
+                        <div>
+                            <h2>Failed to load page</h2>
+                            <p>${e.message || 'Unknown error'}</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                dom.browserFrame.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(errorHtml);
+                dom.mainContent.classList.add('hidden');
+                dom.browserView.classList.add('active');
+            }
+        }
+
+        // =========================================================================
+        // HTML REWRITER (basic client-side rewriting)
+        // =========================================================================
+
+        function rewriteHtml(html, baseUrl) {
+            // Inject a script that rewrites all fetch/XHR/WebSocket calls
+            // to go through the proxy client
+            const proxyScript = `
+                <script>
+                (function() {
+                    // Override fetch
+                    const originalFetch = window.fetch;
+                    window.fetch = async function(input, init) {
+                        let url = typeof input === 'string' ? input : input.url;
+                        // Resolve relative URLs
+                        try {
+                            url = new URL(url, '${baseUrl}').href;
+                        } catch(e) {}
+                        // Use parent's proxy if available
+                        if (window.parent && window.parent !== window && window.parent.__nexusProxyFetch) {
+                            return window.parent.__nexusProxyFetch(url);
+                        }
+                        return originalFetch.apply(this, arguments);
+                    };
+
+                    // Override XMLHttpRequest
+                    const OriginalXHR = window.XMLHttpRequest;
+                    window.XMLHttpRequest = function() {
+                        const xhr = new OriginalXHR();
+                        const originalOpen = xhr.open;
+                        xhr.open = function(method, url, async, user, password) {
+                            try {
+                                url = new URL(url, '${baseUrl}').href;
+                            } catch(e) {}
+                            return originalOpen.call(this, method, url, async, user, password);
+                        };
+                        return xhr;
+                    };
+
+                    // Override WebSocket
+                    const OriginalWS = window.WebSocket;
+                    window.WebSocket = function(url, protocols) {
+                        // Let native WebSocket pass through for now
+                        return new OriginalWS(url, protocols);
+                    };
+
+                    // Signal to parent that this frame is ready
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'nexus-ready', url: '${baseUrl}' }, '*');
+                    }
+                })();
+                </script>
+            `;
+
+            // Inject the proxy script right after <head>
+            if (html.includes('<head>')) {
+                html = html.replace('<head>', '<head>' + proxyScript);
+            } else if (html.includes('<html>')) {
+                html = html.replace('<html>', '<html><head>' + proxyScript + '</head>');
+            } else {
+                html = proxyScript + html;
+            }
+
+            return html;
+        }
+
+        // Expose proxy fetch to iframe children
+        window.__nexusProxyFetch = async function(url) {
+            const response = await proxyFetch(url);
+            return response;
+        };
+
+        // =========================================================================
+        // UI EVENT HANDLERS
+        // =========================================================================
+
+        function setupEventListeners() {
+            // Search bar
+            dom.searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const query = this.value.trim();
+                    if (query) {
+                        navigateTo(query);
+                    }
+                }
+            });
+
+            // App icons
+            dom.appRow.addEventListener('click', function(e) {
+                const button = e.target.closest('.app-icon');
+                if (button && button.dataset.url) {
+                    navigateTo(button.dataset.url);
+                }
+            });
+
+            // Browser back
+            dom.browserBack.addEventListener('click', function() {
+                if (state.historyIndex > 0) {
+                    state.historyIndex--;
+                    navigateTo(state.history[state.historyIndex]);
+                }
+            });
+
+            // Browser refresh
+            dom.browserRefresh.addEventListener('click', function() {
+                if (state.history.length > 0 && state.historyIndex >= 0) {
+                    navigateTo(state.history[state.historyIndex]);
+                }
+            });
+
+            // Browser URL bar
+            dom.browserUrl.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const url = this.value.trim();
+                    if (url) navigateTo(url);
+                }
+            });
+
+            // Browser Go button
+            dom.browserGo.addEventListener('click', function() {
+                const url = dom.browserUrl.value.trim();
+                if (url) navigateTo(url);
+            });
+
+            // Top nav - Home
+            dom.navHome.addEventListener('click', function() {
+                dom.mainContent.classList.remove('hidden');
+                dom.browserView.classList.remove('active');
+                dom.browserFrame.src = 'about:blank';
+                dom.browserUrl.value = '';
+                state.history = [];
+                state.historyIndex = -1;
+                dom.searchInput.value = '';
+                dom.searchInput.focus();
+            });
+
+            // Top nav - Discord
+            dom.navDiscord.addEventListener('click', function() {
+                navigateTo('https://discord.com');
+            });
+
+            // Top nav - Grid (apps)
+            dom.navGrid.addEventListener('click', function() {
+                dom.mainContent.classList.remove('hidden');
+                dom.browserView.classList.remove('active');
+                dom.browserFrame.src = 'about:blank';
+                dom.browserUrl.value = '';
+            });
+
+            // Top nav - Extensions
+            dom.navExtensions.addEventListener('click', function() {
+                alert('Extensions coming soon!');
+            });
+
+            // Top nav - Add
+            dom.navAdd.addEventListener('click', function() {
+                const url = prompt('Enter a URL to bookmark:');
+                if (url) {
+                    alert('Bookmark added: ' + url);
+                }
+            });
+
+            // Handle messages from iframe
+            window.addEventListener('message', function(e) {
+                if (e.data && e.data.type === 'nexus-ready') {
+                    console.log('[Nexus] Iframe ready:', e.data.url);
+                }
+            });
+
+            // Keyboard shortcut: Escape to go home
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    dom.mainContent.classList.remove('hidden');
+                    dom.browserView.classList.remove('active');
+                    dom.browserFrame.src = 'about:blank';
+                    dom.browserUrl.value = '';
+                }
+            });
+        }
+
+        // =========================================================================
+        // INITIALIZATION
+        // =========================================================================
+
+        async function init() {
+            console.log('[Nexus] Initializing...');
+
+            // Generate starfield
+            generateStarfield();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Focus search input
+            dom.searchInput.focus();
+
+            // Initialize transport
+            const success = await initializeTransport();
+
+            if (success) {
+                console.log('[Nexus] Ready with relay:', state.currentRelay);
+                setStatus('ready', 'connected (' + (state.isFallback ? 'libcurl' : 'epoxy') + ')');
+
+                // Auto-focus search
+                dom.searchInput.focus();
+            } else {
+                console.error('[Nexus] Initialization failed');
+                setStatus('error', 'no relay available - check console');
+            }
+        }
+
+        // Start the app
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    })();
+    </script>
 </body>
 </html>
