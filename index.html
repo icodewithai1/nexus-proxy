@@ -291,6 +291,35 @@
     flex-wrap: wrap;
     gap: 8px;
   }
+  .render-bar .controls-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .force-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    background: #d2992222;
+    border-color: #d2992266;
+    color: var(--warn);
+    border-radius: 4px;
+  }
+  .force-btn:hover { background: #d2992244; border-color: var(--warn); }
+
+  .video-modal-bar {
+    padding: 8px 12px;
+    background: #1c2129;
+    border-bottom: 1px solid var(--border);
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .video-modal-bar.show { display: flex; }
+  .video-modal-bar a { color: var(--accent2); font-weight: 600; text-decoration: none; }
+
   .img-wrap { padding: 14px; text-align: center; }
   .img-wrap img { max-width: 100%; background: #fff; border-radius: 4px; }
 
@@ -433,8 +462,8 @@
              value="wss://wisp.mercurywork.shop/" placeholder="wss://your-wisp-server/">
       <datalist id="wisp-list">
         <option value="wss://wisp.mercurywork.shop/">Mercury Workshop (Default)</option>
-        <option value="wss://wisp.ruby.fg-network.com/">Ruby WISP</option>
         <option value="wss://wisp.rhw.one/">RHW WISP</option>
+        <option value="wss://wisp.ruby.fg-network.com/">Ruby WISP</option>
         <option value="wss://wisp-server.onrender.com/">Render WISP</option>
       </datalist>
     </div>
@@ -456,6 +485,7 @@
     <button class="preset-btn" data-url="https://httpbin.org/get" data-ver="1.1">httpbin.org/get</button>
     <button class="preset-btn" data-url="https://www.google.com" data-ver="1.1">google.com</button>
     <button class="preset-btn" data-url="https://www.youtube.com" data-ver="1.1">youtube.com</button>
+    <button class="preset-btn" data-url="https://www.youtube.com/embed/dQw4w9WgXcQ" data-ver="1.1">yt embed</button>
     <button class="preset-btn" data-url="https://www.tiktok.com" data-ver="1.1">tiktok.com</button>
     <button class="preset-btn" data-url="https://now.gg" data-ver="1.1">now.gg (HTTP/1.1)</button>
   </div>
@@ -491,10 +521,17 @@
 
     <div class="pane render-wrap active" id="pane-render">
       <div class="render-bar">
-        <span>scripts auto-enabled · media &amp; WebRTC unlocked · SPA error resilience</span>
+        <div class="controls-group">
+          <span>scripts active · media &amp; WebRTC unlocked</span>
+          <button id="force-load-btn" class="force-btn" title="Force inject HTML and keep rendered layout visible without script blanking">⚡ Force Load</button>
+        </div>
         <label class="opt" style="font-size:11px" title="Execute scripts inside sandbox (default ON)">
           <input type="checkbox" id="allow-scripts" checked> allow scripts
         </label>
+      </div>
+      <div id="video-bar" class="video-modal-bar">
+        <span id="video-bar-text">🎬 YouTube video link detected!</span>
+        <button id="open-embed-btn" class="force-btn" style="color:var(--accent2);border-color:var(--accent2)">Switch to Embed Player</button>
       </div>
       <iframe id="render-view"
               sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
@@ -565,6 +602,7 @@
     headers: $("headers"), body: $("body"),
     meta: $("resp-meta"), renderWrap: $("pane-render"), renderFrame: $("render-view"),
     renderEmpty: $("render-empty"), allowScripts: $("allow-scripts"),
+    forceLoadBtn: $("force-load-btn"), videoBar: $("video-bar"), openEmbedBtn: $("open-embed-btn"),
     codeView: $("code-view"), headersList: $("headers-list"),
     headersEmpty: $("headers-empty"), logView: $("log-view"),
     codeEditor: $("code-editor"), runCode: $("run-code"),
@@ -583,6 +621,7 @@
   let lastSource = "";         // raw response text
   let lastFinalUrl = "";
   let lastContentType = "";
+  let forceMode = false;
   let ctab = "js";
   let userEditedCode = false;  // track if user manually edited the code editor
   const logs = [];
@@ -917,7 +956,6 @@
   }
 
   function buildIframeShim(targetUrl) {
-    // Inject resilient polyfills, iframe break-out mitigation, and error swallowing into rendered SPA
     return `
 <script>
 (function() {
@@ -927,36 +965,60 @@
     Object.defineProperty(window, 'parent', { get: () => window });
   } catch(e) {}
 
-  // Suppress SPA uncaught errors that trigger white screen resets (e.g. YouTube Polymer crash)
+  // Suppress SPA uncaught errors that trigger white screen resets
   window.addEventListener('error', function(e) {
-    console.warn('[curlbrowser iframe caught error]:', e.message);
     e.preventDefault && e.preventDefault();
     return true;
   }, true);
   window.addEventListener('unhandledrejection', function(e) {
-    console.warn('[curlbrowser iframe unhandled rejection]:', e.reason);
     e.preventDefault && e.preventDefault();
   }, true);
 
   // Preserve skeleton or custom elements if an error tries to blank out body
-  const origRemoveChild = document.body ? document.body.removeChild : null;
   document.addEventListener('DOMContentLoaded', function() {
-    // If YouTube / Polymer hides skeleton and custom elements fail to load, unhide skeleton content
-    setTimeout(function() {
+    function restoreContent() {
       const sk = document.getElementById('home-page-skeleton');
-      if (sk && (window.getComputedStyle(sk).display === 'none' || sk.hidden)) {
+      if (sk) {
         sk.style.display = 'block';
+        sk.style.visibility = 'visible';
         sk.hidden = false;
       }
-      const app = document.querySelector('ytd-app');
-      if (app && app.children.length === 0) {
-        if (sk) sk.style.display = 'block';
-      }
-    }, 1200);
+      // If ytd-app is empty or blank, unhide skeleton items
+      const skeletons = document.querySelectorAll('.rich-grid-media-skeleton, #home-container-media, #home-chips');
+      skeletons.forEach(s => {
+        s.style.display = 'block';
+        s.style.visibility = 'visible';
+      });
+    }
+    restoreContent();
+    setTimeout(restoreContent, 500);
+    setTimeout(restoreContent, 1500);
+    setTimeout(restoreContent, 3000);
   });
 })();
 <\/script>
+<style>
+  /* Ensure skeleton layout stays visible if client scripts fail to hydrate */
+  #home-page-skeleton { display: block !important; visibility: visible !important; }
+  .rich-grid-media-skeleton { display: block !important; visibility: visible !important; }
+</style>
 `;
+  }
+
+  function getCleanStaticDoc(doc) {
+    // Strip scripts that crash or wipe the body, but preserve all stylesheets, fonts, inline SVGs, and DOM skeleton
+    let clean = doc.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+    // Ensure hidden attribute is stripped from skeleton
+    clean = clean.replace(/\bhidden\b/gi, "");
+    clean += `
+<style>
+  html, body { background: #0f0f0f; color: #f1f1f1; font-family: Roboto, Arial, sans-serif; }
+  #home-page-skeleton { display: block !important; visibility: visible !important; opacity: 1 !important; }
+  .rich-grid-media-skeleton { display: inline-block !important; margin: 12px; }
+  ytd-masthead.shell { display: flex !important; background: #0f0f0f !important; }
+</style>
+`;
+    return clean;
   }
 
   function updateIframeRender() {
@@ -966,7 +1028,7 @@
     const allowScripts = el.allowScripts.checked;
 
     // Full permissions sandbox for scripts, forms, downloads, and popups
-    if (allowScripts) {
+    if (allowScripts && !forceMode) {
       el.renderFrame.setAttribute("sandbox", "allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads");
     } else {
       el.renderFrame.setAttribute("sandbox", "allow-same-origin");
@@ -978,18 +1040,28 @@
 
     let doc = lastSource;
     if (/^text\/html|application\/xhtml/i.test(ctype) || /^\s*(<!doctype|<html|<head|<body)/i.test(doc)) {
-      const shim = buildIframeShim(lastFinalUrl);
-      const baseTag = '<base href="' + urlAttr + '">';
-
-      if (/<head[^>]*>/i.test(doc)) {
-        doc = doc.replace(/<head[^>]*>/i, (m) => m + baseTag + shim);
+      if (forceMode) {
+        doc = getCleanStaticDoc(doc);
       } else {
-        doc = '<head>' + baseTag + shim + '</head>' + doc;
+        const shim = buildIframeShim(lastFinalUrl);
+        if (/<head[^>]*>/i.test(doc)) {
+          doc = doc.replace(/<head[^>]*>/i, (m) => m + '<base href="' + urlAttr + '">' + shim);
+        } else {
+          doc = '<head><base href="' + urlAttr + '">' + shim + '</head>' + doc;
+        }
       }
 
-      // If YouTube desktop HTML, make sure skeleton doesn't get instantly removed before user sees it
-      if (lastFinalUrl.includes("youtube.com")) {
-        doc = doc.replace(/hidden\s*([ >])/g, "$1");
+      // Check if YouTube video URL and suggest embed player
+      const ytMatch = lastFinalUrl.match(/(?:youtube\.com\/(?:watch\?v=|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (ytMatch) {
+        const vidId = ytMatch[1];
+        el.videoBar.classList.add("show");
+        el.openEmbedBtn.onclick = () => {
+          el.url.value = "https://www.youtube.com/embed/" + vidId;
+          doFetch();
+        };
+      } else {
+        el.videoBar.classList.remove("show");
       }
 
       el.renderFrame.srcdoc = doc;
@@ -1004,6 +1076,7 @@
     lastSource = text;
     lastFinalUrl = finalUrl;
     lastContentType = ctype;
+    forceMode = false;
     el.copySource.disabled = false;
 
     // meta bar
@@ -1109,17 +1182,15 @@
           const nextUrl = new URL(loc, currentUrl).href;
           log("↳ Redirect (" + res.status + " " + res.statusText + ") to: " + nextUrl, "l-warn");
 
-          // 301, 302, 303 switch POST to GET
           if ((res.status === 301 || res.status === 302 || res.status === 303) && currentMethod !== "HEAD") {
             currentMethod = "GET";
             currentBody = undefined;
           }
           currentUrl = nextUrl;
           el.url.value = nextUrl;
-          continue; // Loop to follow redirect
+          continue;
         }
 
-        // Final response reached
         const bytes = await res.arrayBuffer();
         const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
         const ms = Math.round(performance.now() - t0);
@@ -1144,7 +1215,9 @@
         const msg = String(err && err.message ? err.message : err);
         setStatus("request failed", "error");
         let hint = "Hint: Check WISP server or network connectivity.";
-        if (msg.includes("SSL connect error") || msg.includes("error code 35") || msg.includes("EOF")) {
+        if (msg.includes("could not connect") || msg.includes("Failed to connect") || msg.includes("7")) {
+          hint = "Tip (School Chromebook): The school network filter is blocking the WebSocket tunnel. Change WISP to another server or test on hotspot.";
+        } else if (msg.includes("SSL connect error") || msg.includes("error code 35") || msg.includes("EOF")) {
           hint = "Tip: Server closed TLS handshake or rejected ALPN h2. Try setting HTTP version to '1.1' or testing with another WISP server.";
         }
         showError(msg, hint);
@@ -1256,6 +1329,13 @@
     }
   });
 
+  // Force load button
+  el.forceLoadBtn.addEventListener("click", () => {
+    forceMode = true;
+    updateIframeRender();
+    log("⚡ Force Load applied: scripts stripped, clean DOM snapshot preserved.", "l-ok");
+  });
+
   // Presets
   document.querySelectorAll(".preset-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1270,7 +1350,10 @@
   });
 
   // Allow scripts checkbox toggle
-  el.allowScripts.addEventListener("change", updateIframeRender);
+  el.allowScripts.addEventListener("change", () => {
+    forceMode = !el.allowScripts.checked;
+    updateIframeRender();
+  });
 
   // Input change updates code editor (unless user manually typed in editor)
   for (const node of [el.method, el.url, el.headers, el.body, el.wisp, el.httpVer, el.followRedirects, el.verbose]) {
