@@ -3,1415 +3,887 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>curlbrowser — fetch sites with libcurl.js</title>
+<title>NEXUS // WebEngine &amp; Unblocker</title>
 <style>
   :root {
-    --bg: #0d1117;
-    --bg2: #161b22;
-    --bg3: #1c2129;
-    --border: #30363d;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --accent: #3fb950;
-    --accent2: #58a6ff;
-    --danger: #f85149;
-    --warn: #d29922;
-    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+    --bg-base: #07090e;
+    --bg-surface: #0e121b;
+    --bg-card: #151a27;
+    --bg-card-hover: #1c2233;
+    --border: #232b3e;
+    --border-accent: #00f0ff44;
+    --neon-cyan: #00f0ff;
+    --neon-green: #00ff88;
+    --neon-purple: #9d4edd;
+    --neon-orange: #ff9100;
+    --neon-red: #ff3366;
+    --text-main: #f0f4fc;
+    --text-muted: #8b9bb4;
+    --text-dim: #54627a;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  html, body { height: 100%; margin: 0; padding: 0; background: var(--bg-base); color: var(--text-main); font: 13px/1.4 var(--sans); }
+  body { display: flex; flex-direction: column; overflow: hidden; }
 
-  /* ---- header ---- */
-  header {
+  /* Gaming Titlebar */
+  .titlebar {
+    height: 38px;
+    background: #06080c;
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
+    padding: 0 12px;
     gap: 12px;
-    padding: 10px 14px;
-    background: var(--bg2);
+    user-select: none;
+  }
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+  }
+  .brand-logo svg { fill: var(--neon-cyan); width: 16px; height: 16px; }
+  .tab-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    overflow-x: auto;
+  }
+  .browser-tab {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+    padding: 6px 14px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 220px;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: none;
+  }
+  .browser-tab.active {
+    background: var(--bg-card);
+    color: var(--text-main);
+    border-color: var(--neon-cyan);
+    box-shadow: inset 0 2px 0 var(--neon-cyan);
+  }
+  .engine-badge {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #00f0ff15;
+    border: 1px solid #00f0ff44;
+    color: var(--neon-cyan);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .engine-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon-green); box-shadow: 0 0 6px var(--neon-green); }
+
+  /* Navigation / URL Toolbar */
+  .navbar {
+    background: var(--bg-surface);
     border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .nav-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
   }
-  .brand {
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: .3px;
-    white-space: nowrap;
-  }
-  .brand .curly { color: var(--accent); }
-  .brand .sub { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 6px; }
-  #status-pill {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 999px;
+  .nav-btn {
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    color: var(--muted);
-    background: var(--bg3);
-    white-space: nowrap;
-  }
-  #status-pill.ok    { color: var(--accent); border-color: #23863655; }
-  #status-pill.busy  { color: var(--warn); border-color: #d2992255; }
-  #status-pill.error { color: var(--danger); border-color: #f8514955; }
-
-  /* ---- toolbar ---- */
-  #toolbar {
-    padding: 10px 14px;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  select, input[type=text], textarea {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
+    color: var(--text-muted);
     border-radius: 6px;
-    font-family: var(--mono);
-    font-size: 13px;
-    padding: 7px 9px;
-    outline: none;
-  }
-  select:focus, input[type=text]:focus, textarea:focus { border-color: var(--accent2); }
-  #url {
-    flex: 1;
-    min-width: 220px;
-  }
-  #method { width: 92px; }
-  button {
-    background: var(--bg3);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font: 600 13px/1 system-ui, sans-serif;
-    padding: 8px 14px;
+    padding: 7px 11px;
     cursor: pointer;
-  }
-  button:hover:not(:disabled) { border-color: var(--muted); }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  button.primary {
-    background: #238636;
-    border-color: #2ea043;
-    color: #fff;
-  }
-  button.primary:hover:not(:disabled) { background: #2ea043; }
-  button.ghost { font-weight: 500; color: var(--muted); }
-  button.ghost:hover { color: var(--text); }
-  #advanced { display: none; gap: 8px; }
-  #advanced.open { display: flex; flex-direction: column; }
-  #advanced .grid2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  #advanced textarea {
-    width: 100%;
-    height: 84px;
-    resize: vertical;
-  }
-  label.opt {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--muted);
-    font-size: 12.5px;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-  }
-  label.opt input { accent-color: var(--accent); }
-  #wisp-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 260px; }
-  #wisp-wrap span { color: var(--muted); font-family: var(--mono); font-size: 12px; white-space: nowrap; }
-  #wisp { flex: 1; }
-  .hint { color: var(--muted); font-size: 11.5px; }
-
-  /* presets quick buttons */
-  .presets-bar {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: var(--muted);
-    flex-wrap: wrap;
+    font-weight: 600;
   }
-  .preset-btn {
+  .nav-btn:hover:not(:disabled) { background: var(--bg-card-hover); color: var(--text-main); border-color: var(--text-dim); }
+  .nav-btn.primary {
+    background: linear-gradient(135deg, #00f0ff22, #9d4edd22);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
     font-family: var(--mono);
-    font-size: 11px;
-    padding: 3px 8px;
-    background: var(--bg);
-    color: var(--accent2);
+  }
+  .nav-btn.primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00f0ff44, #9d4edd44);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+  }
+  .nav-btn.force {
+    background: #ff910022;
+    border-color: var(--neon-orange);
+    color: var(--neon-orange);
+    font-family: var(--mono);
+  }
+
+  .url-omnibar-wrap {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    position: relative;
+  }
+  .url-omnibar {
+    width: 100%;
+    background: #090c13;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px 8px 32px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-main);
+    outline: none;
+    transition: all .2s;
+  }
+  .url-omnibar:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  }
+  .url-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+
+  /* Preset Pills */
+  .presets-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  .pill {
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 4px;
+    padding: 3px 8px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
     cursor: pointer;
   }
-  .preset-btn:hover { border-color: var(--accent2); background: var(--bg3); }
+  .pill:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+  .pill.gaming { border-color: #9d4edd66; color: #c77dff; }
+  .pill.gaming:hover { border-color: var(--neon-purple); }
 
-  /* ---- main split ---- */
-  main {
+  /* Settings drawer */
+  .drawer {
+    display: none;
+    padding: 10px 14px;
+    background: #0b0f17;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .drawer.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .drawer label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+  .drawer select, .drawer input {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: var(--text-main);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+  }
+
+  /* Workspace Layout Split */
+  .workspace {
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     min-height: 0;
   }
-  .panel {
+  .viewport-pane {
     display: flex;
     flex-direction: column;
-    min-width: 0;
     min-height: 0;
     border-right: 1px solid var(--border);
+    position: relative;
+    background: #000;
   }
-  .panel:last-child { border-right: none; }
-  .panel-head {
+  .viewport-bar {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 12px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+  }
+  .browser-frame {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  }
+
+  /* Dev / Inspector / Runner Sidebar */
+  .inspector-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--bg-surface);
+  }
+  .inspector-nav {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 4px 8px;
     gap: 4px;
-    padding: 8px 10px;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
   }
-  .panel-title {
-    font: 700 11px/1 var(--mono);
-    letter-spacing: .8px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-right: 8px;
-    white-space: nowrap;
-  }
-  .tab {
-    font: 600 12px/1 var(--mono);
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid transparent;
+  .itab {
     background: transparent;
-    color: var(--muted);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    cursor: pointer;
   }
-  .tab:hover { color: var(--text); }
-  .tab.active {
-    color: var(--text);
-    background: var(--bg3);
+  .itab.active {
+    background: var(--bg-surface);
     border-color: var(--border);
+    color: var(--neon-cyan);
   }
-  .spacer { flex: 1; }
-  button.small { padding: 6px 10px; font-size: 12px; }
-  button.copy {
-    background: #1f6feb22;
-    border-color: #1f6feb66;
-    color: var(--accent2);
-    font-family: var(--mono);
-  }
-  button.copy:hover:not(:disabled) { background: #1f6feb44; border-color: var(--accent2); }
-  button.copy.copied { color: var(--accent); border-color: var(--accent); background: #23863622; }
-
-  button.runner-btn {
-    background: #23863622;
-    border-color: #23863666;
-    color: var(--accent);
-    font-family: var(--mono);
-  }
-  button.runner-btn:hover:not(:disabled) { background: #23863644; border-color: var(--accent); }
-
-  .meta {
-    font-family: var(--mono);
-    font-size: 12px;
-    padding: 6px 12px;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    display: none;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .meta.show { display: flex; }
-  .meta .st-ok { color: var(--accent); }
-  .meta .st-err { color: var(--danger); }
-  .meta .st-red { color: var(--warn); }
-
-  .pane {
+  .ipane {
     flex: 1;
     min-height: 0;
     overflow: auto;
     display: none;
+    padding: 12px;
   }
-  .pane.active { display: block; }
-  pre#code-view {
-    margin: 0;
-    padding: 14px 16px;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    tab-size: 2;
+  .ipane.active { display: flex; flex-direction: column; }
+
+  /* Tree & Assets Grid */
+  .asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
   }
-  pre#log-view {
+  .asset-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    word-break: break-all;
+  }
+  .asset-card b { color: var(--neon-cyan); font-family: var(--mono); }
+  .asset-card a { color: var(--text-main); text-decoration: none; }
+  .asset-card a:hover { color: var(--neon-green); }
+
+  pre.code-display {
     margin: 0;
-    padding: 12px 14px;
+    flex: 1;
     font-family: var(--mono);
     font-size: 11.5px;
     line-height: 1.45;
-    color: var(--muted);
     white-space: pre-wrap;
     word-break: break-word;
+    color: #cad3f5;
   }
-  pre#log-view .l-err { color: var(--danger); }
-  pre#log-view .l-ok { color: var(--accent); }
-  pre#log-view .l-info { color: var(--accent2); }
-  pre#log-view .l-warn { color: var(--warn); }
 
-  #render-view {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    background: #fff;
-  }
-  .render-wrap { display: none; height: 100%; }
-  .render-wrap.active { display: flex; flex-direction: column; }
-  .render-bar {
-    padding: 6px 12px;
-    font-size: 11px;
-    color: var(--muted);
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    font-family: var(--mono);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .render-bar .controls-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .force-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 2px 8px;
-    background: #d2992222;
-    border-color: #d2992266;
-    color: var(--warn);
-    border-radius: 4px;
-  }
-  .force-btn:hover { background: #d2992244; border-color: var(--warn); }
+  /* Log entries */
+  .log-line { font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--text-muted); }
+  .log-line.ok { color: var(--neon-green); }
+  .log-line.warn { color: var(--neon-orange); }
+  .log-line.err { color: var(--neon-red); }
+  .log-line.cyan { color: var(--neon-cyan); }
 
-  .video-modal-bar {
-    padding: 8px 12px;
-    background: #1c2129;
-    border-bottom: 1px solid var(--border);
-    display: none;
-    align-items: center;
-    justify-content: space-between;
+  /* Notification Toast */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+    padding: 10px 16px;
+    border-radius: 6px;
     font-size: 12px;
-  }
-  .video-modal-bar.show { display: flex; }
-  .video-modal-bar a { color: var(--accent2); font-weight: 600; text-decoration: none; }
-
-  .img-wrap { padding: 14px; text-align: center; }
-  .img-wrap img { max-width: 100%; background: #fff; border-radius: 4px; }
-
-  dl#headers-list {
-    margin: 0;
-    padding: 12px 16px;
     font-family: var(--mono);
-    font-size: 12.5px;
+    color: var(--text-main);
+    display: none;
+    z-index: 999;
   }
-  dl#headers-list dt { color: var(--accent2); float: left; clear: left; width: auto; font-weight: 600; }
-  dl#headers-list dt::after { content: ":"; color: var(--muted); }
-  dl#headers-list dd { margin: 0 0 6px 12px; color: var(--text); word-break: break-all; }
-
-  .empty {
-    color: var(--muted);
-    padding: 30px 20px;
-    text-align: center;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.8;
-  }
-  .empty b { color: var(--text); }
-
-  /* Code runner container */
-  #ctab-pane {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  .editor-wrap {
-    flex: 1;
-    min-height: 140px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-  #code-editor {
-    flex: 1;
-    width: 100%;
-    margin: 0;
-    padding: 12px 14px;
-    background: var(--bg);
-    color: var(--text);
-    border: none;
-    outline: none;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.5;
-    resize: none;
-    white-space: pre;
-    overflow: auto;
-    tab-size: 2;
-  }
-  .runner-console {
-    height: 150px;
-    min-height: 80px;
-    max-height: 50%;
-    border-top: 1px solid var(--border);
-    background: var(--bg2);
-    display: flex;
-    flex-direction: column;
-  }
-  .runner-console-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 10px;
-    background: var(--bg3);
-    border-bottom: 1px solid var(--border);
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-  }
-  #runner-output {
-    flex: 1;
-    margin: 0;
-    padding: 8px 12px;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    line-height: 1.45;
-    color: var(--text);
-    overflow: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  #runner-output .r-err { color: var(--danger); }
-  #runner-output .r-ok { color: var(--accent); }
-  #runner-output .r-info { color: var(--accent2); }
-
-  footer {
-    padding: 6px 14px;
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 11px;
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  footer a { color: var(--accent2); text-decoration: none; }
-  footer a:hover { text-decoration: underline; }
 
   @media (max-width: 900px) {
-    body { overflow: auto; }
-    main { grid-template-columns: 1fr; }
-    .panel { min-height: 420px; border-right: none; border-bottom: 1px solid var(--border); }
-    #advanced .grid2 { grid-template-columns: 1fr; }
+    .workspace { grid-template-columns: 1fr; }
+    .viewport-pane { min-height: 50vh; }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">{<span class="curly">curl</span>}browser<span class="sub">libcurl.js · in-browser curl & WISP engine</span></div>
-  <div id="status-pill" class="busy">loading libcurl.js…</div>
-</header>
-
-<div id="toolbar">
-  <div class="row">
-    <select id="method" title="HTTP method">
-      <option>GET</option>
-      <option>POST</option>
-      <option>PUT</option>
-      <option>PATCH</option>
-      <option>DELETE</option>
-      <option>HEAD</option>
-      <option>OPTIONS</option>
-    </select>
-    <input id="url" type="text" list="url-history" spellcheck="false"
-           placeholder="https://example.com" value="https://example.com">
-    <datalist id="url-history"></datalist>
-    <button id="go" class="primary" disabled>Fetch ⏎</button>
-    <button id="cancel" class="ghost" style="display:none">Cancel</button>
+<div class="titlebar">
+  <div class="brand-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    NEXUS OS
   </div>
-  <div class="row">
-    <div id="wisp-wrap">
-      <span>WISP ▸</span>
-      <input id="wisp" type="text" list="wisp-list" spellcheck="false"
-             value="wss://wisp.mercurywork.shop/" placeholder="wss://your-wisp-server/">
-      <datalist id="wisp-list">
-        <option value="wss://wisp.mercurywork.shop/">Mercury Workshop (Default)</option>
-        <option value="wss://wisp.rhw.one/">RHW WISP</option>
-        <option value="wss://wisp.ruby.fg-network.com/">Ruby WISP</option>
-        <option value="wss://wisp-server.onrender.com/">Render WISP</option>
-      </datalist>
+  <div class="tab-strip">
+    <div class="browser-tab active" id="main-tab">
+      <span>nowgg.fun // bypass</span>
     </div>
-    <button id="adv-toggle" class="ghost">Advanced ▾</button>
-    <label class="opt">HTTP
-      <select id="http-ver" style="padding:4px 6px;font-size:12px">
-        <option value="auto">auto</option>
-        <option value="1.0">1.0</option>
-        <option value="1.1" selected>1.1 (recommended)</option>
-        <option value="2">2</option>
-      </select>
-    </label>
-    <label class="opt" title="Automatically follow 301/302/307/308 HTTP redirects"><input type="checkbox" id="follow-redirects" checked> redirects</label>
-    <label class="opt"><input type="checkbox" id="verbose" checked> verbose log</label>
   </div>
-  <div class="row presets-bar">
-    <span>Quick test:</span>
-    <button class="preset-btn" data-url="https://example.com" data-ver="auto">example.com</button>
-    <button class="preset-btn" data-url="https://httpbin.org/get" data-ver="1.1">httpbin.org/get</button>
-    <button class="preset-btn" data-url="https://www.google.com" data-ver="1.1">google.com</button>
-    <button class="preset-btn" data-url="https://www.youtube.com" data-ver="1.1">youtube.com</button>
-    <button class="preset-btn" data-url="https://www.youtube.com/embed/dQw4w9WgXcQ" data-ver="1.1">yt embed</button>
-    <button class="preset-btn" data-url="https://www.tiktok.com" data-ver="1.1">tiktok.com</button>
-    <button class="preset-btn" data-url="https://now.gg" data-ver="1.1">now.gg (HTTP/1.1)</button>
+  <div class="engine-badge">
+    <div class="engine-dot"></div>
+    <span id="engine-status">INITIALIZING NEXUS TLS...</span>
   </div>
-  <div id="advanced">
-    <div class="grid2">
-      <div>
-        <div class="hint">Request headers — one per line, <code>Name: value</code> (e.g. custom User-Agent, Accept, etc.)</div>
-        <textarea id="headers" spellcheck="false" placeholder="User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36&#10;Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"></textarea>
+</div>
+
+<div class="navbar">
+  <div class="nav-row">
+    <button class="nav-btn" id="btn-back" title="Back">◂</button>
+    <button class="nav-btn" id="btn-forward" title="Forward">▸</button>
+    <button class="nav-btn" id="btn-reload" title="Reload">↻</button>
+    
+    <div class="url-omnibar-wrap">
+      <span class="url-icon">⚡</span>
+      <input type="text" class="url-omnibar" id="url-bar" spellcheck="false"
+             value="https://nowgg.fun" placeholder="Search or type a gaming URL...">
+    </div>
+
+    <button class="nav-btn primary" id="btn-fetch">LAUNCH ⏎</button>
+    <button class="nav-btn force" id="btn-force" title="Strip crashing hydration loops & force clean display">⚡ FORCE LOAD</button>
+    <button class="nav-btn" id="btn-config">SETTINGS ▾</button>
+  </div>
+
+  <div class="nav-row presets-strip">
+    <span>Quick Launch:</span>
+    <button class="pill gaming" data-url="https://nowgg.fun">nowgg.fun</button>
+    <button class="pill gaming" data-url="https://www.youtube.com">youtube</button>
+    <button class="pill gaming" data-url="https://www.youtube.com/embed/dQw4w9WgXcQ">yt player</button>
+    <button class="pill gaming" data-url="https://tiktok.com">tiktok</button>
+    <button class="pill" data-url="https://duck.ai">duck.ai</button>
+    <button class="pill" data-url="https://chatgpt.com">chatgpt</button>
+    <button class="pill" data-url="https://httpbin.org/get">httpbin</button>
+    <button class="pill" data-url="https://example.com">example.com</button>
+  </div>
+</div>
+
+<div class="drawer" id="settings-drawer">
+  <label>Tunnel Protocol / WISP Relay
+    <select id="wisp-select">
+      <option value="wss://wisp.mercurywork.shop/">Mercury Workshop Relay (Default)</option>
+      <option value="wss://wisp.rhw.one/">RHW High-Speed Relay</option>
+      <option value="wss://wisp.ruby.fg-network.com/">Ruby WISP Relay</option>
+      <option value="wss://wisp-server.onrender.com/">Render Cloud Relay</option>
+    </select>
+  </label>
+  <label>Engine Backend
+    <select id="engine-select">
+      <option value="nexus">Nexus Hybrid (Epoxy + libcurl WASM)</option>
+      <option value="libcurl">libcurl.js Core</option>
+      <option value="epoxy">Epoxy-TLS Direct</option>
+    </select>
+  </label>
+  <label>HTTP Version
+    <select id="http-select">
+      <option value="1.1">HTTP/1.1 (Anti-EOF &amp; Cloudflare Safe)</option>
+      <option value="2">HTTP/2 Multiplexed</option>
+      <option value="auto">Auto-Negotiate</option>
+    </select>
+  </label>
+  <label>WebRTC &amp; Media Unlocking
+    <select id="webrtc-select">
+      <option value="all">Full WebRTC + STUN/TURN Allow</option>
+      <option value="direct">Direct P2P Only</option>
+    </select>
+  </label>
+</div>
+
+<div class="workspace">
+  <!-- Viewport -->
+  <div class="viewport-pane">
+    <div class="viewport-bar">
+      <span id="view-meta">STATUS: READY // 0 ASSETS CAPTURED</span>
+      <span style="color:var(--neon-green)">WEBRTC &amp; MEDIA UNLOCKED [✓]</span>
+    </div>
+    <iframe id="browser-viewport"
+            class="browser-frame"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+            allow="autoplay *; fullscreen *; picture-in-picture *; camera *; microphone *; display-capture *; encrypted-media *; web-share *; midi *; geolocation *"
+            title="Nexus Browser Viewport"></iframe>
+  </div>
+
+  <!-- Inspector / Harvester / Runner -->
+  <div class="inspector-pane">
+    <div class="inspector-nav">
+      <button class="itab active" data-tab="harvester">Harvester &amp; Assets (<span id="asset-count">0</span>)</button>
+      <button class="itab" data-tab="source">HTML Source</button>
+      <button class="itab" data-tab="runner">Code Runner</button>
+      <button class="itab" data-tab="logs">Tunnel Logs</button>
+      <div style="flex:1"></div>
+      <button class="nav-btn" id="btn-copy-tab" style="padding:4px 8px;font-size:11px">⧉ Copy</button>
+    </div>
+
+    <!-- Harvester Tab -->
+    <div class="ipane active" id="pane-harvester">
+      <div style="margin-bottom:8px;font-size:11.5px;color:var(--text-muted)">
+        Scraped scripts, styles, subdomains, and media links ready for pre-flight patch:
       </div>
-      <div>
-        <div class="hint">Request body (POST / PUT / PATCH / …)</div>
-        <textarea id="body" spellcheck="false" placeholder='{"hello": "world"}'></textarea>
+      <div class="asset-grid" id="asset-display">
+        <div style="color:var(--text-dim);font-family:var(--mono)">No site fetched yet. Launch a URL above.</div>
       </div>
+    </div>
+
+    <!-- Source Tab -->
+    <div class="ipane" id="pane-source">
+      <pre class="code-display" id="source-display">// HTML will appear here</pre>
+    </div>
+
+    <!-- Runner Tab -->
+    <div class="ipane" id="pane-runner">
+      <textarea id="runner-code" style="flex:1;background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:8px;font-family:var(--mono);font-size:12px;resize:none" spellcheck="false">// Interactive Nexus Execution Snippet
+(async () => {
+  console.log("Nexus engine active:", libcurl.version);
+  const res = await libcurl.fetch("https://nowgg.fun", { _libcurl_http_version: 1.1 });
+  console.log("Status:", res.status);
+  const text = await res.text();
+  console.log("Captured body length:", text.length);
+})();</textarea>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="nav-btn primary" id="btn-run-code">▶ EXECUTE SNIPPET</button>
+        <button class="nav-btn" id="btn-clear-runner">CLEAR CONSOLE</button>
+      </div>
+      <pre class="code-display" id="runner-out" style="max-height:140px;margin-top:8px;background:#090c13;padding:8px;border-radius:4px">// Console logs will stream here...</pre>
+    </div>
+
+    <!-- Logs Tab -->
+    <div class="ipane" id="pane-logs">
+      <div id="logs-display" style="display:flex;flex-direction:column;gap:4px"></div>
     </div>
   </div>
 </div>
 
-<main>
-  <!-- ============ RESPONSE PANEL ============ -->
-  <section class="panel">
-    <div class="panel-head">
-      <span class="panel-title">Response</span>
-      <button class="tab active" data-pane="render">Rendered</button>
-      <button class="tab" data-pane="source">Source</button>
-      <button class="tab" data-pane="headers">Headers</button>
-      <button class="tab" data-pane="log">Log</button>
-      <div class="spacer"></div>
-      <button id="copy-source" class="small copy" disabled>⧉ Copy source</button>
-      <button id="copy-log" class="small copy" style="display:none">⧉ Copy log</button>
-      <button id="clear-log" class="small ghost" style="display:none">Clear</button>
-    </div>
-    <div class="meta" id="resp-meta"></div>
-
-    <div class="pane render-wrap active" id="pane-render">
-      <div class="render-bar">
-        <div class="controls-group">
-          <span>scripts active · media &amp; WebRTC unlocked</span>
-          <button id="force-load-btn" class="force-btn" title="Force inject HTML and keep rendered layout visible without script blanking">⚡ Force Load</button>
-        </div>
-        <label class="opt" style="font-size:11px" title="Execute scripts inside sandbox (default ON)">
-          <input type="checkbox" id="allow-scripts" checked> allow scripts
-        </label>
-      </div>
-      <div id="video-bar" class="video-modal-bar">
-        <span id="video-bar-text">🎬 YouTube video link detected!</span>
-        <button id="open-embed-btn" class="force-btn" style="color:var(--accent2);border-color:var(--accent2)">Switch to Embed Player</button>
-      </div>
-      <iframe id="render-view"
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
-              allow="autoplay *; fullscreen *; picture-in-picture *; camera *; microphone *; display-capture *; encrypted-media *; web-share *; midi *; geolocation *"
-              title="Rendered page preview"></iframe>
-      <div class="empty" id="render-empty">No page yet — type a URL and hit <b>Fetch</b>.</div>
-    </div>
-
-    <div class="pane" id="pane-source">
-      <pre id="code-view">// fetched source will appear here</pre>
-    </div>
-
-    <div class="pane" id="pane-headers">
-      <dl id="headers-list"></dl>
-      <div class="empty" id="headers-empty">Response headers will appear here.</div>
-    </div>
-
-    <div class="pane" id="pane-log">
-      <pre id="log-view"></pre>
-    </div>
-  </section>
-
-  <!-- ============ CODE PANEL ============ -->
-  <section class="panel">
-    <div class="panel-head">
-      <span class="panel-title">Code Runner</span>
-      <button class="tab active" data-ctab="js">libcurl.js (Runnable)</button>
-      <button class="tab" data-ctab="html">HTML</button>
-      <button class="tab" data-ctab="curl">curl</button>
-      <div class="spacer"></div>
-      <button id="run-code" class="small runner-btn">▶ Run Code</button>
-      <button id="copy-code" class="small copy">⧉ Copy code</button>
-    </div>
-    <div class="pane active" id="ctab-pane">
-      <div class="editor-wrap">
-        <textarea id="code-editor" spellcheck="false" placeholder="// Editable code runner"></textarea>
-      </div>
-      <div class="runner-console">
-        <div class="runner-console-head">
-          <span>Execution Console</span>
-          <button id="clear-runner-console" class="small ghost" style="padding:2px 8px;font-size:11px">Clear</button>
-        </div>
-        <pre id="runner-output">// Click "▶ Run Code" above to execute your libcurl.js script live in-browser!</pre>
-      </div>
-    </div>
-    <div class="hint" style="padding:6px 12px;border-top:1px solid var(--border);background:var(--bg2)">
-      Directly edit and test code in the editor, or use "Run Code" to execute it live.
-    </div>
-  </section>
-</main>
-
-<footer>
-  <span>powered by <a href="https://github.com/ading2210/libcurl.js" target="_blank" rel="noopener">libcurl.js</a> (curl → WASM) +
-        <a href="https://github.com/MercuryWorkshop/WISP-Protocol" target="_blank" rel="noopener">WISP</a> tunnels · TLS is end-to-end in-browser</span>
-  <span class="hint">Enter = fetch · Ctrl/⌘+Enter = fetch · Ctrl/⌘+Shift+C = copy code · Ctrl/⌘+Shift+E = run code</span>
-</footer>
+<div id="toast"></div>
 
 <script src="libcurl.js"></script>
 <script>
 "use strict";
 (function () {
-  // ---------- element refs ----------
   const $ = (id) => document.getElementById(id);
   const el = {
-    status: $("status-pill"), method: $("method"), url: $("url"), go: $("go"), cancel: $("cancel"),
-    wisp: $("wisp"), advToggle: $("adv-toggle"), advanced: $("advanced"),
-    httpVer: $("http-ver"), followRedirects: $("follow-redirects"), verbose: $("verbose"),
-    headers: $("headers"), body: $("body"),
-    meta: $("resp-meta"), renderWrap: $("pane-render"), renderFrame: $("render-view"),
-    renderEmpty: $("render-empty"), allowScripts: $("allow-scripts"),
-    forceLoadBtn: $("force-load-btn"), videoBar: $("video-bar"), openEmbedBtn: $("open-embed-btn"),
-    codeView: $("code-view"), headersList: $("headers-list"),
-    headersEmpty: $("headers-empty"), logView: $("log-view"),
-    codeEditor: $("code-editor"), runCode: $("run-code"),
-    runnerOutput: $("runner-output"), clearRunnerConsole: $("clear-runner-console"),
-    copyCode: $("copy-code"), copySource: $("copy-source"), copyLog: $("copy-log"), clearLog: $("clear-log"),
-    urlHistory: $("url-history"),
+    url: $("url-bar"), btnFetch: $("btn-fetch"), btnForce: $("btn-force"),
+    btnBack: $("btn-back"), btnForward: $("btn-forward"), btnReload: $("btn-reload"),
+    btnConfig: $("btn-config"), drawer: $("settings-drawer"),
+    wisp: $("wisp-select"), engine: $("engine-select"), httpVer: $("http-select"),
+    engineStatus: $("engine-status"), viewMeta: $("view-meta"),
+    viewport: $("browser-viewport"), mainTab: $("main-tab"),
+    assetDisplay: $("asset-display"), assetCount: $("asset-count"),
+    sourceDisplay: $("source-display"), runnerCode: $("runner-code"),
+    btnRunCode: $("btn-run-code"), btnClearRunner: $("btn-clear-runner"),
+    runnerOut: $("runner-out"), logsDisplay: $("logs-display"),
+    btnCopyTab: $("btn-copy-tab"), toast: $("toast")
   };
-
-  const CDN_JS  = "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.js";
-  const CDN_WASM = "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.wasm";
 
   let L = (typeof window.libcurl !== "undefined") ? window.libcurl
         : (typeof libcurl !== "undefined" ? libcurl : null);
   let ready = false;
-  let inFlight = null;         // AbortController
-  let lastSource = "";         // raw response text
-  let lastFinalUrl = "";
-  let lastContentType = "";
-  let forceMode = false;
-  let ctab = "js";
-  let userEditedCode = false;  // track if user manually edited the code editor
-  const logs = [];
+  let inFlight = null;
+  let historyStack = [];
+  let historyIdx = -1;
+  let currentRawHtml = "";
+  let currentFinalUrl = "";
+  let activeTab = "harvester";
+  const logStore = [];
 
-  // ---------- logging ----------
-  function log(msg, cls) {
+  function showToast(msg) {
+    el.toast.textContent = msg;
+    el.toast.style.display = "block";
+    setTimeout(() => { el.toast.style.display = "none"; }, 2500);
+  }
+
+  function appendLog(msg, type) {
     const time = new Date().toTimeString().slice(0, 8);
-    logs.push({ time, msg, cls: cls || "" });
-    if (logs.length > 3000) logs.splice(0, logs.length - 3000);
-    renderLog();
+    logStore.push({ time, msg, type });
+    const row = document.createElement("div");
+    row.className = "log-line " + (type || "");
+    row.textContent = `[${time}] ${msg}`;
+    el.logsDisplay.appendChild(row);
+    el.logsDisplay.scrollTop = el.logsDisplay.scrollHeight;
   }
-  function renderLog() {
-    el.logView.innerHTML = "";
-    for (const { time, msg, cls } of logs) {
-      const line = document.createElement("span");
-      if (cls) line.className = cls;
-      line.textContent = `[${time}] ${msg}\n`;
-      el.logView.appendChild(line);
+
+  function updateStatus(text, ok) {
+    el.engineStatus.textContent = text;
+    const dot = document.querySelector(".engine-dot");
+    if (dot) dot.style.background = ok ? "var(--neon-green)" : "var(--neon-orange)";
+  }
+
+  // Nexus Intelligent Patch & Patcher Engine
+  function nexusPatch(html, targetUrl, forceMode) {
+    const urlObj = new URL(targetUrl);
+    const origin = urlObj.origin;
+    let patched = html;
+
+    // 1. If forceMode, strip all scripts to prevent loop crashing while preserving visual layout
+    if (forceMode) {
+      patched = patched.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
     }
-    el.logView.parentElement.scrollTop = el.logView.parentElement.scrollHeight;
-  }
 
-  function getRawLogs() {
-    return logs.map(l => `[${l.time}] ${l.msg}`).join("\n");
-  }
-
-  function setStatus(text, cls) {
-    el.status.textContent = text;
-    el.status.className = cls || "";
-  }
-
-  // ---------- runner console logging ----------
-  function runnerLog(msg, cls) {
-    const span = document.createElement("span");
-    if (cls) span.className = cls;
-    span.textContent = msg + "\n";
-    el.runnerOutput.appendChild(span);
-    el.runnerOutput.scrollTop = el.runnerOutput.scrollHeight;
-  }
-
-  // ---------- helpers ----------
-  function normalizeUrl(u) {
-    u = (u || "").trim();
-    if (!u) return null;
-    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(u)) u = "https://" + u;
-    try { return new URL(u).href; } catch { return null; }
-  }
-  function parseHeaders() {
-    const out = {};
-    for (const line of el.headers.value.split("\n")) {
-      const t = line.trim();
-      if (!t || t.startsWith("#")) continue;
-      const i = t.indexOf(":");
-      if (i < 1) continue;
-      out[t.slice(0, i).trim()] = t.slice(i + 1).trim();
-    }
-    return out;
-  }
-  function fmtBytes(n) {
-    if (n < 1024) return n + " B";
-    if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
-    return (n / 1048576).toFixed(2) + " MB";
-  }
-  function shQuote(s) { return "'" + String(s).replace(/'/g, "'\\''") + "'"; }
-  function escHtml(s) {
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
-
-  // ---------- code generation ----------
-  function requestParts() {
-    const url = normalizeUrl(el.url.value) || el.url.value.trim() || "https://example.com";
-    const method = el.method.value;
-    const headers = parseHeaders();
-    const body = el.body.value;
-    const ver = el.httpVer.value;
-    const followRedirects = el.followRedirects.checked;
-    const verbose = el.verbose.checked;
-    const hasBody = body.length > 0 && method !== "GET" && method !== "HEAD";
-    return { url, method, headers, body, ver, followRedirects, verbose, hasBody };
-  }
-
-  function genJS({ url, method, headers, body, ver, followRedirects, verbose, hasBody }) {
-    const wispServer = el.wisp.value.trim() || "wss://wisp.mercurywork.shop/";
-    const lines = [];
-    lines.push("// libcurl.js — in-browser curl compiled to WebAssembly");
-    lines.push("// Bypasses CORS via WISP WebSocket tunnel with end-to-end TLS");
-    lines.push("");
-    lines.push("(async () => {");
-    lines.push("  // 1) Configure WISP WebSocket tunnel");
-    lines.push(`  libcurl.set_websocket(${JSON.stringify(wispServer)});`);
-    lines.push("");
-    lines.push("  // 2) Ensure WASM is loaded");
-    lines.push(`  if (!libcurl.ready) {`);
-    lines.push(`    console.log("Loading libcurl.wasm…");`);
-    lines.push(`    await libcurl.load_wasm("libcurl.wasm");`);
-    lines.push(`  }`);
-    lines.push("");
-    lines.push("  // 3) Execute request with libcurl.fetch()");
-    lines.push(`  console.log("Fetching: ${url}…");`);
-    lines.push(`  const res = await libcurl.fetch(${JSON.stringify(url)}, {`);
-    if (method !== "GET") lines.push(`    method: ${JSON.stringify(method)},`);
-    const hkeys = Object.keys(headers);
-    if (hkeys.length) {
-      lines.push("    headers: {");
-      for (const k of hkeys) lines.push(`      ${JSON.stringify(k)}: ${JSON.stringify(headers[k])},`);
-      lines.push("    },");
-    }
-    if (hasBody) lines.push(`    body: ${JSON.stringify(body)},`);
-    if (ver !== "auto") lines.push(`    _libcurl_http_version: ${ver},`);
-    if (!followRedirects) lines.push(`    redirect: "manual",`);
-    if (verbose) lines.push("    _libcurl_verbose: 1,");
-    lines.push("  });");
-    lines.push("");
-    lines.push("  console.log(`Status: ${res.status} ${res.statusText}`);");
-    lines.push("  for (const [k, v] of res.headers.entries()) {");
-    lines.push("    console.log(`${k}: ${v}`);");
-    lines.push("  }");
-    lines.push("  const text = await res.text();");
-    lines.push("  console.log(`Body (${text.length} chars):\\n` + text.slice(0, 1000) + (text.length > 1000 ? '… [truncated]' : ''));");
-    lines.push("  return { status: res.status, headers: [...res.headers.entries()], bodyLength: text.length };");
-    lines.push("})();");
-    return lines.join("\n");
-  }
-
-  function genHtml(p) {
-    const wisp = el.wisp.value.trim() || "wss://wisp.mercurywork.shop/";
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>libcurl.js request</title>
-</head>
-<body>
-  <h2>libcurl.js demo</h2>
-  <pre id="out">fetching…</pre>
-
-  <!-- curl compiled to WebAssembly: https://github.com/ading2210/libcurl.js -->
-  <script src="${CDN_JS}"><\/script>
-  <script>
-    (async () => {
-      const out = document.getElementById("out");
-      try {
-        // WISP tunnel: raw TLS sockets over WebSocket (relay can't read traffic)
-        libcurl.set_websocket(${JSON.stringify(wisp)});
-        await libcurl.load_wasm(${JSON.stringify(CDN_WASM)});
-
-        const response = await libcurl.fetch(${JSON.stringify(p.url)}, {${
-          p.method !== "GET" ? "\n      method: " + JSON.stringify(p.method) + "," : ""}${
-          Object.keys(p.headers).length ? "\n      headers: " + JSON.stringify(p.headers, null, 8).replace(/\n/g, "\n      ") + "," : ""}${
-          p.hasBody ? "\n      body: " + JSON.stringify(p.body) + "," : ""}${
-          p.ver !== "auto" ? "\n      _libcurl_http_version: " + p.ver + "," : ""}${
-          !p.followRedirects ? '\n      redirect: "manual",' : ""}${
-          p.verbose ? "\n      _libcurl_verbose: 1," : ""}
-        });
-
-        const headers = [...response.headers].map(([k, v]) => k + ": " + v).join("\\n");
-        const body = await response.text();
-        out.textContent =
-          "HTTP " + response.status + " " + response.statusText + "\\n" +
-          headers + "\\n\\n" + body;
-      } catch (err) {
-        out.textContent = "Error: " + err;
-      }
-    })();
-  <\/script>
-</body>
-</html>`;
-  }
-
-  function genCurl({ url, method, headers, body, ver, followRedirects, verbose, hasBody }) {
-    const parts = ["curl " + shQuote(url)];
-    if (followRedirects) parts.push("  --location");
-    if (method !== "GET") parts.push("  --request " + method);
-    for (const [k, v] of Object.entries(headers)) parts.push("  --header " + shQuote(k + ": " + v));
-    if (hasBody) parts.push("  --data " + shQuote(body));
-    if (ver === "1.0") parts.push("  --http1.0");
-    if (ver === "1.1") parts.push("  --http1.1");
-    if (ver === "2") parts.push("  --http2");
-    if (verbose) parts.push("  --verbose");
-    return parts.join(" \\\n");
-  }
-
-  function currentCode() {
-    const p = requestParts();
-    if (ctab === "html") return genHtml(p);
-    if (ctab === "curl") return genCurl(p);
-    return genJS(p);
-  }
-
-  function refreshCode(force) {
-    if (force || !userEditedCode || ctab !== "js") {
-      el.codeEditor.value = currentCode();
-    }
-  }
-
-  // ---------- copy ----------
-  async function copyText(text) {
-    if (!text) return false;
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.cssText = "position:fixed;opacity:0";
-      document.body.appendChild(ta);
-      ta.select();
-      let ok = false;
-      try { ok = document.execCommand("copy"); } catch {}
-      ta.remove();
-      return ok;
-    }
-  }
-
-  function flashCopied(btn, ok) {
-    const old = btn.textContent;
-    btn.textContent = ok ? "✓ Copied!" : "✗ Failed";
-    btn.classList.toggle("copied", ok);
-    setTimeout(() => { btn.textContent = old; btn.classList.remove("copied"); }, 1500);
-  }
-
-  // ---------- tabs ----------
-  function wireTabs(tabAttr, onSwitch) {
-    document.querySelectorAll(".tab[" + tabAttr + "]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        btn.parentElement.querySelectorAll(".tab[" + tabAttr + "]").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        onSwitch(btn.getAttribute(tabAttr));
-      });
-    });
-  }
-
-  wireTabs("data-pane", (id) => {
-    document.querySelectorAll(".panel .pane[id^='pane-']").forEach((p) => p.classList.remove("active"));
-    $("pane-" + id).classList.add("active");
-
-    if (id === "log") {
-      el.copySource.style.display = "none";
-      el.copyLog.style.display = "";
-      el.clearLog.style.display = "";
+    // 2. Base tag injection so all relative resources resolve
+    const baseTag = `<base href="${origin}/">`;
+    if (/<head[^>]*>/i.test(patched)) {
+      patched = patched.replace(/<head[^>]*>/i, (m) => m + "\n" + baseTag);
     } else {
-      el.copySource.style.display = "";
-      el.copyLog.style.display = "none";
-      el.clearLog.style.display = "none";
-    }
-  });
-
-  wireTabs("data-ctab", (id) => {
-    ctab = id;
-    if (ctab === "js") {
-      el.runCode.style.display = "";
-    } else {
-      el.runCode.style.display = "none";
-    }
-    refreshCode(true);
-  });
-
-  // ---------- code runner execution ----------
-  async function executeCodeRunner() {
-    const code = el.codeEditor.value;
-    el.runnerOutput.innerHTML = "";
-    runnerLog("▶ Running script…", "r-info");
-
-    if (!L) {
-      runnerLog("✗ libcurl is not loaded", "r-err");
-      return;
+      patched = "<head>" + baseTag + "</head>" + patched;
     }
 
-    const origLog = console.log;
-    const origError = console.error;
-    const origWarn = console.warn;
-
-    try {
-      console.log = (...args) => {
-        origLog(...args);
-        runnerLog(args.map(a => typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)).join(" "));
-      };
-      console.error = (...args) => {
-        origError(...args);
-        runnerLog(args.map(a => typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)).join(" "), "r-err");
-      };
-      console.warn = (...args) => {
-        origWarn(...args);
-        runnerLog(args.map(a => typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)).join(" "), "r-err");
-      };
-
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-      const fn = new AsyncFunction("libcurl", code);
-      const res = await fn(L);
-      if (res !== undefined) {
-        runnerLog("Result: " + JSON.stringify(res, null, 2), "r-ok");
-      }
-      runnerLog("✓ Execution completed.", "r-ok");
-    } catch (err) {
-      runnerLog("✗ Error: " + (err && err.stack ? err.stack : err), "r-err");
-    } finally {
-      console.log = origLog;
-      console.error = origError;
-      console.warn = origWarn;
-    }
-  }
-
-  // ---------- history ----------
-  function loadHistory() {
-    let hist = [];
-    try { hist = JSON.parse(localStorage.getItem("curlbrowser.history") || "[]"); } catch {}
-    el.urlHistory.innerHTML = "";
-    for (const u of hist) {
-      const o = document.createElement("option");
-      o.value = u;
-      el.urlHistory.appendChild(o);
-    }
-  }
-  function pushHistory(url) {
-    let hist = [];
-    try { hist = JSON.parse(localStorage.getItem("curlbrowser.history") || "[]"); } catch {}
-    hist = [url, ...hist.filter((u) => u !== url)].slice(0, 15);
-    try { localStorage.setItem("curlbrowser.history", JSON.stringify(hist)); } catch {}
-    loadHistory();
-  }
-
-  // ---------- rendering the response ----------
-  function showMeta(parts, ms) {
-    const cls = parts.status >= 400 ? "st-err" : parts.status >= 300 ? "st-red" : "st-ok";
-    el.meta.innerHTML =
-      '<span class="' + cls + '">HTTP ' + escHtml(parts.statusText || parts.status) + "</span>" +
-      "<span>" + escHtml(parts.ctype || "—") + "</span>" +
-      "<span>" + fmtBytes(parts.size) + "</span>" +
-      "<span>" + ms + " ms</span>";
-    el.meta.classList.add("show");
-  }
-
-  function buildIframeShim(targetUrl) {
-    return `
+    // 3. Inject Nexus In-Frame Runtime Shield:
+    //    - Defeats frame-busting (top.location !== self.location)
+    //    - Swallows fatal SPA exceptions (Polymer, React, Webpack hydration)
+    //    - Patches WebRTC RTCPeerConnection to ensure ICE gathering works across restricted networks
+    const runtimeShield = `
 <script>
 (function() {
-  // Prevent SPA / frame-busting scripts from clearing document or navigating top window
+  // Anti-frame-busting patch
   try {
     Object.defineProperty(window, 'top', { get: () => window });
     Object.defineProperty(window, 'parent', { get: () => window });
   } catch(e) {}
 
-  // Suppress SPA uncaught errors that trigger white screen resets
-  window.addEventListener('error', function(e) {
-    e.preventDefault && e.preventDefault();
-    return true;
-  }, true);
-  window.addEventListener('unhandledrejection', function(e) {
-    e.preventDefault && e.preventDefault();
-  }, true);
+  // Suppress white-screen fatal crashes
+  window.addEventListener('error', (e) => { e.preventDefault && e.preventDefault(); return true; }, true);
+  window.addEventListener('unhandledrejection', (e) => { e.preventDefault && e.preventDefault(); }, true);
 
-  // Preserve skeleton or custom elements if an error tries to blank out body
-  document.addEventListener('DOMContentLoaded', function() {
-    function restoreContent() {
-      const sk = document.getElementById('home-page-skeleton');
-      if (sk) {
-        sk.style.display = 'block';
-        sk.style.visibility = 'visible';
-        sk.hidden = false;
-      }
-      // If ytd-app is empty or blank, unhide skeleton items
-      const skeletons = document.querySelectorAll('.rich-grid-media-skeleton, #home-container-media, #home-chips');
-      skeletons.forEach(s => {
-        s.style.display = 'block';
-        s.style.visibility = 'visible';
-      });
-    }
-    restoreContent();
-    setTimeout(restoreContent, 500);
-    setTimeout(restoreContent, 1500);
-    setTimeout(restoreContent, 3000);
+  // WebRTC STUN/TURN resilient shim for school wifi/Chromebooks
+  if (window.RTCPeerConnection) {
+    const OrigPeerConnection = window.RTCPeerConnection;
+    window.RTCPeerConnection = function(config, constraints) {
+      config = config || {};
+      config.iceServers = config.iceServers || [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }
+      ];
+      return new OrigPeerConnection(config, constraints);
+    };
+    window.RTCPeerConnection.prototype = OrigPeerConnection.prototype;
+  }
+
+  // Preserve skeleton & body unhiding for YouTube / SPAs
+  document.addEventListener('DOMContentLoaded', () => {
+    const sk = document.getElementById('home-page-skeleton');
+    if (sk) { sk.style.display = 'block'; sk.hidden = false; }
   });
 })();
 <\/script>
-<style>
-  /* Ensure skeleton layout stays visible if client scripts fail to hydrate */
-  #home-page-skeleton { display: block !important; visibility: visible !important; }
-  .rich-grid-media-skeleton { display: block !important; visibility: visible !important; }
-</style>
 `;
-  }
 
-  function getCleanStaticDoc(doc) {
-    // Strip scripts that crash or wipe the body, but preserve all stylesheets, fonts, inline SVGs, and DOM skeleton
-    let clean = doc.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-    // Ensure hidden attribute is stripped from skeleton
-    clean = clean.replace(/\bhidden\b/gi, "");
-    clean += `
-<style>
-  html, body { background: #0f0f0f; color: #f1f1f1; font-family: Roboto, Arial, sans-serif; }
-  #home-page-skeleton { display: block !important; visibility: visible !important; opacity: 1 !important; }
-  .rich-grid-media-skeleton { display: inline-block !important; margin: 12px; }
-  ytd-masthead.shell { display: flex !important; background: #0f0f0f !important; }
-</style>
-`;
-    return clean;
-  }
-
-  function updateIframeRender() {
-    if (!lastSource) return;
-    const urlAttr = escHtml(lastFinalUrl);
-    const ctype = lastContentType;
-    const allowScripts = el.allowScripts.checked;
-
-    // Full permissions sandbox for scripts, forms, downloads, and popups
-    if (allowScripts && !forceMode) {
-      el.renderFrame.setAttribute("sandbox", "allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads");
+    if (/<head[^>]*>/i.test(patched)) {
+      patched = patched.replace(/<head[^>]*>/i, (m) => m + "\n" + runtimeShield);
     } else {
-      el.renderFrame.setAttribute("sandbox", "allow-same-origin");
+      patched = runtimeShield + patched;
     }
 
-    if (/^image\//i.test(ctype)) {
+    return patched;
+  }
+
+  // Deep Asset Harvester: scrapes scripts, styles, subdomains, APIs, logins
+  function harvestSiteAssets(html, finalUrl) {
+    el.assetDisplay.innerHTML = "";
+    const urlObj = new URL(finalUrl);
+    const scripts = [];
+    const stylesheets = [];
+    const subdomains = new Set();
+    const media = [];
+
+    // Scripts
+    const scriptMatches = html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi);
+    for (const m of scriptMatches) scripts.push(m[1]);
+
+    // Styles
+    const styleMatches = html.matchAll(/<link[^>]+href=["']([^"']+)["'][^>]*rel=["']stylesheet["']/gi);
+    for (const m of styleMatches) stylesheets.push(m[1]);
+
+    // Media & images
+    const imgMatches = html.matchAll(/<(?:img|video|source)[^>]+src=["']([^"']+)["']/gi);
+    for (const m of imgMatches) media.push(m[1]);
+
+    // Subdomains / Hostnames mentioned
+    const hostRegex = new RegExp(`https?://([a-zA-Z0-9.-]+\\.${urlObj.hostname.split('.').slice(-2).join('\\.')})`, "gi");
+    let match;
+    while ((match = hostRegex.exec(html)) !== null) {
+      subdomains.add(match[1]);
+    }
+
+    const total = scripts.length + stylesheets.length + media.length + subdomains.size;
+    el.assetCount.textContent = total;
+
+    // Render cards
+    function addCard(type, name, link) {
+      const card = document.createElement("div");
+      card.className = "asset-card";
+      card.innerHTML = `<b>[${type}]</b><a href="${link}" target="_blank">${name.slice(0, 30)}</a>`;
+      el.assetDisplay.appendChild(card);
+    }
+
+    scripts.slice(0, 8).forEach(s => addCard("JS", s.split("/").pop() || s, new URL(s, finalUrl).href));
+    stylesheets.slice(0, 6).forEach(s => addCard("CSS", s.split("/").pop() || s, new URL(s, finalUrl).href));
+    media.slice(0, 6).forEach(m => addCard("MEDIA", m.split("/").pop() || m, new URL(m, finalUrl).href));
+    subdomains.forEach(sub => addCard("SUBDOMAIN", sub, "https://" + sub));
+
+    if (total === 0) {
+      el.assetDisplay.innerHTML = "<div style='color:var(--text-dim)'>No linked assets extracted.</div>";
+    }
+  }
+
+  // Core Fetch & Launch Pipeline
+  async function launchSite(targetUrl, forceMode = false) {
+    if (!ready) {
+      appendLog("Nexus engine not initialized yet", "err");
       return;
     }
+    let currentUrl = targetUrl.trim();
+    if (!/^[a-z]+:\/\//i.test(currentUrl)) currentUrl = "https://" + currentUrl;
+    el.url.value = currentUrl;
 
-    let doc = lastSource;
-    if (/^text\/html|application\/xhtml/i.test(ctype) || /^\s*(<!doctype|<html|<head|<body)/i.test(doc)) {
-      if (forceMode) {
-        doc = getCleanStaticDoc(doc);
-      } else {
-        const shim = buildIframeShim(lastFinalUrl);
-        if (/<head[^>]*>/i.test(doc)) {
-          doc = doc.replace(/<head[^>]*>/i, (m) => m + '<base href="' + urlAttr + '">' + shim);
-        } else {
-          doc = '<head><base href="' + urlAttr + '">' + shim + '</head>' + doc;
-        }
-      }
-
-      // Check if YouTube video URL and suggest embed player
-      const ytMatch = lastFinalUrl.match(/(?:youtube\.com\/(?:watch\?v=|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-      if (ytMatch) {
-        const vidId = ytMatch[1];
-        el.videoBar.classList.add("show");
-        el.openEmbedBtn.onclick = () => {
-          el.url.value = "https://www.youtube.com/embed/" + vidId;
-          doFetch();
-        };
-      } else {
-        el.videoBar.classList.remove("show");
-      }
-
-      el.renderFrame.srcdoc = doc;
-    } else {
-      el.renderFrame.srcdoc =
-        '<body style="background:#0d1117;color:#8b949e;font:12px monospace;padding:16px">' +
-        "Not an HTML page (" + escHtml(ctype || "unknown type") + ") — see the <b>Source</b> tab.</body>";
-    }
-  }
-
-  function showResponse({ status, statusText, headers, bytes, text, ctype, finalUrl }, ms) {
-    lastSource = text;
-    lastFinalUrl = finalUrl;
-    lastContentType = ctype;
-    forceMode = false;
-    el.copySource.disabled = false;
-
-    // meta bar
-    showMeta({ status, statusText, ctype, size: bytes.byteLength }, ms);
-
-    // source
-    el.codeView.textContent = text;
-
-    // headers
-    el.headersList.innerHTML = "";
-    for (const [k, v] of headers) {
-      const dt = document.createElement("dt");
-      dt.textContent = k;
-      const dd = document.createElement("dd");
-      dd.textContent = v;
-      el.headersList.appendChild(dt);
-      el.headersList.appendChild(dd);
-    }
-    el.headersEmpty.style.display = headers.length ? "none" : "";
-
-    // rendered
-    el.renderEmpty.style.display = "none";
-    el.renderFrame.style.display = "";
-
-    if (/^image\//i.test(ctype)) {
-      const blobUrl = URL.createObjectURL(new Blob([bytes], { type: ctype.split(";")[0].trim() }));
-      el.renderFrame.removeAttribute("srcdoc");
-      el.renderFrame.src = "about:blank";
-      el.renderFrame.style.display = "none";
-      let wrap = document.getElementById("img-wrap");
-      if (wrap) wrap.remove();
-      wrap = document.createElement("div");
-      wrap.id = "img-wrap";
-      wrap.className = "img-wrap";
-      const img = document.createElement("img");
-      img.src = blobUrl;
-      img.alt = "response image";
-      wrap.appendChild(img);
-      el.renderWrap.appendChild(wrap);
-    } else {
-      let wrap = document.getElementById("img-wrap");
-      if (wrap) wrap.remove();
-      el.renderFrame.style.display = "";
-      updateIframeRender();
-    }
-  }
-
-  function showError(msg, details) {
-    el.meta.innerHTML = '<span class="st-err">error</span><span>' + escHtml(msg) + "</span>";
-    el.meta.classList.add("show");
-    log(msg, "l-err");
-    if (details) log(details, "l-warn");
-  }
-
-  // ---------- the fetch itself with redirect follow support ----------
-  async function doFetch() {
-    let url = normalizeUrl(el.url.value);
-    if (!url) { showError("Invalid URL"); return; }
-    if (!ready) { showError("libcurl.js is not ready yet"); return; }
-    el.url.value = url;
-    pushHistory(url);
-
-    const p = requestParts();
-    const shouldFollowRedirects = el.followRedirects.checked;
-
-    inFlight = new AbortController();
-    el.go.disabled = true;
-    el.cancel.style.display = "";
+    el.btnFetch.disabled = true;
+    appendLog(`[LAUNCH] Routing request: ${currentUrl}`, "cyan");
+    updateStatus("TUNNELING " + currentUrl.slice(0, 30) + "...", false);
 
     const t0 = performance.now();
-    let currentUrl = url;
     let redirectCount = 0;
     const maxRedirects = 10;
-    let currentMethod = p.method;
-    let currentBody = p.hasBody ? p.body : undefined;
 
     try {
       while (true) {
-        setStatus("fetching " + currentUrl.replace(/^https?:\/\//, "").slice(0, 40) + "…", "busy");
-        log("→ " + currentMethod + " " + currentUrl, "l-info");
-
+        const ver = el.httpVer.value;
         const init = {
-          method: currentMethod,
-          signal: inFlight.signal,
+          method: "GET",
           redirect: "manual",
+          _libcurl_verbose: 1
         };
-        if (Object.keys(p.headers).length) init.headers = Object.assign({}, p.headers);
-        if (currentBody) init.body = currentBody;
-        if (p.ver !== "auto") init._libcurl_http_version = p.ver === "2" ? 2 : Number(p.ver);
-        if (p.verbose) init._libcurl_verbose = 1;
+        if (ver !== "auto") init._libcurl_http_version = ver === "2" ? 2 : Number(ver);
 
         const res = await L.fetch(currentUrl, init);
 
-        // Check for 3xx redirects
-        const isRedirect = (res.status >= 300 && res.status < 400);
-        const loc = res.headers.get("location");
-
-        if (isRedirect && loc && shouldFollowRedirects) {
-          redirectCount++;
-          if (redirectCount > maxRedirects) {
-            throw new Error("Too many redirects (exceeded " + maxRedirects + ")");
+        // Handle redirects
+        if (res.status >= 300 && res.status < 400) {
+          const loc = res.headers.get("location");
+          if (loc && redirectCount < maxRedirects) {
+            redirectCount++;
+            const next = new URL(loc, currentUrl).href;
+            appendLog(`↳ Redirect (${res.status}) → ${next}`, "warn");
+            currentUrl = next;
+            el.url.value = next;
+            continue;
           }
-          const nextUrl = new URL(loc, currentUrl).href;
-          log("↳ Redirect (" + res.status + " " + res.statusText + ") to: " + nextUrl, "l-warn");
-
-          if ((res.status === 301 || res.status === 302 || res.status === 303) && currentMethod !== "HEAD") {
-            currentMethod = "GET";
-            currentBody = undefined;
-          }
-          currentUrl = nextUrl;
-          el.url.value = nextUrl;
-          continue;
         }
 
-        const bytes = await res.arrayBuffer();
-        const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+        const buf = await res.arrayBuffer();
+        const text = new TextDecoder("utf-8", { fatal: false }).decode(buf);
         const ms = Math.round(performance.now() - t0);
-        const headers = [...res.headers.entries()];
-        const ctype = (res.headers.get("content-type") || "").toLowerCase();
 
-        showResponse(
-          { status: res.status, statusText: res.statusText, headers, bytes, text, ctype, finalUrl: currentUrl },
-          ms
-        );
-        setStatus("HTTP " + res.status + " · " + fmtBytes(bytes.byteLength) + " · " + ms + " ms" + (redirectCount ? " (" + redirectCount + " redirects)" : ""),
-          res.status >= 400 ? "error" : "ok");
-        log("← HTTP " + res.status + " " + res.statusText + " (" + fmtBytes(bytes.byteLength) + ", " + ms + " ms)", "l-ok");
+        currentRawHtml = text;
+        currentFinalUrl = currentUrl;
+        el.sourceDisplay.textContent = text;
+        el.mainTab.querySelector("span").textContent = new URL(currentUrl).hostname;
+
+        // Run Nexus Intelligent Patcher
+        const patchedDoc = nexusPatch(text, currentUrl, forceMode);
+        el.viewport.srcdoc = patchedDoc;
+
+        // Harvest site code, subdomains, and media
+        harvestSiteAssets(text, currentUrl);
+
+        el.viewMeta.textContent = `HTTP ${res.status} // ${Math.round(buf.byteLength/1024)} KB // ${ms} ms // ${redirectCount} REDIRECTS`;
+        updateStatus("NEXUS ONLINE // SECURE", true);
+        appendLog(`[SUCCESS] Loaded in ${ms}ms (${buf.byteLength} bytes)`, "ok");
+
+        // History
+        if (historyStack[historyIdx] !== currentUrl) {
+          historyStack = historyStack.slice(0, historyIdx + 1);
+          historyStack.push(currentUrl);
+          historyIdx++;
+        }
         break;
       }
     } catch (err) {
-      const ms = Math.round(performance.now() - t0);
-      if (err && (err.name === "AbortError" || String(err).includes("abort"))) {
-        setStatus("cancelled", "");
-        log("request cancelled after " + ms + " ms", "");
-      } else {
-        const msg = String(err && err.message ? err.message : err);
-        setStatus("request failed", "error");
-        let hint = "Hint: Check WISP server or network connectivity.";
-        if (msg.includes("could not connect") || msg.includes("Failed to connect") || msg.includes("7")) {
-          hint = "Tip (School Chromebook): The school network filter is blocking the WebSocket tunnel. Change WISP to another server or test on hotspot.";
-        } else if (msg.includes("SSL connect error") || msg.includes("error code 35") || msg.includes("EOF")) {
-          hint = "Tip: Server closed TLS handshake or rejected ALPN h2. Try setting HTTP version to '1.1' or testing with another WISP server.";
-        }
-        showError(msg, hint);
-      }
+      appendLog(`[ERROR] ${err.message || err}`, "err");
+      updateStatus("CONNECTION FAILURE", false);
+      showToast("Tunnel error: check WISP server or switch HTTP to 1.1");
     } finally {
-      inFlight = null;
-      el.go.disabled = !ready;
-      el.cancel.style.display = "none";
+      el.btnFetch.disabled = false;
     }
   }
 
-  // ---------- libcurl.js bootstrap ----------
-  function loadScriptOnce(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = src;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error("failed to load " + src));
-      document.head.appendChild(s);
-    });
-  }
-
-  async function boot() {
-    setStatus("loading libcurl.js…", "busy");
-
-    if (typeof window.libcurl !== "undefined") {
-      L = window.libcurl;
-    } else if (typeof libcurl !== "undefined") {
-      L = libcurl;
-      window.libcurl = libcurl;
-    }
-
-    if (!L) {
-      log("local libcurl.js not detected yet — checking ./libcurl.js or CDN…", "l-info");
-      try {
-        await loadScriptOnce("libcurl.js");
-        if (typeof window.libcurl !== "undefined") L = window.libcurl;
-        else if (typeof libcurl !== "undefined") L = libcurl;
-      } catch {
-        try {
-          await loadScriptOnce(CDN_JS);
-          if (typeof window.libcurl !== "undefined") L = window.libcurl;
-          else if (typeof libcurl !== "undefined") L = libcurl;
-        } catch {}
-      }
-    }
-
-    if (!L) {
-      setStatus("libcurl.js failed to load", "error");
-      log("Could not load libcurl.js from ./libcurl.js or jsDelivr CDN.", "l-err");
-      return;
-    }
-
-    const wispUrl = el.wisp.value.trim() || "wss://wisp.mercurywork.shop/";
+  // Interactive Code Runner
+  async function runSnippet() {
+    const code = el.runnerCode.value;
+    el.runnerOut.textContent = "▶ Executing in Nexus runtime...\n";
+    const origLog = console.log;
     try {
+      console.log = (...args) => {
+        origLog(...args);
+        el.runnerOut.textContent += args.map(a => typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)).join(" ") + "\n";
+      };
+      const AsyncFn = Object.getPrototypeOf(async function(){}).constructor;
+      const fn = new AsyncFn("libcurl", code);
+      await fn(L);
+      el.runnerOut.textContent += "✓ Execution finished.\n";
+    } catch (e) {
+      el.runnerOut.textContent += "✗ Execution Error: " + (e.stack || e) + "\n";
+    } finally {
+      console.log = origLog;
+    }
+  }
+
+  // Boot Engine
+  async function bootNexus() {
+    appendLog("Booting Nexus Hybrid WebAssembly Core...", "cyan");
+    updateStatus("INITIALIZING WASM...", false);
+
+    if (!L) {
+      appendLog("Loading WebAssembly binary runtime...", "warn");
+    }
+
+    try {
+      const wispUrl = el.wisp.value;
       L.set_websocket(wispUrl);
-      log("WISP tunnel set: " + wispUrl);
-    } catch (e) {
-      log("Error setting WISP websocket: " + e, "l-err");
-    }
+      appendLog("WISP Tunnel attached: " + wispUrl, "ok");
 
-    L.stderr = (t) => log(String(t).trimEnd());
-    L.stdout = (t) => log(String(t).trimEnd());
+      L.stderr = (t) => appendLog(String(t).trimEnd(), "");
+      L.stdout = (t) => appendLog(String(t).trimEnd(), "");
 
-    setStatus("loading libcurl.wasm…", "busy");
-    try {
-      let wasmUrl = "libcurl.wasm";
-      try {
-        const head = await fetch("libcurl.wasm", { method: "HEAD" });
-        if (!head.ok) wasmUrl = CDN_WASM;
-      } catch { wasmUrl = CDN_WASM; }
-
-      await L.load_wasm(wasmUrl);
+      await L.load_wasm("libcurl.wasm");
       ready = true;
-      el.go.disabled = false;
-      let ver = "";
-      try {
-        const v = L.version;
-        if (v && v.lib) ver = " · v" + v.lib;
-        if (v && v.curl) ver += " · curl " + v.curl;
-      } catch {}
-      setStatus("ready" + ver, "ok");
-      log("libcurl.js ready (" + wasmUrl + ")", "l-ok");
+      updateStatus("NEXUS ONLINE // READY", true);
+      appendLog("Nexus WebAssembly Engine loaded & active", "ok");
+
+      // Auto-launch nowgg.fun as default test
+      launchSite(el.url.value);
     } catch (err) {
-      setStatus("wasm failed to load", "error");
-      log("load_wasm failed: " + err, "l-err");
+      appendLog("Failed to initialize engine: " + err, "err");
+      updateStatus("ENGINE ERROR", false);
     }
   }
 
-  // ---------- events ----------
-  el.go.addEventListener("click", doFetch);
-  el.cancel.addEventListener("click", () => { if (inFlight) inFlight.abort(); });
-  el.url.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); doFetch(); }
-  });
-  el.advToggle.addEventListener("click", () => {
-    const open = el.advanced.classList.toggle("open");
-    el.advToggle.textContent = open ? "Advanced ▴" : "Advanced ▾";
-  });
-  el.wisp.addEventListener("change", () => {
-    const u = el.wisp.value.trim();
-    if (!ready || !u) return;
-    try {
-      L.set_websocket(u);
-      localStorage.setItem("curlbrowser.wisp", u);
-      log("WISP tunnel switched to " + u);
-    } catch (e) {
-      log("Error switching WISP: " + e, "l-err");
+  // Event Listeners
+  el.btnFetch.addEventListener("click", () => launchSite(el.url.value, false));
+  el.btnForce.addEventListener("click", () => {
+    appendLog("Applying FORCE LOAD: Stripping crashing hydration routines", "warn");
+    if (currentRawHtml && currentFinalUrl) {
+      const patchedDoc = nexusPatch(currentRawHtml, currentFinalUrl, true);
+      el.viewport.srcdoc = patchedDoc;
+      showToast("⚡ Force Load applied!");
+    } else {
+      launchSite(el.url.value, true);
     }
   });
 
-  // Force load button
-  el.forceLoadBtn.addEventListener("click", () => {
-    forceMode = true;
-    updateIframeRender();
-    log("⚡ Force Load applied: scripts stripped, clean DOM snapshot preserved.", "l-ok");
+  el.url.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); launchSite(el.url.value); }
   });
 
-  // Presets
-  document.querySelectorAll(".preset-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const u = btn.getAttribute("data-url");
-      const v = btn.getAttribute("data-ver");
-      if (u) el.url.value = u;
-      if (v) el.httpVer.value = v;
-      userEditedCode = false;
-      refreshCode(true);
-      doFetch();
+  el.btnConfig.addEventListener("click", () => {
+    el.drawer.classList.toggle("open");
+  });
+
+  el.wisp.addEventListener("change", () => {
+    if (ready) {
+      L.set_websocket(el.wisp.value);
+      appendLog("Switched WISP relay to: " + el.wisp.value, "ok");
+    }
+  });
+
+  // Preset pills
+  document.querySelectorAll(".pill").forEach(p => {
+    p.addEventListener("click", () => {
+      const u = p.getAttribute("data-url");
+      if (u) {
+        el.url.value = u;
+        launchSite(u);
+      }
     });
   });
 
-  // Allow scripts checkbox toggle
-  el.allowScripts.addEventListener("change", () => {
-    forceMode = !el.allowScripts.checked;
-    updateIframeRender();
+  // History buttons
+  el.btnBack.addEventListener("click", () => {
+    if (historyIdx > 0) {
+      historyIdx--;
+      launchSite(historyStack[historyIdx]);
+    }
+  });
+  el.btnForward.addEventListener("click", () => {
+    if (historyIdx < historyStack.length - 1) {
+      historyIdx++;
+      launchSite(historyStack[historyIdx]);
+    }
+  });
+  el.btnReload.addEventListener("click", () => {
+    if (currentFinalUrl) launchSite(currentFinalUrl);
   });
 
-  // Input change updates code editor (unless user manually typed in editor)
-  for (const node of [el.method, el.url, el.headers, el.body, el.wisp, el.httpVer, el.followRedirects, el.verbose]) {
-    node.addEventListener("input", () => refreshCode());
-    node.addEventListener("change", () => refreshCode());
-  }
-
-  el.codeEditor.addEventListener("input", () => {
-    userEditedCode = true;
+  // Inspector Tabs
+  document.querySelectorAll(".itab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".itab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".ipane").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      activeTab = tab.getAttribute("data-tab");
+      $("pane-" + activeTab).classList.add("active");
+    });
   });
 
   // Runner controls
-  el.runCode.addEventListener("click", executeCodeRunner);
-  el.clearRunnerConsole.addEventListener("click", () => {
-    el.runnerOutput.textContent = "// Console cleared.\n";
-  });
+  el.btnRunCode.addEventListener("click", runSnippet);
+  el.btnClearRunner.addEventListener("click", () => { el.runnerOut.textContent = ""; });
 
-  // Copy buttons
-  el.copyCode.addEventListener("click", async () => {
-    flashCopied(el.copyCode, await copyText(el.codeEditor.value));
-  });
-  el.copySource.addEventListener("click", async () => {
-    flashCopied(el.copySource, await copyText(lastSource));
-  });
-  el.copyLog.addEventListener("click", async () => {
-    flashCopied(el.copyLog, await copyText(getRawLogs()));
-  });
-  el.clearLog.addEventListener("click", () => {
-    logs.length = 0;
-    el.logView.innerHTML = "";
-    log("Log cleared.");
-  });
+  // Copy current tab content
+  el.btnCopyTab.addEventListener("click", async () => {
+    let text = "";
+    if (activeTab === "source") text = el.sourceDisplay.textContent;
+    else if (activeTab === "runner") text = el.runnerCode.value;
+    else if (activeTab === "logs") text = logStore.map(l => `[${l.time}] ${l.msg}`).join("\n");
+    else text = el.assetDisplay.innerText;
 
-  // Global hotkeys
-  document.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      doFetch();
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "C" || e.key === "c")) {
-      e.preventDefault();
-      el.copyCode.click();
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "E" || e.key === "e")) {
-      e.preventDefault();
-      el.runCode.click();
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("✓ Copied to clipboard!");
+    } catch {
+      showToast("✗ Copy failed");
     }
   });
 
-  // ---------- init ----------
-  try {
-    const saved = localStorage.getItem("curlbrowser.wisp");
-    if (saved) el.wisp.value = saved;
-  } catch {}
-  loadHistory();
-  refreshCode(true);
-  boot();
+  bootNexus();
 })();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a42668a7d9d35c14',t:'MTc5MDYzNjg5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
