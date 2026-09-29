@@ -2,888 +2,1611 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NEXUS // WebEngine &amp; Unblocker</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hyperion — libcurl.js Browser</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
 <style>
-  :root {
-    --bg-base: #07090e;
-    --bg-surface: #0e121b;
-    --bg-card: #151a27;
-    --bg-card-hover: #1c2233;
-    --border: #232b3e;
-    --border-accent: #00f0ff44;
-    --neon-cyan: #00f0ff;
-    --neon-green: #00ff88;
-    --neon-purple: #9d4edd;
-    --neon-orange: #ff9100;
-    --neon-red: #ff3366;
-    --text-main: #f0f4fc;
-    --text-muted: #8b9bb4;
-    --text-dim: #54627a;
-    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; padding: 0; background: var(--bg-base); color: var(--text-main); font: 13px/1.4 var(--sans); }
-  body { display: flex; flex-direction: column; overflow: hidden; }
+/* Hyperion browser — dark theme */
+:root{
+  --bg0:#0d1017; --bg1:#141926; --bg2:#1b2233; --bg3:#232c42;
+  --fg0:#e8ecf6; --fg1:#a9b3c9; --fg2:#6b7690;
+  --acc:#5b8cff; --acc2:#7c5bff; --ok:#3ddc84; --warn:#ffb454; --err:#ff5f6d;
+  --line:#262f47; --omni:#10141f;
+  --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg0);color:var(--fg0);
+  font:13px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex;
+}
+#app{display:flex;flex-direction:column;width:100%;height:100%}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
 
-  /* Gaming Titlebar */
-  .titlebar {
-    height: 38px;
-    background: #06080c;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 12px;
-    user-select: none;
-  }
-  .brand-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--mono);
-    font-weight: 800;
-    font-size: 13px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
-  }
-  .brand-logo svg { fill: var(--neon-cyan); width: 16px; height: 16px; }
-  .tab-strip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    overflow-x: auto;
-  }
-  .browser-tab {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 6px 6px 0 0;
-    padding: 6px 14px;
-    font-size: 11.5px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    max-width: 220px;
-    cursor: pointer;
-    white-space: nowrap;
-    border-bottom: none;
-  }
-  .browser-tab.active {
-    background: var(--bg-card);
-    color: var(--text-main);
-    border-color: var(--neon-cyan);
-    box-shadow: inset 0 2px 0 var(--neon-cyan);
-  }
-  .engine-badge {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: #00f0ff15;
-    border: 1px solid #00f0ff44;
-    color: var(--neon-cyan);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .engine-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon-green); box-shadow: 0 0 6px var(--neon-green); }
+/* ── tab strip ─────────────────────────────────── */
+#tabstrip{
+  display:flex;align-items:flex-end;gap:4px;
+  background:var(--bg0);padding:6px 8px 0;min-height:38px;
+  border-bottom:1px solid var(--line);user-select:none;
+}
+#tabs{display:flex;gap:4px;overflow-x:auto;max-width:calc(100% - 44px);scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{
+  display:flex;align-items:center;gap:7px;
+  min-width:110px;max-width:220px;padding:7px 10px;
+  background:var(--bg1);border:1px solid var(--line);border-bottom:none;
+  border-radius:9px 9px 0 0;color:var(--fg1);cursor:pointer;
+  white-space:nowrap;overflow:hidden;flex-shrink:0;
+}
+.tab.active{background:var(--bg2);color:var(--fg0)}
+.tab .favicon{width:14px;height:14px;flex:0 0 14px;object-fit:contain;border-radius:3px}
+.tab .tab-title{overflow:hidden;text-overflow:ellipsis;flex:1;font-size:12px}
+.tab .tab-close{
+  width:16px;height:16px;line-height:14px;text-align:center;border-radius:4px;
+  font-size:12px;opacity:.55;flex:0 0 16px
+}
+.tab .tab-close:hover{background:#ffffff22;opacity:1}
+.tab.loading .favicon{animation:pulse 1s infinite alternate}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+#btn-newtab{
+  margin-bottom:4px;width:30px;height:28px;border-radius:7px;
+  color:var(--fg1);font-size:15px
+}
+#btn-newtab:hover{background:var(--bg2)}
 
-  /* Navigation / URL Toolbar */
-  .navbar {
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .nav-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .nav-btn {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: 6px;
-    padding: 7px 11px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .nav-btn:hover:not(:disabled) { background: var(--bg-card-hover); color: var(--text-main); border-color: var(--text-dim); }
-  .nav-btn.primary {
-    background: linear-gradient(135deg, #00f0ff22, #9d4edd22);
-    border-color: var(--neon-cyan);
-    color: var(--neon-cyan);
-    font-family: var(--mono);
-  }
-  .nav-btn.primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00f0ff44, #9d4edd44);
-    box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
-  }
-  .nav-btn.force {
-    background: #ff910022;
-    border-color: var(--neon-orange);
-    color: var(--neon-orange);
-    font-family: var(--mono);
-  }
+/* ── toolbar ───────────────────────────────────── */
+#toolbar{
+  display:flex;align-items:center;gap:4px;
+  background:var(--bg2);padding:7px 9px;border-bottom:1px solid var(--line);
+}
+.iconbtn{
+  width:32px;height:30px;border-radius:7px;color:var(--fg1);
+  font-size:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto
+}
+.iconbtn:hover{background:#ffffff14;color:var(--fg0)}
+.iconbtn:disabled{opacity:.3;cursor:default;background:none}
+#omni-wrap{
+  flex:1;display:flex;align-items:center;gap:6px;
+  background:var(--omni);border:1px solid var(--line);
+  border-radius:18px;padding:0 6px 0 10px;height:32px;margin:0 6px;
+}
+#omni-wrap:focus-within{border-color:var(--acc);box-shadow:0 0 0 2px #5b8cff33}
+#engine-badge{
+  font:10.5px/1 var(--mono);padding:3px 7px;border-radius:9px;
+  background:#5b8cff26;color:#9db9ff;border:1px solid #5b8cff44;
+  white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis
+}
+#engine-badge.relay{background:#3ddc8422;color:#7ce8ad;border-color:#3ddc8444}
+#engine-badge.public{background:#ffb45422;color:#ffd39a;border-color:#ffb45444}
+#engine-badge.err{background:#ff5f6d22;color:#ff9aa4;border-color:#ff5f6d55}
+#engine-badge.dim{background:#ffffff10;color:var(--fg1);border-color:var(--line)}
+#omni{flex:1;background:none;border:none;outline:none;font-size:13.5px;min-width:40px}
+#btn-go{width:26px;height:26px;font-size:13px}
+#engine-select-wrap select{
+  background:var(--omni);border:1px solid var(--line);border-radius:7px;
+  font:11px var(--mono);padding:5px 4px;outline:none;color:var(--fg1)
+}
 
-  .url-omnibar-wrap {
-    flex: 1;
-    min-width: 240px;
-    display: flex;
-    position: relative;
-  }
-  .url-omnibar {
-    width: 100%;
-    background: #090c13;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 12px 8px 32px;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text-main);
-    outline: none;
-    transition: all .2s;
-  }
-  .url-omnibar:focus {
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-  }
-  .url-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-dim);
-    font-size: 12px;
-  }
+/* ── bookmark bar ──────────────────────────────── */
+#bookmarkbar{
+  display:flex;gap:2px;background:var(--bg1);
+  border-bottom:1px solid var(--line);padding:3px 10px;min-height:0;
+  overflow-x:auto;scrollbar-width:none
+}
+#bookmarkbar:empty{display:none}
+.bm-chip{
+  font-size:11.5px;color:var(--fg1);padding:3px 9px;border-radius:6px;
+  white-space:nowrap;display:flex;gap:6px;align-items:center
+}
+.bm-chip:hover{background:#ffffff14;color:var(--fg0)}
+.bm-chip .x{opacity:.4;font-size:10px}
+.bm-chip .x:hover{opacity:1;color:var(--err)}
 
-  /* Preset Pills */
-  .presets-strip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    font-size: 11.5px;
-    color: var(--text-dim);
-  }
-  .pill {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 8px;
-    color: var(--text-muted);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-  }
-  .pill:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
-  .pill.gaming { border-color: #9d4edd66; color: #c77dff; }
-  .pill.gaming:hover { border-color: var(--neon-purple); }
+/* ── viewport ──────────────────────────────────── */
+#viewport{flex:1;position:relative;background:#fff;overflow:hidden}
+.tabview{position:absolute;inset:0;display:none}
+.tabview.active{display:block}
+.tabview iframe{
+  position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff
+}
+.tabview .overlay{
+  position:absolute;inset:0;overflow:auto;display:none;
+  background:
+    radial-gradient(1000px 500px at 20% -10%, #5b8cff1f, transparent),
+    radial-gradient(900px 600px at 90% 110%, #7c5bff1c, transparent),
+    var(--bg0);
+}
+.tabview .overlay.show{display:block}
 
-  /* Settings drawer */
-  .drawer {
-    display: none;
-    padding: 10px 14px;
-    background: #0b0f17;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
-  }
-  .drawer.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-  .drawer label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
-  .drawer select, .drawer input {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 8px;
-    color: var(--text-main);
-    font-family: var(--mono);
-    font-size: 12px;
-    outline: none;
-  }
+/* start page */
+.start{max-width:860px;margin:0 auto;padding:9vh 30px 40px;color:var(--fg0)}
+.start h1{
+  font-size:44px;font-weight:800;letter-spacing:-1.5px;
+  background:linear-gradient(92deg,var(--acc),var(--acc2),#ff6bd6);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  display:flex;align-items:baseline;gap:14px
+}
+.start h1 small{font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:0}
+.start .sub{color:var(--fg1);margin:10px 0 30px;font-size:14px}
+.start .sub b{color:#9db9ff;font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{
+  background:var(--bg1);border:1px solid var(--line);border-radius:12px;
+  padding:14px;cursor:pointer;transition:.12s;text-align:left
+}
+.tile:hover{border-color:var(--acc);transform:translateY(-2px);background:var(--bg2)}
+.tile .t-ico{font-size:20px}
+.tile .t-name{font-weight:600;margin-top:8px;font-size:13px}
+.tile .t-url{color:var(--fg2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.start .hint{margin-top:28px;color:var(--fg2);font-size:12px;line-height:1.9}
+.start .hint code{background:var(--bg2);padding:1px 6px;border-radius:5px;font-family:var(--mono)}
 
-  /* Workspace Layout Split */
-  .workspace {
-    flex: 1;
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    min-height: 0;
-  }
-  .viewport-pane {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    border-right: 1px solid var(--border);
-    position: relative;
-    background: #000;
-  }
-  .viewport-bar {
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-    padding: 6px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--text-muted);
-  }
-  .browser-frame {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: #fff;
-  }
+/* error page */
+.errpage{max-width:640px;margin:0 auto;padding:12vh 30px;text-align:center}
+.errpage .big{font-size:52px}
+.errpage h2{margin:14px 0 8px;font-size:20px}
+.errpage p{color:var(--fg1);font-family:var(--mono);font-size:12px;word-break:break-all}
+.errpage .row{margin-top:22px;display:flex;gap:10px;justify-content:center}
+.btn{
+  background:var(--bg2);border:1px solid var(--line);color:var(--fg0);
+  padding:8px 16px;border-radius:9px;cursor:pointer;font-size:13px
+}
+.btn:hover{border-color:var(--acc);background:var(--bg3)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
 
-  /* Dev / Inspector / Runner Sidebar */
-  .inspector-pane {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    background: var(--bg-surface);
-  }
-  .inspector-nav {
-    display: flex;
-    align-items: center;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    padding: 4px 8px;
-    gap: 4px;
-  }
-  .itab {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    padding: 5px 10px;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--text-muted);
-    cursor: pointer;
-  }
-  .itab.active {
-    background: var(--bg-surface);
-    border-color: var(--border);
-    color: var(--neon-cyan);
-  }
-  .ipane {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    display: none;
-    padding: 12px;
-  }
-  .ipane.active { display: flex; flex-direction: column; }
+/* ── devtools ──────────────────────────────────── */
+#devtools{
+  height:280px;min-height:120px;display:flex;flex-direction:column;
+  background:var(--bg1);border-top:1px solid var(--line);resize:vertical;
+  overflow:hidden
+}
+#devtools.hidden{display:none}
+#dev-head{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg2);border-bottom:1px solid var(--line);padding:0 6px
+}
+#dev-tabs{display:flex}
+.dev-tab{
+  padding:8px 14px;font-size:12px;color:var(--fg1);
+  border-bottom:2px solid transparent
+}
+.dev-tab.active{color:var(--fg0);border-bottom-color:var(--acc)}
+.dev-head-actions{display:flex;gap:4px}
+.mini{
+  font-size:11px;color:var(--fg1);padding:3px 9px;border-radius:6px;
+  border:1px solid var(--line)
+}
+.mini:hover{background:#ffffff14;color:var(--fg0)}
+#dev-body{flex:1;position:relative;overflow:hidden}
+.dev-pane{position:absolute;inset:0;display:none;overflow:auto}
+.dev-pane.active{display:block}
 
-  /* Tree & Assets Grid */
-  .asset-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 8px;
-  }
-  .asset-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 11px;
-    word-break: break-all;
-  }
-  .asset-card b { color: var(--neon-cyan); font-family: var(--mono); }
-  .asset-card a { color: var(--text-main); text-decoration: none; }
-  .asset-card a:hover { color: var(--neon-green); }
+/* console */
+#dev-console{display:none;flex-direction:column}
+#dev-console.active{display:flex}
+#console-lines{flex:1;overflow:auto;padding:6px 0;font-family:var(--mono);font-size:12px}
+.cline{padding:2px 12px;white-space:pre-wrap;word-break:break-word;border-bottom:1px solid #ffffff08}
+.cline.warn{background:#ffb4540f;color:var(--warn)}
+.cline.error{background:#ff5f6d12;color:#ff8f98}
+.cline.info{color:#8fd3ff}
+.cline.debug{color:var(--fg2)}
+.cline .csrc{color:var(--fg2);font-size:10px;margin-left:8px}
+#console-input-row{
+  display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);
+  padding:6px 12px;background:var(--bg2)
+}
+#console-input-row .prompt{color:var(--acc);font-family:var(--mono);font-weight:700}
+#console-input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:var(--mono);font-size:12.5px
+}
 
-  pre.code-display {
-    margin: 0;
-    flex: 1;
-    font-family: var(--mono);
-    font-size: 11.5px;
-    line-height: 1.45;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: #cad3f5;
-  }
+/* network */
+#net-table{width:100%;border-collapse:collapse;font-size:12px}
+#net-table th{
+  text-align:left;padding:6px 10px;color:var(--fg2);font-weight:500;
+  background:var(--bg2);position:sticky;top:0;border-bottom:1px solid var(--line);
+  font-size:11px
+}
+#net-table td{padding:4px 10px;border-bottom:1px solid #ffffff08;font-family:var(--mono);
+  white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis}
+#net-table tr:hover td{background:#ffffff0a;cursor:pointer}
+.st-2{color:var(--ok)} .st-3{color:#9db9ff} .st-4,.st-5{color:var(--err)} .st-0{color:var(--warn)}
+.eng-libcurl{color:#c3a6ff} .eng-relay{color:#7ce8ad} .eng-public{color:#ffd39a}
 
-  /* Log entries */
-  .log-line { font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--text-muted); }
-  .log-line.ok { color: var(--neon-green); }
-  .log-line.warn { color: var(--neon-orange); }
-  .log-line.err { color: var(--neon-red); }
-  .log-line.cyan { color: var(--neon-cyan); }
+/* source */
+#source-view{
+  font-family:var(--mono);font-size:12px;padding:12px;white-space:pre-wrap;
+  word-break:break-all;color:#cfe0ff
+}
 
-  /* Notification Toast */
-  #toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--bg-card);
-    border: 1px solid var(--neon-cyan);
-    box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-family: var(--mono);
-    color: var(--text-main);
-    display: none;
-    z-index: 999;
-  }
+/* ── status bar ────────────────────────────────── */
+#statusbar{
+  display:flex;gap:16px;align-items:center;background:var(--bg0);
+  border-top:1px solid var(--line);padding:3px 12px;font-size:11px;
+  color:var(--fg1);font-family:var(--mono);user-select:none;min-height:22px
+}
+.st-item.ok{color:var(--ok)} .st-item.dim{color:var(--fg2);flex:1;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%}
+.st-spacer{flex:0}
 
-  @media (max-width: 900px) {
-    .workspace { grid-template-columns: 1fr; }
-    .viewport-pane { min-height: 50vh; }
-  }
+/* ── library panel ─────────────────────────────── */
+#library{
+  position:absolute;right:0;top:78px;bottom:24px;width:340px;z-index:40;
+  background:var(--bg1);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;box-shadow:-14px 0 40px #00000066;
+  border-radius:10px 0 0 0
+}
+#library.hidden{display:none}
+#library-head{display:flex;align-items:center;background:var(--bg2);
+  border-bottom:1px solid var(--line);padding:4px 6px;gap:4px}
+.lib-tab{padding:6px 12px;font-size:12px;color:var(--fg1);border-radius:6px}
+.lib-tab.active{background:#ffffff14;color:var(--fg0)}
+#library-close{margin-left:auto}
+#library-body{flex:1;overflow:auto;padding:6px 0}
+.lib-item{padding:7px 14px;cursor:pointer;border-bottom:1px solid #ffffff08;
+  display:flex;flex-direction:column;gap:2px}
+.lib-item:hover{background:#ffffff0a}
+.lib-item .li-title{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-item .li-url{font-size:10.5px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--mono)}
+.lib-item .li-date{font-size:10px;color:var(--fg2)}
+.lib-empty{padding:30px;text-align:center;color:var(--fg2);font-size:12px}
+
+/* ── toasts ────────────────────────────────────── */
+#toasts{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);z-index:99;
+  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{
+  background:var(--bg3);border:1px solid var(--line);color:var(--fg0);
+  padding:9px 18px;border-radius:10px;font-size:12.5px;
+  box-shadow:0 8px 30px #00000088;animation:tin .18s ease
+}
+.toast.err{border-color:#ff5f6d77}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#2c3652;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
 </style>
 </head>
 <body>
 
-<div class="titlebar">
-  <div class="brand-logo">
-    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-    NEXUS OS
-  </div>
-  <div class="tab-strip">
-    <div class="browser-tab active" id="main-tab">
-      <span>nowgg.fun // bypass</span>
-    </div>
-  </div>
-  <div class="engine-badge">
-    <div class="engine-dot"></div>
-    <span id="engine-status">INITIALIZING NEXUS TLS...</span>
-  </div>
-</div>
+<div id="app">
 
-<div class="navbar">
-  <div class="nav-row">
-    <button class="nav-btn" id="btn-back" title="Back">◂</button>
-    <button class="nav-btn" id="btn-forward" title="Forward">▸</button>
-    <button class="nav-btn" id="btn-reload" title="Reload">↻</button>
-    
-    <div class="url-omnibar-wrap">
-      <span class="url-icon">⚡</span>
-      <input type="text" class="url-omnibar" id="url-bar" spellcheck="false"
-             value="https://nowgg.fun" placeholder="Search or type a gaming URL...">
+  <!-- ── tab strip ─────────────────────────────────────────────── -->
+  <div id="tabstrip">
+    <div id="tabs" role="tablist"></div>
+    <button class="iconbtn" id="btn-newtab" title="New tab (Ctrl+T)">＋</button>
+  </div>
+
+  <!-- ── toolbar ───────────────────────────────────────────────── -->
+  <div id="toolbar">
+    <button class="iconbtn" id="btn-back" title="Back (Alt+←)">←</button>
+    <button class="iconbtn" id="btn-fwd" title="Forward (Alt+→)">→</button>
+    <button class="iconbtn" id="btn-reload" title="Reload (Ctrl+R)">⟳</button>
+    <button class="iconbtn" id="btn-home" title="Home">⌂</button>
+
+    <div id="omni-wrap">
+      <span id="engine-badge" title="Active network engine">…</span>
+      <input id="omni" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Search the web or enter a URL">
+      <button class="iconbtn" id="btn-go" title="Go">➜</button>
     </div>
 
-    <button class="nav-btn primary" id="btn-fetch">LAUNCH ⏎</button>
-    <button class="nav-btn force" id="btn-force" title="Strip crashing hydration loops & force clean display">⚡ FORCE LOAD</button>
-    <button class="nav-btn" id="btn-config">SETTINGS ▾</button>
-  </div>
-
-  <div class="nav-row presets-strip">
-    <span>Quick Launch:</span>
-    <button class="pill gaming" data-url="https://nowgg.fun">nowgg.fun</button>
-    <button class="pill gaming" data-url="https://www.youtube.com">youtube</button>
-    <button class="pill gaming" data-url="https://www.youtube.com/embed/dQw4w9WgXcQ">yt player</button>
-    <button class="pill gaming" data-url="https://tiktok.com">tiktok</button>
-    <button class="pill" data-url="https://duck.ai">duck.ai</button>
-    <button class="pill" data-url="https://chatgpt.com">chatgpt</button>
-    <button class="pill" data-url="https://httpbin.org/get">httpbin</button>
-    <button class="pill" data-url="https://example.com">example.com</button>
-  </div>
-</div>
-
-<div class="drawer" id="settings-drawer">
-  <label>Tunnel Protocol / WISP Relay
-    <select id="wisp-select">
-      <option value="wss://wisp.mercurywork.shop/">Mercury Workshop Relay (Default)</option>
-      <option value="wss://wisp.rhw.one/">RHW High-Speed Relay</option>
-      <option value="wss://wisp.ruby.fg-network.com/">Ruby WISP Relay</option>
-      <option value="wss://wisp-server.onrender.com/">Render Cloud Relay</option>
-    </select>
-  </label>
-  <label>Engine Backend
-    <select id="engine-select">
-      <option value="nexus">Nexus Hybrid (Epoxy + libcurl WASM)</option>
-      <option value="libcurl">libcurl.js Core</option>
-      <option value="epoxy">Epoxy-TLS Direct</option>
-    </select>
-  </label>
-  <label>HTTP Version
-    <select id="http-select">
-      <option value="1.1">HTTP/1.1 (Anti-EOF &amp; Cloudflare Safe)</option>
-      <option value="2">HTTP/2 Multiplexed</option>
-      <option value="auto">Auto-Negotiate</option>
-    </select>
-  </label>
-  <label>WebRTC &amp; Media Unlocking
-    <select id="webrtc-select">
-      <option value="all">Full WebRTC + STUN/TURN Allow</option>
-      <option value="direct">Direct P2P Only</option>
-    </select>
-  </label>
-</div>
-
-<div class="workspace">
-  <!-- Viewport -->
-  <div class="viewport-pane">
-    <div class="viewport-bar">
-      <span id="view-meta">STATUS: READY // 0 ASSETS CAPTURED</span>
-      <span style="color:var(--neon-green)">WEBRTC &amp; MEDIA UNLOCKED [✓]</span>
+    <button class="iconbtn" id="btn-bookmark" title="Bookmark this page">☆</button>
+    <button class="iconbtn" id="btn-library" title="History & bookmarks">☰</button>
+    <button class="iconbtn" id="btn-source" title="View source">{ }</button>
+    <button class="iconbtn" id="btn-dev" title="Developer tools (F12)">⌨</button>
+    <div id="engine-select-wrap" title="Network engine">
+      <select id="engine-select">
+        <option value="auto">auto</option>
+        <option value="libcurl">libcurl + wisp</option>
+        <option value="relay">local relay</option>
+        <option value="public">public cors</option>
+      </select>
     </div>
-    <iframe id="browser-viewport"
-            class="browser-frame"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
-            allow="autoplay *; fullscreen *; picture-in-picture *; camera *; microphone *; display-capture *; encrypted-media *; web-share *; midi *; geolocation *"
-            title="Nexus Browser Viewport"></iframe>
   </div>
 
-  <!-- Inspector / Harvester / Runner -->
-  <div class="inspector-pane">
-    <div class="inspector-nav">
-      <button class="itab active" data-tab="harvester">Harvester &amp; Assets (<span id="asset-count">0</span>)</button>
-      <button class="itab" data-tab="source">HTML Source</button>
-      <button class="itab" data-tab="runner">Code Runner</button>
-      <button class="itab" data-tab="logs">Tunnel Logs</button>
-      <div style="flex:1"></div>
-      <button class="nav-btn" id="btn-copy-tab" style="padding:4px 8px;font-size:11px">⧉ Copy</button>
-    </div>
+  <!-- ── bookmark bar ──────────────────────────────────────────── -->
+  <div id="bookmarkbar"></div>
 
-    <!-- Harvester Tab -->
-    <div class="ipane active" id="pane-harvester">
-      <div style="margin-bottom:8px;font-size:11.5px;color:var(--text-muted)">
-        Scraped scripts, styles, subdomains, and media links ready for pre-flight patch:
+  <!-- ── viewport (tab views injected here) ────────────────────── -->
+  <div id="viewport"></div>
+
+  <!-- ── devtools drawer ───────────────────────────────────────── -->
+  <div id="devtools" class="hidden">
+    <div id="dev-head">
+      <div id="dev-tabs">
+        <button class="dev-tab active" data-dev="console">Console</button>
+        <button class="dev-tab" data-dev="network">Network</button>
+        <button class="dev-tab" data-dev="source">Source</button>
       </div>
-      <div class="asset-grid" id="asset-display">
-        <div style="color:var(--text-dim);font-family:var(--mono)">No site fetched yet. Launch a URL above.</div>
+      <div class="dev-head-actions">
+        <button class="mini" id="dev-clear">clear</button>
+        <button class="mini" id="dev-close">✕</button>
       </div>
     </div>
-
-    <!-- Source Tab -->
-    <div class="ipane" id="pane-source">
-      <pre class="code-display" id="source-display">// HTML will appear here</pre>
-    </div>
-
-    <!-- Runner Tab -->
-    <div class="ipane" id="pane-runner">
-      <textarea id="runner-code" style="flex:1;background:var(--bg-card);color:var(--text-main);border:1px solid var(--border);border-radius:4px;padding:8px;font-family:var(--mono);font-size:12px;resize:none" spellcheck="false">// Interactive Nexus Execution Snippet
-(async () => {
-  console.log("Nexus engine active:", libcurl.version);
-  const res = await libcurl.fetch("https://nowgg.fun", { _libcurl_http_version: 1.1 });
-  console.log("Status:", res.status);
-  const text = await res.text();
-  console.log("Captured body length:", text.length);
-})();</textarea>
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button class="nav-btn primary" id="btn-run-code">▶ EXECUTE SNIPPET</button>
-        <button class="nav-btn" id="btn-clear-runner">CLEAR CONSOLE</button>
+    <div id="dev-body">
+      <div id="dev-console" class="dev-pane active">
+        <div id="console-lines"></div>
+        <div id="console-input-row">
+          <span class="prompt">›</span>
+          <input id="console-input" spellcheck="false"
+                 placeholder="evaluate in page context (runs in sandbox)">
+        </div>
       </div>
-      <pre class="code-display" id="runner-out" style="max-height:140px;margin-top:8px;background:#090c13;padding:8px;border-radius:4px">// Console logs will stream here...</pre>
-    </div>
-
-    <!-- Logs Tab -->
-    <div class="ipane" id="pane-logs">
-      <div id="logs-display" style="display:flex;flex-direction:column;gap:4px"></div>
+      <div id="dev-network" class="dev-pane">
+        <table id="net-table">
+          <thead><tr><th>▼</th><th>Status</th><th>Method</th><th>Name</th>
+            <th>Engine</th><th>Size</th><th>Time</th></tr></thead>
+          <tbody id="net-rows"></tbody>
+        </table>
+      </div>
+      <div id="dev-source" class="dev-pane">
+        <pre id="source-view">// open a page, then click “view source”</pre>
+      </div>
     </div>
   </div>
+
+  <!-- ── status bar ────────────────────────────────────────────── -->
+  <div id="statusbar">
+    <span id="st-engine" class="st-item">engine: booting…</span>
+    <span id="st-wisp" class="st-item">wisp: …</span>
+    <span id="st-curl" class="st-item">libcurl: …</span>
+    <span class="st-spacer"></span>
+    <span id="st-scripts" class="st-item ok">scripts: auto-allowed ✓</span>
+    <span id="st-url" class="st-item dim"></span>
+  </div>
+
+  <!-- ── library side panel (history + bookmarks) ──────────────── -->
+  <div id="library" class="hidden">
+    <div id="library-head">
+      <button class="lib-tab active" data-lib="history">History</button>
+      <button class="lib-tab" data-lib="bookmarks">Bookmarks</button>
+      <button class="mini" id="library-close">✕</button>
+    </div>
+    <div id="library-body"></div>
+  </div>
+
+  <div id="toasts"></div>
 </div>
 
-<div id="toast"></div>
-
-<script src="libcurl.js"></script>
+<script>const HYPERION_INJECTED = "/* Hyperion injected runtime — runs INSIDE every proxied page.\n   - bridges console / errors to the devtools panel\n   - rewrites every network call (fetch, XHR, beacons) back through the engine\n   - intercepts links, forms, window.open, meta-refresh → parent navigation\n   - shims localStorage / sessionStorage / document.cookie (sandbox has none)\n   - keeps resource URLs flowing through the proxy (MutationObserver)\n   __PROXY_PREFIX__ is substituted by the browser before injection.        */\n(function () {\n  \"use strict\";\n  if (window.__hyperion__) return;\n  window.__hyperion__ = true;\n\n  var PROXY = \"__PROXY_PREFIX__\";            // e.g. https://host/proxy/\n  var ORIGIN = \"__APP_ORIGIN__\";\n  var CFG = __CONFIG__;                      // {standalone, topLevel}\n  var BASE = document.baseURI || location.href;\n\n  function send(msg) { try { parent.postMessage(msg, \"*\"); } catch (e) {} }\n\n  function abs(u, base) {\n    try { return new URL(u, base || BASE).href; } catch (e) { return u; }\n  }\n  function isHttp(u) { return /^https?:\\/\\//i.test(u); }\n  /* standalone mode: no proxy prefix — subresources load directly from the\n     target site (they don't need CORS), documents/XHR go through the engine */\n  function toProxy(u) { if (CFG.standalone) return u; return isHttp(u) ? PROXY + u : u; }\n  function fromProxy(u) {\n    if (typeof u === \"string\" && u.indexOf(PROXY) === 0) return u.slice(PROXY.length);\n    return u;\n  }\n  /* Chrome queues a MutationObserver record even for identical setAttribute\n     values — writing through this helper guarantees we only ever change\n     something when it really differs, which is what keeps the observer from\n     re-entering proxify forever in standalone mode (identity toProxy). */\n  function setAttr(el, name, val) {\n    if (val != null && el.getAttribute(name) !== val) el.setAttribute(name, val);\n  }\n\n  /* nested iframes: the top-level runtime asks the browser to fetch + process\n     the page through the engine and answers with ready-to-render HTML */\n  function requestPage(url, frame) {\n    if (frame.dataset.hbusy === \"1\") return;\n    frame.dataset.hbusy = \"1\";\n    var id = ++rid;\n    pending[id] = function (d) {\n      delete frame.dataset.hbusy;\n      if (d.error) {\n        frame.dataset.hfail = \"1\";              // don't re-request forever\n        if (d.raw) frame.setAttribute(\"src\", d.raw);   // fall back to raw load\n        return;\n      }\n      if (d.html) frame.srcdoc = d.html;\n      else if (d.raw) {\n        frame.dataset.hfail = \"1\";\n        frame.setAttribute(\"src\", d.raw);\n      }\n    };\n    send({ h: \"page\", id: id, url: url });\n  }\n\n  /* ── console bridge ─────────────────────────────────────────── */\n  function ser(v, depth) {\n    depth = depth || 0;\n    if (v === null) return \"null\";\n    if (v === undefined) return \"undefined\";\n    var t = typeof v;\n    if (t === \"string\") return depth === 0 ? v : JSON.stringify(v);\n    if (t === \"number\" || t === \"boolean\") return String(v);\n    if (t === \"bigint\") return String(v) + \"n\";\n    if (t === \"symbol\") return v.toString();\n    if (t === \"function\") return \"ƒ \" + (v.name || \"anonymous\") + \"()\";\n    if (v instanceof Error) return (v.stack || v.name + \": \" + v.message);\n    if (v instanceof Date) return v.toISOString();\n    if (v instanceof RegExp) return String(v);\n    if (v === document) return \"#document\";\n    if (v === window) return \"#window\";\n    if (depth > 4) return Array.isArray(v) ? \"[…]\" : \"{…}\";\n    try {\n      if (Array.isArray(v)) {\n        var arr = v.slice(0, 40).map(function (x) { return ser(x, depth + 1); });\n        if (v.length > 40) arr.push(\"… +\" + (v.length - 40));\n        return \"[\" + arr.join(\", \") + \"]\";\n      }\n      if (v.nodeType === 1) {\n        return \"<\" + v.tagName.toLowerCase() +\n          (v.id ? \"#\" + v.id : \"\") +\n          (v.className && typeof v.className === \"string\" ?\n            \".\" + v.className.trim().split(/\\s+/).slice(0, 3).join(\".\") : \"\") + \">\";\n      }\n      if (typeof v === \"object\") {\n        var keys = Object.keys(v).slice(0, 30);\n        var body = keys.map(function (k) {\n          return k + \": \" + ser(v[k], depth + 1);\n        }).join(\", \");\n        if (Object.keys(v).length > 30) body += \", …\";\n        return (ArrayBuffer.isView(v) ? v.constructor.name + \" \" : \"\") +\n          \"{\" + body + \"}\";\n      }\n    } catch (e) { return Object.prototype.toString.call(v); }\n    return String(v);\n  }\n  window.__hser = ser;\n\n  [\"log\", \"info\", \"warn\", \"error\", \"debug\", \"trace\", \"dir\"].forEach(function (m) {\n    var orig = console[m] ? console[m].bind(console) : null;\n    console[m] = function () {\n      var txt = Array.prototype.map.call(arguments, function (a) { return ser(a); }).join(\" \");\n      send({ h: \"console\", level: m === \"dir\" ? \"log\" : m, text: txt });\n      if (orig) try { orig.apply(console, arguments); } catch (e) {}\n    };\n  });\n\n  window.addEventListener(\"error\", function (e) {\n    var loc = e.filename ? \" @ \" + e.filename.replace(PROXY, \"\") + \":\" + e.lineno : \"\";\n    send({ h: \"console\", level: \"error\", text: (e.message || \"Script error\") + loc });\n  }, true);\n  window.addEventListener(\"unhandledrejection\", function (e) {\n    var r = e.reason;\n    send({ h: \"console\", level: \"error\",\n           text: \"Unhandled promise rejection: \" + ser(r) });\n  });\n\n  /* ── title + favicon ────────────────────────────────────────── */\n  function pushTitle() { send({ h: \"title\", title: document.title || \"\" }); }\n  var _dt = Object.getOwnPropertyDescriptor(Document.prototype, \"title\");\n  if (_dt && _dt.set && _dt.get) {\n    try {\n      Object.defineProperty(document, \"title\", {\n        get: function () { return _dt.get.call(document); },\n        set: function (v) { _dt.set.call(document, v); pushTitle(); },\n        configurable: true\n      });\n    } catch (e) {}\n  }\n  function pushFav() {\n    var l = document.querySelector('link[rel~=\"icon\" i], link[rel=\"shortcut icon\"]');\n    if (l) {\n      var href = l.dataset.hsrc || l.getAttribute(\"href\") || \"\";\n      if (href) send({ h: \"favicon\", href: abs(href) });\n    }\n  }\n\n  /* ── storage shims (sandboxed iframes have none) ────────────── */\n  function memStore() {\n    var m = new Map();\n    return {\n      getItem: function (k) { k = String(k); return m.has(k) ? m.get(k) : null; },\n      setItem: function (k, v) { m.set(String(k), String(v)); },\n      removeItem: function (k) { m.delete(String(k)); },\n      clear: function () { m.clear(); },\n      key: function (i) { return Array.from(m.keys())[i] || null; },\n      get length() { return m.size; }\n    };\n  }\n  try { Object.defineProperty(window, \"localStorage\", { value: memStore(), configurable: true }); } catch (e) {}\n  try { Object.defineProperty(window, \"sessionStorage\", { value: memStore(), configurable: true }); } catch (e) {}\n\n  var cookieJar = \"\";\n  try {\n    Object.defineProperty(document, \"cookie\", {\n      get: function () { return cookieJar; },\n      set: function (v) {\n        var first = String(v).split(\";\")[0];\n        var name = first.split(\"=\")[0].trim();\n        var jar = cookieJar ? cookieJar.split(/;\\s*/) : [];\n        jar = jar.filter(function (c) { return c.split(\"=\")[0].trim() !== name; });\n        if (first.indexOf(\"=\") > 0) jar.push(first);\n        cookieJar = jar.join(\"; \");\n      },\n      configurable: true\n    });\n  } catch (e) {}\n\n  /* ── navigation interception ────────────────────────────────── */\n  document.addEventListener(\"click\", function (e) {\n    if (e.__hnav) return;\n    var a = e.target && e.target.closest ? e.target.closest(\"a[href]\") : null;\n    if (!a) return;\n    var raw = a.dataset.hhref || a.getAttribute(\"href\") || \"\";\n    if (/^javascript:/i.test(raw)) return;          // let JS links run (scripts allowed)\n    var url = abs(raw);\n    if (!isHttp(url) && !/^mailto:|^tel:/i.test(url)) return;\n    if (a.target === \"_blank\" || a.target === \"_new\" || e.ctrlKey || e.metaKey || e.shiftKey) {\n      e.preventDefault(); e.__hnav = true;\n      send({ h: \"open\", url: url });\n      return;\n    }\n    e.preventDefault(); e.__hnav = true;\n    send({ h: \"nav\", url: url, source: \"link\" });\n  }, true);\n\n  document.addEventListener(\"auxclick\", function (e) {\n    if (e.button !== 1) return;\n    var a = e.target && e.target.closest ? e.target.closest(\"a[href]\") : null;\n    if (!a) return;\n    e.preventDefault();\n    var raw = a.dataset.hhref || a.getAttribute(\"href\") || \"\";\n    if (/^javascript:/i.test(raw)) return;\n    send({ h: \"open\", url: abs(raw) });\n  }, true);\n\n  document.addEventListener(\"submit\", function (e) {\n    var f = e.target;\n    if (!f || f.tagName !== \"FORM\") return;\n    e.preventDefault();\n    var method = (f.getAttribute(\"method\") || \"GET\").toUpperCase();\n    var action = f.dataset.haction || f.getAttribute(\"action\") || BASE;\n    var url = abs(action);\n    var enctype = (f.getAttribute(\"enctype\") || \"application/x-www-form-urlencoded\").toLowerCase();\n    var fd = new FormData(f);\n    var entries = [];\n    var hasFile = false;\n    fd.forEach(function (v, k) {\n      if (v instanceof File) {\n        hasFile = true;\n        v.arrayBuffer().then(function (buf) {\n          entries.push({ k: k, file: { name: v.name, type: v.type, buf: buf } });\n          if (entries.length === fd.length) finish();\n        });\n      } else {\n        entries.push({ k: k, v: String(v) });\n        if (entries.length === fd.length) finish();\n      }\n    });\n    function finish() {\n      if (method === \"GET\" || method === \"HEAD\") {\n        var qs = [];\n        entries.forEach(function (en) { qs.push(encodeURIComponent(en.k) + \"=\" + encodeURIComponent(en.v || \"\")); });\n        var q = qs.join(\"&\");\n        url = url.split(\"#\")[0].split(\"?\")[0] + (q ? \"?\" + q : \"\");\n        send({ h: \"nav\", url: url, method: \"GET\", source: \"form\" });\n      } else {\n        send({ h: \"nav\", url: url, method: method, source: \"form\",\n               enctype: enctype, entries: entries, hasFile: hasFile });\n      }\n    }\n    if (fd.length === 0) finish();\n  }, true);\n\n  /* window.open */\n  var _open = window.open;\n  window.open = function (url) {\n    if (url && typeof url === \"string\") {\n      var u = abs(url);\n      if (isHttp(u)) { send({ h: \"open\", url: u }); return null; }\n    }\n    try { return _open.apply(window, arguments); } catch (e) { return null; }\n  };\n\n  /* meta refresh */\n  function checkMeta() {\n    var m = document.querySelector('meta[http-equiv=\"refresh\" i]');\n    if (!m) return;\n    var c = m.getAttribute(\"content\") || \"\";\n    var mm = /^\\s*(\\d+(?:\\.\\d+)?)\\s*;?\\s*url\\s*=\\s*(.+)$/i.exec(c);\n    if (mm) send({ h: \"nav\", url: abs(mm[2].trim().replace(/^[\"']|[\"']$/g, \"\")), source: \"meta\" });\n  }\n\n  /* ── fetch + XHR routed through the parent engine ───────────── */\n  var rid = 0;\n  var pending = {};\n  window.addEventListener(\"message\", function (e) {\n    if (e.source !== parent) return;\n    var d = e.data;\n    if (!d || d.h !== \"res\") return;\n    var p = pending[d.id];\n    if (!p) return;\n    delete pending[d.id];\n    p(d);\n  });\n\n  function hdrObj(entries) {\n    var o = {};\n    (entries || []).forEach(function (kv) { o[kv[0]] = kv[1]; });\n    return o;\n  }\n\n  function bodyToWire(body, headers) {\n    if (body == null) return Promise.resolve(null);\n    if (typeof body === \"string\") return Promise.resolve(body);\n    if (body instanceof URLSearchParams)\n      return Promise.resolve(body.toString());\n    if (body instanceof ArrayBuffer) return Promise.resolve(body);\n    if (ArrayBuffer.isView(body)) return Promise.resolve(body.buffer);\n    if (body instanceof Blob)\n      return body.arrayBuffer().then(function (b) { return b; });\n    if (body instanceof FormData) {\n      var out = [];\n      var proms = [];\n      body.forEach(function (v, k) {\n        if (v instanceof File) {\n          proms.push(v.arrayBuffer().then(function (buf) {\n            out.push({ k: k, file: { name: v.name, type: v.type, buf: buf } });\n          }));\n        } else out.push({ k: k, v: String(v) });\n      });\n      return Promise.all(proms).then(function () {\n        return { __form: out };\n      });\n    }\n    return Promise.resolve(String(body));\n  }\n\n  function relay(method, url, headers, body) {\n    return new Promise(function (resolve, reject) {\n      var id = ++rid;\n      pending[id] = function (d) {\n        if (d.error) reject(new TypeError(d.error));\n        else resolve(d);\n      };\n      bodyToWire(body).then(function (wire) {\n        send({ h: \"req\", id: id, method: method, url: url,\n               headers: headers || [], body: wire });\n      }).catch(function (e) { reject(e); });\n      setTimeout(function () {\n        if (pending[id]) { delete pending[id]; reject(new TypeError(\"Network timeout\")); }\n      }, 120000);\n    });\n  }\n  window.__hrelay = relay;\n\n  var _fetch = window.fetch;\n  window.fetch = function (input, init) {\n    init = init || {};\n    var url = typeof input === \"string\" ? input\n            : (input && input.url) ? input.url : String(input);\n    url = abs(url);\n    if (!isHttp(url)) return _fetch.apply(window, arguments);\n    var headers = [];\n    var h = init.headers || (input && input.headers);\n    if (h && typeof h.forEach === \"function\") h.forEach(function (v, k) { headers.push([k, v]); });\n    else if (h) Object.keys(h).forEach(function (k) { headers.push([k, h[k]]); });\n    return relay(init.method || (input && input.method) || \"GET\", url, headers, init.body)\n      .then(function (d) {\n        var noBody = d.status === 204 || d.status === 205 || d.status === 304;\n        return new Response(noBody ? null : d.body, {\n          status: d.status,\n          statusText: d.statusText || \"\",\n          headers: hdrObj(d.headers)\n        });\n      });\n  };\n\n  /* XMLHttpRequest */\n  function HijackXHR() {\n    this.readyState = 0;\n    this.status = 0;\n    this.statusText = \"\";\n    this.responseText = \"\";\n    this.response = null;\n    this.responseType = \"\";\n    this.responseURL = \"\";\n    this.timeout = 0;\n    this.withCredentials = false;\n    this.upload = new EventTarget();\n    var self = this;\n    this._headers = [];\n    this._listeners = {};\n    this._aborted = false;\n\n    function fire(type, extra) {\n      var ev = new Event(type);\n      if (extra) Object.keys(extra).forEach(function (k) { ev[k] = extra[k]; });\n      self.dispatchEvent(ev);\n      var h = self[\"on\" + type];\n      if (typeof h === \"function\") { try { h.call(self, ev); } catch (e) {} }\n    }\n    this._fire = fire;\n  }\n  HijackXHR.prototype = Object.create(EventTarget.prototype);\n  HijackXHR.prototype.constructor = HijackXHR;\n  HijackXHR.prototype.open = function (method, url, async) {\n    this._method = (method || \"GET\").toUpperCase();\n    this._url = abs(url);\n    this._async = async !== false;\n    this.readyState = 1;\n    this.responseURL = this._url;\n  };\n  HijackXHR.prototype.setRequestHeader = function (k, v) {\n    this._headers.push([k, v]);\n  };\n  HijackXHR.prototype.overrideMimeType = function () {};\n  HijackXHR.prototype.getAllResponseHeaders = function () {\n    return (this._respHeaders || []).map(function (kv) {\n      return kv[0] + \": \" + kv[1] + \"\\r\\n\";\n  }).join(\"\");\n  };\n  HijackXHR.prototype.getResponseHeader = function (k) {\n    var lk = String(k).toLowerCase();\n    var hit = (this._respHeaders || []).filter(function (kv) {\n      return kv[0].toLowerCase() === lk;\n    })[0];\n    return hit ? hit[1] : null;\n  };\n  HijackXHR.prototype.abort = function () {\n    this._aborted = true;\n    this.readyState = 0;\n    this._fire(\"abort\");\n    this._fire(\"loadend\");\n  };\n  HijackXHR.prototype.send = function (body) {\n    var self = this;\n    if (this._aborted) return;\n    this._fire(\"loadstart\");\n    try { this.upload.dispatchEvent(new Event(\"loadstart\")); } catch (e) {}\n    relay(this._method, this._url, this._headers, body).then(function (d) {\n      if (self._aborted) return;\n      self.status = d.status;\n      self.statusText = d.statusText || \"\";\n      self._respHeaders = d.headers || [];\n      self.readyState = 4;\n      var buf = d.body;\n      var rt = self.responseType;\n      if (rt === \"arraybuffer\") self.response = buf;\n      else if (rt === \"blob\") self.response = new Blob([buf], {\n        type: (self.getResponseHeader(\"content-type\") || \"application/octet-stream\")\n      });\n      else if (rt === \"json\") {\n        try { self.response = JSON.parse(new TextDecoder().decode(buf)); }\n        catch (e) { self.response = null; }\n      } else {\n        var ct = self.getResponseHeader(\"content-type\") || \"\";\n        var m = /charset=([\\w-]+)/i.exec(ct);\n        var text = new TextDecoder(m ? m[1] : \"utf-8\").decode(buf);\n        self.responseText = text;\n        self.response = rt === \"\" ? text : self.response;\n      }\n      self._fire(\"readystatechange\");\n      self._fire(\"load\");\n      try { self.upload.dispatchEvent(new Event(\"load\")); } catch (e) {}\n      self._fire(\"loadend\");\n      try { self.upload.dispatchEvent(new Event(\"loadend\")); } catch (e) {}\n    }, function (err) {\n      if (self._aborted) return;\n      self.readyState = 4;\n      self._fire(\"error\");\n      self._fire(\"loadend\");\n    });\n  };\n\n  var _xhrOpen = XMLHttpRequest.prototype.open;\n  var _xhrSend = XMLHttpRequest.prototype.send;\n  // Replace the constructor wholesale so every instance is proxied.\n  try {\n    window.XMLHttpRequest = function () { return new HijackXHR(); };\n    window.XMLHttpRequest.prototype = HijackXHR.prototype;\n    window.XMLHttpRequest.UNSENT = 0;\n    window.XMLHttpRequest.OPENED = 1;\n    window.XMLHttpRequest.HEADERS_RECEIVED = 2;\n    window.XMLHttpRequest.LOADING = 3;\n    window.XMLHttpRequest.DONE = 4;\n  } catch (e) { window.XMLHttpRequest = HijackXHR; }\n\n  /* navigator.sendBeacon */\n  try {\n    if (navigator.sendBeacon) {\n      navigator.sendBeacon = function (url, data) {\n        relay(\"POST\", abs(url), [[\"content-type\", \"application/octet-stream\"]], data)\n          .catch(function () {});\n        return true;\n      };\n    }\n  } catch (e) {}\n\n  /* ── keep dynamic resources on the proxy ────────────────────── */\n  var SRC_ATTRS = {\n    IMG: [\"src\"], SOURCE: [\"src\", \"srcset\"], SCRIPT: [\"src\"], LINK: [\"href\"],\n    IFRAME: [\"src\"], FRAME: [\"src\"], EMBED: [\"src\"], OBJECT: [\"data\"],\n    VIDEO: [\"src\", \"poster\"], AUDIO: [\"src\"], TRACK: [\"src\"],\n    INPUT: [\"src\"], USE: [\"href\"], IMAGE: [\"href\"]\n  };\n\n  function proxify(el) {\n    try {\n      if (!el || el.nodeType !== 1) return;\n      var tag = el.tagName;\n\n      if (tag === \"BASE\") {\n        if (el.id !== \"hbase\") { el.remove(); return; }\n      }\n      if (tag === \"IFRAME\" || tag === \"FRAME\") {\n        var cur = el.getAttribute(\"src\");\n        if (cur && isHttp(abs(cur)) && !el.dataset.hsrc) el.dataset.hsrc = fromProxy(abs(cur));\n        if (CFG.topLevel && el.dataset.hsrc && !el.dataset.hbusy && !el.dataset.hfail) {\n          if (cur && cur !== \"about:blank\") el.removeAttribute(\"src\");\n          requestPage(el.dataset.hsrc, el);\n          return;\n        }\n        if (!CFG.topLevel && !CFG.standalone && el.dataset.hsrc && cur) {\n          setAttr(el, \"src\", toProxy(el.dataset.hsrc));\n        }\n        if (cur || el.dataset.hsrc) return;\n      }\n      if (tag === \"A\") {\n        var href = el.getAttribute(\"href\");\n        if (href && !el.dataset.hhref && isHttp(abs(href))) {\n          el.dataset.hhref = abs(href);\n          if (!/^mailto:|^tel:/i.test(href)) setAttr(el, \"href\", toProxy(el.dataset.hhref));\n        }\n      } else if (tag === \"FORM\") {\n        var act = el.getAttribute(\"action\");\n        if (act && !el.dataset.haction) {\n          el.dataset.haction = abs(act);\n          setAttr(el, \"action\", toProxy(el.dataset.haction));\n        }\n      } else if (tag === \"META\" && (el.getAttribute(\"http-equiv\") || \"\").toLowerCase() === \"refresh\") {\n        checkMeta();\n      }\n\n      var attrs = SRC_ATTRS[tag];\n      if (attrs) attrs.forEach(function (a) {\n        var v = el.getAttribute(a);\n        if (!v) return;\n        if (a === \"srcset\") {\n          if (!v.trim()) return;\n          if (v.indexOf(\"data:\") === -1 && v.indexOf(PROXY) === -1) {\n            setAttr(el, \"srcset\", v.split(\",\").map(function (part) {\n              var bits = part.trim().split(/\\s+/);\n              if (!bits[0]) return part;\n              bits[0] = toProxy(abs(bits[0]));\n              return bits.join(\" \");\n            }).join(\", \"));\n          }\n          return;\n        }\n        if (v.indexOf(PROXY) === 0 || v.indexOf(\"data:\") === 0 ||\n            v.indexOf(\"blob:\") === 0 || v.indexOf(\"#\") === 0) return;\n        var a2 = abs(v);\n        if (isHttp(a2)) {\n          if (a === \"href\" && (tag === \"A\")) return;\n          el.dataset.hsrc = a2;\n          setAttr(el, a, toProxy(a2));\n        }\n      });\n\n      // inline styles\n      var st = el.getAttribute && el.getAttribute(\"style\");\n      if (st && st.indexOf(\"url(\") !== -1 && el.dataset.hst !== \"1\") {\n        el.dataset.hst = \"1\";\n        setAttr(el, \"style\", st.replace(/url\\(\\s*(['\"]?)([^'\")]+)\\1\\s*\\)/g,\n          function (m, q, u) {\n            if (/^(data:|blob:|#)/i.test(u)) return m;\n            return \"url(\" + q + toProxy(abs(u)) + q + \")\";\n          }));\n      }\n    } catch (e) {}\n  }\n\n  function proxifyTree(root) {\n    if (!root) return;\n    if (root.nodeType === 1) proxify(root);\n    var list = root.querySelectorAll ? root.querySelectorAll(\n      \"a[href],form[action],img[src],img[srcset],source[src],source[srcset],\" +\n      \"script[src],link[href],iframe[src],frame[src],iframe[data-hsrc],frame[data-hsrc],\" +\n      \"embed[src],object[data],\" +\n      \"video[src],video[poster],audio[src],track[src],input[src],use[href],\" +\n      \"image[href],meta[http-equiv],[style]\"\n    ) : [];\n    for (var i = 0; i < list.length; i++) proxify(list[i]);\n  }\n\n  var mo = new MutationObserver(function (muts) {\n    for (var i = 0; i < muts.length; i++) {\n      var m = muts[i];\n      if (m.type === \"childList\") {\n        for (var j = 0; j < m.addedNodes.length; j++) {\n          var n = m.addedNodes[j];\n          if (n.nodeType === 1) proxifyTree(n);\n        }\n      } else if (m.type === \"attributes\") {\n        var t = m.target;\n        var nv = m.attributeName === \"style\" ? t.getAttribute(\"style\") || \"\"\n               : t.getAttribute(m.attributeName) || \"\";\n        if (nv.indexOf(PROXY) === 0) continue;\n        proxify(t);\n      }\n    }\n  });\n  mo.observe(document.documentElement, {\n    subtree: true, childList: true, attributes: true,\n    attributeFilter: [\"src\", \"href\", \"srcset\", \"poster\", \"action\",\n                      \"data\", \"style\", \"http-equiv\"]\n  });\n\n  /* ── resource timing → network panel ────────────────────────── */\n  try {\n    var seen = {};\n    new PerformanceObserver(function (list) {\n      list.getEntries().forEach(function (e) {\n        if (!/^https?:/.test(e.name)) return;\n        if (e.name.indexOf(PROXY) === 0) return;\n        if (seen[e.name]) return;\n        seen[e.name] = 1;\n        send({ h: \"res\", url: e.name, type: e.initiatorType,\n               ms: Math.round(e.duration),\n               size: e.transferSize || e.encodedBodySize || 0 });\n      });\n    }).observe({ type: \"resource\", buffered: true });\n  } catch (e) {}\n\n  /* ── evaluate from the devtools console ─────────────────────── */\n  window.addEventListener(\"message\", function (e) {\n    if (e.source !== parent) return;\n    var d = e.data;\n    if (!d || d.h !== \"eval\") return;\n    var out, err = null;\n    try { out = (0, eval)(d.code); } catch (ex) { err = ex; }\n    send({ h: \"eval-result\", id: d.id,\n           ok: !err, result: err ? String(ex && ex.stack || ex) : ser(out) });\n  });\n\n  /* ── boot ───────────────────────────────────────────────────── */\n  function boot() {\n    pushTitle(); pushFav(); checkMeta();\n    send({ h: \"ready\", url: location.href, title: document.title || \"\" });\n  }\n  if (document.readyState === \"loading\") {\n    document.addEventListener(\"DOMContentLoaded\", function () { proxifyTree(document); boot(); });\n  } else { proxifyTree(document); boot(); }\n  window.addEventListener(\"load\", function () { pushTitle(); pushFav(); });\n})();\n";</script>
 <script>
+/* Hyperion — a browser built on libcurl.js (WebAssembly) + Wisp + local relay.
+   Runs fetched sites with scripts auto-allowed inside sandboxed frames.     */
 "use strict";
-(function () {
-  const $ = (id) => document.getElementById(id);
-  const el = {
-    url: $("url-bar"), btnFetch: $("btn-fetch"), btnForce: $("btn-force"),
-    btnBack: $("btn-back"), btnForward: $("btn-forward"), btnReload: $("btn-reload"),
-    btnConfig: $("btn-config"), drawer: $("settings-drawer"),
-    wisp: $("wisp-select"), engine: $("engine-select"), httpVer: $("http-select"),
-    engineStatus: $("engine-status"), viewMeta: $("view-meta"),
-    viewport: $("browser-viewport"), mainTab: $("main-tab"),
-    assetDisplay: $("asset-display"), assetCount: $("asset-count"),
-    sourceDisplay: $("source-display"), runnerCode: $("runner-code"),
-    btnRunCode: $("btn-run-code"), btnClearRunner: $("btn-clear-runner"),
-    runnerOut: $("runner-out"), logsDisplay: $("logs-display"),
-    btnCopyTab: $("btn-copy-tab"), toast: $("toast")
+
+/* ═══════════════════════ state ═══════════════════════ */
+const P = location.origin + "/proxy/";           // path-form proxy prefix
+const CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+const IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+const CURL_UA = "curl/8.5.0";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const toProxy = (u) => (state && !state.localMode ? u               // standalone: identity
+  : typeof u === "string" && u.startsWith(P) ? u
+  : /^https?:\/\//i.test(u) ? P + u : u);          // idempotent
+const unproxy = (u) => (u.startsWith(P) ? u.slice(P.length) : u);
+const loadJSON = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const saveJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const hostOf = (u) => { try { return new URL(u).host; } catch { return u; } };
+
+const state = {
+  tabs: [],
+  active: null,
+  enginePref: localStorage.getItem("hyperion.engine") || "auto",
+  lastEngine: "—",
+  libcurlReady: false,
+  wispOk: false,
+  libcurlErr: null,
+  localMode: false,           // true: served by server.py (local /proxy + /wisp/)
+  cookieSession: null,
+  runtimeSrc: "",
+  ua: localStorage.getItem("hyperion.ua") || CHROME_UA,
+  history: loadJSON("hyperion.history", []),
+  bookmarks: loadJSON("hyperion.bookmarks", []),
+  devOpen: false,
+  devTab: "console",
+  netSeq: 0,
+  navSeq: 0,
+};
+
+function toast(msg, isErr) {
+  const el = document.createElement("div");
+  el.className = "toast" + (isErr ? " err" : "");
+  el.textContent = msg;
+  $("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+/* ═══════════════════════ engines ═══════════════════════
+   Each engine returns:
+   {status, statusText, headers:[[k,v]], body:ArrayBuffer, finalUrl, engine}  */
+
+function wispUrl() {
+  const custom = localStorage.getItem("hyperion.wisp");
+  if (custom) return custom.endsWith("/") ? custom : custom + "/";
+  if (state.localMode) return location.origin + "/wisp/";
+  return "wss://wisp.mercurywork.shop/";       // official public wisp server
+}
+function wispLabel() {
+  try {
+    const h = new URL(wispUrl()).host;
+    return h === location.host ? "local" : h;
+  } catch { return "wisp"; }
+}
+
+async function engineLibcurl(method, url, opts = {}) {
+  if (!state.libcurlReady) throw new Error("libcurl wasm not ready");
+  const headers = [...(opts.headers || [])];
+  if (!headers.some(([k]) => k.toLowerCase() === "user-agent"))
+    headers.push(["User-Agent", state.ua]);
+  const sess = state.cookieSession || null;
+  const f = sess ? sess.fetch.bind(sess) : libcurl.fetch.bind(libcurl);
+  const init = { method, headers };
+  if (opts.body != null && method !== "GET" && method !== "HEAD") init.body = opts.body;
+  if (opts.signal) init.signal = opts.signal;
+  const r = await f(url, init);
+  const body = await r.arrayBuffer();
+  const hdrs = [];
+  r.headers.forEach((v, k) => hdrs.push([k, v]));
+  saveCookies();
+  return {
+    status: r.status, statusText: r.statusText, headers: hdrs, body,
+    finalUrl: (r.url && /^https?:/.test(r.url)) ? r.url : url,
+    engine: "libcurl",
+  };
+}
+
+async function engineRelay(method, url, opts = {}) {
+  const headers = new Headers();
+  for (const [k, v] of opts.headers || []) {
+    const lk = k.toLowerCase();
+    if (["user-agent", "content-length", "host", "connection"].includes(lk)) continue;
+    try { headers.set(k, v); } catch {}
+  }
+  headers.set("X-Proxy-UA", state.ua);
+  const init = { method, headers, signal: opts.signal, credentials: "omit" };
+  if (opts.body != null && method !== "GET" && method !== "HEAD") init.body = opts.body;
+  const r = await fetch("/proxy?url=" + encodeURIComponent(url), init);
+  const body = await r.arrayBuffer();
+  const hdrs = [];
+  r.headers.forEach((v, k) => hdrs.push([k, v]));
+  return {
+    status: r.status, statusText: r.statusText, headers: hdrs, body,
+    finalUrl: r.headers.get("X-Final-URL") || url,
+    engine: "relay",
+  };
+}
+
+/* public CORS proxies (GET/HEAD only) — standalone fallback, rotating.
+   NOTE: corsfix requires a real http(s) Origin (works when served, not file://) */
+const PUBLIC_PROXIES = [
+  (u) => "https://proxy.corsfix.com/?" + u,
+  (u) => "https://api.cors.lol/?url=" + encodeURIComponent(u),
+  (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  (u) => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
+];
+let publicIdx = 0;
+
+async function enginePublic(method, url, opts = {}) {
+  if (method !== "GET" && method !== "HEAD") throw new Error("public proxy: GET only");
+  let lastErr = null;
+  for (let i = 0; i < PUBLIC_PROXIES.length; i++) {
+    const tpl = PUBLIC_PROXIES[(publicIdx + i) % PUBLIC_PROXIES.length];
+    try {
+      const r = await fetch(tpl(url), { method, signal: opts.signal, mode: "cors" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const body = await r.arrayBuffer();
+      const hdrs = [];
+      r.headers.forEach((v, k) => hdrs.push([k, v]));
+      publicIdx = (publicIdx + i) % PUBLIC_PROXIES.length;
+      return { status: 200, statusText: "OK", headers: hdrs, body, finalUrl: url, engine: "public" };
+    } catch (e) {
+      if (e && e.name === "AbortError") throw e;
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("public proxies unavailable");
+}
+
+const ENGINE_FN = { libcurl: engineLibcurl, relay: engineRelay, public: enginePublic };
+
+function engineChain() {
+  const local = state.localMode;
+  switch (state.enginePref) {
+    case "libcurl": return local ? ["libcurl", "relay", "public"] : ["libcurl", "public"];
+    case "relay": return local ? ["relay"] : ["libcurl"];
+    case "public": return ["public"];
+    default: return local ? ["libcurl", "relay", "public"] : ["libcurl", "public"];
+  }
+}
+
+async function engineFetch(method, url, opts = {}) {
+  const chain = engineChain().filter((n) =>
+    (n !== "libcurl" || (state.libcurlReady && state.wispOk)) &&
+    (n !== "relay" || state.localMode) &&
+    (n !== "public" || (method === "GET" || method === "HEAD")));
+  let lastErr = null;
+  for (const name of chain) {
+    if (opts.signal?.aborted) throw new DOMException("aborted", "AbortError");
+    try {
+      const res = await ENGINE_FN[name](method, url, opts);
+      state.lastEngine = res.engine;
+      updateBadges();
+      return res;
+    } catch (e) {
+      if (e && e.name === "AbortError") throw e;
+      lastErr = e;
+      if (state.enginePref === "auto")
+        consoleLog("warn", `engine ${name} failed for ${hostOf(url)}: ${e.message || e}`, "engine");
+    }
+  }
+  throw lastErr || new Error("no engine available");
+}
+
+function saveCookies() {
+  if (!state.cookieSession) return;
+  try {
+    const jar = state.cookieSession.export_cookies();
+    if (jar) localStorage.setItem("hyperion.jar", jar);
+  } catch {}
+}
+
+/* ═══════════════════════ net log ═══════════════════════ */
+function netAdd(tab, row) {
+  row.id = ++state.netSeq;
+  row.ts = Date.now();
+  tab.net.unshift(row);
+  if (tab.net.length > 600) tab.net.pop();
+  if (tab === state.active) renderNetwork();
+}
+function headerGet(headers, name) {
+  const ln = name.toLowerCase();
+  for (const [k, v] of headers || []) if (k.toLowerCase() === ln) return v;
+  return null;
+}
+
+/* ═══════════════════════ console ═══════════════════════ */
+function consoleLog(level, text, src) {
+  const tab = state.active;
+  if (!tab) return;
+  tab.console.push({ level, text: String(text), src, ts: Date.now() });
+  if (tab.console.length > 800) tab.console.shift();
+  if (tab === state.active) renderConsole();
+}
+
+/* ═══════════════════════ tabs ═══════════════════════ */
+function makeTab() {
+  const tab = {
+    id: "t" + Math.random().toString(36).slice(2, 9),
+    url: "about:start", title: "New Tab", icon: null, raw: "",
+    status: "idle", console: [], net: [], ctrl: null,
+    hist: [], hidx: -1, lastNav: null, seq: 0,
+    view: null, iframe: null, overlay: null,
   };
 
-  let L = (typeof window.libcurl !== "undefined") ? window.libcurl
-        : (typeof libcurl !== "undefined" ? libcurl : null);
-  let ready = false;
-  let inFlight = null;
-  let historyStack = [];
-  let historyIdx = -1;
-  let currentRawHtml = "";
-  let currentFinalUrl = "";
-  let activeTab = "harvester";
-  const logStore = [];
+  const view = document.createElement("div");
+  view.className = "tabview";
+  view.innerHTML = `<iframe sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+      allow="autoplay; fullscreen"></iframe>
+    <div class="overlay show"></div>`;
+  const iframe = view.querySelector("iframe");
+  const overlay = view.querySelector(".overlay");
+  $("viewport").appendChild(view);
+  tab.view = view; tab.iframe = iframe; tab.overlay = overlay;
 
-  function showToast(msg) {
-    el.toast.textContent = msg;
-    el.toast.style.display = "block";
-    setTimeout(() => { el.toast.style.display = "none"; }, 2500);
+  // messages from the sandboxed page
+  iframe.addEventListener("load", () => { tab.status = "idle"; renderTabState(tab); });
+
+  state.tabs.push(tab);
+  activateTab(tab);
+  renderStart(tab);
+  renderTabs();
+  return tab;
+}
+
+function activateTab(tab) {
+  state.active = tab;
+  state.tabs.forEach((t) => t.view.classList.toggle("active", t === tab));
+  renderTabs();
+  syncOmnibox();
+  renderConsole();
+  renderNetwork();
+  updateBadges();
+  document.title = (tab.title && tab.title !== "New Tab" ? tab.title + " · " : "") + "Hyperion";
+}
+
+function closeTab(tab) {
+  const i = state.tabs.indexOf(tab);
+  tab.view.remove();
+  state.tabs.splice(i, 1);
+  if (!state.tabs.length) return makeTab();
+  if (state.active === tab) activateTab(state.tabs[Math.max(0, i - 1)]);
+  else renderTabs();
+}
+
+function renderTabs() {
+  const el = $("tabs");
+  el.innerHTML = "";
+  for (const t of state.tabs) {
+    const d = document.createElement("div");
+    d.className = "tab" + (t === state.active ? " active" : "") +
+      (t.status === "loading" ? " loading" : "");
+    d.dataset.id = t.id;
+    const icon = t.icon
+      ? `<img class="favicon" src="${esc(t.icon)}" onerror="this.style.visibility='hidden'">`
+      : `<span class="favicon">🌐</span>`;
+    d.innerHTML = `${icon}<span class="tab-title">${esc(t.title || "New Tab")}</span>
+      <span class="tab-close" title="Close">×</span>`;
+    el.appendChild(d);
   }
+}
+function renderTabState(tab) { renderTabs(); }
 
-  function appendLog(msg, type) {
-    const time = new Date().toTimeString().slice(0, 8);
-    logStore.push({ time, msg, type });
-    const row = document.createElement("div");
-    row.className = "log-line " + (type || "");
-    row.textContent = `[${time}] ${msg}`;
-    el.logsDisplay.appendChild(row);
-    el.logsDisplay.scrollTop = el.logsDisplay.scrollHeight;
-  }
+$("tabs").addEventListener("click", (e) => {
+  const close = e.target.closest(".tab-close");
+  const t = state.tabs.find((x) => x.id === e.target.closest(".tab")?.dataset.id);
+  if (!t) return;
+  if (close) closeTab(t);
+  else activateTab(t);
+});
+$("btn-newtab").addEventListener("click", () => makeTab());
 
-  function updateStatus(text, ok) {
-    el.engineStatus.textContent = text;
-    const dot = document.querySelector(".engine-dot");
-    if (dot) dot.style.background = ok ? "var(--neon-green)" : "var(--neon-orange)";
-  }
+/* ═══════════════════════ URL handling ═══════════════════════ */
+function normalizeUrl(input) {
+  input = (input || "").trim();
+  if (!input) return null;
+  if (/^about:/i.test(input)) return input.toLowerCase();
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(input)) return input;
+  if (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$|\?)/i.test(input))
+    return "http://" + input;
+  if (!/\s/.test(input) && /^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?([/?#].*)?$/i.test(input))
+    return "https://" + input;
+  if (/^\d{1,3}(\.\d{1,3}){3}(:\d+)?(\/|$)/.test(input)) return "http://" + input;
+  return null;
+}
+function searchUrl(q) {
+  return "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(q);
+}
 
-  // Nexus Intelligent Patch & Patcher Engine
-  function nexusPatch(html, targetUrl, forceMode) {
-    const urlObj = new URL(targetUrl);
-    const origin = urlObj.origin;
-    let patched = html;
+/* ═══════════════════════ HTML rewriting ═══════════════════════ */
+const SUB_RES_SELECTORS = [
+  ["script[src]", ["src"]], ["link[href]", ["href"]],
+  ["img[src]", ["src"]], ["img[srcset]", ["srcset"]],
+  ["source[src]", ["src"]], ["source[srcset]", ["srcset"]],
+  ["iframe[src]", ["src"]], ["frame[src]", ["src"]],
+  ["embed[src]", ["src"]], ["object[data]", ["data"]],
+  ["video[src]", ["src"]], ["video[poster]", ["poster"]],
+  ["audio[src]", ["src"]], ["track[src]", ["src"]],
+  ["input[src]", ["src"]], ["use[href]", ["href"]],
+  ["image[href]", ["href"]], ["input[formaction][type=submit]", ["formaction"]],
+  ["button[formaction]", ["formaction"]],
+];
 
-    // 1. If forceMode, strip all scripts to prevent loop crashing while preserving visual layout
-    if (forceMode) {
-      patched = patched.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+function rewriteSrcset(v) {
+  if (!v || v.includes("data:")) return v;
+  return v.split(",").map((part) => {
+    const bits = part.trim().split(/\s+/);
+    if (!bits[0]) return part;
+    const a = absolutize(bits[0]);
+    if (a) bits[0] = toProxy(a);
+    return bits.join(" ");
+  }).join(", ");
+}
+function absolutize(u, base) {
+  try { return new URL(u, base).href; } catch { return null; }
+}
+function rewriteCssText(text, base) {
+  return text
+    .replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (m, q, u) => {
+      if (/^(data:|blob:|#|javascript:)/i.test(u)) return m;
+      const a = absolutize(u, base);
+      return a ? `url(${q}${toProxy(a)}${q})` : m;
+    })
+    .replace(/@import\s+(['"])([^'"]+)\1/g, (m, q, u) => {
+      const a = absolutize(u, base);
+      return a ? `@import ${q}${toProxy(a)}${q}` : m;
+    });
+}
+
+function processHtml(text, finalUrl, topLevel = false) {
+  const doc = new DOMParser().parseFromString(text, "text/html");
+  const local = state.localMode;
+
+  // strip CSP / frame-embedding blockers
+  doc.querySelectorAll("meta[http-equiv]").forEach((m) => {
+    const v = (m.getAttribute("http-equiv") || "").toLowerCase();
+    if (v.includes("content-security-policy") || v.includes("refresh")) {
+      if (v.includes("content-security-policy")) m.remove();
     }
-
-    // 2. Base tag injection so all relative resources resolve
-    const baseTag = `<base href="${origin}/">`;
-    if (/<head[^>]*>/i.test(patched)) {
-      patched = patched.replace(/<head[^>]*>/i, (m) => m + "\n" + baseTag);
-    } else {
-      patched = "<head>" + baseTag + "</head>" + patched;
-    }
-
-    // 3. Inject Nexus In-Frame Runtime Shield:
-    //    - Defeats frame-busting (top.location !== self.location)
-    //    - Swallows fatal SPA exceptions (Polymer, React, Webpack hydration)
-    //    - Patches WebRTC RTCPeerConnection to ensure ICE gathering works across restricted networks
-    const runtimeShield = `
-<script>
-(function() {
-  // Anti-frame-busting patch
-  try {
-    Object.defineProperty(window, 'top', { get: () => window });
-    Object.defineProperty(window, 'parent', { get: () => window });
-  } catch(e) {}
-
-  // Suppress white-screen fatal crashes
-  window.addEventListener('error', (e) => { e.preventDefault && e.preventDefault(); return true; }, true);
-  window.addEventListener('unhandledrejection', (e) => { e.preventDefault && e.preventDefault(); }, true);
-
-  // WebRTC STUN/TURN resilient shim for school wifi/Chromebooks
-  if (window.RTCPeerConnection) {
-    const OrigPeerConnection = window.RTCPeerConnection;
-    window.RTCPeerConnection = function(config, constraints) {
-      config = config || {};
-      config.iceServers = config.iceServers || [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' }
-      ];
-      return new OrigPeerConnection(config, constraints);
-    };
-    window.RTCPeerConnection.prototype = OrigPeerConnection.prototype;
-  }
-
-  // Preserve skeleton & body unhiding for YouTube / SPAs
-  document.addEventListener('DOMContentLoaded', () => {
-    const sk = document.getElementById('home-page-skeleton');
-    if (sk) { sk.style.display = 'block'; sk.hidden = false; }
   });
-})();
-<\/script>
-`;
 
-    if (/<head[^>]*>/i.test(patched)) {
-      patched = patched.replace(/<head[^>]*>/i, (m) => m + "\n" + runtimeShield);
+  // <base> = the real page URL (relative resolution stays correct)
+  doc.querySelectorAll("base").forEach((b) => b.remove());
+  const base = doc.createElement("base");
+  base.id = "hbase";
+  base.href = finalUrl;
+  const head = doc.head || doc.documentElement;
+  head.insertBefore(base, head.firstChild);
+
+  const abs = (u) => absolutize(u, finalUrl);
+
+  // anchors + forms keep their real target in data-*; local mode rewrites the
+  // href/action through the proxy, standalone keeps absolute originals
+  doc.querySelectorAll("a[href]").forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    if (!href || /^javascript:/i.test(href)) return;
+    const u = abs(href);
+    if (!u || !/^https?:/i.test(u)) return;
+    a.setAttribute("data-hhref", u);
+    if (!/^(mailto:|tel:)/i.test(href))
+      a.setAttribute("href", local ? toProxy(u) : u);
+  });
+  doc.querySelectorAll("form[action]").forEach((f) => {
+    const u = abs(f.getAttribute("action") || "");
+    if (u) { f.setAttribute("data-haction", u); f.setAttribute("action", local ? toProxy(u) : u); }
+  });
+
+  // top-level page: iframes get their src parked in data-hsrc so NO raw load
+  // starts; the runtime then requests the document through the engine
+  if (topLevel) {
+    doc.querySelectorAll("iframe[src],frame[src]").forEach((fr) => {
+      const u = abs(fr.getAttribute("src") || "");
+      if (u && /^https?:/i.test(u)) {
+        fr.setAttribute("data-hsrc", u);
+        fr.removeAttribute("src");
+      }
+    });
+  }
+
+  // every subresource through the proxy (local mode only — in standalone mode
+  // classic subresources are no-cors and load directly from the target origin)
+  if (local) {
+    for (const [sel, attrs] of SUB_RES_SELECTORS) {
+      doc.querySelectorAll(sel).forEach((el) => {
+        for (const attr of attrs) {
+          const v = el.getAttribute(attr);
+          if (!v) continue;
+          if (attr === "srcset") { el.setAttribute("srcset", rewriteSrcset(v)); continue; }
+          if (/^(data:|blob:|#|javascript:|mailto:|tel:)/i.test(v)) continue;
+          const u = abs(v);
+          if (!u || !/^https?:/i.test(u)) continue;
+          el.setAttribute(attr, toProxy(u));
+        }
+      });
+    }
+
+    // inline styles + <style> blocks
+    doc.querySelectorAll("[style]").forEach((el) => {
+      const v = el.getAttribute("style");
+      if (v && v.includes("url(")) el.setAttribute("style", rewriteCssText(v, finalUrl));
+    });
+    doc.querySelectorAll("style").forEach((el) => {
+      if (el.textContent && /url\(|@import/i.test(el.textContent))
+        el.textContent = rewriteCssText(el.textContent, finalUrl);
+    });
+  }
+
+  // meta refresh → let the runtime forward it
+  // (left in place; runtime resolves it against <base>)
+
+  // inject the runtime right after <base> — before ANY page script
+  const runtime = state.runtimeSrc
+    .replace(/__PROXY_PREFIX__/g, P)
+    .replace(/__APP_ORIGIN__/g, location.origin)
+    .replace("__CONFIG__", JSON.stringify({ standalone: !local, topLevel: !!topLevel }))
+    .replace(/<\/script/gi, "<\\/script");
+  const s = doc.createElement("script");
+  s.textContent = runtime;
+  head.insertBefore(s, base.nextSibling);
+
+  const dt = /^\s*(<!DOCTYPE[^>]*>)/i.exec(text);
+  return (dt ? dt[1] : "<!DOCTYPE html>") + doc.documentElement.outerHTML;
+}
+
+/* ═══════════════════════ renderers ═══════════════════════ */
+function showOverlay(tab, html) {
+  tab.overlay.innerHTML = html;
+  tab.overlay.classList.add("show");
+}
+function hideOverlay(tab) { tab.overlay.classList.remove("show"); }
+
+function renderStart(tab) {
+  tab.url = "about:start"; tab.title = "New Tab"; tab.icon = null;
+  tab.iframe.removeAttribute("src");
+  tab.iframe.srcdoc = "";
+  const tiles = [
+    ["📄", "Wikipedia", "https://en.wikipedia.org"],
+    ["🐙", "GitHub", "https://github.com"],
+    ["💬", "Reddit", "https://www.reddit.com"],
+    ["⬛", "Hacker News", "https://news.ycombinator.com"],
+    ["🧩", "MDN Web Docs", "https://developer.mozilla.org"],
+    ["🔎", "DuckDuckGo", "https://duckduckgo.com"],
+    ["📌", "Example", "https://example.com"],
+    ["📰", "Stack Overflow", "https://stackoverflow.com"],
+  ];
+  showOverlay(tab, `
+    <div class="start">
+      <h1>Hyperion <small>libcurl.js · wisp · relay</small></h1>
+      <div class="sub">A browser that fetches <b>everything</b> through a real
+        curl compiled to WebAssembly. Scripts are auto-allowed; every request
+        of the page flows back through the proxy engine.</div>
+      <div class="tiles">
+        ${tiles.map(([i, n, u]) => `
+          <button class="tile" data-url="${esc(u)}">
+            <div class="t-ico">${i}</div>
+            <div class="t-name">${n}</div>
+            <div class="t-url">${esc(u.replace(/^https?:\/\//, ""))}</div>
+          </button>`).join("")}
+      </div>
+      <div class="hint">
+        Type any address or search above · <code>Ctrl+T</code> new tab ·
+        <code>Ctrl+R</code> reload · <code>Ctrl+L</code> address bar ·
+        <code>F12</code> devtools (console + network + source) ·
+        engine switcher at the right of the toolbar.
+      </div>
+    </div>`);
+  tab.overlay.onclick = (e) => {
+    const t = e.target.closest("[data-url]");
+    if (t) navigate(tab, t.dataset.url);
+  };
+  syncOmnibox(); renderTabs();
+}
+
+function renderError(tab, url, err) {
+  tab.status = "idle"; renderTabState(tab);
+  showOverlay(tab, `
+    <div class="errpage">
+      <div class="big">🛰️</div>
+      <h2>Couldn’t reach this site</h2>
+      <p>${esc(url)}</p>
+      <p style="color:var(--err)">${esc(err && (err.message || String(err)))}</p>
+      <div class="row">
+        <button class="btn primary" data-act="retry">Retry (auto engine)</button>
+        <button class="btn" data-act="relay">Force local relay</button>
+        <button class="btn" data-act="home">Start page</button>
+      </div>
+    </div>`);
+  tab.overlay.onclick = (e) => {
+    const b = e.target.closest("[data-act]");
+    if (!b) return;
+    if (b.dataset.act === "retry") navigate(tab, url, { noPush: true });
+    if (b.dataset.act === "relay") {
+      state.enginePref = "relay"; $("engine-select").value = "relay";
+      navigate(tab, url, { noPush: true });
+    }
+    if (b.dataset.act === "home") navigate(tab, "about:start");
+  };
+}
+
+function looksHtml(buf, ct) {
+  return /text\/html|application\/xhtml\+xml/i.test(ct) ||
+    (!ct && new TextDecoder().decode(buf.slice(0, 512)).trimStart().startsWith("<"));
+}
+
+function textViewerHtml(text, url, ct) {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${esc(hostOf(url))}</title>
+<style>body{background:#0d1017;color:#cfe0ff;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:18px}
+header{position:sticky;top:-18px;background:#0d1017;padding:4px 0 12px;color:#6b7690;border-bottom:1px solid #262f47;margin:-4px 0 14px}
+pre{white-space:pre-wrap;word-break:break-all}</style></head>
+<body><header>${esc(ct || "text")} · ${esc(url)}</header><pre>${esc(text)}</pre></body></html>`;
+}
+
+function renderTextViewer(tab, text, url, ct) {
+  setIframeSrcdoc(tab, textViewerHtml(text, url, ct));
+}
+
+function setIframeSrcdoc(tab, html) {
+  tab.iframe.removeAttribute("src");
+  tab.iframe.srcdoc = html;
+}
+function setIframeSrc(tab, url) {
+  tab.iframe.srcdoc = "";
+  tab.iframe.src = url;
+}
+
+/* ═══════════════════════ navigation ═══════════════════════ */
+async function navigate(tab, rawUrl, opts = {}) {
+  let url = normalizeUrl(rawUrl) || searchUrl(rawUrl);
+  const seq = ++tab.seq;
+  ++state.navSeq;
+
+  if (url === "about:start" || url === "about:blank") {
+    if (tab.ctrl) tab.ctrl.abort();
+    renderStart(tab);
+    if (!opts.noPush) pushHistory(tab, { url });
+    tab.lastNav = null;
+    syncOmnibox();
+    return;
+  }
+
+  const method = (opts.method || "GET").toUpperCase();
+  tab.status = "loading";
+  tab.overlay.onclick = null;
+  renderTabState(tab);
+  $("btn-reload").innerHTML = "✕";
+
+  const ctrl = new AbortController();
+  tab.ctrl = ctrl;
+  const t0 = performance.now();
+  let headers = [["accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"],
+                 ["accept-language", "en-US,en;q=0.9"]];
+  let body = null;
+
+  if (method !== "GET" && method !== "HEAD" && opts.entries) {
+    const entries = opts.entries;
+    if ((opts.enctype || "").includes("multipart") || opts.hasFile) {
+      const fd = new FormData();
+      for (const en of entries) {
+        if (en.file) fd.append(en.k, new Blob([en.file.buf], { type: en.file.type }), en.file.name);
+        else fd.append(en.k, en.v ?? "");
+      }
+      body = fd;
     } else {
-      patched = runtimeShield + patched;
-    }
-
-    return patched;
-  }
-
-  // Deep Asset Harvester: scrapes scripts, styles, subdomains, APIs, logins
-  function harvestSiteAssets(html, finalUrl) {
-    el.assetDisplay.innerHTML = "";
-    const urlObj = new URL(finalUrl);
-    const scripts = [];
-    const stylesheets = [];
-    const subdomains = new Set();
-    const media = [];
-
-    // Scripts
-    const scriptMatches = html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi);
-    for (const m of scriptMatches) scripts.push(m[1]);
-
-    // Styles
-    const styleMatches = html.matchAll(/<link[^>]+href=["']([^"']+)["'][^>]*rel=["']stylesheet["']/gi);
-    for (const m of styleMatches) stylesheets.push(m[1]);
-
-    // Media & images
-    const imgMatches = html.matchAll(/<(?:img|video|source)[^>]+src=["']([^"']+)["']/gi);
-    for (const m of imgMatches) media.push(m[1]);
-
-    // Subdomains / Hostnames mentioned
-    const hostRegex = new RegExp(`https?://([a-zA-Z0-9.-]+\\.${urlObj.hostname.split('.').slice(-2).join('\\.')})`, "gi");
-    let match;
-    while ((match = hostRegex.exec(html)) !== null) {
-      subdomains.add(match[1]);
-    }
-
-    const total = scripts.length + stylesheets.length + media.length + subdomains.size;
-    el.assetCount.textContent = total;
-
-    // Render cards
-    function addCard(type, name, link) {
-      const card = document.createElement("div");
-      card.className = "asset-card";
-      card.innerHTML = `<b>[${type}]</b><a href="${link}" target="_blank">${name.slice(0, 30)}</a>`;
-      el.assetDisplay.appendChild(card);
-    }
-
-    scripts.slice(0, 8).forEach(s => addCard("JS", s.split("/").pop() || s, new URL(s, finalUrl).href));
-    stylesheets.slice(0, 6).forEach(s => addCard("CSS", s.split("/").pop() || s, new URL(s, finalUrl).href));
-    media.slice(0, 6).forEach(m => addCard("MEDIA", m.split("/").pop() || m, new URL(m, finalUrl).href));
-    subdomains.forEach(sub => addCard("SUBDOMAIN", sub, "https://" + sub));
-
-    if (total === 0) {
-      el.assetDisplay.innerHTML = "<div style='color:var(--text-dim)'>No linked assets extracted.</div>";
+      const sp = new URLSearchParams();
+      for (const en of entries) sp.append(en.k, en.v ?? "");
+      body = sp.toString();
+      headers.push(["content-type", "application/x-www-form-urlencoded"]);
     }
   }
 
-  // Core Fetch & Launch Pipeline
-  async function launchSite(targetUrl, forceMode = false) {
-    if (!ready) {
-      appendLog("Nexus engine not initialized yet", "err");
+  try {
+    const res = await engineFetch(method, url, { headers, body, signal: ctrl.signal });
+    if (seq !== tab.seq) return;                 // superseded
+    const ms = Math.round(performance.now() - t0);
+    const ct = headerGet(res.headers, "content-type") || "";
+    const buf = res.body;
+
+    netAdd(tab, {
+      status: res.status, method, url: res.finalUrl, engine: res.engine,
+      size: buf.byteLength, ms, type: "document",
+    });
+
+    if (res.status >= 400)
+      throw new Error(`HTTP ${res.status} ${res.statusText || ""}`.trim());
+
+    tab.lastNav = { url, method, opts: { method, entries: opts.entries, enctype: opts.enctype, hasFile: opts.hasFile } };
+    tab.url = res.finalUrl;
+    tab.status = "idle";
+
+    const isHtml = looksHtml(buf, ct);
+
+    if (isHtml) {
+      const text = decodeBuf(buf, ct);
+      tab.raw = text;
+      setIframeSrcdoc(tab, processHtml(text, res.finalUrl, true));
+      tab.title = titleFrom(text) || hostOf(res.finalUrl);
+      tab.icon = null;
+    } else if (/^(text\/|application\/(json|xml|javascript|x-javascript)|.*\+(xml|json))/i.test(ct)) {
+      const text = decodeBuf(buf, ct);
+      tab.raw = text;
+      setIframeSrcdoc(tab, textViewerHtml(text, res.finalUrl, ct));
+      tab.title = hostOf(res.finalUrl);
+    } else {
+      tab.raw = "";
+      // binary: standalone shows it via a blob URL; local mode offloads to the proxy
+      if (state.localMode) {
+        setIframeSrc(tab, toProxy(res.finalUrl));
+      } else {
+        const blob = new Blob([buf], { type: ct || "application/octet-stream" });
+        setIframeSrc(tab, URL.createObjectURL(blob));
+      }
+      tab.title = hostOf(res.finalUrl);
+    }
+
+    hideOverlay(tab);
+    if (!opts.noPush && !opts.replaceHist) pushHistory(tab, { url, method, opts: tab.lastNav.opts });
+    if (opts.histIdx != null) tab.hidx = opts.histIdx;
+    syncOmnibox(true);
+    renderTabState(tab);
+    document.title = (tab.title || hostOf(tab.url)) + " · Hyperion";
+    if (state.cookieSession) saveCookies();
+  } catch (e) {
+    if (e && e.name === "AbortError") {
+      if (seq === tab.seq) { tab.status = "idle"; renderTabState(tab); $("btn-reload").innerHTML = "⟳"; }
       return;
     }
-    let currentUrl = targetUrl.trim();
-    if (!/^[a-z]+:\/\//i.test(currentUrl)) currentUrl = "https://" + currentUrl;
-    el.url.value = currentUrl;
+    if (seq !== tab.seq) return;
+    netAdd(tab, { status: 0, method, url, engine: state.lastEngine, size: 0,
+                  ms: Math.round(performance.now() - t0), type: "document",
+                  error: e.message || String(e) });
+    renderError(tab, url, e);
+    toast("Navigation failed: " + (e.message || e), true);
+  } finally {
+    if (seq === tab.seq) { $("btn-reload").innerHTML = "⟳"; $("btn-reload").disabled = false; }
+  }
+}
 
-    el.btnFetch.disabled = true;
-    appendLog(`[LAUNCH] Routing request: ${currentUrl}`, "cyan");
-    updateStatus("TUNNELING " + currentUrl.slice(0, 30) + "...", false);
+function titleFrom(html) {
+  const m = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
+  return m ? m[1].replace(/\s+/g, " ").trim().slice(0, 120) : null;
+}
+function decodeBuf(buf, ct) {
+  let enc = "utf-8";
+  const m = /charset=([\w-]+)/i.exec(ct || "");
+  if (m) enc = m[1];
+  try { return new TextDecoder(enc).decode(buf); }
+  catch { return new TextDecoder("utf-8").decode(buf); }
+}
 
-    const t0 = performance.now();
-    let redirectCount = 0;
-    const maxRedirects = 10;
+function pushHistory(tab, entry) {
+  tab.hist = tab.hist.slice(0, tab.hidx + 1);
+  tab.hist.push({ ...entry, ts: Date.now(), title: tab.title });
+  if (tab.hist.length > 200) tab.hist.shift();
+  tab.hidx = tab.hist.length - 1;
+  if (tab === state.active) {
+    state.history.unshift({ url: entry.url, title: tab.title || hostOf(entry.url), ts: Date.now() });
+    if (state.history.length > 500) state.history.pop();
+    saveJSON("hyperion.history", state.history);
+  }
+  updateNavButtons();
+}
 
-    try {
-      while (true) {
-        const ver = el.httpVer.value;
-        const init = {
-          method: "GET",
-          redirect: "manual",
-          _libcurl_verbose: 1
-        };
-        if (ver !== "auto") init._libcurl_http_version = ver === "2" ? 2 : Number(ver);
+function goBack(tab = state.active) {
+  if (!tab || tab.hidx <= 0) return;
+  const e = tab.hist[--tab.hidx];
+  navigate(tab, e.url, { noPush: true, ...e.opts, histIdx: tab.hidx });
+  updateNavButtons();
+}
+function goFwd(tab = state.active) {
+  if (!tab || tab.hidx >= tab.hist.length - 1) return;
+  const e = tab.hist[++tab.hidx];
+  navigate(tab, e.url, { noPush: true, ...e.opts, histIdx: tab.hidx });
+  updateNavButtons();
+}
+function updateNavButtons() {
+  const t = state.active;
+  $("btn-back").disabled = !t || t.hidx <= 0;
+  $("btn-fwd").disabled = !t || t.hidx >= t.hist.length - 1;
+}
 
-        const res = await L.fetch(currentUrl, init);
+function syncOmnibox(force) {
+  const o = $("omni");
+  if (!force && document.activeElement === o) return;
+  const t = state.active;
+  o.value = !t || t.url === "about:start" ? "" : unproxy(t.url);
+  if (document.activeElement === o) o.select();
+  $("st-url").textContent = t ? t.url === "about:start" ? "start page" : t.url : "";
+  updateNavButtons();
+}
 
-        // Handle redirects
-        if (res.status >= 300 && res.status < 400) {
-          const loc = res.headers.get("location");
-          if (loc && redirectCount < maxRedirects) {
-            redirectCount++;
-            const next = new URL(loc, currentUrl).href;
-            appendLog(`↳ Redirect (${res.status}) → ${next}`, "warn");
-            currentUrl = next;
-            el.url.value = next;
-            continue;
-          }
+/* ═══════════════════════ messages from pages ═══════════════════════ */
+window.addEventListener("message", async (e) => {
+  const d = e.data;
+  if (!d || typeof d !== "object" || !d.h) return;
+  const tab = state.tabs.find((t) => t.iframe.contentWindow === e.source);
+  if (!tab) return;                                // validate by source window
+
+  switch (d.h) {
+    case "console":
+      tab.console.push({ level: d.level, text: d.text, src: hostOf(tab.url), ts: Date.now() });
+      if (tab.console.length > 800) tab.console.shift();
+      if (tab === state.active) renderConsole();
+      break;
+
+    case "title":
+      if (d.title) { tab.title = d.title; renderTabs();
+        if (tab === state.active) document.title = d.title + " · Hyperion"; }
+      break;
+
+    case "favicon":
+      if (d.href) {
+        if (!/^https?:/i.test(d.href)) {
+          tab.icon = d.href;                       // data:/blob: — usable as-is
+          renderTabs();
+        } else if (state.localMode) {
+          tab.icon = toProxy(d.href);
+          renderTabs();
+        } else {
+          // standalone: fetch through the engine, show as blob URL
+          engineFetch("GET", d.href, {}).then((r) => {
+            if (tab.icon && tab.icon.startsWith("blob:")) URL.revokeObjectURL(tab.icon);
+            tab.icon = URL.createObjectURL(new Blob([r.body],
+              { type: headerGet(r.headers, "content-type") || "image/x-icon" }));
+            renderTabs();
+          }).catch(() => {});
         }
-
-        const buf = await res.arrayBuffer();
-        const text = new TextDecoder("utf-8", { fatal: false }).decode(buf);
-        const ms = Math.round(performance.now() - t0);
-
-        currentRawHtml = text;
-        currentFinalUrl = currentUrl;
-        el.sourceDisplay.textContent = text;
-        el.mainTab.querySelector("span").textContent = new URL(currentUrl).hostname;
-
-        // Run Nexus Intelligent Patcher
-        const patchedDoc = nexusPatch(text, currentUrl, forceMode);
-        el.viewport.srcdoc = patchedDoc;
-
-        // Harvest site code, subdomains, and media
-        harvestSiteAssets(text, currentUrl);
-
-        el.viewMeta.textContent = `HTTP ${res.status} // ${Math.round(buf.byteLength/1024)} KB // ${ms} ms // ${redirectCount} REDIRECTS`;
-        updateStatus("NEXUS ONLINE // SECURE", true);
-        appendLog(`[SUCCESS] Loaded in ${ms}ms (${buf.byteLength} bytes)`, "ok");
-
-        // History
-        if (historyStack[historyIdx] !== currentUrl) {
-          historyStack = historyStack.slice(0, historyIdx + 1);
-          historyStack.push(currentUrl);
-          historyIdx++;
-        }
-        break;
       }
-    } catch (err) {
-      appendLog(`[ERROR] ${err.message || err}`, "err");
-      updateStatus("CONNECTION FAILURE", false);
-      showToast("Tunnel error: check WISP server or switch HTTP to 1.1");
-    } finally {
-      el.btnFetch.disabled = false;
-    }
+      break;
+
+    case "ready":
+      tab.status = "idle"; renderTabState(tab);
+      hideOverlay(tab);
+      if (d.title && (!tab.title || tab.title === hostOf(tab.url))) {
+        tab.title = d.title; renderTabs();
+      }
+      break;
+
+    case "nav":
+      navigate(tab, d.url, {
+        method: d.method, entries: d.entries,
+        enctype: d.enctype, hasFile: d.hasFile,
+      });
+      break;
+
+    case "open":
+      const nt = makeTab();
+      navigate(nt, d.url);
+      activateTab(nt);
+      break;
+
+    case "req":                                    // page fetch/XHR via engine
+    case "page":                                   // nested iframe document
+      handlePageRequest(tab, d);
+      break;
+
+    case "res-pong": break;
+
+    case "eval-result":
+      tab.console.push({
+        level: d.ok ? "log" : "error",
+        text: d.result, src: "‹console›", ts: Date.now(),
+      });
+      if (tab === state.active) renderConsole();
+      break;
   }
+});
 
-  // Interactive Code Runner
-  async function runSnippet() {
-    const code = el.runnerCode.value;
-    el.runnerOut.textContent = "▶ Executing in Nexus runtime...\n";
-    const origLog = console.log;
-    try {
-      console.log = (...args) => {
-        origLog(...args);
-        el.runnerOut.textContent += args.map(a => typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)).join(" ") + "\n";
-      };
-      const AsyncFn = Object.getPrototypeOf(async function(){}).constructor;
-      const fn = new AsyncFn("libcurl", code);
-      await fn(L);
-      el.runnerOut.textContent += "✓ Execution finished.\n";
-    } catch (e) {
-      el.runnerOut.textContent += "✗ Execution Error: " + (e.stack || e) + "\n";
-    } finally {
-      console.log = origLog;
-    }
-  }
-
-  // Boot Engine
-  async function bootNexus() {
-    appendLog("Booting Nexus Hybrid WebAssembly Core...", "cyan");
-    updateStatus("INITIALIZING WASM...", false);
-
-    if (!L) {
-      appendLog("Loading WebAssembly binary runtime...", "warn");
-    }
-
-    try {
-      const wispUrl = el.wisp.value;
-      L.set_websocket(wispUrl);
-      appendLog("WISP Tunnel attached: " + wispUrl, "ok");
-
-      L.stderr = (t) => appendLog(String(t).trimEnd(), "");
-      L.stdout = (t) => appendLog(String(t).trimEnd(), "");
-
-      await L.load_wasm("libcurl.wasm");
-      ready = true;
-      updateStatus("NEXUS ONLINE // READY", true);
-      appendLog("Nexus WebAssembly Engine loaded & active", "ok");
-
-      // Auto-launch nowgg.fun as default test
-      launchSite(el.url.value);
-    } catch (err) {
-      appendLog("Failed to initialize engine: " + err, "err");
-      updateStatus("ENGINE ERROR", false);
-    }
-  }
-
-  // Event Listeners
-  el.btnFetch.addEventListener("click", () => launchSite(el.url.value, false));
-  el.btnForce.addEventListener("click", () => {
-    appendLog("Applying FORCE LOAD: Stripping crashing hydration routines", "warn");
-    if (currentRawHtml && currentFinalUrl) {
-      const patchedDoc = nexusPatch(currentRawHtml, currentFinalUrl, true);
-      el.viewport.srcdoc = patchedDoc;
-      showToast("⚡ Force Load applied!");
+/* nested iframe document via the engine — runtime asked for a whole page */
+async function handleFrameDoc(tab, d) {
+  const t0 = performance.now();
+  try {
+    const res = await engineFetch("GET", d.url, {
+      headers: [["accept", "text/html,application/xhtml+xml,*/*;q=0.8"]],
+    });
+    const ct = headerGet(res.headers, "content-type") || "";
+    netAdd(tab, {
+      status: res.status, method: "GET", url: d.url, engine: res.engine,
+      size: res.body.byteLength, ms: Math.round(performance.now() - t0),
+      type: "iframe",
+    });
+    if (res.status >= 400)
+      throw new Error(`HTTP ${res.status} ${res.statusText || ""}`.trim());
+    let html = null, raw = null;
+    if (looksHtml(res.body, ct)) {
+      html = processHtml(decodeBuf(res.body, ct), res.finalUrl, false);
+    } else if (/^(text\/|application\/(json|xml|javascript|x-javascript)|.*\+(xml|json))/i.test(ct)) {
+      html = textViewerHtml(decodeBuf(res.body, ct), res.finalUrl, ct);
     } else {
-      launchSite(el.url.value, true);
+      raw = res.finalUrl;                 // binary → runtime falls back to raw src
     }
-  });
-
-  el.url.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); launchSite(el.url.value); }
-  });
-
-  el.btnConfig.addEventListener("click", () => {
-    el.drawer.classList.toggle("open");
-  });
-
-  el.wisp.addEventListener("change", () => {
-    if (ready) {
-      L.set_websocket(el.wisp.value);
-      appendLog("Switched WISP relay to: " + el.wisp.value, "ok");
-    }
-  });
-
-  // Preset pills
-  document.querySelectorAll(".pill").forEach(p => {
-    p.addEventListener("click", () => {
-      const u = p.getAttribute("data-url");
-      if (u) {
-        el.url.value = u;
-        launchSite(u);
-      }
+    tab.iframe.contentWindow.postMessage(
+      { h: "res", id: d.id, kind: "page", html, raw }, "*");
+  } catch (err) {
+    netAdd(tab, {
+      status: 0, method: "GET", url: d.url, engine: state.lastEngine, size: 0,
+      ms: Math.round(performance.now() - t0), type: "iframe",
+      error: err.message || String(err),
     });
-  });
+    tab.iframe.contentWindow.postMessage(
+      { h: "res", id: d.id, kind: "page", error: err.message || "network error", raw: d.url }, "*");
+  }
+}
 
-  // History buttons
-  el.btnBack.addEventListener("click", () => {
-    if (historyIdx > 0) {
-      historyIdx--;
-      launchSite(historyStack[historyIdx]);
+async function handlePageRequest(tab, d) {
+  if (d.h === "page") return handleFrameDoc(tab, d);
+  const t0 = performance.now();
+  const method = (d.method || "GET").toUpperCase();
+  const headers = (d.headers || []).map((h) => [String(h[0]), String(h[1])]);
+  let body = null;
+  if (d.body && typeof d.body === "object" && d.body.__form) {
+    const fd = new FormData();
+    for (const en of d.body.__form) {
+      if (en.file) fd.append(en.k, new Blob([en.file.buf], { type: en.file.type }), en.file.name);
+      else fd.append(en.k, en.v ?? "");
     }
-  });
-  el.btnForward.addEventListener("click", () => {
-    if (historyIdx < historyStack.length - 1) {
-      historyIdx++;
-      launchSite(historyStack[historyIdx]);
-    }
-  });
-  el.btnReload.addEventListener("click", () => {
-    if (currentFinalUrl) launchSite(currentFinalUrl);
-  });
+    body = fd;
+  } else if (d.body != null) body = d.body;
 
-  // Inspector Tabs
-  document.querySelectorAll(".itab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".itab").forEach(t => t.classList.remove("active"));
-      document.querySelectorAll(".ipane").forEach(p => p.classList.remove("active"));
-      tab.classList.add("active");
-      activeTab = tab.getAttribute("data-tab");
-      $("pane-" + activeTab).classList.add("active");
+  try {
+    const res = await engineFetch(method, d.url, { headers, body });
+    netAdd(tab, {
+      status: res.status, method, url: d.url, engine: res.engine,
+      size: res.body.byteLength, ms: Math.round(performance.now() - t0),
+      type: "xhr",
     });
+    tab.iframe.contentWindow.postMessage({
+      h: "res", id: d.id, status: res.status, statusText: res.statusText,
+      headers: res.headers, body: res.body,
+    }, "*");
+  } catch (err) {
+    netAdd(tab, {
+      status: 0, method, url: d.url, engine: state.lastEngine, size: 0,
+      ms: Math.round(performance.now() - t0), type: "xhr",
+      error: err.message || String(err),
+    });
+    tab.iframe.contentWindow.postMessage(
+      { h: "res", id: d.id, error: err.message || "network error" }, "*");
+  }
+}
+
+/* ═══════════════════════ devtools ═══════════════════════ */
+function setDev(open, tabName) {
+  state.devOpen = open;
+  $("devtools").classList.toggle("hidden", !open);
+  if (tabName) state.devTab = tabName;
+  document.querySelectorAll(".dev-tab").forEach((b) =>
+    b.classList.toggle("active", b.dataset.dev === state.devTab));
+  document.querySelectorAll(".dev-pane").forEach((p) =>
+    p.classList.toggle("active", p.id === "dev-" + state.devTab));
+  renderConsole(); renderNetwork(); renderSource();
+}
+
+function renderConsole() {
+  const box = $("console-lines");
+  if (!state.devOpen || state.devTab !== "console") return;
+  const tab = state.active;
+  const lines = tab ? tab.console : [];
+  box.innerHTML = lines.map((l) =>
+    `<div class="cline ${esc(l.level)}">${esc(l.text)}${
+      l.src ? `<span class="csrc">— ${esc(l.src)}</span>` : ""}</div>`).join("");
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderNetwork() {
+  if (!state.devOpen || state.devTab !== "network") return;
+  const tab = state.active;
+  const rows = tab ? tab.net : [];
+  $("net-rows").innerHTML = rows.map((r) => {
+    const stCls = r.status === 0 ? "st-0" : "st-" + Math.floor(r.status / 100);
+    const name = unproxy(r.url).replace(/^https?:\/\//, "");
+    return `<tr title="${esc(unproxy(r.url))}${r.error ? "\n" + esc(r.error) : ""}">
+      <td>${r.type === "document" ? "📄" : r.type === "xhr" ? "⚡" : "🔗"}</td>
+      <td class="${stCls}">${r.status || (r.error ? "ERR" : "—")}</td>
+      <td>${esc(r.method)}</td>
+      <td>${esc(name)}</td>
+      <td class="eng-${esc(r.engine)}">${esc(r.engine)}</td>
+      <td>${r.size ? fmtSize(r.size) : "—"}</td>
+      <td>${r.ms != null ? r.ms + "ms" : "—"}</td>
+    </tr>`;
+  }).join("");
+}
+function fmtSize(n) {
+  if (n < 1024) return n + "B";
+  if (n < 1048576) return (n / 1024).toFixed(1) + "kB";
+  return (n / 1048576).toFixed(1) + "MB";
+}
+
+function renderSource() {
+  if (!state.devOpen || state.devTab !== "source") return;
+  const tab = state.active;
+  $("source-view").textContent = tab && tab.raw
+    ? tab.raw : "// no source for this page (binary / start page)";
+}
+
+function showSource() {
+  setDev(true, "source");
+  renderSource();
+}
+
+document.querySelectorAll(".dev-tab").forEach((b) =>
+  b.addEventListener("click", () => setDev(true, b.dataset.dev)));
+$("btn-dev").addEventListener("click", () => setDev(!state.devOpen));
+$("dev-close").addEventListener("click", () => setDev(false));
+$("dev-clear").addEventListener("click", () => {
+  const tab = state.active;
+  if (!tab) return;
+  if (state.devTab === "console") { tab.console = []; renderConsole(); }
+  else if (state.devTab === "network") { tab.net = []; renderNetwork(); }
+  else { tab.raw = ""; renderSource(); }
+});
+$("btn-source").addEventListener("click", showSource);
+
+let evalSeq = 0;
+$("console-input").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const code = e.target.value.trim();
+  if (!code) return;
+  e.target.value = "";
+  const tab = state.active;
+  tab.console.push({ level: "input", text: "› " + code, src: "", ts: Date.now() });
+  tab.iframe.contentWindow.postMessage({ h: "eval", id: ++evalSeq, code }, "*");
+  renderConsole();
+  // if the frame has no runtime, answer with an error so the line resolves
+  setTimeout(() => {
+    const last = tab.console[tab.console.length - 1];
+    if (last && last.level === "input" && last.text === "› " + code) {
+      tab.console.push({ level: "debug", text: "(no runtime responding in this frame)", src: "" });
+      if (tab === state.active) renderConsole();
+    }
+  }, 1500);
+});
+
+/* ═══════════════════════ library (history/bookmarks) ═══════════════════════ */
+function setLibrary(open, which) {
+  $("library").classList.toggle("hidden", !open);
+  if (which) {
+    document.querySelectorAll(".lib-tab").forEach((b) =>
+      b.classList.toggle("active", b.dataset.lib === which));
+  }
+  renderLibrary();
+}
+function renderLibrary() {
+  if ($("library").classList.contains("hidden")) return;
+  const which = document.querySelector(".lib-tab.active")?.dataset.lib || "history";
+  const body = $("library-body");
+  const items = which === "history" ? state.history : state.bookmarks;
+  if (!items.length) {
+    body.innerHTML = `<div class="lib-empty">Nothing here yet.</div>`;
+    return;
+  }
+  body.innerHTML = items.map((it, i) => `
+    <div class="lib-item" data-url="${esc(it.url)}" data-i="${i}">
+      <div class="li-title">${esc(it.title || hostOf(it.url))}</div>
+      <div class="li-url">${esc(it.url)}</div>
+      <div class="li-date">${which === "history" ? new Date(it.ts).toLocaleString() : ""}</div>
+    </div>`).join("");
+  body.onclick = (e) => {
+    const el = e.target.closest(".lib-item");
+    if (!el) return;
+    if (e.target.classList.contains("li-del")) return;
+    navigate(state.active, el.dataset.url);
+    setLibrary(false);
+  };
+}
+$("btn-library").addEventListener("click", () =>
+  setLibrary($("library").classList.contains("hidden")));
+$("library-close").addEventListener("click", () => setLibrary(false));
+document.querySelectorAll(".lib-tab").forEach((b) =>
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".lib-tab").forEach((x) => x.classList.toggle("active", x === b));
+    renderLibrary();
+  }));
+
+function renderBookmarkBar() {
+  const bar = $("bookmarkbar");
+  bar.innerHTML = state.bookmarks.map((b, i) => `
+    <button class="bm-chip" data-url="${esc(b.url)}" title="${esc(b.url)}">
+      <span>${esc(b.title || hostOf(b.url))}</span><span class="x" data-del="${i}">×</span>
+    </button>`).join("");
+  bar.onclick = (e) => {
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      state.bookmarks.splice(+del.dataset.del, 1);
+      saveJSON("hyperion.bookmarks", state.bookmarks);
+      renderBookmarkBar(); syncBookmarkStar();
+      return;
+    }
+    const chip = e.target.closest("[data-url]");
+    if (chip) navigate(state.active, chip.dataset.url);
+  };
+}
+function isBookmarked(url) {
+  return state.bookmarks.some((b) => b.url === url);
+}
+function syncBookmarkStar() {
+  const t = state.active;
+  const on = t && t.url && t.url !== "about:start" && isBookmarked(t.url);
+  $("btn-bookmark").textContent = on ? "★" : "☆";
+}
+$("btn-bookmark").addEventListener("click", () => {
+  const t = state.active;
+  if (!t || t.url === "about:start") return;
+  if (isBookmarked(t.url)) {
+    state.bookmarks = state.bookmarks.filter((b) => b.url !== t.url);
+  } else {
+    state.bookmarks.unshift({ url: t.url, title: t.title || hostOf(t.url) });
+  }
+  saveJSON("hyperion.bookmarks", state.bookmarks);
+  renderBookmarkBar(); syncBookmarkStar();
+});
+
+/* ═══════════════════════ toolbar ═══════════════════════ */
+$("btn-back").addEventListener("click", () => goBack());
+$("btn-fwd").addEventListener("click", () => goFwd());
+$("btn-home").addEventListener("click", () => navigate(state.active, "about:start"));
+$("btn-reload").addEventListener("click", () => {
+  const t = state.active;
+  if (!t) return;
+  if (t.status === "loading" && t.ctrl) { t.ctrl.abort(); return; }
+  if (t.lastNav) navigate(t, t.url, { noPush: true, method: t.lastNav.method,
+    entries: t.lastNav.opts?.entries, enctype: t.lastNav.opts?.enctype,
+    hasFile: t.lastNav.opts?.hasFile });
+  else if (t.url && t.url !== "about:start") navigate(t, t.url, { noPush: true });
+  else renderStart(t);
+});
+$("btn-go").addEventListener("click", submitOmnibox);
+$("omni").addEventListener("keydown", (e) => { if (e.key === "Enter") submitOmnibox(); });
+$("omni").addEventListener("focus", (e) => e.target.select());
+
+function submitOmnibox() {
+  const v = $("omni").value;
+  if (!v.trim()) return;
+  navigate(state.active, v.trim());
+}
+
+$("engine-select").value = state.enginePref;
+$("engine-select").addEventListener("change", (e) => {
+  state.enginePref = e.target.value;
+  localStorage.setItem("hyperion.engine", state.enginePref);
+  updateBadges();
+  toast("Engine: " + state.enginePref);
+});
+
+function updateBadges() {
+  const b = $("engine-badge");
+  const eng = state.enginePref === "auto" ? state.lastEngine : state.enginePref;
+  b.textContent = eng === "libcurl" ? "curl·wasm ⇄ wisp" :
+    eng === "relay" ? "local relay" :
+    eng === "public" ? "public cors" : eng;
+  b.className = eng === "relay" ? "relay" : eng === "public" ? "public" :
+    eng === "libcurl" ? "" : (eng === "—" ? "dim" : "err");
+
+  const mode = state.localMode ? "" : " · standalone";
+  $("st-engine").textContent = "engine: " +
+    (state.enginePref === "auto" ? "auto → " + state.lastEngine : state.enginePref) + mode;
+  $("st-wisp").textContent = "wisp: " +
+    (state.wispOk ? "connected ✓ · " + wispLabel()
+      : state.libcurlReady ? "unavailable (" + (state.localMode ? "relay" : "public") + " fallback)" : "…");
+  $("st-wisp").className = "st-item " + (state.wispOk ? "ok" : "");
+  let ver = "libcurl: …";
+  if (state.libcurlErr) ver = "libcurl: failed";
+  else if (state.libcurlReady && typeof libcurl !== "undefined" && libcurl.version) {
+    const v = libcurl.version;
+    ver = `libcurl: ${v.libcurl || v.lib || "?"} · wisp ${v.wisp || "?"}`;
+  }
+  $("st-curl").textContent = ver;
+}
+
+/* ═══════════════════════ keyboard ═══════════════════════ */
+document.addEventListener("keydown", (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === "t") { e.preventDefault(); makeTab(); }
+  else if (mod && e.key.toLowerCase() === "w") { e.preventDefault(); closeTab(state.active); }
+  else if (mod && e.key.toLowerCase() === "l") { e.preventDefault(); $("omni").focus(); $("omni").select(); }
+  else if (mod && e.key.toLowerCase() === "r") { e.preventDefault(); $("btn-reload").click(); }
+  else if (e.key === "F5") { e.preventDefault(); $("btn-reload").click(); }
+  else if (e.key === "F12") { e.preventDefault(); setDev(!state.devOpen); }
+  else if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); goBack(); }
+  else if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); goFwd(); }
+  else if (mod && e.key === "Tab") { e.preventDefault(); newTabSwitch(e.shiftKey ? -1 : 1); }
+});
+function newTabSwitch(dir) {
+  const i = state.tabs.indexOf(state.active);
+  activateTab(state.tabs[(i + dir + state.tabs.length) % state.tabs.length]);
+}
+
+/* ═══════════════════════ boot ═══════════════════════ */
+function probeWisp() {
+  return new Promise((resolve) => {
+    let ws;
+    try { ws = new WebSocket(wispUrl()); }
+    catch { return resolve(false); }
+    let done = false;
+    const fin = (v) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      try { ws.close(); } catch {}
+      resolve(v);
+    };
+    const timer = setTimeout(() => fin(false), 7000);
+    ws.binaryType = "arraybuffer";
+    ws.onmessage = () => fin(true);       // first frame = Wisp initial window
+    ws.onerror = () => fin(false);
+    ws.onclose = () => fin(false);
   });
+}
 
-  // Runner controls
-  el.btnRunCode.addEventListener("click", runSnippet);
-  el.btnClearRunner.addEventListener("click", () => { el.runnerOut.textContent = ""; });
+/* libcurl.js loader — local vendor copy with jsdelivr CDN fallback */
+const LIBCURL_CDN = "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.js";
+const LIBCURL_WASM_CDN = "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.wasm";
 
-  // Copy current tab content
-  el.btnCopyTab.addEventListener("click", async () => {
-    let text = "";
-    if (activeTab === "source") text = el.sourceDisplay.textContent;
-    else if (activeTab === "runner") text = el.runnerCode.value;
-    else if (activeTab === "logs") text = logStore.map(l => `[${l.time}] ${l.msg}`).join("\n");
-    else text = el.assetDisplay.innerText;
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => res();
+    s.onerror = () => rej(new Error("script load failed: " + src));
+    document.head.appendChild(s);
+  });
+}
+async function headOk(url, ms = 4000) {
+  try {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), ms);
+    const r = await fetch(url, { method: "HEAD", signal: c.signal, cache: "no-store" });
+    clearTimeout(t);
+    return r.ok;
+  } catch { return false; }
+}
 
+/* standalone = file:// or no local /proxy relay (X-Proxy-Engine header) */
+async function detectMode() {
+  if (location.protocol === "file:") { state.localMode = false; return; }
+  try {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), 4000);
+    const r = await fetch("/proxy?url=" + encodeURIComponent("https://example.com"),
+      { method: "HEAD", signal: c.signal, cache: "no-store" });
+    clearTimeout(t);
+    state.localMode = r.ok && r.headers.get("X-Proxy-Engine") === "relay";
+  } catch {
+    state.localMode = false;
+  }
+}
+
+async function initLibcurl() {
+  try {
+    if (typeof libcurl === "undefined" && location.protocol !== "file:") {
+      try { await loadScript("/vendor/libcurl.js"); } catch { /* fall to CDN */ }
+    }
+    if (typeof libcurl === "undefined") await loadScript(LIBCURL_CDN);
+    libcurl.logger = (type, text) => {
+      if (type === "error" || type === "warn")
+        consoleLog(type === "error" ? "error" : "debug", "[libcurl] " + text, "libcurl");
+    };
+    let wasmUrl = LIBCURL_WASM_CDN;
+    if (location.protocol !== "file:" && await headOk("/vendor/libcurl.wasm"))
+      wasmUrl = "/vendor/libcurl.wasm";
+    await libcurl.load_wasm(wasmUrl);
+    libcurl.set_websocket(wispUrl());
+    state.libcurlReady = true;
     try {
-      await navigator.clipboard.writeText(text);
-      showToast("✓ Copied to clipboard!");
-    } catch {
-      showToast("✗ Copy failed");
+      const jar = localStorage.getItem("hyperion.jar");
+      state.cookieSession = jar
+        ? new libcurl.HTTPSession({ enable_cookies: true, cookie_jar: jar })
+        : new libcurl.HTTPSession({ enable_cookies: true });
+    } catch (e) {
+      console.warn("cookie session failed", e);
+      try { state.cookieSession = new libcurl.HTTPSession(); } catch {}
     }
+    state.wispOk = await probeWisp();
+    if (!state.wispOk)
+      toast("Wisp tunnel unreachable — falling back to " +
+        (state.localMode ? "the local relay" : "public proxies"), true);
+    updateBadges();
+  } catch (e) {
+    state.libcurlErr = e;
+    console.warn("libcurl init failed:", e);
+    toast("libcurl.js unavailable — " +
+      (state.localMode ? "using local relay" : "public proxies only") +
+      " (" + (e.message || e) + ")", true);
+    updateBadges();
+  }
+}
+
+let booted = false;
+async function boot() {
+  if (booted) return;
+  booted = true;
+
+  // mode first (local relay vs standalone), then the page runtime
+  await detectMode();
+
+  if (typeof HYPERION_INJECTED !== "undefined" && HYPERION_INJECTED) {
+    state.runtimeSrc = HYPERION_INJECTED;               // single-file build
+  } else {
+    try {
+      state.runtimeSrc = await (await fetch("/injected.js")).text();
+    } catch { state.runtimeSrc = ""; }
+  }
+
+  updateBadges();
+  renderBookmarkBar();
+  makeTab();
+  syncBookmarkStar();
+
+  initLibcurl().then(() => {
+    syncBookmarkStar();
+    updateBadges();
   });
 
-  bootNexus();
-})();
+  // keep star + url bar in sync after navigations
+  setInterval(syncBookmarkStar, 1500);
+}
+
+document.addEventListener("DOMContentLoaded", boot);
+if (document.readyState !== "loading") boot();
+
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a42668a7d9d35c14',t:'MTc5MDYzNjg5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
