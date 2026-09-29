@@ -4,271 +4,716 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Hyperion — libcurl.js Browser</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700&display=swap">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232f7dff'/><path d='M9 8v16M23 8v16M9 16h14' stroke='white' stroke-width='3.4' stroke-linecap='round'/></svg>">
 <style>
-/* Hyperion browser — dark theme */
-:root{
-  --bg0:#0d1017; --bg1:#141926; --bg2:#1b2233; --bg3:#232c42;
-  --fg0:#e8ecf6; --fg1:#a9b3c9; --fg2:#6b7690;
-  --acc:#5b8cff; --acc2:#7c5bff; --ok:#3ddc84; --warn:#ffb454; --err:#ff5f6d;
-  --line:#262f47; --omni:#10141f;
-  --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body{
-  background:var(--bg0);color:var(--fg0);
-  font:13px/1.45 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  display:flex;
-}
-#app{display:flex;flex-direction:column;width:100%;height:100%}
-button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-input,select{font:inherit;color:inherit}
-
-/* ── tab strip ─────────────────────────────────── */
-#tabstrip{
-  display:flex;align-items:flex-end;gap:4px;
-  background:var(--bg0);padding:6px 8px 0;min-height:38px;
-  border-bottom:1px solid var(--line);user-select:none;
-}
-#tabs{display:flex;gap:4px;overflow-x:auto;max-width:calc(100% - 44px);scrollbar-width:none}
-#tabs::-webkit-scrollbar{display:none}
-.tab{
-  display:flex;align-items:center;gap:7px;
-  min-width:110px;max-width:220px;padding:7px 10px;
-  background:var(--bg1);border:1px solid var(--line);border-bottom:none;
-  border-radius:9px 9px 0 0;color:var(--fg1);cursor:pointer;
-  white-space:nowrap;overflow:hidden;flex-shrink:0;
-}
-.tab.active{background:var(--bg2);color:var(--fg0)}
-.tab .favicon{width:14px;height:14px;flex:0 0 14px;object-fit:contain;border-radius:3px}
-.tab .tab-title{overflow:hidden;text-overflow:ellipsis;flex:1;font-size:12px}
-.tab .tab-close{
-  width:16px;height:16px;line-height:14px;text-align:center;border-radius:4px;
-  font-size:12px;opacity:.55;flex:0 0 16px
-}
-.tab .tab-close:hover{background:#ffffff22;opacity:1}
-.tab.loading .favicon{animation:pulse 1s infinite alternate}
-@keyframes pulse{from{opacity:.35}to{opacity:1}}
-#btn-newtab{
-  margin-bottom:4px;width:30px;height:28px;border-radius:7px;
-  color:var(--fg1);font-size:15px
-}
-#btn-newtab:hover{background:var(--bg2)}
-
-/* ── toolbar ───────────────────────────────────── */
-#toolbar{
-  display:flex;align-items:center;gap:4px;
-  background:var(--bg2);padding:7px 9px;border-bottom:1px solid var(--line);
-}
-.iconbtn{
-  width:32px;height:30px;border-radius:7px;color:var(--fg1);
-  font-size:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto
-}
-.iconbtn:hover{background:#ffffff14;color:var(--fg0)}
-.iconbtn:disabled{opacity:.3;cursor:default;background:none}
-#omni-wrap{
-  flex:1;display:flex;align-items:center;gap:6px;
-  background:var(--omni);border:1px solid var(--line);
-  border-radius:18px;padding:0 6px 0 10px;height:32px;margin:0 6px;
-}
-#omni-wrap:focus-within{border-color:var(--acc);box-shadow:0 0 0 2px #5b8cff33}
-#engine-badge{
-  font:10.5px/1 var(--mono);padding:3px 7px;border-radius:9px;
-  background:#5b8cff26;color:#9db9ff;border:1px solid #5b8cff44;
-  white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis
-}
-#engine-badge.relay{background:#3ddc8422;color:#7ce8ad;border-color:#3ddc8444}
-#engine-badge.public{background:#ffb45422;color:#ffd39a;border-color:#ffb45444}
-#engine-badge.err{background:#ff5f6d22;color:#ff9aa4;border-color:#ff5f6d55}
-#engine-badge.dim{background:#ffffff10;color:var(--fg1);border-color:var(--line)}
-#omni{flex:1;background:none;border:none;outline:none;font-size:13.5px;min-width:40px}
-#btn-go{width:26px;height:26px;font-size:13px}
-#engine-select-wrap select{
-  background:var(--omni);border:1px solid var(--line);border-radius:7px;
-  font:11px var(--mono);padding:5px 4px;outline:none;color:var(--fg1)
+/* ══════════════════════════════════════════════════════════════
+   Hyperion — PS5-inspired UI
+   deep space blue · frosted glass · rounded tiles · white focus
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --font: "Saira", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  --bg0: #04060f;
+  --bg1: #0a0e1d;
+  --glass: rgba(255, 255, 255, 0.055);
+  --glass2: rgba(255, 255, 255, 0.09);
+  --line: rgba(255, 255, 255, 0.10);
+  --line2: rgba(255, 255, 255, 0.18);
+  --txt: #eef2ff;
+  --dim: #97a1c0;
+  --dim2: #5d6688;
+  --acc: #2f7dff;
+  --acc2: #6aa4ff;
+  --ok: #3ddc84;
+  --warn: #ffb02e;
+  --err: #ff5d6c;
+  --r: 12px;
+  --sidebar-w: 236px;
+  --tab-h: 46px;
+  --bar-h: 54px;
+  --bm-h: 42px;
 }
 
-/* ── bookmark bar ──────────────────────────────── */
-#bookmarkbar{
-  display:flex;gap:2px;background:var(--bg1);
-  border-bottom:1px solid var(--line);padding:3px 10px;min-height:0;
-  overflow-x:auto;scrollbar-width:none
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-weight: 400;
+  color: var(--txt);
+  background: var(--bg0);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
-#bookmarkbar:empty{display:none}
-.bm-chip{
-  font-size:11.5px;color:var(--fg1);padding:3px 9px;border-radius:6px;
-  white-space:nowrap;display:flex;gap:6px;align-items:center
-}
-.bm-chip:hover{background:#ffffff14;color:var(--fg0)}
-.bm-chip .x{opacity:.4;font-size:10px}
-.bm-chip .x:hover{opacity:1;color:var(--err)}
 
-/* ── viewport ──────────────────────────────────── */
-#viewport{flex:1;position:relative;background:#fff;overflow:hidden}
-.tabview{position:absolute;inset:0;display:none}
-.tabview.active{display:block}
-.tabview iframe{
-  position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff
-}
-.tabview .overlay{
-  position:absolute;inset:0;overflow:auto;display:none;
+/* aurora backdrop — PS5 home wash */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  inset: -30%;
+  z-index: 0;
+  pointer-events: none;
   background:
-    radial-gradient(1000px 500px at 20% -10%, #5b8cff1f, transparent),
-    radial-gradient(900px 600px at 90% 110%, #7c5bff1c, transparent),
-    var(--bg0);
+    radial-gradient(38% 42% at 18% 22%, rgba(47, 125, 255, 0.20), transparent 70%),
+    radial-gradient(30% 36% at 82% 14%, rgba(122, 92, 255, 0.16), transparent 70%),
+    radial-gradient(42% 40% at 68% 86%, rgba(0, 168, 255, 0.10), transparent 70%);
+  filter: blur(10px);
+  animation: aurora 26s ease-in-out infinite alternate;
 }
-.tabview .overlay.show{display:block}
+body::after {
+  background:
+    radial-gradient(26% 30% at 60% 30%, rgba(0, 196, 255, 0.10), transparent 70%),
+    radial-gradient(34% 34% at 24% 78%, rgba(88, 76, 255, 0.14), transparent 70%);
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+@keyframes aurora {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to   { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
 
-/* start page */
-.start{max-width:860px;margin:0 auto;padding:9vh 30px 40px;color:var(--fg0)}
-.start h1{
-  font-size:44px;font-weight:800;letter-spacing:-1.5px;
-  background:linear-gradient(92deg,var(--acc),var(--acc2),#ff6bd6);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  display:flex;align-items:baseline;gap:14px
+.ico { width: 18px; height: 18px; flex: none; }
+.ico.sm { width: 14px; height: 14px; }
+.ico.lg { width: 44px; height: 44px; stroke-width: 1.4; }
+
+#app {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100vh;
 }
-.start h1 small{font-size:13px;font-weight:600;color:var(--fg2);letter-spacing:0}
-.start .sub{color:var(--fg1);margin:10px 0 30px;font-size:14px}
-.start .sub b{color:#9db9ff;font-weight:600}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.tile{
-  background:var(--bg1);border:1px solid var(--line);border-radius:12px;
-  padding:14px;cursor:pointer;transition:.12s;text-align:left
+
+/* ─────────────────────────── sidebar ─────────────────────────── */
+#sidebar {
+  width: var(--sidebar-w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px 14px;
+  background: linear-gradient(180deg, rgba(10, 14, 29, 0.88), rgba(6, 8, 18, 0.92));
+  border-right: 1px solid var(--line);
+  backdrop-filter: blur(22px);
+  gap: 18px;
 }
-.tile:hover{border-color:var(--acc);transform:translateY(-2px);background:var(--bg2)}
-.tile .t-ico{font-size:20px}
-.tile .t-name{font-weight:600;margin-top:8px;font-size:13px}
-.tile .t-url{color:var(--fg2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.start .hint{margin-top:28px;color:var(--fg2);font-size:12px;line-height:1.9}
-.start .hint code{background:var(--bg2);padding:1px 6px;border-radius:5px;font-family:var(--mono)}
+
+#brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 0; }
+.brand-mark { width: 34px; height: 34px; filter: drop-shadow(0 4px 14px rgba(47, 125, 255, 0.45)); }
+.brand-name {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.18em;
+  background: linear-gradient(90deg, #fff, #9cc2ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+#side-nav { display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dim);
+  font: 500 14.5px var(--font);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+.nav-item:hover { background: var(--glass); color: var(--txt); }
+.nav-item:active { transform: scale(0.975); }
+.nav-item.active, .nav-item:focus-visible {
+  background: linear-gradient(90deg, rgba(47, 125, 255, 0.22), rgba(47, 125, 255, 0.06));
+  border-color: rgba(106, 164, 255, 0.45);
+  color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(47, 125, 255, 0.25), 0 6px 18px -8px rgba(47, 125, 255, 0.5);
+}
+
+#side-status {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.status-chip {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim);
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-chip.dim { background: transparent; border-color: transparent; padding-left: 2px; }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--dim2, #5d6688);
+  flex: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+.dot.ok { background: var(--ok); box-shadow: 0 0 8px rgba(61, 220, 132, 0.7); }
+.dot.bad { background: var(--err); box-shadow: 0 0 8px rgba(255, 93, 108, 0.6); }
+.dot.wait { background: var(--warn); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+#engine-select-wrap {
+  position: relative;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  color: var(--dim);
+}
+#engine-select-wrap .ico { width: 14px; height: 14px; color: var(--acc2); }
+#engine-select-wrap .ico:last-child { position: absolute; right: 8px; pointer-events: none; width: 13px; }
+#engine-select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--txt);
+  font: 500 12.5px var(--font);
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  padding-right: 14px;
+}
+#engine-select option { background: var(--bg1); color: var(--txt); }
+#st-url {
+  font-size: 11px;
+  color: var(--dim);
+  opacity: 0.75;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 2px;
+}
+
+/* ─────────────────────────── main ────────────────────────────── */
+#main { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+
+/* tabs (PS5 top row) */
+#tabstrip {
+  height: var(--tab-h);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(6, 8, 18, 0.5);
+  backdrop-filter: blur(14px);
+}
+#tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; align-items: center; height: 100%; }
+#tabs::-webkit-scrollbar { display: none; }
+.tab {
+  display: flex; align-items: center; gap: 8px;
+  height: 32px;
+  max-width: 220px;
+  padding: 0 10px 0 12px;
+  border-radius: 16px;
+  border: 1.5px solid transparent;
+  background: var(--glass);
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  flex: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+}
+.tab:hover { background: var(--glass2); color: var(--txt); }
+.tab.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.07));
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #fff;
+  box-shadow: 0 0 14px -4px rgba(255, 255, 255, 0.45);
+}
+.tab.loading .favicon { animation: pulse 0.9s ease-in-out infinite; }
+.tab .favicon { width: 16px; height: 16px; border-radius: 4px; object-fit: contain; display: flex; color: var(--dim2, #667); }
+.tab .favicon svg { width: 16px; height: 16px; }
+.tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+}
+.tab:hover .tab-close, .tab.active .tab-close { opacity: 0.7; }
+.tab-close:hover { background: rgba(255, 255, 255, 0.18); opacity: 1; }
+.tab-close svg { width: 12px; height: 12px; }
+
+/* toolbar */
+#toolbar {
+  height: var(--bar-h);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(6, 8, 18, 0.35);
+}
+.iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, transform 0.1s, border-color 0.14s;
+}
+.iconbtn:hover { background: var(--glass2); color: var(--txt); border-color: var(--line); }
+.iconbtn:active { transform: scale(0.93); }
+.iconbtn:disabled { opacity: 0.32; pointer-events: none; }
+.iconbtn.on { color: #ffd75e; }
+.iconbtn.on svg { fill: currentColor; }
+
+#omni-wrap {
+  flex: 1;
+  display: flex; align-items: center; gap: 10px;
+  height: 40px;
+  margin: 0 6px;
+  padding: 0 6px 0 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid var(--line);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  max-width: 860px;
+}
+#omni-wrap:focus-within {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12), 0 8px 24px -12px rgba(47, 125, 255, 0.6);
+}
+#engine-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--acc2);
+  background: rgba(47, 125, 255, 0.16);
+  border: 1px solid rgba(106, 164, 255, 0.35);
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex: none;
+}
+#engine-badge.relay { color: #9ef0c0; background: rgba(61, 220, 132, 0.12); border-color: rgba(61, 220, 132, 0.35); }
+#engine-badge.dim { color: var(--dim); background: transparent; border-color: var(--line); }
+#engine-badge.err { color: var(--err); background: rgba(255, 93, 108, 0.12); border-color: rgba(255, 93, 108, 0.4); }
+#omni {
+  flex: 1; min-width: 0;
+  background: transparent; border: 0; outline: none;
+  color: var(--txt);
+  font: 400 14.5px var(--font);
+  letter-spacing: 0.01em;
+}
+#omni::placeholder { color: var(--dim); opacity: 0.75; }
+#btn-go.go { border-radius: 50%; width: 32px; height: 32px; background: rgba(255, 255, 255, 0.10); }
+
+/* pinned sites */
+#bookmarkbar {
+  height: var(--bm-h);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
+  background: rgba(6, 8, 18, 0.25);
+}
+#bookmarkbar::-webkit-scrollbar { display: none; }
+.bm-chip {
+  display: flex; align-items: center; gap: 8px;
+  height: 28px;
+  padding: 0 11px 0 7px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  color: var(--dim);
+  font: 500 12.5px var(--font);
+  cursor: pointer;
+  flex: none;
+  max-width: 200px;
+  transition: background 0.14s, color 0.14s, border-color 0.14s, transform 0.12s;
+}
+.bm-chip:hover { background: var(--glass2); color: var(--txt); border-color: var(--line2); transform: translateY(-1px); }
+.bm-fav {
+  position: relative;
+  width: 17px; height: 17px; border-radius: 4px;
+  background: rgba(255, 255, 255, 0.10);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex: none;
+}
+.bm-fav img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 13px; height: 13px; object-fit: contain; }
+.bm-fav svg { width: 12px; height: 12px; color: var(--dim); }
+.bm-chip > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bm-chip .x {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  opacity: 0; flex: none;
+}
+.bm-chip:hover .x { opacity: 0.7; }
+.bm-chip .x:hover { background: rgba(255, 93, 108, 0.35); opacity: 1; }
+.bm-chip .x svg { width: 11px; height: 11px; }
+
+/* viewport + overlays */
+#viewport { flex: 1; position: relative; min-height: 0; padding: 12px; }
+#viewport iframe {
+  width: 100%; height: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0b0e18;
+  box-shadow: 0 18px 50px -22px rgba(0, 0, 0, 0.9);
+}
+.overlay {
+  position: absolute; inset: 12px;
+  z-index: 5;
+  border-radius: 14px;
+  overflow: auto;
+  background:
+    linear-gradient(180deg, rgba(7, 10, 22, 0.92), rgba(4, 6, 15, 0.96));
+  display: none;
+}
+.overlay.show { display: block; }
+
+/* start page — PS5 dashboard */
+.start { padding: 46px 52px 40px; min-height: 100%; }
+.start-hero { margin-bottom: 34px; }
+.start h1 {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  background: linear-gradient(90deg, #ffffff 20%, #7fb0ff 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.start .hero-sub {
+  display: block;
+  margin-top: 6px;
+  color: var(--acc2);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.start .sub {
+  margin-top: 14px;
+  max-width: 560px;
+  color: var(--dim);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.start .sub b { color: var(--txt); font-weight: 600; }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 18px;
+  max-width: 980px;
+}
+.tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background:
+    radial-gradient(120% 100% at 20% 0%, rgba(47, 125, 255, 0.28), transparent 60%),
+    linear-gradient(160deg, #131a30, #0b0f1f 70%);
+  color: var(--txt);
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px;
+  padding: 14px;
+  transition: transform 0.16s ease, border-color 0.16s, box-shadow 0.16s;
+  overflow: hidden;
+}
+.tile:hover, .tile:focus-visible {
+  transform: translateY(-5px) scale(1.03);
+  border-color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18), 0 16px 34px -14px rgba(47, 125, 255, 0.65);
+}
+.t-art {
+  width: 62px; height: 62px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.8);
+}
+.t-art { position: relative; }
+.t-art img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; object-fit: contain; }
+.t-art svg { width: 34px; height: 34px; color: #45507a; }
+.t-name { font-size: 13.5px; font-weight: 600; letter-spacing: 0.03em; }
+.t-url { display: none; }
+
+.start .cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  max-width: 980px;
+  margin-top: 34px;
+}
+.card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  backdrop-filter: blur(16px);
+}
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--acc2);
+}
+.card p { margin: 5px 0; font-size: 13px; color: var(--dim); line-height: 1.5; }
+.card kbd {
+  display: inline-block;
+  font: 600 11px var(--font);
+  color: var(--txt);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--line2);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin: 0 2px;
+}
 
 /* error page */
-.errpage{max-width:640px;margin:0 auto;padding:12vh 30px;text-align:center}
-.errpage .big{font-size:52px}
-.errpage h2{margin:14px 0 8px;font-size:20px}
-.errpage p{color:var(--fg1);font-family:var(--mono);font-size:12px;word-break:break-all}
-.errpage .row{margin-top:22px;display:flex;gap:10px;justify-content:center}
-.btn{
-  background:var(--bg2);border:1px solid var(--line);color:var(--fg0);
-  padding:8px 16px;border-radius:9px;cursor:pointer;font-size:13px
+.errpage {
+  min-height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 40px;
+  gap: 4px;
 }
-.btn:hover{border-color:var(--acc);background:var(--bg3)}
-.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.errpage .big { color: var(--acc2); margin-bottom: 10px; }
+.errpage h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0.04em; }
+.errpage p { margin: 6px 0; color: var(--dim); font-size: 13.5px; max-width: 560px; word-break: break-all; }
+.errpage .row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 600 13.5px var(--font);
+  letter-spacing: 0.03em;
+  color: var(--txt);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line2);
+  border-radius: 22px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.14s, box-shadow 0.14s;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
+.btn.primary {
+  background: linear-gradient(180deg, #ffffff, #e8efff);
+  color: #0a3ea8;
+  border-color: transparent;
+  box-shadow: 0 10px 26px -12px rgba(120, 170, 255, 0.8);
+}
+.btn.primary:hover { box-shadow: 0 14px 30px -12px rgba(120, 170, 255, 0.95); }
+.btn .ico { width: 15px; height: 15px; }
 
-/* ── devtools ──────────────────────────────────── */
-#devtools{
-  height:280px;min-height:120px;display:flex;flex-direction:column;
-  background:var(--bg1);border-top:1px solid var(--line);resize:vertical;
-  overflow:hidden
+/* ─────────────────────────── devtools ────────────────────────── */
+#devtools {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: min(44vh, 360px);
+  z-index: 30;
+  display: flex; flex-direction: column;
+  background: rgba(7, 9, 20, 0.97);
+  border-top: 1px solid var(--line2);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 -18px 44px -20px rgba(0, 0, 0, 0.9);
+  border-radius: 14px 14px 0 0;
 }
-#devtools.hidden{display:none}
-#dev-head{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--bg2);border-bottom:1px solid var(--line);padding:0 6px
+#devtools.hidden { display: none; }
+#dev-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
 }
-#dev-tabs{display:flex}
-.dev-tab{
-  padding:8px 14px;font-size:12px;color:var(--fg1);
-  border-bottom:2px solid transparent
+#dev-tabs { display: flex; gap: 6px; }
+.dev-tab {
+  font: 600 12.5px var(--font);
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
 }
-.dev-tab.active{color:var(--fg0);border-bottom-color:var(--acc)}
-.dev-head-actions{display:flex;gap:4px}
-.mini{
-  font-size:11px;color:var(--fg1);padding:3px 9px;border-radius:6px;
-  border:1px solid var(--line)
+.dev-tab:hover { color: var(--txt); background: var(--glass); }
+.dev-tab.active {
+  color: #fff;
+  background: rgba(47, 125, 255, 0.20);
+  border-color: rgba(106, 164, 255, 0.5);
 }
-.mini:hover{background:#ffffff14;color:var(--fg0)}
-#dev-body{flex:1;position:relative;overflow:hidden}
-.dev-pane{position:absolute;inset:0;display:none;overflow:auto}
-.dev-pane.active{display:block}
+.dev-head-actions { display: flex; gap: 6px; align-items: center; }
+.mini {
+  font: 600 11.5px var(--font);
+  color: var(--dim);
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: color 0.14s, background 0.14s;
+}
+.mini:hover { color: var(--txt); background: var(--glass2); }
+.mini.icon { display: inline-flex; align-items: center; justify-content: center; padding: 5px 7px; }
+.mini.icon svg { width: 13px; height: 13px; }
+#dev-body { flex: 1; min-height: 0; position: relative; }
+.dev-pane { position: absolute; inset: 0; display: none; overflow: auto; }
+.dev-pane.active { display: block; }
 
-/* console */
-#dev-console{display:none;flex-direction:column}
-#dev-console.active{display:flex}
-#console-lines{flex:1;overflow:auto;padding:6px 0;font-family:var(--mono);font-size:12px}
-.cline{padding:2px 12px;white-space:pre-wrap;word-break:break-word;border-bottom:1px solid #ffffff08}
-.cline.warn{background:#ffb4540f;color:var(--warn)}
-.cline.error{background:#ff5f6d12;color:#ff8f98}
-.cline.info{color:#8fd3ff}
-.cline.debug{color:var(--fg2)}
-.cline .csrc{color:var(--fg2);font-size:10px;margin-left:8px}
-#console-input-row{
-  display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);
-  padding:6px 12px;background:var(--bg2)
+#console-lines { padding: 10px 14px; font: 12.5px/1.6 var(--mono); }
+.cline { display: flex; gap: 10px; padding: 2px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+.cline .csrc { color: var(--dim2, #5d6688); margin-left: auto; font-size: 11px; flex: none; }
+.cline.log { color: #cfe0ff; }
+.cline.debug { color: var(--dim); }
+.cline.warn { color: var(--warn); }
+.cline.error { color: var(--err); }
+.cline.input { color: var(--acc2); }
+#console-input-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  position: sticky; bottom: 0;
+  background: rgba(7, 9, 20, 0.98);
 }
-#console-input-row .prompt{color:var(--acc);font-family:var(--mono);font-weight:700}
-#console-input{
-  flex:1;background:none;border:none;outline:none;
-  font-family:var(--mono);font-size:12.5px
-}
-
-/* network */
-#net-table{width:100%;border-collapse:collapse;font-size:12px}
-#net-table th{
-  text-align:left;padding:6px 10px;color:var(--fg2);font-weight:500;
-  background:var(--bg2);position:sticky;top:0;border-bottom:1px solid var(--line);
-  font-size:11px
-}
-#net-table td{padding:4px 10px;border-bottom:1px solid #ffffff08;font-family:var(--mono);
-  white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis}
-#net-table tr:hover td{background:#ffffff0a;cursor:pointer}
-.st-2{color:var(--ok)} .st-3{color:#9db9ff} .st-4,.st-5{color:var(--err)} .st-0{color:var(--warn)}
-.eng-libcurl{color:#c3a6ff} .eng-relay{color:#7ce8ad} .eng-public{color:#ffd39a}
-
-/* source */
-#source-view{
-  font-family:var(--mono);font-size:12px;padding:12px;white-space:pre-wrap;
-  word-break:break-all;color:#cfe0ff
+#console-input-row .prompt { color: var(--acc2); font: 600 15px var(--mono); }
+#console-input {
+  flex: 1;
+  background: transparent; border: 0; outline: none;
+  color: var(--txt);
+  font: 12.5px var(--mono);
 }
 
-/* ── status bar ────────────────────────────────── */
-#statusbar{
-  display:flex;gap:16px;align-items:center;background:var(--bg0);
-  border-top:1px solid var(--line);padding:3px 12px;font-size:11px;
-  color:var(--fg1);font-family:var(--mono);user-select:none;min-height:22px
+#net-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+#net-table th {
+  text-align: left;
+  position: sticky; top: 0;
+  background: #0a0d1c;
+  color: var(--dim);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  z-index: 1;
 }
-.st-item.ok{color:var(--ok)} .st-item.dim{color:var(--fg2);flex:1;text-align:right;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%}
-.st-spacer{flex:0}
-
-/* ── library panel ─────────────────────────────── */
-#library{
-  position:absolute;right:0;top:78px;bottom:24px;width:340px;z-index:40;
-  background:var(--bg1);border-left:1px solid var(--line);
-  display:flex;flex-direction:column;box-shadow:-14px 0 40px #00000066;
-  border-radius:10px 0 0 0
+#net-table td { padding: 6px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #c9d4f2; }
+#net-table tr:hover td { background: rgba(255, 255, 255, 0.04); }
+#net-table .rtype {
+  font: 700 9.5px var(--font);
+  letter-spacing: 0.1em;
+  color: var(--acc2);
+  background: rgba(47, 125, 255, 0.14);
+  border: 1px solid rgba(106, 164, 255, 0.3);
+  padding: 2px 6px;
+  border-radius: 5px;
 }
-#library.hidden{display:none}
-#library-head{display:flex;align-items:center;background:var(--bg2);
-  border-bottom:1px solid var(--line);padding:4px 6px;gap:4px}
-.lib-tab{padding:6px 12px;font-size:12px;color:var(--fg1);border-radius:6px}
-.lib-tab.active{background:#ffffff14;color:var(--fg0)}
-#library-close{margin-left:auto}
-#library-body{flex:1;overflow:auto;padding:6px 0}
-.lib-item{padding:7px 14px;cursor:pointer;border-bottom:1px solid #ffffff08;
-  display:flex;flex-direction:column;gap:2px}
-.lib-item:hover{background:#ffffff0a}
-.lib-item .li-title{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lib-item .li-url{font-size:10.5px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-family:var(--mono)}
-.lib-item .li-date{font-size:10px;color:var(--fg2)}
-.lib-empty{padding:30px;text-align:center;color:var(--fg2);font-size:12px}
+.st-2 { color: var(--ok); }
+.st-3 { color: var(--acc2); }
+.st-4 { color: var(--warn); }
+.st-5, .st-0 { color: var(--err); }
+.eng-libcurl { color: #8fd0ff; }
+.eng-relay { color: #9ef0c0; }
+.eng-public { color: #ffd75e; }
 
-/* ── toasts ────────────────────────────────────── */
-#toasts{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);z-index:99;
-  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.toast{
-  background:var(--bg3);border:1px solid var(--line);color:var(--fg0);
-  padding:9px 18px;border-radius:10px;font-size:12.5px;
-  box-shadow:0 8px 30px #00000088;animation:tin .18s ease
+#dev-source, #source-view { margin: 0; padding: 14px 16px; font: 12px/1.6 var(--mono); color: #cfe0ff; }
+
+/* ─────────────────────────── library ─────────────────────────── */
+#library {
+  position: absolute;
+  top: calc(var(--tab-h) + var(--bar-h) + var(--bm-h));
+  right: 0; bottom: 0;
+  width: 340px;
+  z-index: 25;
+  background: rgba(8, 10, 22, 0.97);
+  border-left: 1px solid var(--line2);
+  backdrop-filter: blur(20px);
+  display: flex; flex-direction: column;
+  box-shadow: -20px 0 44px -24px rgba(0, 0, 0, 0.9);
 }
-.toast.err{border-color:#ff5f6d77}
-@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#library.hidden { display: none; }
+#library-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.lib-tab {
+  font: 600 13px var(--font);
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.lib-tab.active {
+  color: #fff;
+  background: rgba(47, 125, 255, 0.20);
+  border-color: rgba(106, 164, 255, 0.5);
+}
+#library-head .mini { margin-left: auto; }
+#library-body { flex: 1; overflow: auto; padding: 8px; }
+.lib-empty { color: var(--dim); font-size: 13px; padding: 20px 14px; }
+.lib-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.13s, border-color 0.13s;
+}
+.lib-item:hover { background: var(--glass); border-color: var(--line); }
+.li-title { display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 500; color: var(--txt); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.li-url { font-size: 11.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.li-date { font-size: 10.5px; color: var(--dim2, #5d6688); margin-top: 3px; opacity: 0.8; }
 
-::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-thumb{background:#2c3652;border-radius:6px}
-::-webkit-scrollbar-track{background:transparent}
+/* ─────────────────────────── toasts ──────────────────────────── */
+#toasts {
+  position: absolute;
+  right: 16px; bottom: 16px;
+  z-index: 60;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(14, 18, 36, 0.96);
+  border: 1px solid var(--line2);
+  border-left: 3px solid var(--acc);
+  color: var(--txt);
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  max-width: 380px;
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.9);
+  animation: toast-in 0.22s ease;
+}
+.toast.err { border-left-color: var(--err); }
+@keyframes toast-in { from { transform: translateX(24px); opacity: 0; } }
+
+/* scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.26); background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+::selection { background: rgba(47, 125, 255, 0.45); }
 
 </style>
 </head>
@@ -276,102 +721,155 @@ input,select{font:inherit;color:inherit}
 
 <div id="app">
 
-  <!-- ── tab strip ─────────────────────────────────────────────── -->
-  <div id="tabstrip">
-    <div id="tabs" role="tablist"></div>
-    <button class="iconbtn" id="btn-newtab" title="New tab (Ctrl+T)">＋</button>
-  </div>
-
-  <!-- ── toolbar ───────────────────────────────────────────────── -->
-  <div id="toolbar">
-    <button class="iconbtn" id="btn-back" title="Back (Alt+←)">←</button>
-    <button class="iconbtn" id="btn-fwd" title="Forward (Alt+→)">→</button>
-    <button class="iconbtn" id="btn-reload" title="Reload (Ctrl+R)">⟳</button>
-    <button class="iconbtn" id="btn-home" title="Home">⌂</button>
-
-    <div id="omni-wrap">
-      <span id="engine-badge" title="Active network engine">…</span>
-      <input id="omni" type="text" spellcheck="false" autocomplete="off"
-             placeholder="Search the web or enter a URL">
-      <button class="iconbtn" id="btn-go" title="Go">➜</button>
+  <!-- ── sidebar ─────────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div id="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#4d9bff"/><stop offset="1" stop-color="#7a5cff"/>
+        </linearGradient></defs>
+        <rect width="32" height="32" rx="9" fill="url(#bg1)"/>
+        <path d="M9.5 8.5v15M22.5 8.5v15M9.5 16h13" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-name">HYPERION</span>
     </div>
 
-    <button class="iconbtn" id="btn-bookmark" title="Bookmark this page">☆</button>
-    <button class="iconbtn" id="btn-library" title="History & bookmarks">☰</button>
-    <button class="iconbtn" id="btn-source" title="View source">{ }</button>
-    <button class="iconbtn" id="btn-dev" title="Developer tools (F12)">⌨</button>
-    <div id="engine-select-wrap" title="Network engine">
-      <select id="engine-select">
-        <option value="auto">auto</option>
-        <option value="libcurl">libcurl + wisp</option>
-        <option value="relay">local relay</option>
-        <option value="public">public cors</option>
-      </select>
-    </div>
-  </div>
+    <nav id="side-nav">
+      <button class="nav-item active" id="nav-home" title="Start page">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span>Home</span>
+      </button>
+      <button class="nav-item" id="nav-history" title="History">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+  <path d="M3 3v5h5" />
+  <path d="M12 7v5l4 2" /></svg><span>History</span>
+      </button>
+      <button class="nav-item" id="nav-bookmarks" title="Bookmarks">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg><span>Bookmarks</span>
+      </button>
+      <button class="nav-item" id="btn-dev" title="Developer tools (F12)">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" /></svg><span>Devtools</span>
+      </button>
+      <button class="nav-item" id="btn-source" title="View source">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4" />
+  <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+  <path d="m5 12-3 3 3 3" />
+  <path d="m9 18 3-3-3-3" /></svg><span>Source</span>
+      </button>
+    </nav>
 
-  <!-- ── bookmark bar ──────────────────────────────────────────── -->
-  <div id="bookmarkbar"></div>
-
-  <!-- ── viewport (tab views injected here) ────────────────────── -->
-  <div id="viewport"></div>
-
-  <!-- ── devtools drawer ───────────────────────────────────────── -->
-  <div id="devtools" class="hidden">
-    <div id="dev-head">
-      <div id="dev-tabs">
-        <button class="dev-tab active" data-dev="console">Console</button>
-        <button class="dev-tab" data-dev="network">Network</button>
-        <button class="dev-tab" data-dev="source">Source</button>
+    <div id="side-status">
+      <div class="status-chip" id="chip-engine" title="Network engine">
+        <span class="dot" id="dot-engine"></span><span id="st-engine">engine: booting…</span>
       </div>
-      <div class="dev-head-actions">
-        <button class="mini" id="dev-clear">clear</button>
-        <button class="mini" id="dev-close">✕</button>
+      <div class="status-chip" id="chip-wisp" title="Wisp tunnel">
+        <span class="dot" id="dot-wisp"></span><span id="st-wisp">wisp: …</span>
       </div>
+      <div class="status-chip dim" title="Curl engine version">
+        <span id="st-curl">libcurl: …</span>
+      </div>
+      <div class="status-chip dim" title="Page scripts always run">
+        <span class="dot ok"></span><span id="st-scripts">scripts: auto-allowed</span>
+      </div>
+      <div id="engine-select-wrap" title="Network engine">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg>
+        <select id="engine-select" aria-label="Network engine">
+          <option value="auto">auto</option>
+          <option value="libcurl">libcurl + wisp</option>
+          <option value="relay">local relay</option>
+        </select>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </div>
+      <div id="st-url" title="Current address"></div>
     </div>
-    <div id="dev-body">
-      <div id="dev-console" class="dev-pane active">
-        <div id="console-lines"></div>
-        <div id="console-input-row">
-          <span class="prompt">›</span>
-          <input id="console-input" spellcheck="false"
-                 placeholder="evaluate in page context (runs in sandbox)">
+  </aside>
+
+  <!-- ── main ────────────────────────────────────────────────── -->
+  <main id="main">
+
+    <!-- tab strip (PS5 top row) -->
+    <div id="tabstrip">
+      <div id="tabs" role="tablist"></div>
+      <button class="iconbtn" id="btn-newtab" title="New tab (Ctrl+T)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" />
+  <path d="M12 5v14" /></svg></button>
+    </div>
+
+    <!-- toolbar -->
+    <div id="toolbar">
+      <button class="iconbtn" id="btn-back" title="Back (Alt+←)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" /></svg></button>
+      <button class="iconbtn" id="btn-fwd" title="Forward (Alt+→)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg></button>
+      <button class="iconbtn" id="btn-reload" title="Reload (Ctrl+R)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" /></svg></button>
+
+      <div id="omni-wrap">
+        <span id="engine-badge" title="Active network engine">…</span>
+        <input id="omni" type="text" spellcheck="false" autocomplete="off"
+               placeholder="Search the web or enter a URL">
+        <button class="iconbtn go" id="btn-go" title="Go"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg></button>
+      </div>
+
+      <button class="iconbtn" id="btn-bookmark" title="Bookmark this page"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg></button>
+    </div>
+
+    <!-- pinned sites (real favicons, no emoji) -->
+    <div id="bookmarkbar"></div>
+
+    <!-- viewport (tab views injected here) -->
+    <div id="viewport"></div>
+
+    <!-- devtools drawer -->
+    <div id="devtools" class="hidden">
+      <div id="dev-head">
+        <div id="dev-tabs">
+          <button class="dev-tab active" data-dev="console">Console</button>
+          <button class="dev-tab" data-dev="network">Network</button>
+          <button class="dev-tab" data-dev="source">Source</button>
+        </div>
+        <div class="dev-head-actions">
+          <button class="mini" id="dev-clear">clear</button>
+          <button class="mini icon" id="dev-close" title="Close"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" />
+  <path d="m6 6 12 12" /></svg></button>
         </div>
       </div>
-      <div id="dev-network" class="dev-pane">
-        <table id="net-table">
-          <thead><tr><th>▼</th><th>Status</th><th>Method</th><th>Name</th>
-            <th>Engine</th><th>Size</th><th>Time</th></tr></thead>
-          <tbody id="net-rows"></tbody>
-        </table>
-      </div>
-      <div id="dev-source" class="dev-pane">
-        <pre id="source-view">// open a page, then click “view source”</pre>
+      <div id="dev-body">
+        <div id="dev-console" class="dev-pane active">
+          <div id="console-lines"></div>
+          <div id="console-input-row">
+            <span class="prompt">&rsaquo;</span>
+            <input id="console-input" spellcheck="false"
+                 placeholder="evaluate in page context (runs in sandbox)">
+          </div>
+        </div>
+        <div id="dev-network" class="dev-pane">
+          <table id="net-table">
+            <thead><tr><th>Type</th><th>Status</th><th>Method</th><th>Name</th>
+              <th>Engine</th><th>Size</th><th>Time</th></tr></thead>
+            <tbody id="net-rows"></tbody>
+          </table>
+        </div>
+        <div id="dev-source" class="dev-pane">
+          <pre id="source-view">// open a page, then click &ldquo;view source&rdquo;</pre>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── status bar ────────────────────────────────────────────── -->
-  <div id="statusbar">
-    <span id="st-engine" class="st-item">engine: booting…</span>
-    <span id="st-wisp" class="st-item">wisp: …</span>
-    <span id="st-curl" class="st-item">libcurl: …</span>
-    <span class="st-spacer"></span>
-    <span id="st-scripts" class="st-item ok">scripts: auto-allowed ✓</span>
-    <span id="st-url" class="st-item dim"></span>
-  </div>
-
-  <!-- ── library side panel (history + bookmarks) ──────────────── -->
-  <div id="library" class="hidden">
-    <div id="library-head">
-      <button class="lib-tab active" data-lib="history">History</button>
-      <button class="lib-tab" data-lib="bookmarks">Bookmarks</button>
-      <button class="mini" id="library-close">✕</button>
+    <!-- library side panel (history + bookmarks) -->
+    <div id="library" class="hidden">
+      <div id="library-head">
+        <button class="lib-tab active" data-lib="history">History</button>
+        <button class="lib-tab" data-lib="bookmarks">Bookmarks</button>
+        <button class="mini icon" id="library-close" title="Close"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" />
+  <path d="m6 6 12 12" /></svg></button>
+      </div>
+      <div id="library-body"></div>
     </div>
-    <div id="library-body"></div>
-  </div>
 
-  <div id="toasts"></div>
+    <div id="toasts"></div>
+  </main>
 </div>
 
 <script>const HYPERION_INJECTED = "/* Hyperion injected runtime — runs INSIDE every proxied page.\n   - bridges console / errors to the devtools panel\n   - rewrites every network call (fetch, XHR, beacons) back through the engine\n   - intercepts links, forms, window.open, meta-refresh → parent navigation\n   - shims localStorage / sessionStorage / document.cookie (sandbox has none)\n   - keeps resource URLs flowing through the proxy (MutationObserver)\n   __PROXY_PREFIX__ is substituted by the browser before injection.        */\n(function () {\n  \"use strict\";\n  if (window.__hyperion__) return;\n  window.__hyperion__ = true;\n\n  var PROXY = \"__PROXY_PREFIX__\";            // e.g. https://host/proxy/\n  var ORIGIN = \"__APP_ORIGIN__\";\n  var CFG = __CONFIG__;                      // {standalone, topLevel}\n  var BASE = document.baseURI || location.href;\n\n  function send(msg) { try { parent.postMessage(msg, \"*\"); } catch (e) {} }\n\n  function abs(u, base) {\n    try { return new URL(u, base || BASE).href; } catch (e) { return u; }\n  }\n  function isHttp(u) { return /^https?:\\/\\//i.test(u); }\n  /* standalone mode: no proxy prefix — subresources load directly from the\n     target site (they don't need CORS), documents/XHR go through the engine */\n  function toProxy(u) { if (CFG.standalone) return u; return isHttp(u) ? PROXY + u : u; }\n  function fromProxy(u) {\n    if (typeof u === \"string\" && u.indexOf(PROXY) === 0) return u.slice(PROXY.length);\n    return u;\n  }\n  /* Chrome queues a MutationObserver record even for identical setAttribute\n     values — writing through this helper guarantees we only ever change\n     something when it really differs, which is what keeps the observer from\n     re-entering proxify forever in standalone mode (identity toProxy). */\n  function setAttr(el, name, val) {\n    if (val != null && el.getAttribute(name) !== val) el.setAttribute(name, val);\n  }\n\n  /* nested iframes: the top-level runtime asks the browser to fetch + process\n     the page through the engine and answers with ready-to-render HTML */\n  function requestPage(url, frame) {\n    if (frame.dataset.hbusy === \"1\") return;\n    frame.dataset.hbusy = \"1\";\n    var id = ++rid;\n    pending[id] = function (d) {\n      delete frame.dataset.hbusy;\n      if (d.error) {\n        frame.dataset.hfail = \"1\";              // don't re-request forever\n        if (d.raw) frame.setAttribute(\"src\", d.raw);   // fall back to raw load\n        return;\n      }\n      if (d.html) frame.srcdoc = d.html;\n      else if (d.raw) {\n        frame.dataset.hfail = \"1\";\n        frame.setAttribute(\"src\", d.raw);\n      }\n    };\n    send({ h: \"page\", id: id, url: url });\n  }\n\n  /* ── console bridge ─────────────────────────────────────────── */\n  function ser(v, depth) {\n    depth = depth || 0;\n    if (v === null) return \"null\";\n    if (v === undefined) return \"undefined\";\n    var t = typeof v;\n    if (t === \"string\") return depth === 0 ? v : JSON.stringify(v);\n    if (t === \"number\" || t === \"boolean\") return String(v);\n    if (t === \"bigint\") return String(v) + \"n\";\n    if (t === \"symbol\") return v.toString();\n    if (t === \"function\") return \"ƒ \" + (v.name || \"anonymous\") + \"()\";\n    if (v instanceof Error) return (v.stack || v.name + \": \" + v.message);\n    if (v instanceof Date) return v.toISOString();\n    if (v instanceof RegExp) return String(v);\n    if (v === document) return \"#document\";\n    if (v === window) return \"#window\";\n    if (depth > 4) return Array.isArray(v) ? \"[…]\" : \"{…}\";\n    try {\n      if (Array.isArray(v)) {\n        var arr = v.slice(0, 40).map(function (x) { return ser(x, depth + 1); });\n        if (v.length > 40) arr.push(\"… +\" + (v.length - 40));\n        return \"[\" + arr.join(\", \") + \"]\";\n      }\n      if (v.nodeType === 1) {\n        return \"<\" + v.tagName.toLowerCase() +\n          (v.id ? \"#\" + v.id : \"\") +\n          (v.className && typeof v.className === \"string\" ?\n            \".\" + v.className.trim().split(/\\s+/).slice(0, 3).join(\".\") : \"\") + \">\";\n      }\n      if (typeof v === \"object\") {\n        var keys = Object.keys(v).slice(0, 30);\n        var body = keys.map(function (k) {\n          return k + \": \" + ser(v[k], depth + 1);\n        }).join(\", \");\n        if (Object.keys(v).length > 30) body += \", …\";\n        return (ArrayBuffer.isView(v) ? v.constructor.name + \" \" : \"\") +\n          \"{\" + body + \"}\";\n      }\n    } catch (e) { return Object.prototype.toString.call(v); }\n    return String(v);\n  }\n  window.__hser = ser;\n\n  [\"log\", \"info\", \"warn\", \"error\", \"debug\", \"trace\", \"dir\"].forEach(function (m) {\n    var orig = console[m] ? console[m].bind(console) : null;\n    console[m] = function () {\n      var txt = Array.prototype.map.call(arguments, function (a) { return ser(a); }).join(\" \");\n      send({ h: \"console\", level: m === \"dir\" ? \"log\" : m, text: txt });\n      if (orig) try { orig.apply(console, arguments); } catch (e) {}\n    };\n  });\n\n  window.addEventListener(\"error\", function (e) {\n    var loc = e.filename ? \" @ \" + e.filename.replace(PROXY, \"\") + \":\" + e.lineno : \"\";\n    send({ h: \"console\", level: \"error\", text: (e.message || \"Script error\") + loc });\n  }, true);\n  window.addEventListener(\"unhandledrejection\", function (e) {\n    var r = e.reason;\n    send({ h: \"console\", level: \"error\",\n           text: \"Unhandled promise rejection: \" + ser(r) });\n  });\n\n  /* ── title + favicon ────────────────────────────────────────── */\n  function pushTitle() { send({ h: \"title\", title: document.title || \"\" }); }\n  var _dt = Object.getOwnPropertyDescriptor(Document.prototype, \"title\");\n  if (_dt && _dt.set && _dt.get) {\n    try {\n      Object.defineProperty(document, \"title\", {\n        get: function () { return _dt.get.call(document); },\n        set: function (v) { _dt.set.call(document, v); pushTitle(); },\n        configurable: true\n      });\n    } catch (e) {}\n  }\n  function pushFav() {\n    var l = document.querySelector('link[rel~=\"icon\" i], link[rel=\"shortcut icon\"]');\n    if (l) {\n      var href = l.dataset.hsrc || l.getAttribute(\"href\") || \"\";\n      if (href) send({ h: \"favicon\", href: abs(href) });\n    }\n  }\n\n  /* ── storage shims (sandboxed iframes have none) ────────────── */\n  function memStore() {\n    var m = new Map();\n    return {\n      getItem: function (k) { k = String(k); return m.has(k) ? m.get(k) : null; },\n      setItem: function (k, v) { m.set(String(k), String(v)); },\n      removeItem: function (k) { m.delete(String(k)); },\n      clear: function () { m.clear(); },\n      key: function (i) { return Array.from(m.keys())[i] || null; },\n      get length() { return m.size; }\n    };\n  }\n  try { Object.defineProperty(window, \"localStorage\", { value: memStore(), configurable: true }); } catch (e) {}\n  try { Object.defineProperty(window, \"sessionStorage\", { value: memStore(), configurable: true }); } catch (e) {}\n\n  var cookieJar = \"\";\n  try {\n    Object.defineProperty(document, \"cookie\", {\n      get: function () { return cookieJar; },\n      set: function (v) {\n        var first = String(v).split(\";\")[0];\n        var name = first.split(\"=\")[0].trim();\n        var jar = cookieJar ? cookieJar.split(/;\\s*/) : [];\n        jar = jar.filter(function (c) { return c.split(\"=\")[0].trim() !== name; });\n        if (first.indexOf(\"=\") > 0) jar.push(first);\n        cookieJar = jar.join(\"; \");\n      },\n      configurable: true\n    });\n  } catch (e) {}\n\n  /* ── navigation interception ────────────────────────────────── */\n  document.addEventListener(\"click\", function (e) {\n    if (e.__hnav) return;\n    var a = e.target && e.target.closest ? e.target.closest(\"a[href]\") : null;\n    if (!a) return;\n    var raw = a.dataset.hhref || a.getAttribute(\"href\") || \"\";\n    if (/^javascript:/i.test(raw)) return;          // let JS links run (scripts allowed)\n    var url = abs(raw);\n    if (!isHttp(url) && !/^mailto:|^tel:/i.test(url)) return;\n    if (a.target === \"_blank\" || a.target === \"_new\" || e.ctrlKey || e.metaKey || e.shiftKey) {\n      e.preventDefault(); e.__hnav = true;\n      send({ h: \"open\", url: url });\n      return;\n    }\n    e.preventDefault(); e.__hnav = true;\n    send({ h: \"nav\", url: url, source: \"link\" });\n  }, true);\n\n  document.addEventListener(\"auxclick\", function (e) {\n    if (e.button !== 1) return;\n    var a = e.target && e.target.closest ? e.target.closest(\"a[href]\") : null;\n    if (!a) return;\n    e.preventDefault();\n    var raw = a.dataset.hhref || a.getAttribute(\"href\") || \"\";\n    if (/^javascript:/i.test(raw)) return;\n    send({ h: \"open\", url: abs(raw) });\n  }, true);\n\n  document.addEventListener(\"submit\", function (e) {\n    var f = e.target;\n    if (!f || f.tagName !== \"FORM\") return;\n    e.preventDefault();\n    var method = (f.getAttribute(\"method\") || \"GET\").toUpperCase();\n    var action = f.dataset.haction || f.getAttribute(\"action\") || BASE;\n    var url = abs(action);\n    var enctype = (f.getAttribute(\"enctype\") || \"application/x-www-form-urlencoded\").toLowerCase();\n    var fd = new FormData(f);\n    var entries = [];\n    var hasFile = false;\n    fd.forEach(function (v, k) {\n      if (v instanceof File) {\n        hasFile = true;\n        v.arrayBuffer().then(function (buf) {\n          entries.push({ k: k, file: { name: v.name, type: v.type, buf: buf } });\n          if (entries.length === fd.length) finish();\n        });\n      } else {\n        entries.push({ k: k, v: String(v) });\n        if (entries.length === fd.length) finish();\n      }\n    });\n    function finish() {\n      if (method === \"GET\" || method === \"HEAD\") {\n        var qs = [];\n        entries.forEach(function (en) { qs.push(encodeURIComponent(en.k) + \"=\" + encodeURIComponent(en.v || \"\")); });\n        var q = qs.join(\"&\");\n        url = url.split(\"#\")[0].split(\"?\")[0] + (q ? \"?\" + q : \"\");\n        send({ h: \"nav\", url: url, method: \"GET\", source: \"form\" });\n      } else {\n        send({ h: \"nav\", url: url, method: method, source: \"form\",\n               enctype: enctype, entries: entries, hasFile: hasFile });\n      }\n    }\n    if (fd.length === 0) finish();\n  }, true);\n\n  /* window.open */\n  var _open = window.open;\n  window.open = function (url) {\n    if (url && typeof url === \"string\") {\n      var u = abs(url);\n      if (isHttp(u)) { send({ h: \"open\", url: u }); return null; }\n    }\n    try { return _open.apply(window, arguments); } catch (e) { return null; }\n  };\n\n  /* meta refresh */\n  function checkMeta() {\n    var m = document.querySelector('meta[http-equiv=\"refresh\" i]');\n    if (!m) return;\n    var c = m.getAttribute(\"content\") || \"\";\n    var mm = /^\\s*(\\d+(?:\\.\\d+)?)\\s*;?\\s*url\\s*=\\s*(.+)$/i.exec(c);\n    if (mm) send({ h: \"nav\", url: abs(mm[2].trim().replace(/^[\"']|[\"']$/g, \"\")), source: \"meta\" });\n  }\n\n  /* ── fetch + XHR routed through the parent engine ───────────── */\n  var rid = 0;\n  var pending = {};\n  window.addEventListener(\"message\", function (e) {\n    if (e.source !== parent) return;\n    var d = e.data;\n    if (!d || d.h !== \"res\") return;\n    var p = pending[d.id];\n    if (!p) return;\n    delete pending[d.id];\n    p(d);\n  });\n\n  function hdrObj(entries) {\n    var o = {};\n    (entries || []).forEach(function (kv) { o[kv[0]] = kv[1]; });\n    return o;\n  }\n\n  function bodyToWire(body, headers) {\n    if (body == null) return Promise.resolve(null);\n    if (typeof body === \"string\") return Promise.resolve(body);\n    if (body instanceof URLSearchParams)\n      return Promise.resolve(body.toString());\n    if (body instanceof ArrayBuffer) return Promise.resolve(body);\n    if (ArrayBuffer.isView(body)) return Promise.resolve(body.buffer);\n    if (body instanceof Blob)\n      return body.arrayBuffer().then(function (b) { return b; });\n    if (body instanceof FormData) {\n      var out = [];\n      var proms = [];\n      body.forEach(function (v, k) {\n        if (v instanceof File) {\n          proms.push(v.arrayBuffer().then(function (buf) {\n            out.push({ k: k, file: { name: v.name, type: v.type, buf: buf } });\n          }));\n        } else out.push({ k: k, v: String(v) });\n      });\n      return Promise.all(proms).then(function () {\n        return { __form: out };\n      });\n    }\n    return Promise.resolve(String(body));\n  }\n\n  function relay(method, url, headers, body) {\n    return new Promise(function (resolve, reject) {\n      var id = ++rid;\n      pending[id] = function (d) {\n        if (d.error) reject(new TypeError(d.error));\n        else resolve(d);\n      };\n      bodyToWire(body).then(function (wire) {\n        send({ h: \"req\", id: id, method: method, url: url,\n               headers: headers || [], body: wire });\n      }).catch(function (e) { reject(e); });\n      setTimeout(function () {\n        if (pending[id]) { delete pending[id]; reject(new TypeError(\"Network timeout\")); }\n      }, 120000);\n    });\n  }\n  window.__hrelay = relay;\n\n  var _fetch = window.fetch;\n  window.fetch = function (input, init) {\n    init = init || {};\n    var url = typeof input === \"string\" ? input\n            : (input && input.url) ? input.url : String(input);\n    url = abs(url);\n    if (!isHttp(url)) return _fetch.apply(window, arguments);\n    var headers = [];\n    var h = init.headers || (input && input.headers);\n    if (h && typeof h.forEach === \"function\") h.forEach(function (v, k) { headers.push([k, v]); });\n    else if (h) Object.keys(h).forEach(function (k) { headers.push([k, h[k]]); });\n    return relay(init.method || (input && input.method) || \"GET\", url, headers, init.body)\n      .then(function (d) {\n        var noBody = d.status === 204 || d.status === 205 || d.status === 304;\n        return new Response(noBody ? null : d.body, {\n          status: d.status,\n          statusText: d.statusText || \"\",\n          headers: hdrObj(d.headers)\n        });\n      });\n  };\n\n  /* XMLHttpRequest */\n  function HijackXHR() {\n    this.readyState = 0;\n    this.status = 0;\n    this.statusText = \"\";\n    this.responseText = \"\";\n    this.response = null;\n    this.responseType = \"\";\n    this.responseURL = \"\";\n    this.timeout = 0;\n    this.withCredentials = false;\n    this.upload = new EventTarget();\n    var self = this;\n    this._headers = [];\n    this._listeners = {};\n    this._aborted = false;\n\n    function fire(type, extra) {\n      var ev = new Event(type);\n      if (extra) Object.keys(extra).forEach(function (k) { ev[k] = extra[k]; });\n      self.dispatchEvent(ev);\n      var h = self[\"on\" + type];\n      if (typeof h === \"function\") { try { h.call(self, ev); } catch (e) {} }\n    }\n    this._fire = fire;\n  }\n  HijackXHR.prototype = Object.create(EventTarget.prototype);\n  HijackXHR.prototype.constructor = HijackXHR;\n  HijackXHR.prototype.open = function (method, url, async) {\n    this._method = (method || \"GET\").toUpperCase();\n    this._url = abs(url);\n    this._async = async !== false;\n    this.readyState = 1;\n    this.responseURL = this._url;\n  };\n  HijackXHR.prototype.setRequestHeader = function (k, v) {\n    this._headers.push([k, v]);\n  };\n  HijackXHR.prototype.overrideMimeType = function () {};\n  HijackXHR.prototype.getAllResponseHeaders = function () {\n    return (this._respHeaders || []).map(function (kv) {\n      return kv[0] + \": \" + kv[1] + \"\\r\\n\";\n  }).join(\"\");\n  };\n  HijackXHR.prototype.getResponseHeader = function (k) {\n    var lk = String(k).toLowerCase();\n    var hit = (this._respHeaders || []).filter(function (kv) {\n      return kv[0].toLowerCase() === lk;\n    })[0];\n    return hit ? hit[1] : null;\n  };\n  HijackXHR.prototype.abort = function () {\n    this._aborted = true;\n    this.readyState = 0;\n    this._fire(\"abort\");\n    this._fire(\"loadend\");\n  };\n  HijackXHR.prototype.send = function (body) {\n    var self = this;\n    if (this._aborted) return;\n    this._fire(\"loadstart\");\n    try { this.upload.dispatchEvent(new Event(\"loadstart\")); } catch (e) {}\n    relay(this._method, this._url, this._headers, body).then(function (d) {\n      if (self._aborted) return;\n      self.status = d.status;\n      self.statusText = d.statusText || \"\";\n      self._respHeaders = d.headers || [];\n      self.readyState = 4;\n      var buf = d.body;\n      var rt = self.responseType;\n      if (rt === \"arraybuffer\") self.response = buf;\n      else if (rt === \"blob\") self.response = new Blob([buf], {\n        type: (self.getResponseHeader(\"content-type\") || \"application/octet-stream\")\n      });\n      else if (rt === \"json\") {\n        try { self.response = JSON.parse(new TextDecoder().decode(buf)); }\n        catch (e) { self.response = null; }\n      } else {\n        var ct = self.getResponseHeader(\"content-type\") || \"\";\n        var m = /charset=([\\w-]+)/i.exec(ct);\n        var text = new TextDecoder(m ? m[1] : \"utf-8\").decode(buf);\n        self.responseText = text;\n        self.response = rt === \"\" ? text : self.response;\n      }\n      self._fire(\"readystatechange\");\n      self._fire(\"load\");\n      try { self.upload.dispatchEvent(new Event(\"load\")); } catch (e) {}\n      self._fire(\"loadend\");\n      try { self.upload.dispatchEvent(new Event(\"loadend\")); } catch (e) {}\n    }, function (err) {\n      if (self._aborted) return;\n      self.readyState = 4;\n      self._fire(\"error\");\n      self._fire(\"loadend\");\n    });\n  };\n\n  var _xhrOpen = XMLHttpRequest.prototype.open;\n  var _xhrSend = XMLHttpRequest.prototype.send;\n  // Replace the constructor wholesale so every instance is proxied.\n  try {\n    window.XMLHttpRequest = function () { return new HijackXHR(); };\n    window.XMLHttpRequest.prototype = HijackXHR.prototype;\n    window.XMLHttpRequest.UNSENT = 0;\n    window.XMLHttpRequest.OPENED = 1;\n    window.XMLHttpRequest.HEADERS_RECEIVED = 2;\n    window.XMLHttpRequest.LOADING = 3;\n    window.XMLHttpRequest.DONE = 4;\n  } catch (e) { window.XMLHttpRequest = HijackXHR; }\n\n  /* navigator.sendBeacon */\n  try {\n    if (navigator.sendBeacon) {\n      navigator.sendBeacon = function (url, data) {\n        relay(\"POST\", abs(url), [[\"content-type\", \"application/octet-stream\"]], data)\n          .catch(function () {});\n        return true;\n      };\n    }\n  } catch (e) {}\n\n  /* ── keep dynamic resources on the proxy ────────────────────── */\n  var SRC_ATTRS = {\n    IMG: [\"src\"], SOURCE: [\"src\", \"srcset\"], SCRIPT: [\"src\"], LINK: [\"href\"],\n    IFRAME: [\"src\"], FRAME: [\"src\"], EMBED: [\"src\"], OBJECT: [\"data\"],\n    VIDEO: [\"src\", \"poster\"], AUDIO: [\"src\"], TRACK: [\"src\"],\n    INPUT: [\"src\"], USE: [\"href\"], IMAGE: [\"href\"]\n  };\n\n  function proxify(el) {\n    try {\n      if (!el || el.nodeType !== 1) return;\n      var tag = el.tagName;\n\n      if (tag === \"BASE\") {\n        if (el.id !== \"hbase\") { el.remove(); return; }\n      }\n      if (tag === \"IFRAME\" || tag === \"FRAME\") {\n        var cur = el.getAttribute(\"src\");\n        if (cur && isHttp(abs(cur)) && !el.dataset.hsrc) el.dataset.hsrc = fromProxy(abs(cur));\n        if (CFG.topLevel && el.dataset.hsrc && !el.dataset.hbusy && !el.dataset.hfail) {\n          if (cur && cur !== \"about:blank\") el.removeAttribute(\"src\");\n          requestPage(el.dataset.hsrc, el);\n          return;\n        }\n        if (!CFG.topLevel && !CFG.standalone && el.dataset.hsrc && cur) {\n          setAttr(el, \"src\", toProxy(el.dataset.hsrc));\n        }\n        if (cur || el.dataset.hsrc) return;\n      }\n      if (tag === \"A\") {\n        var href = el.getAttribute(\"href\");\n        if (href && !el.dataset.hhref && isHttp(abs(href))) {\n          el.dataset.hhref = abs(href);\n          if (!/^mailto:|^tel:/i.test(href)) setAttr(el, \"href\", toProxy(el.dataset.hhref));\n        }\n      } else if (tag === \"FORM\") {\n        var act = el.getAttribute(\"action\");\n        if (act && !el.dataset.haction) {\n          el.dataset.haction = abs(act);\n          setAttr(el, \"action\", toProxy(el.dataset.haction));\n        }\n      } else if (tag === \"META\" && (el.getAttribute(\"http-equiv\") || \"\").toLowerCase() === \"refresh\") {\n        checkMeta();\n      }\n\n      var attrs = SRC_ATTRS[tag];\n      if (attrs) attrs.forEach(function (a) {\n        var v = el.getAttribute(a);\n        if (!v) return;\n        if (a === \"srcset\") {\n          if (!v.trim()) return;\n          if (v.indexOf(\"data:\") === -1 && v.indexOf(PROXY) === -1) {\n            setAttr(el, \"srcset\", v.split(\",\").map(function (part) {\n              var bits = part.trim().split(/\\s+/);\n              if (!bits[0]) return part;\n              bits[0] = toProxy(abs(bits[0]));\n              return bits.join(\" \");\n            }).join(\", \"));\n          }\n          return;\n        }\n        if (v.indexOf(PROXY) === 0 || v.indexOf(\"data:\") === 0 ||\n            v.indexOf(\"blob:\") === 0 || v.indexOf(\"#\") === 0) return;\n        var a2 = abs(v);\n        if (isHttp(a2)) {\n          if (a === \"href\" && (tag === \"A\")) return;\n          el.dataset.hsrc = a2;\n          setAttr(el, a, toProxy(a2));\n        }\n      });\n\n      // inline styles\n      var st = el.getAttribute && el.getAttribute(\"style\");\n      if (st && st.indexOf(\"url(\") !== -1 && el.dataset.hst !== \"1\") {\n        el.dataset.hst = \"1\";\n        setAttr(el, \"style\", st.replace(/url\\(\\s*(['\"]?)([^'\")]+)\\1\\s*\\)/g,\n          function (m, q, u) {\n            if (/^(data:|blob:|#)/i.test(u)) return m;\n            return \"url(\" + q + toProxy(abs(u)) + q + \")\";\n          }));\n      }\n    } catch (e) {}\n  }\n\n  function proxifyTree(root) {\n    if (!root) return;\n    if (root.nodeType === 1) proxify(root);\n    var list = root.querySelectorAll ? root.querySelectorAll(\n      \"a[href],form[action],img[src],img[srcset],source[src],source[srcset],\" +\n      \"script[src],link[href],iframe[src],frame[src],iframe[data-hsrc],frame[data-hsrc],\" +\n      \"embed[src],object[data],\" +\n      \"video[src],video[poster],audio[src],track[src],input[src],use[href],\" +\n      \"image[href],meta[http-equiv],[style]\"\n    ) : [];\n    for (var i = 0; i < list.length; i++) proxify(list[i]);\n  }\n\n  var mo = new MutationObserver(function (muts) {\n    for (var i = 0; i < muts.length; i++) {\n      var m = muts[i];\n      if (m.type === \"childList\") {\n        for (var j = 0; j < m.addedNodes.length; j++) {\n          var n = m.addedNodes[j];\n          if (n.nodeType === 1) proxifyTree(n);\n        }\n      } else if (m.type === \"attributes\") {\n        var t = m.target;\n        var nv = m.attributeName === \"style\" ? t.getAttribute(\"style\") || \"\"\n               : t.getAttribute(m.attributeName) || \"\";\n        if (nv.indexOf(PROXY) === 0) continue;\n        proxify(t);\n      }\n    }\n  });\n  mo.observe(document.documentElement, {\n    subtree: true, childList: true, attributes: true,\n    attributeFilter: [\"src\", \"href\", \"srcset\", \"poster\", \"action\",\n                      \"data\", \"style\", \"http-equiv\"]\n  });\n\n  /* ── resource timing → network panel ────────────────────────── */\n  try {\n    var seen = {};\n    new PerformanceObserver(function (list) {\n      list.getEntries().forEach(function (e) {\n        if (!/^https?:/.test(e.name)) return;\n        if (e.name.indexOf(PROXY) === 0) return;\n        if (seen[e.name]) return;\n        seen[e.name] = 1;\n        send({ h: \"res\", url: e.name, type: e.initiatorType,\n               ms: Math.round(e.duration),\n               size: e.transferSize || e.encodedBodySize || 0 });\n      });\n    }).observe({ type: \"resource\", buffered: true });\n  } catch (e) {}\n\n  /* ── evaluate from the devtools console ─────────────────────── */\n  window.addEventListener(\"message\", function (e) {\n    if (e.source !== parent) return;\n    var d = e.data;\n    if (!d || d.h !== \"eval\") return;\n    var out, err = null;\n    try { out = (0, eval)(d.code); } catch (ex) { err = ex; }\n    send({ h: \"eval-result\", id: d.id,\n           ok: !err, result: err ? String(ex && ex.stack || ex) : ser(out) });\n  });\n\n  /* ── boot ───────────────────────────────────────────────────── */\n  function boot() {\n    pushTitle(); pushFav(); checkMeta();\n    send({ h: \"ready\", url: location.href, title: document.title || \"\" });\n  }\n  if (document.readyState === \"loading\") {\n    document.addEventListener(\"DOMContentLoaded\", function () { proxifyTree(document); boot(); });\n  } else { proxifyTree(document); boot(); }\n  window.addEventListener(\"load\", function () { pushTitle(); pushFav(); });\n})();\n";</script>
@@ -389,6 +887,52 @@ const CURL_UA = "curl/8.5.0";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ICONS = {
+  "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />",
+  "arrow-left": "<path d=\"m12 19-7-7 7-7\" />\n  <path d=\"M19 12H5\" />",
+  "arrow-right": "<path d=\"M5 12h14\" />\n  <path d=\"m12 5 7 7-7 7\" />",
+  "bookmark": "<path d=\"m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z\" />",
+  "braces": "<path d=\"M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1\" />\n  <path d=\"M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1\" />",
+  "check": "<path d=\"M20 6 9 17l-5-5\" />",
+  "chevron-down": "<path d=\"m6 9 6 6 6-6\" />",
+  "circle-dot": "<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <circle cx=\"12\" cy=\"12\" r=\"1\" />",
+  "clock": "<path d=\"M12 6v6l4 2\" />\n  <circle cx=\"12\" cy=\"12\" r=\"10\" />",
+  "external-link": "<path d=\"M15 3h6v6\" />\n  <path d=\"M10 14 21 3\" />\n  <path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\" />",
+  "file-code-2": "<path d=\"M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4\" />\n  <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" />\n  <path d=\"m5 12-3 3 3 3\" />\n  <path d=\"m9 18 3-3-3-3\" />",
+  "globe": "<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <path d=\"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20\" />\n  <path d=\"M2 12h20\" />",
+  "history": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" />\n  <path d=\"M3 3v5h5\" />\n  <path d=\"M12 7v5l4 2\" />",
+  "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" />\n  <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />",
+  "keyboard": "<path d=\"M10 8h.01\" />\n  <path d=\"M12 12h.01\" />\n  <path d=\"M14 8h.01\" />\n  <path d=\"M16 12h.01\" />\n  <path d=\"M18 8h.01\" />\n  <path d=\"M6 8h.01\" />\n  <path d=\"M7 16h10\" />\n  <path d=\"M8 12h.01\" />\n  <rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" />",
+  "loader-2": "<path d=\"M21 12a9 9 0 1 1-6.219-8.56\" />",
+  "menu": "<path d=\"M4 5h16\" />\n  <path d=\"M4 12h16\" />\n  <path d=\"M4 19h16\" />",
+  "panel-left": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" />\n  <path d=\"M9 3v18\" />",
+  "plus": "<path d=\"M5 12h14\" />\n  <path d=\"M12 5v14\" />",
+  "refresh-cw": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" />\n  <path d=\"M21 3v5h-5\" />\n  <path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" />\n  <path d=\"M8 16H3v5\" />",
+  "rotate-cw": "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\" />\n  <path d=\"M21 3v5h-5\" />",
+  "search": "<path d=\"m21 21-4.34-4.34\" />\n  <circle cx=\"11\" cy=\"11\" r=\"8\" />",
+  "send": "<path d=\"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z\" />\n  <path d=\"m21.854 2.147-10.94 10.939\" />",
+  "server": "<rect width=\"20\" height=\"8\" x=\"2\" y=\"2\" rx=\"2\" ry=\"2\" />\n  <rect width=\"20\" height=\"8\" x=\"2\" y=\"14\" rx=\"2\" ry=\"2\" />\n  <line x1=\"6\" x2=\"6.01\" y1=\"6\" y2=\"6\" />\n  <line x1=\"6\" x2=\"6.01\" y1=\"18\" y2=\"18\" />",
+  "star": "<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />",
+  "terminal": "<path d=\"M12 19h8\" />\n  <path d=\"m4 17 6-6-6-6\" />",
+  "x": "<path d=\"M18 6 6 18\" />\n  <path d=\"m6 6 12 12\" />",
+  "zap": "<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />"
+  };
+
+/* lucide-style line icons (inline, no emoji) */
+function svgIco(name, cls) {
+  return `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+}
+/* real site icon (DuckDuckGo ip3 → Google s2 handled by onerror remove → globe beneath) */
+function favUrl(u) {
+  const h = hostOf(u);
+  if (!h || /^about:/i.test(String(u))) return "";
+  return "https://icons.duckduckgo.com/ip3/" + h + ".ico";
+}
+function favImg(u, cls) {
+  const f = favUrl(u);
+  return `${svgIco("globe", cls || "")}${f ? `<img src="${esc(f)}" alt="" onerror="this.remove()">` : ""}`;
+}
+
 const toProxy = (u) => (state && !state.localMode ? u               // standalone: identity
   : typeof u === "string" && u.startsWith(P) ? u
   : /^https?:\/\//i.test(u) ? P + u : u);          // idempotent
@@ -404,6 +948,7 @@ const state = {
   lastEngine: "—",
   libcurlReady: false,
   wispOk: false,
+  wispEndpoint: "",
   libcurlErr: null,
   localMode: false,           // true: served by server.py (local /proxy + /wisp/)
   cookieSession: null,
@@ -429,11 +974,27 @@ function toast(msg, isErr) {
    Each engine returns:
    {status, statusText, headers:[[k,v]], body:ArrayBuffer, finalUrl, engine}  */
 
+/* Wisp tunnel endpoints — tried in order until one connects.
+   No CORS proxies: every byte rides a Wisp WebSocket (school-network
+   friendly — wss on 443 is the only thing we ever ask of the network).
+   localStorage.hyperion.wisp overrides everything. */
+const PUBLIC_WISP = [
+  "wss://wisp.mercurywork.shop/",   // official libcurl.js endpoint
+  "wss://wisp.webmc.fun/",          // community (eaglercraft scene)
+  "wss://anura.pro/",               // community (eaglercraft scene)
+];
+function wispCandidates() {
+  const out = [];
+  try {
+    const custom = localStorage.getItem("hyperion.wisp");
+    if (custom) out.push(custom.endsWith("/") ? custom : custom + "/");
+  } catch {}
+  if (state.localMode) out.push(location.origin + "/wisp/");
+  for (const u of PUBLIC_WISP) if (!out.includes(u)) out.push(u);
+  return out;
+}
 function wispUrl() {
-  const custom = localStorage.getItem("hyperion.wisp");
-  if (custom) return custom.endsWith("/") ? custom : custom + "/";
-  if (state.localMode) return location.origin + "/wisp/";
-  return "wss://wisp.mercurywork.shop/";       // official public wisp server
+  return state.wispEndpoint || wispCandidates()[0];
 }
 function wispLabel() {
   try {
@@ -485,54 +1046,21 @@ async function engineRelay(method, url, opts = {}) {
   };
 }
 
-/* public CORS proxies (GET/HEAD only) — standalone fallback, rotating.
-   NOTE: corsfix requires a real http(s) Origin (works when served, not file://) */
-const PUBLIC_PROXIES = [
-  (u) => "https://proxy.corsfix.com/?" + u,
-  (u) => "https://api.cors.lol/?url=" + encodeURIComponent(u),
-  (u) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
-  (u) => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
-];
-let publicIdx = 0;
-
-async function enginePublic(method, url, opts = {}) {
-  if (method !== "GET" && method !== "HEAD") throw new Error("public proxy: GET only");
-  let lastErr = null;
-  for (let i = 0; i < PUBLIC_PROXIES.length; i++) {
-    const tpl = PUBLIC_PROXIES[(publicIdx + i) % PUBLIC_PROXIES.length];
-    try {
-      const r = await fetch(tpl(url), { method, signal: opts.signal, mode: "cors" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const body = await r.arrayBuffer();
-      const hdrs = [];
-      r.headers.forEach((v, k) => hdrs.push([k, v]));
-      publicIdx = (publicIdx + i) % PUBLIC_PROXIES.length;
-      return { status: 200, statusText: "OK", headers: hdrs, body, finalUrl: url, engine: "public" };
-    } catch (e) {
-      if (e && e.name === "AbortError") throw e;
-      lastErr = e;
-    }
-  }
-  throw lastErr || new Error("public proxies unavailable");
-}
-
-const ENGINE_FN = { libcurl: engineLibcurl, relay: engineRelay, public: enginePublic };
+const ENGINE_FN = { libcurl: engineLibcurl, relay: engineRelay };
 
 function engineChain() {
   const local = state.localMode;
   switch (state.enginePref) {
-    case "libcurl": return local ? ["libcurl", "relay", "public"] : ["libcurl", "public"];
+    case "libcurl": return local ? ["libcurl", "relay"] : ["libcurl"];
     case "relay": return local ? ["relay"] : ["libcurl"];
-    case "public": return ["public"];
-    default: return local ? ["libcurl", "relay", "public"] : ["libcurl", "public"];
+    default: return local ? ["libcurl", "relay"] : ["libcurl"];
   }
 }
 
 async function engineFetch(method, url, opts = {}) {
   const chain = engineChain().filter((n) =>
     (n !== "libcurl" || (state.libcurlReady && state.wispOk)) &&
-    (n !== "relay" || state.localMode) &&
-    (n !== "public" || (method === "GET" || method === "HEAD")));
+    (n !== "relay" || state.localMode));
   let lastErr = null;
   for (const name of chain) {
     if (opts.signal?.aborted) throw new DOMException("aborted", "AbortError");
@@ -642,9 +1170,9 @@ function renderTabs() {
     d.dataset.id = t.id;
     const icon = t.icon
       ? `<img class="favicon" src="${esc(t.icon)}" onerror="this.style.visibility='hidden'">`
-      : `<span class="favicon">🌐</span>`;
+      : `<span class="favicon">${svgIco("globe", "sm")}</span>`;
     d.innerHTML = `${icon}<span class="tab-title">${esc(t.title || "New Tab")}</span>
-      <span class="tab-close" title="Close">×</span>`;
+      <span class="tab-close" title="Close">${svgIco("x", "sm")}</span>`;
     el.appendChild(d);
   }
 }
@@ -823,34 +1351,47 @@ function renderStart(tab) {
   tab.iframe.removeAttribute("src");
   tab.iframe.srcdoc = "";
   const tiles = [
-    ["📄", "Wikipedia", "https://en.wikipedia.org"],
-    ["🐙", "GitHub", "https://github.com"],
-    ["💬", "Reddit", "https://www.reddit.com"],
-    ["⬛", "Hacker News", "https://news.ycombinator.com"],
-    ["🧩", "MDN Web Docs", "https://developer.mozilla.org"],
-    ["🔎", "DuckDuckGo", "https://duckduckgo.com"],
-    ["📌", "Example", "https://example.com"],
-    ["📰", "Stack Overflow", "https://stackoverflow.com"],
+    ["Wikipedia", "https://en.wikipedia.org"],
+    ["GitHub", "https://github.com"],
+    ["Reddit", "https://www.reddit.com"],
+    ["Hacker News", "https://news.ycombinator.com"],
+    ["MDN Web Docs", "https://developer.mozilla.org"],
+    ["DuckDuckGo", "https://duckduckgo.com"],
+    ["Example", "https://example.com"],
+    ["Stack Overflow", "https://stackoverflow.com"],
   ];
   showOverlay(tab, `
     <div class="start">
-      <h1>Hyperion <small>libcurl.js · wisp · relay</small></h1>
-      <div class="sub">A browser that fetches <b>everything</b> through a real
-        curl compiled to WebAssembly. Scripts are auto-allowed; every request
-        of the page flows back through the proxy engine.</div>
+      <div class="start-hero">
+        <h1>HYPERION</h1>
+        <span class="hero-sub">libcurl.js &middot; wisp &middot; webassembly browser</span>
+        <div class="sub">A browser that fetches <b>everything</b> through a real
+          curl compiled to WebAssembly. Scripts are auto-allowed; every request
+          of the page flows back through the engine.</div>
+      </div>
       <div class="tiles">
-        ${tiles.map(([i, n, u]) => `
+        ${tiles.map(([n, u]) => `
           <button class="tile" data-url="${esc(u)}">
-            <div class="t-ico">${i}</div>
+            <div class="t-art">${favImg(u, "lg")}</div>
             <div class="t-name">${n}</div>
-            <div class="t-url">${esc(u.replace(/^https?:\/\//, ""))}</div>
           </button>`).join("")}
       </div>
-      <div class="hint">
-        Type any address or search above · <code>Ctrl+T</code> new tab ·
-        <code>Ctrl+R</code> reload · <code>Ctrl+L</code> address bar ·
-        <code>F12</code> devtools (console + network + source) ·
-        engine switcher at the right of the toolbar.
+      <div class="cards">
+        <div class="card">
+          <h3>Controls</h3>
+          <p><kbd>Ctrl</kbd><kbd>T</kbd> new tab &middot; <kbd>Ctrl</kbd><kbd>L</kbd> address bar</p>
+          <p><kbd>Ctrl</kbd><kbd>R</kbd> reload &middot; <kbd>F12</kbd> devtools &middot; <kbd>Alt</kbd><kbd>&larr;</kbd><kbd>&rarr;</kbd> history</p>
+        </div>
+        <div class="card">
+          <h3>Engine</h3>
+          <p>libcurl + wisp first, local relay when served. Switch it from the
+             sidebar. Status dots show the live tunnel.</p>
+        </div>
+        <div class="card">
+          <h3>Network</h3>
+          <p>Traffic rides a Wisp WebSocket tunnel; TLS terminates inside the
+             wasm. The page origin never sees your requests.</p>
+        </div>
       </div>
     </div>`);
   tab.overlay.onclick = (e) => {
@@ -864,13 +1405,13 @@ function renderError(tab, url, err) {
   tab.status = "idle"; renderTabState(tab);
   showOverlay(tab, `
     <div class="errpage">
-      <div class="big">🛰️</div>
-      <h2>Couldn’t reach this site</h2>
+      <div class="big">${svgIco("server", "lg")}</div>
+      <h2>Couldn&rsquo;t reach this site</h2>
       <p>${esc(url)}</p>
       <p style="color:var(--err)">${esc(err && (err.message || String(err)))}</p>
       <div class="row">
         <button class="btn primary" data-act="retry">Retry (auto engine)</button>
-        <button class="btn" data-act="relay">Force local relay</button>
+        ${state.localMode ? `<button class="btn" data-act="relay">Force local relay</button>` : ""}
         <button class="btn" data-act="home">Start page</button>
       </div>
     </div>`);
@@ -932,7 +1473,7 @@ async function navigate(tab, rawUrl, opts = {}) {
   tab.status = "loading";
   tab.overlay.onclick = null;
   renderTabState(tab);
-  $("btn-reload").innerHTML = "✕";
+  $("btn-reload").innerHTML = svgIco("x");
 
   const ctrl = new AbortController();
   tab.ctrl = ctrl;
@@ -1011,7 +1552,7 @@ async function navigate(tab, rawUrl, opts = {}) {
     if (state.cookieSession) saveCookies();
   } catch (e) {
     if (e && e.name === "AbortError") {
-      if (seq === tab.seq) { tab.status = "idle"; renderTabState(tab); $("btn-reload").innerHTML = "⟳"; }
+      if (seq === tab.seq) { tab.status = "idle"; renderTabState(tab); $("btn-reload").innerHTML = svgIco("rotate-cw"); }
       return;
     }
     if (seq !== tab.seq) return;
@@ -1021,7 +1562,7 @@ async function navigate(tab, rawUrl, opts = {}) {
     renderError(tab, url, e);
     toast("Navigation failed: " + (e.message || e), true);
   } finally {
-    if (seq === tab.seq) { $("btn-reload").innerHTML = "⟳"; $("btn-reload").disabled = false; }
+    if (seq === tab.seq) { $("btn-reload").innerHTML = svgIco("rotate-cw"); $("btn-reload").disabled = false; }
   }
 }
 
@@ -1258,8 +1799,10 @@ function renderNetwork() {
   $("net-rows").innerHTML = rows.map((r) => {
     const stCls = r.status === 0 ? "st-0" : "st-" + Math.floor(r.status / 100);
     const name = unproxy(r.url).replace(/^https?:\/\//, "");
+    const rtype = r.type === "document" ? "doc" : r.type === "xhr" ? "xhr"
+      : r.type === "iframe" ? "frame" : r.type || "res";
     return `<tr title="${esc(unproxy(r.url))}${r.error ? "\n" + esc(r.error) : ""}">
-      <td>${r.type === "document" ? "📄" : r.type === "xhr" ? "⚡" : "🔗"}</td>
+      <td><span class="rtype">${esc(rtype)}</span></td>
       <td class="${stCls}">${r.status || (r.error ? "ERR" : "—")}</td>
       <td>${esc(r.method)}</td>
       <td>${esc(name)}</td>
@@ -1340,7 +1883,7 @@ function renderLibrary() {
   }
   body.innerHTML = items.map((it, i) => `
     <div class="lib-item" data-url="${esc(it.url)}" data-i="${i}">
-      <div class="li-title">${esc(it.title || hostOf(it.url))}</div>
+      <div class="li-title"><span class="bm-fav">${favImg(it.url, "sm")}</span>${esc(it.title || hostOf(it.url))}</div>
       <div class="li-url">${esc(it.url)}</div>
       <div class="li-date">${which === "history" ? new Date(it.ts).toLocaleString() : ""}</div>
     </div>`).join("");
@@ -1352,9 +1895,26 @@ function renderLibrary() {
     setLibrary(false);
   };
 }
-$("btn-library").addEventListener("click", () =>
-  setLibrary($("library").classList.contains("hidden")));
+function markNav(id) {
+  document.querySelectorAll(".nav-item").forEach((b) =>
+    b.classList.toggle("active", b.id === id));
+}
+$("nav-home").addEventListener("click", () => {
+  markNav("nav-home");
+  navigate(state.active, "about:start");
+});
+$("nav-history").addEventListener("click", () => {
+  markNav("nav-history");
+  setLibrary(true, "history");
+});
+$("nav-bookmarks").addEventListener("click", () => {
+  markNav("nav-bookmarks");
+  setLibrary(true, "bookmarks");
+});
 $("library-close").addEventListener("click", () => setLibrary(false));
+document.querySelector("#library-head").addEventListener("click", (e) => {
+  if (e.target.closest("#library-close")) markNav("");
+});
 document.querySelectorAll(".lib-tab").forEach((b) =>
   b.addEventListener("click", () => {
     document.querySelectorAll(".lib-tab").forEach((x) => x.classList.toggle("active", x === b));
@@ -1365,7 +1925,9 @@ function renderBookmarkBar() {
   const bar = $("bookmarkbar");
   bar.innerHTML = state.bookmarks.map((b, i) => `
     <button class="bm-chip" data-url="${esc(b.url)}" title="${esc(b.url)}">
-      <span>${esc(b.title || hostOf(b.url))}</span><span class="x" data-del="${i}">×</span>
+      <span class="bm-fav">${favImg(b.url, "sm")}</span>
+      <span>${esc(b.title || hostOf(b.url))}</span>
+      <span class="x" data-del="${i}">${svgIco("x", "sm")}</span>
     </button>`).join("");
   bar.onclick = (e) => {
     const del = e.target.closest("[data-del]");
@@ -1385,7 +1947,9 @@ function isBookmarked(url) {
 function syncBookmarkStar() {
   const t = state.active;
   const on = t && t.url && t.url !== "about:start" && isBookmarked(t.url);
-  $("btn-bookmark").textContent = on ? "★" : "☆";
+  const b = $("btn-bookmark");
+  b.classList.toggle("on", !!on);
+  b.innerHTML = svgIco("star");
 }
 $("btn-bookmark").addEventListener("click", () => {
   const t = state.active;
@@ -1402,7 +1966,6 @@ $("btn-bookmark").addEventListener("click", () => {
 /* ═══════════════════════ toolbar ═══════════════════════ */
 $("btn-back").addEventListener("click", () => goBack());
 $("btn-fwd").addEventListener("click", () => goFwd());
-$("btn-home").addEventListener("click", () => navigate(state.active, "about:start"));
 $("btn-reload").addEventListener("click", () => {
   const t = state.active;
   if (!t) return;
@@ -1423,6 +1986,10 @@ function submitOmnibox() {
   navigate(state.active, v.trim());
 }
 
+if (state.enginePref === "public") {          // legacy value — CORS proxies are gone
+  state.enginePref = "auto";
+  try { localStorage.setItem("hyperion.engine", "auto"); } catch {}
+}
 $("engine-select").value = state.enginePref;
 $("engine-select").addEventListener("change", (e) => {
   state.enginePref = e.target.value;
@@ -1434,20 +2001,25 @@ $("engine-select").addEventListener("change", (e) => {
 function updateBadges() {
   const b = $("engine-badge");
   const eng = state.enginePref === "auto" ? state.lastEngine : state.enginePref;
-  b.textContent = eng === "libcurl" ? "curl·wasm ⇄ wisp" :
-    eng === "relay" ? "local relay" :
-    eng === "public" ? "public cors" : eng;
-  b.className = eng === "relay" ? "relay" : eng === "public" ? "public" :
-    eng === "libcurl" ? "" : (eng === "—" ? "dim" : "err");
+  if (eng === "libcurl") { b.className = ""; b.innerHTML = svgIco("zap", "sm") + "curl·wisp"; }
+  else if (eng === "relay") { b.className = "relay"; b.innerHTML = svgIco("server", "sm") + "local relay"; }
+  else if (!eng || eng === "\u2014") { b.className = "dim"; b.textContent = "\u2026"; }
+  else { b.className = ""; b.textContent = eng; }
 
   const mode = state.localMode ? "" : " · standalone";
   $("st-engine").textContent = "engine: " +
     (state.enginePref === "auto" ? "auto → " + state.lastEngine : state.enginePref) + mode;
+  const de = $("dot-engine");
+  if (de) de.className = "dot " +
+    (state.lastEngine === "libcurl" || state.lastEngine === "relay" ? "ok" : "wait");
+
   $("st-wisp").textContent = "wisp: " +
-    (state.wispOk ? "connected ✓ · " + wispLabel()
-      : state.libcurlReady ? "unavailable (" + (state.localMode ? "relay" : "public") + " fallback)" : "…");
-  $("st-wisp").className = "st-item " + (state.wispOk ? "ok" : "");
-  let ver = "libcurl: …";
+    (state.wispOk ? "connected · " + wispLabel()
+      : state.libcurlReady ? "offline" : "\u2026");
+  const dw = $("dot-wisp");
+  if (dw) dw.className = "dot " + (state.wispOk ? "ok" : state.libcurlReady ? "bad" : "wait");
+
+  let ver = "libcurl: \u2026";
   if (state.libcurlErr) ver = "libcurl: failed";
   else if (state.libcurlReady && typeof libcurl !== "undefined" && libcurl.version) {
     const v = libcurl.version;
@@ -1475,10 +2047,10 @@ function newTabSwitch(dir) {
 }
 
 /* ═══════════════════════ boot ═══════════════════════ */
-function probeWisp() {
+function probeWisp(url) {
   return new Promise((resolve) => {
     let ws;
-    try { ws = new WebSocket(wispUrl()); }
+    try { ws = new WebSocket(url || wispUrl()); }
     catch { return resolve(false); }
     let done = false;
     const fin = (v) => {
@@ -1496,9 +2068,16 @@ function probeWisp() {
   });
 }
 
-/* libcurl.js loader — local vendor copy with jsdelivr CDN fallback */
-const LIBCURL_CDN = "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.js";
-const LIBCURL_WASM_CDN = "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.wasm";
+/* libcurl.js loader — local vendor, jsdelivr, unpkg (school networks often
+   whitelist one CDN but not the other, so we try every source in order) */
+const LIBCURL_JS = [
+  "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.js",
+  "https://unpkg.com/libcurl.js@0.7.4/libcurl.js",
+];
+const LIBCURL_WASM_SRC = [
+  "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl.wasm",
+  "https://unpkg.com/libcurl.js@0.7.4/libcurl.wasm",
+];
 
 function loadScript(src) {
   return new Promise((res, rej) => {
@@ -1536,19 +2115,30 @@ async function detectMode() {
 
 async function initLibcurl() {
   try {
-    if (typeof libcurl === "undefined" && location.protocol !== "file:") {
-      try { await loadScript("/vendor/libcurl.js"); } catch { /* fall to CDN */ }
+    if (typeof libcurl === "undefined") {
+      const tries = [];
+      if (location.protocol !== "file:") tries.push("/vendor/libcurl.js");
+      tries.push(...LIBCURL_JS);
+      for (const u of tries) {
+        try { await loadScript(u); } catch { /* next source */ }
+        if (typeof libcurl !== "undefined") break;
+      }
     }
-    if (typeof libcurl === "undefined") await loadScript(LIBCURL_CDN);
+    if (typeof libcurl === "undefined")
+      throw new Error("libcurl.js unavailable from every source");
     libcurl.logger = (type, text) => {
       if (type === "error" || type === "warn")
         consoleLog(type === "error" ? "error" : "debug", "[libcurl] " + text, "libcurl");
     };
-    let wasmUrl = LIBCURL_WASM_CDN;
+    const wasmTries = [];
     if (location.protocol !== "file:" && await headOk("/vendor/libcurl.wasm"))
-      wasmUrl = "/vendor/libcurl.wasm";
-    await libcurl.load_wasm(wasmUrl);
-    libcurl.set_websocket(wispUrl());
+      wasmTries.push("/vendor/libcurl.wasm");
+    wasmTries.push(...LIBCURL_WASM_SRC);
+    let wasmOk = false;
+    for (const u of wasmTries) {
+      try { await libcurl.load_wasm(u); wasmOk = true; break; } catch { /* next */ }
+    }
+    if (!wasmOk) throw new Error("libcurl.wasm unavailable from every source");
     state.libcurlReady = true;
     try {
       const jar = localStorage.getItem("hyperion.jar");
@@ -1559,16 +2149,23 @@ async function initLibcurl() {
       console.warn("cookie session failed", e);
       try { state.cookieSession = new libcurl.HTTPSession(); } catch {}
     }
-    state.wispOk = await probeWisp();
+    // Wisp failover: probe every candidate until one opens a tunnel
+    state.wispOk = false;
+    for (const u of wispCandidates()) {
+      state.wispEndpoint = u;
+      libcurl.set_websocket(u);
+      if (await probeWisp(u)) { state.wispOk = true; break; }
+    }
     if (!state.wispOk)
-      toast("Wisp tunnel unreachable — falling back to " +
-        (state.localMode ? "the local relay" : "public proxies"), true);
+      toast(state.localMode
+        ? "Wisp tunnel unreachable — falling back to the local relay"
+        : "No Wisp server reachable — check this network", true);
     updateBadges();
   } catch (e) {
     state.libcurlErr = e;
     console.warn("libcurl init failed:", e);
     toast("libcurl.js unavailable — " +
-      (state.localMode ? "using local relay" : "public proxies only") +
+      (state.localMode ? "using local relay" : "nothing else to fall back on") +
       " (" + (e.message || e) + ")", true);
     updateBadges();
   }
@@ -1608,5 +2205,5 @@ document.addEventListener("DOMContentLoaded", boot);
 if (document.readyState !== "loading") boot();
 
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a42eef402d2c5c14',t:'MTc5MDcyNjI5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
