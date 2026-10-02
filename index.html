@@ -1,46 +1,1479 @@
 <!DOCTYPE html>
+<!--
+  ============================================================================
+  browser.lol - Proxy Browser (libcurl.js + Wisp edition)
+  ============================================================================
+  A single-file proxy browser powered by libcurl.js v0.7.4 (curl-impersonate
+  compiled to WebAssembly) over the Wisp multiplexed WebSocket protocol.
+
+  Architecture:
+    browser  [wss]  Wisp server  [TCP+TLS]  destination site
+  All requests carry end-to-end TLS from your browser via libcurl-wasm, so
+  the wisp relay only sees encrypted streams.
+
+  Usage:
+    * Open this file anywhere (double-click works, no server needed).
+    * Click the wisp chip in the toolbar (bottom-right dot) to open the
+      Server Finder and scan for the fastest public wisp server.
+    * Sessions menu -> named cookie containers & private tabs.
+
+  Self-hosting your own wisp server (optional):
+    git clone https://github.com/ading2210/libcurl.js --recursive
+    cd libcurl.js && server/run.sh --static=./client
+    (or any MercuryWorkshop wisp-server-python deployment)
+
+  Use responsibly and in accordance with your local network policies.
+  ============================================================================
+-->
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Access Denied</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>browser.lol · proxy</title>
+<style>
+:root{
+  --bg:#0b0d14; --bg2:#10131d; --bg3:#161a27; --panel:#141826; --panel2:#1a1f31;
+  --line:#232942; --line2:#2e3554;
+  --txt:#e8ebf5; --txt2:#9aa3bd; --txt3:#5e6784;
+  --acc:#7c5cff; --acc2:#4cc9f0; --accSoft:rgba(124,92,255,.16);
+  --ok:#3ddc84; --warn:#ffb454; --bad:#ff5470;
+  --r:12px; --r-sm:8px;
+  --shadow:0 12px 40px rgba(0,0,0,.45);
+  font-size:15px;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--txt); overflow:hidden;
+  font-family:"Inter","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit; color:inherit; background:none; border:none; cursor:pointer}
+input,select,textarea{font:inherit; color:var(--txt)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line2); border-radius:8px; border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- app frame ---------- */
+#app{display:flex; flex-direction:column; height:100%}
+
+/* ---------- tab strip ---------- */
+#tabstrip{
+  display:flex; align-items:flex-end; gap:6px; padding:8px 10px 0;
+  background:var(--bg2); border-bottom:1px solid var(--line);
+  user-select:none; flex:0 0 auto;
+}
+#brand{
+  display:flex; align-items:center; gap:8px; padding:0 12px 8px 4px;
+  font-weight:700; font-size:.95rem; letter-spacing:.2px; white-space:nowrap;
+}
+#brand .logo{
+  width:22px;height:22px;border-radius:7px; display:grid; place-items:center;
+  background:linear-gradient(135deg,var(--acc),var(--acc2)); font-size:.72rem; color:#fff;
+  font-weight:800; letter-spacing:0;
+}
+#brand .tld{color:var(--acc2)}
+#tabs{display:flex; align-items:flex-end; gap:4px; flex:1 1 auto; overflow-x:auto; scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{
+  display:flex; align-items:center; gap:8px; min-width:130px; max-width:220px;
+  padding:7px 10px; border-radius:10px 10px 0 0; color:var(--txt2);
+  background:transparent; cursor:pointer; position:relative; flex:0 0 auto;
+  border:1px solid transparent; border-bottom:none;
+}
+.tab:hover{background:var(--bg3)}
+.tab.active{
+  background:var(--bg); color:var(--txt); border-color:var(--line);
+}
+.tab.active::after{content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:2px; background:var(--acc); border-radius:2px}
+.tab .fav{
+  width:16px;height:16px; border-radius:4px; flex:0 0 auto; display:grid; place-items:center;
+  font-size:.55rem; font-weight:700; color:#fff; background:var(--accSoft); color:var(--acc2);
+}
+.tab .fav img{width:16px;height:16px;border-radius:4px}
+.tab .ttl{flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.8rem}
+.tab .x{
+  width:18px;height:18px; border-radius:5px; display:grid; place-items:center;
+  font-size:.8rem; color:var(--txt3); flex:0 0 auto; line-height:1;
+}
+.tab .x:hover{background:var(--line2); color:var(--txt)}
+.tab .priv{font-size:.6rem; color:var(--acc2); border:1px solid var(--line2); padding:1px 4px; border-radius:4px}
+#tabAdd{
+  flex:0 0 auto; width:30px;height:30px; margin-bottom:4px; border-radius:8px;
+  color:var(--txt2); font-size:1.1rem; display:grid; place-items:center;
+}
+#tabAdd:hover{background:var(--bg3); color:var(--txt)}
+#tabAdd.priv{color:var(--acc2)}
+.strip-right{display:flex; align-items:center; gap:6px; padding-bottom:6px}
+.iconbtn{
+  width:32px;height:32px; border-radius:9px; display:grid; place-items:center;
+  color:var(--txt2); font-size:1rem; transition:background .15s,color .15s;
+}
+.iconbtn:hover{background:var(--bg3); color:var(--txt)}
+.iconbtn[disabled]{opacity:.35; pointer-events:none}
+
+/* ---------- toolbar ---------- */
+#toolbar{
+  display:flex; align-items:center; gap:6px; padding:7px 10px;
+  background:var(--bg); border-bottom:1px solid var(--line); flex:0 0 auto;
+}
+#addrWrap{
+  flex:1 1 auto; display:flex; align-items:center; gap:8px;
+  background:var(--bg3); border:1px solid var(--line); border-radius:22px;
+  padding:0 6px 0 14px; height:38px; transition:border-color .15s, box-shadow .15s;
+}
+#addrWrap:focus-within{border-color:var(--acc); box-shadow:0 0 0 3px var(--accSoft)}
+#lock{color:var(--txt3); font-size:.85rem; flex:0 0 auto}
+#addr{
+  flex:1 1 auto; background:none; border:none; outline:none; font-size:.88rem;
+  color:var(--txt); min-width:60px;
+}
+#addr::placeholder{color:var(--txt3)}
+#goBtn{
+  flex:0 0 auto; background:var(--acc); color:#fff; border-radius:16px;
+  padding:5px 14px; font-size:.78rem; font-weight:600;
+}
+#goBtn:hover{filter:brightness(1.12)}
+#wispChip{
+  display:flex; align-items:center; gap:7px; height:38px; padding:0 12px;
+  border:1px solid var(--line); border-radius:19px; background:var(--bg3);
+  font-size:.75rem; color:var(--txt2); max-width:220px; cursor:pointer; flex:0 0 auto;
+}
+#wispChip:hover{border-color:var(--line2); color:var(--txt)}
+#wispChip .dot{width:8px;height:8px;border-radius:50%; background:var(--bad); flex:0 0 auto}
+#wispChip .dot.ok{background:var(--ok); box-shadow:0 0 8px rgba(61,220,132,.7)}
+#wispChip .dot.warn{background:var(--warn)}
+#wispChip .dot.bad{background:var(--bad)}
+#wispChip .host{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#containerSel{
+  height:38px; background:var(--bg3); border:1px solid var(--line); border-radius:19px;
+  padding:0 10px; font-size:.75rem; color:var(--txt2); outline:none; max-width:150px; cursor:pointer;
+}
+#containerSel:focus{border-color:var(--acc)}
+
+/* ---------- progress bar ---------- */
+#progress{
+  height:2px; background:linear-gradient(90deg,var(--acc),var(--acc2));
+  width:0%; transition:width .2s ease; border-radius:2px; flex:0 0 auto;
+}
+#progress.on{width:80%}
+#progress.done{width:100%; opacity:0; transition:width .25s, opacity .3s}
+
+/* ---------- views ---------- */
+#views{flex:1 1 auto; position:relative; background:var(--bg); overflow:hidden}
+.view{position:absolute; inset:0; display:none}
+.view.active{display:block}
+.view iframe{width:100%; height:100%; border:none; background:#fff}
+
+/* ---------- new tab page ---------- */
+.ntp{
+  height:100%; overflow-y:auto; display:flex; flex-direction:column; align-items:center;
+  padding:8vh 20px 40px; position:relative;
+}
+.ntp::before{
+  content:""; position:fixed; inset:0; pointer-events:none;
+  background:
+    radial-gradient(600px 300px at 20% 10%, rgba(124,92,255,.14), transparent 60%),
+    radial-gradient(500px 300px at 80% 20%, rgba(76,201,240,.10), transparent 60%),
+    radial-gradient(700px 400px at 50% 100%, rgba(124,92,255,.08), transparent 60%);
+}
+.ntp>*{position:relative}
+.ntp .biglogo{
+  width:64px;height:64px;border-radius:18px; display:grid; place-items:center;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  font-size:1.6rem; font-weight:800; color:#fff; box-shadow:0 10px 40px rgba(124,92,255,.35);
+  margin-bottom:14px;
+}
+.ntp h1{font-size:1.7rem; font-weight:800; letter-spacing:-.4px; margin-bottom:6px}
+.ntp h1 span{color:var(--acc2)}
+.ntp .sub{color:var(--txt2); font-size:.85rem; margin-bottom:28px; text-align:center}
+.ntp .sub b{color:var(--txt); font-weight:600}
+#ntpSearch{
+  width:min(640px,100%); display:flex; gap:8px; align-items:center;
+  background:var(--panel); border:1px solid var(--line); border-radius:26px;
+  padding:6px 6px 6px 18px; box-shadow:var(--shadow); margin-bottom:10px;
+}
+#ntpSearch:focus-within{border-color:var(--acc)}
+#ntpSearch input{flex:1; background:none; border:none; outline:none; font-size:.95rem; height:38px}
+#ntpSearch button{
+  background:var(--acc); border-radius:20px; padding:9px 20px; font-weight:600; font-size:.85rem; color:#fff;
+}
+#ntpSearch button:hover{filter:brightness(1.12)}
+.engineRow{display:flex; gap:6px; margin-bottom:34px; flex-wrap:wrap; justify-content:center}
+.engineRow button{
+  font-size:.72rem; color:var(--txt2); border:1px solid var(--line); border-radius:14px; padding:4px 12px;
+}
+.engineRow button.sel{color:#fff; background:var(--accSoft); border-color:var(--acc)}
+.quick{display:grid; grid-template-columns:repeat(auto-fit,84px); gap:14px; justify-content:center; width:min(720px,100%)}
+.quick a{
+  display:flex; flex-direction:column; align-items:center; gap:8px; text-decoration:none;
+  color:var(--txt2); font-size:.72rem; padding:12px 4px; border-radius:14px; transition:background .15s;
+}
+.quick a:hover{background:var(--bg3); color:var(--txt)}
+.quick .qi{
+  width:46px;height:46px; border-radius:14px; background:var(--panel2); border:1px solid var(--line);
+  display:grid; place-items:center; font-weight:700; font-size:.9rem; color:var(--acc2); overflow:hidden;
+}
+.quick .qi img{width:26px;height:26px;border-radius:6px}
+.ntpCards{display:flex; gap:12px; margin-top:36px; flex-wrap:wrap; justify-content:center}
+.ntpCard{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  padding:14px 18px; min-width:200px; cursor:pointer; transition:border-color .15s;
+}
+.ntpCard:hover{border-color:var(--acc)}
+.ntpCard .k{font-size:.7rem; color:var(--txt3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px}
+.ntpCard .v{font-size:.85rem; color:var(--txt); font-weight:600; display:flex; align-items:center; gap:8px}
+.ntpCard .v .dot{width:8px;height:8px;border-radius:50%;background:var(--bad)}
+.ntpCard .v .dot.ok{background:var(--ok)} .ntpCard .v .dot.warn{background:var(--warn)}
+
+/* ---------- status bar ---------- */
+#statusbar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:4px 12px; background:var(--bg2); border-top:1px solid var(--line);
+  font-size:.68rem; color:var(--txt3); flex:0 0 auto; height:26px; user-select:none;
+}
+#statusbar .l,#statusbar .r{display:flex; align-items:center; gap:10px; overflow:hidden; white-space:nowrap}
+#statusbar .r span{overflow:hidden; text-overflow:ellipsis}
+#statusbar b{color:var(--txt2); font-weight:600}
+
+/* ---------- modals ---------- */
+.backdrop{
+  position:fixed; inset:0; background:rgba(5,7,12,.6); backdrop-filter:blur(4px);
+  display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+}
+.backdrop.open{display:flex}
+.modal{
+  width:min(680px,100%); max-height:86vh; overflow-y:auto; background:var(--panel);
+  border:1px solid var(--line2); border-radius:16px; box-shadow:var(--shadow);
+}
+.modal header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel); z-index:2;
+}
+.modal header h2{font-size:1rem; font-weight:700}
+.modal header .iconbtn{margin:-6px}
+.modal .body{padding:18px 20px 22px}
+.modal h3{font-size:.72rem; text-transform:uppercase; letter-spacing:.9px; color:var(--txt3); margin:18px 0 10px}
+.modal h3:first-child{margin-top:0}
+.field{margin-bottom:12px}
+.field label{display:block; font-size:.75rem; color:var(--txt2); margin-bottom:5px}
+.field input[type=text],.field input[type=url],.field select,.field textarea{
+  width:100%; background:var(--bg3); border:1px solid var(--line); border-radius:9px;
+  padding:9px 12px; font-size:.82rem; outline:none;
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--acc)}
+.field textarea{resize:vertical; min-height:70px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.75rem}
+.btn{
+  background:var(--acc); color:#fff; border-radius:9px; padding:8px 16px;
+  font-size:.8rem; font-weight:600; transition:filter .15s;
+}
+.btn:hover{filter:brightness(1.12)}
+.btn.ghost{background:var(--bg3); border:1px solid var(--line); color:var(--txt)}
+.btn.ghost:hover{border-color:var(--acc); filter:none}
+.btn.danger{background:transparent; border:1px solid var(--bad); color:var(--bad)}
+.btn.danger:hover{background:rgba(255,84,112,.1); filter:none}
+.btnRow{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
+.switchRow{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:9px 0; border-bottom:1px solid var(--line)}
+.switchRow:last-child{border-bottom:none}
+.switchRow .lbl{font-size:.82rem}
+.switchRow .desc{font-size:.7rem; color:var(--txt3); margin-top:2px}
+.switch{position:relative; width:38px; height:21px; flex:0 0 auto; cursor:pointer}
+.switch input{opacity:0; width:0; height:0}
+.switch .sl{
+  position:absolute; inset:0; background:var(--line2); border-radius:20px; transition:.2s;
+}
+.switch .sl::before{
+  content:""; position:absolute; width:15px; height:15px; border-radius:50%;
+  background:#fff; top:3px; left:3px; transition:.2s;
+}
+.switch input:checked + .sl{background:var(--acc)}
+.switch input:checked + .sl::before{transform:translateX(17px)}
+
+/* ---------- server finder ---------- */
+#srvTable{width:100%; border-collapse:collapse; font-size:.8rem}
+#srvTable th{
+  text-align:left; font-size:.65rem; text-transform:uppercase; letter-spacing:.8px;
+  color:var(--txt3); padding:6px 8px; border-bottom:1px solid var(--line);
+}
+#srvTable td{padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:middle}
+#srvTable tr:hover td{background:var(--bg3)}
+#srvTable tr.current td{background:var(--accSoft)}
+.srv-dot{width:8px;height:8px;border-radius:50%;background:var(--txt3); display:inline-block}
+.srv-dot.ok{background:var(--ok); box-shadow:0 0 8px rgba(61,220,132,.6)}
+.srv-dot.testing{background:var(--warn); animation:pulse 1s infinite}
+.srv-dot.bad{background:var(--bad)}
+@keyframes pulse{50%{opacity:.35}}
+.ms{font-variant-numeric:tabular-nums; color:var(--txt2); font-size:.75rem}
+.ms.good{color:var(--ok)} .ms.mid{color:var(--warn)}
+.useBtn{font-size:.7rem; border:1px solid var(--line2); border-radius:7px; padding:4px 10px; color:var(--txt2)}
+.useBtn:hover{border-color:var(--acc); color:var(--txt)}
+.useBtn.cur{background:var(--acc); border-color:var(--acc); color:#fff}
+.delBtn{color:var(--txt3); font-size:.85rem; padding:2px 6px; border-radius:6px}
+.delBtn:hover{color:var(--bad); background:rgba(255,84,112,.1)}
+
+/* ---------- sessions ---------- */
+.sessRow{
+  display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--line);
+  border-radius:12px; margin-bottom:10px; background:var(--bg3);
+}
+.sessRow .ic{width:36px;height:36px; border-radius:10px; display:grid; place-items:center; font-size:1rem; background:var(--accSoft); flex:0 0 auto}
+.sessRow .meta{flex:1 1 auto; min-width:0}
+.sessRow .nm{font-size:.85rem; font-weight:600}
+.sessRow .info{font-size:.7rem; color:var(--txt3); margin-top:2px}
+.sessRow .acts{display:flex; gap:6px; flex:0 0 auto}
+.tag{font-size:.6rem; padding:2px 7px; border-radius:6px; background:var(--accSoft); color:var(--acc2); margin-left:6px; vertical-align:1px}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed; bottom:44px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:200}
+.toast{
+  background:var(--panel2); border:1px solid var(--line2); border-left:3px solid var(--acc);
+  padding:10px 16px; border-radius:10px; font-size:.78rem; box-shadow:var(--shadow);
+  max-width:340px; animation:slideIn .25s ease;
+}
+.toast.err{border-left-color:var(--bad)}
+.toast.ok{border-left-color:var(--ok)}
+@keyframes slideIn{from{transform:translateX(30px); opacity:0}}
+
+/* ---------- misc ---------- */
+.kbd{
+  font-family:ui-monospace,Menlo,monospace; font-size:.65rem; background:var(--bg3);
+  border:1px solid var(--line2); border-bottom-width:2px; border-radius:5px; padding:1px 5px; color:var(--txt2);
+}
+.hint{font-size:.72rem; color:var(--txt3); line-height:1.5}
+.spin{
+  width:14px;height:14px; border:2px solid var(--line2); border-top-color:var(--acc);
+  border-radius:50%; animation:rot .7s linear infinite; display:inline-block; vertical-align:-2px;
+}
+@keyframes rot{to{transform:rotate(360deg)}}
+@media (max-width:760px){
+  #containerSel{display:none}
+  #wispChip{max-width:130px}
+  #brand .btxt{display:none}
+}
+</style>
 </head>
 <body>
-  <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+<div id="app">
 
-  <script>
-    document.title = "Access Denied";
+  <!-- ======== tab strip ======== -->
+  <div id="tabstrip">
+    <div id="brand"><div class="logo">b</div><div class="btxt">browser<span class="tld">.lol</span></div></div>
+    <div id="tabs"></div>
+    <button id="tabAdd" title="New tab (Ctrl+T)">+</button>
+    <div class="strip-right">
+      <button class="iconbtn" id="privBtn" title="New private tab (Ctrl+Shift+N)">🕶</button>
+      <button class="iconbtn" id="aboutBtn" title="About / help">?</button>
+    </div>
+  </div>
 
-    fetch("https://raw.githubusercontent.com/icodewithai1/html-gamerepo/refs/heads/main/LethalApeWeb%202.html")
-      .then(res => res.text())
-      .then(html => {
-        const frame = document.getElementById('frame');
-        frame.srcdoc = html;
+  <!-- ======== toolbar ======== -->
+  <div id="toolbar">
+    <button class="iconbtn" id="backBtn" title="Back (Alt+←)">←</button>
+    <button class="iconbtn" id="fwdBtn" title="Forward (Alt+→)">→</button>
+    <button class="iconbtn" id="reloadBtn" title="Reload (F5)">⟳</button>
+    <button class="iconbtn" id="homeBtn" title="Home">⌂</button>
+    <div id="addrWrap">
+      <span id="lock">◌</span>
+      <input id="addr" spellcheck="false" autocomplete="off" placeholder="Search or type a URL — traffic is proxied over Wisp">
+      <button id="goBtn">Go</button>
+    </div>
+    <select id="containerSel" title="Session container"></select>
+    <div id="wispChip" title="Wisp server — click to open Server Finder">
+      <span class="dot" id="wispDot"></span><span class="host" id="wispHost">connecting…</span>
+    </div>
+  </div>
+  <div id="progress"></div>
 
-        // Keeps the tab name as "Access Denied" once the content loads
-        frame.onload = () => {
-          document.title = "Access Denied";
-        }
-      })
-      .catch(err => console.error("Error loading HTML:", err));
-  </script>
+  <!-- ======== views ======== -->
+  <div id="views"></div>
+
+  <!-- ======== status bar ======== -->
+  <div id="statusbar">
+    <div class="l"><span id="stVer">libcurl.js — loading…</span><span>·</span><span id="stTransport">wisp</span></div>
+    <div class="r"><span id="stLast">ready</span><span>·</span><span><b id="stCount">0</b> requests</span></div>
+  </div>
+</div>
+
+<!-- ======== new tab page template ======== -->
+<template id="tplNTP">
+  <div class="ntp">
+    <div class="biglogo">b</div>
+    <h1>browser<span>.lol</span></h1>
+    <div class="sub">proxy browser · <b>libcurl.js</b> (curl-wasm) over <b>Wisp</b> · end-to-end TLS from your browser</div>
+    <form id="ntpSearch">
+      <input placeholder="Search the web or enter a URL…" spellcheck="false" autocomplete="off">
+      <button type="submit">Browse</button>
+    </form>
+    <div class="engineRow"></div>
+    <div class="quick"></div>
+    <div class="ntpCards">
+      <div class="ntpCard" data-open="servers">
+        <div class="k">Wisp server</div>
+        <div class="v"><span class="dot"></span><span class="vtext">scanning…</span></div>
+      </div>
+      <div class="ntpCard" data-open="sessions">
+        <div class="k">Session</div>
+        <div class="v">🍪 <span class="vtext">Default</span></div>
+      </div>
+      <div class="ntpCard" data-open="about">
+        <div class="k">How it works</div>
+        <div class="v">✦ curl-wasm → wss relay</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======== viewer / binary template ======== -->
+<template id="tplViewer">
+  <div style="width:100%;height:100%;display:grid;place-items:center;background:var(--bg)">
+    <div style="text-align:center;max-width:560px;padding:24px">
+      <div style="font-size:2.4rem;margin-bottom:10px">📦</div>
+      <div class="vTitle" style="font-weight:700;margin-bottom:6px"></div>
+      <div class="vMeta" style="font-size:.75rem;color:var(--txt3);margin-bottom:16px"></div>
+      <div class="vArea" style="margin-bottom:16px"></div>
+      <a class="vDl btn ghost" style="text-decoration:none;display:inline-block" download>Download file</a>
+    </div>
+  </div>
+</template>
+
+<!-- ======== error page template ======== -->
+<template id="tplError">
+  <div style="width:100%;height:100%;display:grid;place-items:center;background:var(--bg)">
+    <div style="text-align:center;max-width:600px;padding:24px">
+      <div style="font-size:2.6rem;margin-bottom:12px">⚠️</div>
+      <div class="eTitle" style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Couldn't load this page</div>
+      <div class="eUrl" style="font-size:.75rem;color:var(--acc2);font-family:ui-monospace,monospace;margin-bottom:12px;word-break:break-all"></div>
+      <div class="eMsg" style="font-size:.8rem;color:var(--txt2);line-height:1.6;margin-bottom:20px"></div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn eRetry">Retry</button>
+        <button class="btn ghost eServers">Switch wisp server</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======== modal: server finder ======== -->
+<div class="backdrop" id="mServers">
+  <div class="modal">
+    <header><h2>📡 Wisp Server Finder</h2><button class="iconbtn mClose">✕</button></header>
+    <div class="body">
+      <p class="hint" style="margin-bottom:14px">
+        The browser tunnels TCP through a <b>Wisp</b> relay over one multiplexed WebSocket.
+        Scan the built-in public relays below — latency is measured live from <i>your</i> machine —
+        or add your own. Highest uptime & speed wins.
+      </p>
+      <div class="btnRow" style="margin-bottom:14px">
+        <button class="btn" id="srvScanAll">⚡ Scan all servers</button>
+        <button class="btn ghost" id="srvAuto">🏆 Auto-pick fastest</button>
+      </div>
+      <table id="srvTable">
+        <thead><tr><th style="width:26px"></th><th>Server</th><th>Latency</th><th style="width:70px"></th><th style="width:30px"></th></tr></thead>
+        <tbody id="srvRows"></tbody>
+      </table>
+      <h3>Add a server</h3>
+      <div class="field">
+        <label>Single wss:// URL</label>
+        <input type="url" id="srvCustom" placeholder="wss://my-wisp-server.example.com/">
+      </div>
+      <div class="field">
+        <label>Bulk scan — one URL per line</label>
+        <textarea id="srvBulk" placeholder="wss://server1.example.com/&#10;wss://server2.example.com/"></textarea>
+      </div>
+      <div class="btnRow"><button class="btn ghost" id="srvAddCustom">Test & add</button></div>
+      <h3>Run your own relay (optional)</h3>
+      <p class="hint">
+        Any <b>wisp-server-python</b> deployment works, e.g. <span class="kbd">server/run.sh</span> from the
+        libcurl.js repo, then paste <span class="kbd">wss://your-host/</span> above. The relay only sees
+        encrypted TLS streams — libcurl-wasm keeps end-to-end TLS inside your browser.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== modal: sessions ======== -->
+<div class="backdrop" id="mSessions">
+  <div class="modal">
+    <header><h2>🍪 Sessions & containers</h2><button class="iconbtn mClose">✕</button></header>
+    <div class="body">
+      <p class="hint" style="margin-bottom:14px">
+        Each container is an independent cookie jar (its own <span class="kbd">HTTPSession</span> inside libcurl).
+        Cookies are exported and restored locally, so logins survive reloads. Private containers stay in memory only.
+      </p>
+      <div id="sessRows"></div>
+      <div class="btnRow">
+        <button class="btn" id="sessNew">+ New container</button>
+        <button class="btn ghost" id="sessPriv">🕶 New private tab</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== modal: settings ======== -->
+<div class="backdrop" id="mSettings">
+  <div class="modal">
+    <header><h2>⚙️ Settings</h2><button class="iconbtn mClose">✕</button></header>
+    <div class="body">
+      <h3>Browsing</h3>
+      <div class="field">
+        <label>Search engine (for non-URL input)</label>
+        <select id="setEngine">
+          <option value="ddg">DuckDuckGo</option>
+          <option value="google">Google</option>
+          <option value="bing">Bing</option>
+          <option value="brave">Brave</option>
+          <option value="startpage">Startpage</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>HTTP version forced by curl</label>
+        <select id="setHttp">
+          <option value="2">HTTP/2 (default)</option>
+          <option value="1.1">HTTP/1.1</option>
+          <option value="1">HTTP/1.0</option>
+        </select>
+      </div>
+      <div class="switchRow">
+        <div><div class="lbl">Spoof User-Agent</div><div class="desc">Send a recent Chrome UA header with every request</div></div>
+        <label class="switch"><input type="checkbox" id="setUA"><span class="sl"></span></label>
+      </div>
+      <div class="field" id="uaField">
+        <label>Custom User-Agent</label>
+        <input type="text" id="setUAVal" placeholder="Mozilla/5.0 (Windows NT 10.0; Win64; x64) …">
+      </div>
+      <div class="switchRow">
+        <div><div class="lbl">Proxy images through Wisp</div><div class="desc">Fetch images as blobs via libcurl instead of loading directly</div></div>
+        <label class="switch"><input type="checkbox" id="setImg"><span class="sl"></span></label>
+      </div>
+      <div class="switchRow">
+        <div><div class="lbl">Safe mode (strip JavaScript)</div><div class="desc">Remove all &lt;script&gt; tags before rendering — lighter and calmer</div></div>
+        <label class="switch"><input type="checkbox" id="setSafe"><span class="sl"></span></label>
+      </div>
+      <div class="switchRow">
+        <div><div class="lbl">Restore tabs on launch</div><div class="desc">Reopen tabs & history from this device after a reload</div></div>
+        <label class="switch"><input type="checkbox" id="setRestore"><span class="sl"></span></label>
+      </div>
+      <h3>Danger zone</h3>
+      <div class="btnRow">
+        <button class="btn danger" id="setClear">Wipe all local data (sessions, cookies, settings)</button>
+      </div>
+      <p class="hint" style="margin-top:12px">Data lives only in this browser's localStorage. Nothing is synced anywhere.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== modal: about ======== -->
+<div class="backdrop" id="mAbout">
+  <div class="modal">
+    <header><h2>✦ About</h2><button class="iconbtn mClose">✕</button></header>
+    <div class="body">
+      <p class="hint" style="line-height:1.7">
+        <b style="color:var(--txt)">browser.lol proxy edition</b> is a single-file proxy browser.
+        Requests are handed to <b>libcurl.js</b> — a port of curl-impersonate to WebAssembly — which
+        opens real TCP + TLS connections to destination sites and multiplexes them through a
+        <b>Wisp</b> WebSocket relay. The relay never sees plaintext: TLS terminates inside your
+        browser, and curl-impersonate's browser-like TLS fingerprint keeps requests natural.
+      </p>
+      <h3>Tips</h3>
+      <p class="hint" style="line-height:1.9">
+        <span class="kbd">Ctrl+T</span> new tab &nbsp; <span class="kbd">Ctrl+W</span> close tab &nbsp;
+        <span class="kbd">Ctrl+L</span> address bar &nbsp; <span class="kbd">Ctrl+R</span> reload<br>
+        <span class="kbd">Alt+←/→</span> back / forward &nbsp; <span class="kbd">Ctrl+Shift+N</span> private tab<br>
+        Middle-click / <span class="kbd">Ctrl</span>+click links to open in a new tab.
+      </p>
+      <h3>Known limits</h3>
+      <p class="hint" style="line-height:1.7">
+        Pages render through a rewriter (this is a single file — no service worker). Sites that build
+        their DOM heavily in JavaScript may look broken; toggle <b>Safe mode</b> for clean reading,
+        and use the Session containers for logins. Large media streams are fetched fully before playback.
+      </p>
+      <h3>Credits</h3>
+      <p class="hint">
+        libcurl.js by ading2210 (LGPL-3.0) · Wisp protocol by Mercury Workshop · UI inspired by browser.lol
+      </p>
+      <p class="hint" style="margin-top:14px">Use responsibly and in line with your network's policies.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<script type="module">
+/* ================================================================
+   browser.lol proxy engine — libcurl.js (curl-wasm) + Wisp
+   ================================================================ */
+import { libcurl } from "https://cdn.jsdelivr.net/npm/libcurl.js@0.7.4/libcurl_full.mjs";
+// To track the newest release instead of a pinned version, swap the URL for:
+//   https://cdn.jsdelivr.net/npm/libcurl.js@latest/libcurl_full.mjs
+const LIBCURL_PIN = "0.7.4";
+
+/* ---------------- constants ---------------- */
+const DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const BUILTIN_SERVERS = [
+  { url: "wss://wisp.mercurywork.shop/", note: "Mercury Workshop · public relay", builtin: true },
+  { url: "wss://wisp.lol/",              note: "wisp.lol · community relay",      builtin: true },
+  { url: "wss://wisp.incognito.best/",   note: "Incognito · community relay",     builtin: true },
+];
+const ENGINE_NAMES = { ddg:"DuckDuckGo", google:"Google", bing:"Bing", brave:"Brave", startpage:"Startpage" };
+const ENGINES = {
+  ddg:       q => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+  google:    q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+  bing:      q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+  brave:     q => `https://search.brave.com/search?q=${encodeURIComponent(q)}`,
+  startpage: q => `https://www.startpage.com/sp/search?query=${encodeURIComponent(q)}`,
+};
+const QUICK_LINKS = [
+  { n:"YouTube",   u:"https://www.youtube.com/" },
+  { n:"Discord",   u:"https://discord.com/login" },
+  { n:"Reddit",    u:"https://www.reddit.com/" },
+  { n:"Spotify",   u:"https://open.spotify.com/" },
+  { n:"Wikipedia", u:"https://www.wikipedia.org/" },
+  { n:"GitHub",    u:"https://github.com/" },
+  { n:"Twitch",    u:"https://www.twitch.tv/" },
+  { n:"X",         u:"https://x.com/" },
+];
+const LS = {
+  settings:"lol.settings", servers:"lol.servers", containers:"lol.containers",
+  tabs:"lol.tabs", cookies:p=>"lol.cookies."+p,
+};
+
+/* ---------------- state ---------------- */
+const state = {
+  settings: { server:BUILTIN_SERVERS[0].url, engine:"ddg", ua:true, uaVal:DEFAULT_UA,
+              img:true, safe:false, restore:true, http:"2" },
+  servers: [],                       // {url, note, builtin, ms, ok}
+  containers: [{ id:"default", name:"Default", priv:false }],
+  tabs: [], active: null,
+  sessions: new Map(),               // containerId -> libcurl.HTTPSession
+  curlReady:false, reqCount:0,
+};
+let tabSeq = 0;
+
+/* ---------------- shorthands & utils ---------------- */
+const $  = s => document.querySelector(s);
+const views=$("#views"), tabsEl=$("#tabs"), addr=$("#addr"), lock=$("#lock"),
+      progress=$("#progress"), stLast=$("#stLast"), stCount=$("#stCount"),
+      stVer=$("#stVer"), tplNTP=$("#tplNTP"), tplViewer=$("#tplViewer"), tplError=$("#tplError");
+
+const hostOf = u => { try{ return new URL(u).hostname; }catch{ return u||""; } };
+const docName = u => { try{ const x=new URL(u); const p=x.pathname.split("/").filter(Boolean).pop(); return p?decodeURIComponent(p):x.hostname; }catch{ return u||"file"; } };
+const escMap = {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};
+const esc = s => String(s??"").replace(/[&<>"']/g, c=>escMap[c]);
+
+function absURL(base, rel){
+  if(!rel) return "";
+  rel = String(rel).trim();
+  if(!rel || /^(data|blob|javascript|mailto|tel|about):/i.test(rel)) return "";
+  try{ return new URL(rel, base).href; }catch{ return ""; }
+}
+function normalizeInput(raw){
+  const s=(raw||"").trim(); if(!s) return "";
+  if(/^https?:\/\//i.test(s)) return s;
+  if(/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+  const isDomain =
+    /^([\w-]+\.)+[a-z]{2,}(:\d+)?([\/?#].*)?$/i.test(s) ||
+    /^localhost(:\d+)?([\/?#].*)?$/i.test(s) ||
+    /^(\d{1,3}\.){3}\d{1,3}(:\d+)?([\/?#].*)?$/.test(s);
+  if(isDomain) return "https://" + s;
+  return (ENGINES[state.settings.engine]||ENGINES.ddg)(s);
+}
+function normalizeWispUrl(u){
+  let s=(u||"").trim(); if(!s) return "";
+  s=s.replace(/^https:\/\//i,"wss://").replace(/^http:\/\//i,"ws://");
+  if(!/^(wss|ws):\/\//i.test(s)) s="wss://"+s;
+  if(!/\/$/.test(s)) s+="/";
+  return s;
+}
+function toast(msg, kind){
+  const t=document.createElement("div"); t.className="toast"+(kind?" "+kind:"");
+  t.textContent=msg; $("#toasts").appendChild(t);
+  setTimeout(()=>{ t.style.opacity="0"; t.style.transition="opacity .4s"; setTimeout(()=>t.remove(),450); }, 4200);
+}
+function setProgress(on){
+  if(on){ progress.className="on"; }
+  else { progress.className="done"; setTimeout(()=>{ if(progress.className==="done") progress.className=""; },350); }
+}
+function fmtMs(ms){ return ms<1 ? "—" : (ms<1000 ? ms+"ms" : (ms/1000).toFixed(1)+"s"); }
+
+/* ---------------- persistence ---------------- */
+function saveSettings(){ localStorage.setItem(LS.settings, JSON.stringify(state.settings)); }
+function loadSettings(){ try{ Object.assign(state.settings, JSON.parse(localStorage.getItem(LS.settings)||"{}")); }catch{} }
+function loadServers(){
+  let extra=[];
+  try{ extra=JSON.parse(localStorage.getItem(LS.servers)||"[]"); }catch{}
+  state.servers=[...BUILTIN_SERVERS];
+  for(const s of extra){
+    const u=normalizeWispUrl(s.url||s);
+    if(u && !state.servers.some(x=>x.url===u)) state.servers.push({url:u, note:s.note||"custom", builtin:false, ms:s.ms, ok:s.ok});
+  }
+  if(!state.servers.some(x=>x.url===state.settings.server)) state.settings.server=BUILTIN_SERVERS[0].url;
+}
+function saveServers(){ localStorage.setItem(LS.servers, JSON.stringify(state.servers.filter(s=>!s.builtin))); }
+function loadContainers(){
+  let saved=[];
+  try{ saved=JSON.parse(localStorage.getItem(LS.containers)||"[]"); }catch{}
+  for(const c of saved){
+    if(c && c.id && c.id!=="default" && !c.priv && !state.containers.some(x=>x.id===c.id))
+      state.containers.push({id:c.id, name:String(c.name||"Session"), priv:false});
+  }
+}
+function saveContainers(){ localStorage.setItem(LS.containers, JSON.stringify(state.containers.filter(c=>!c.priv && c.id!=="default"))); }
+function saveTabs(){
+  const keep = state.tabs.filter(t=>!isPriv(t.containerId));
+  const data = keep.map(t=>({
+    title:t.title, history:t.history, hIdx:t.hIdx, containerId:t.containerId, url:t.url,
+  }));
+  const activeIdx = keep.findIndex(t=>t.id===state.active);
+  localStorage.setItem(LS.tabs, JSON.stringify({activeIdx, tabs:data}));
+}
+function loadTabs(){
+  if(!state.settings.restore) return null;
+  try{ return JSON.parse(localStorage.getItem(LS.tabs)||"null"); }catch{ return null; }
+}
+function saveCookies(){
+  for(const [cid,s] of state.sessions){
+    const c=state.containers.find(x=>x.id===cid);
+    if(!c || c.priv) continue;
+    try{ const jar=s.export_cookies(); if(jar) localStorage.setItem(LS.cookies(cid), jar); }catch{}
+  }
+}
+setInterval(saveCookies, 20000);
+window.addEventListener("beforeunload", saveCookies);
+
+/* ---------------- libcurl lifecycle ---------------- */
+function waitCurlReady(){
+  if(libcurl.ready) return Promise.resolve();
+  try{ const p=libcurl.load_wasm(""); if(p && p.then) return p; }catch{}
+  return new Promise((res,rej)=>{
+    document.addEventListener("libcurl_load", ()=>res(), {once:true});
+    document.addEventListener("libcurl_abort", ()=>rej(new Error("libcurl runtime aborted")), {once:true});
+    const iv=setInterval(()=>{ if(libcurl.ready){ clearInterval(iv); res(); } },120);
+    setTimeout(()=>{ clearInterval(iv); rej(new Error("timed out loading libcurl.wasm (check your connection to cdn.jsdelivr.net)")); },30000);
+  });
+}
+function baseHeaders(referer){
+  const h = {
+    "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language":"en-US,en;q=0.9",
+  };
+  if(state.settings.ua && state.settings.uaVal) h["User-Agent"]=state.settings.uaVal;
+  if(referer) h["Referer"]=referer;
+  return h;
+}
+function getSession(cid){
+  if(state.sessions.has(cid)) return state.sessions.get(cid);
+  const c=state.containers.find(x=>x.id===cid);
+  const jar = (c && !c.priv) ? (localStorage.getItem(LS.cookies(cid))||"") : "";
+  const s = new libcurl.HTTPSession({ enable_cookies:true, cookie_jar: jar });
+  state.sessions.set(cid, s);
+  return s;
+}
+function destroySession(cid){
+  const s=state.sessions.get(cid);
+  if(s){ try{ s.close(); }catch{} state.sessions.delete(cid); }
+}
+async function applyServer(url){
+  url = normalizeWispUrl(url) || BUILTIN_SERVERS[0].url;
+  state.settings.server=url; saveSettings();
+  updateWispChip("warn", hostOf(url)+" · testing…");
+  try{
+    libcurl.transport = "wisp";
+    libcurl.set_websocket(url);
+  }catch(e){
+    state.wispOK=false; updateWispChip("bad", hostOf(url));
+    toast("Could not switch relay: "+(e.message||e),"err"); return false;
+  }
+  const t0=performance.now();
+  try{
+    const r = await libcurl.fetch("https://example.com/", { method:"GET", headers:baseHeaders() });
+    const ms = Math.round(performance.now()-t0);
+    if(r.status < 500){
+      state.wispOK=true;
+      updateWispChip("ok", `${hostOf(url)} · ${fmtMs(ms)}`);
+      stLast.textContent = `relay check → ${r.status} · ${fmtMs(ms)}`;
+      refreshNTPCards();
+      return true;
+    }
+    state.wispOK=false; updateWispChip("bad", hostOf(url)+" · HTTP "+r.status);
+  }catch(e){
+    state.wispOK=false; updateWispChip("bad", hostOf(url)+" · offline");
+    toast(`Relay ${hostOf(url)} is unreachable from your network — open the Server Finder to pick another.`, "err");
+  }
+  refreshNTPCards();
+  return false;
+}
+function updateWispChip(cls, text){
+  $("#wispDot").className="dot "+cls;
+  $("#wispHost").textContent=text;
+}
+
+/* ---------------- tabs & views ---------------- */
+function isPriv(cid){ const c=state.containers.find(x=>x.id===cid); return !!(c && c.priv); }
+function createTab(opts={}){
+  const id="t"+(++tabSeq);
+  const tab={ id, containerId:opts.containerId||"default", title:"New Tab", url:"",
+              history:[], hIdx:-1, loading:false, abort:null, lastUrl:"", el:null };
+  const el=document.createElement("div"); el.className="view"; el.dataset.tab=id;
+  tab.el=el; views.appendChild(el);
+  state.tabs.push(tab);
+  showNTP(tab);
+  if(opts.restore && state.settings.restore){
+    tab.history=opts.restore.history||[]; tab.hIdx=typeof opts.restore.hIdx==="number"?opts.restore.hIdx:tab.history.length-1;
+    tab.title=opts.restore.title||"New Tab";
+  }
+  renderTabStrip(); setActiveTab(id);
+  if(opts.url) navigate(tab, opts.url);
+  else if(opts.auto && tab.history.length && tab.hIdx>=0 && tab.history[tab.hIdx])
+    navigate(tab, tab.history[tab.hIdx].url, {push:false});
+  saveTabs();
+  return tab;
+}
+function closeTab(tab){
+  if(tab.abort){ try{ tab.abort.abort(); }catch{} }
+  const priv=isPriv(tab.containerId);
+  state.tabs=state.tabs.filter(t=>t!==tab);
+  if(priv && !state.tabs.some(t=>t.containerId===tab.containerId)){
+    destroySession(tab.containerId);
+    state.containers=state.containers.filter(c=>c.id!==tab.containerId);
+    renderContainerSel(); renderSessions();
+  }
+  tab.el.remove();
+  if(state.active===tab.id){
+    const next=state.tabs[state.tabs.length-1];
+    if(next) setActiveTab(next.id); else { createTab(); saveTabs(); return; }
+  }
+  renderTabStrip(); saveTabs();
+}
+function setActiveTab(id){
+  state.active=id;
+  const tab=state.tabs.find(t=>t.id===id); if(!tab) return;
+  for(const t of state.tabs){
+    t.el.classList.toggle("active", t.id===id);
+  }
+  renderTabStrip(); renderContainerSel();
+  syncToolbar(tab);
+  addr.focus({preventScroll:true});
+}
+function activeTab(){ return state.tabs.find(t=>t.id===state.active); }
+function syncToolbar(tab){
+  if(tab.url){ addr.value=tab.url; lock.textContent = tab.url.startsWith("https") ? "🔒" : "◌"; }
+  else { addr.value=""; lock.textContent="◌"; }
+  updateNavButtons();
+}
+function updateNavButtons(){
+  const tab=activeTab(); if(!tab) return;
+  $("#backBtn").disabled = tab.hIdx<=0;
+  $("#fwdBtn").disabled  = tab.hIdx>=tab.history.length-1;
+}
+function goHistory(tab, delta){
+  const i=tab.hIdx+delta;
+  if(i<0 || i>=tab.history.length || !tab.history[i]) return;
+  tab.hIdx=i;
+  fetchAndRender(tab, tab.history[i].url, {push:false});
+}
+function showNTP(tab){
+  tab.mode="ntp"; tab.el.innerHTML="";
+  const node=tplNTP.content.firstElementChild.cloneNode(true);
+  const form=node.querySelector("#ntpSearch"), inp=form.querySelector("input");
+  form.addEventListener("submit", e=>{ e.preventDefault(); const v=inp.value.trim(); if(v) navigate(tab,v); });
+  const er=node.querySelector(".engineRow");
+  for(const k of Object.keys(ENGINES)){
+    const b=document.createElement("button"); b.type="button"; b.textContent=ENGINE_NAMES[k];
+    if(state.settings.engine===k) b.classList.add("sel");
+    b.onclick=()=>{ state.settings.engine=k; saveSettings(); er.querySelectorAll("button").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); };
+    er.appendChild(b);
+  }
+  const q=node.querySelector(".quick");
+  for(const ql of QUICK_LINKS){
+    const a=document.createElement("a"); a.href="#";
+    const qi=document.createElement("div"); qi.className="qi";
+    const img=document.createElement("img");
+    img.referrerPolicy="no-referrer";
+    img.src=`https://www.google.com/s2/favicons?domain=${hostOf(ql.u)}&sz=64`;
+    img.onerror=()=>{ img.remove(); qi.textContent=ql.n[0]; };
+    qi.appendChild(img);
+    const sp=document.createElement("span"); sp.textContent=ql.n;
+    a.append(qi,sp);
+    a.onclick=e=>{ e.preventDefault(); navigate(tab, ql.u); };
+    q.appendChild(a);
+  }
+  node.querySelectorAll(".ntpCard").forEach(c=>c.addEventListener("click", ()=>{
+    const m=c.dataset.open;
+    openModal(m==="servers"?"mServers":m==="sessions"?"mSessions":"mAbout");
+  }));
+  tab.el.appendChild(node);
+  refreshNTPCards();
+}
+function refreshNTPCards(){
+  for(const tab of state.tabs){
+    if(tab.mode!=="ntp") continue;
+    const c1=tab.el.querySelector('.ntpCard[data-open="servers"]');
+    if(c1){
+      const dot=c1.querySelector(".dot"), vt=c1.querySelector(".vtext");
+      dot.className="dot "+(state.wispOK?"ok":(state.curlReady?"bad":"warn"));
+      vt.textContent = hostOf(state.settings.server) + (state.wispOK ? " · connected" : state.curlReady?" · offline":" · loading");
+    }
+    const c2=tab.el.querySelector('.ntpCard[data-open="sessions"]');
+    if(c2){
+      const c=state.containers.find(x=>x.id===tab.containerId);
+      c2.querySelector(".vtext").textContent=(c?c.name:tab.containerId)+(c&&c.priv?" · private":"");
+    }
+  }
+}
+
+/* ---------------- history / toolbar sync ---------------- */
+function commitHistory(tab, url, title, push){
+  tab.url=url;
+  const entry={url, title: title||hostOf(url)};
+  if(push){ tab.history=tab.history.slice(0,tab.hIdx+1); tab.history.push(entry); tab.hIdx=tab.history.length-1; }
+  else if(tab.history[tab.hIdx]){ tab.history[tab.hIdx]=entry; }
+  else { tab.history.push(entry); tab.hIdx=tab.history.length-1; }
+  syncToolbar(tab); renderTabStrip(); saveTabs();
+}
+
+/* ---------------- navigation ---------------- */
+async function navigate(tab, input, opts={}){
+  if(!state.curlReady){ toast("libcurl.wasm is still loading — try again in a second.","err"); return; }
+  const url=normalizeInput(input);
+  if(!url){ toast("Nothing to open"); return; }
+  if(tab.abort){ try{ tab.abort.abort(); }catch{} }
+  await fetchAndRender(tab, url, opts);
+}
+async function fetchAndRender(tab, url, {push=true, method="GET", body=null}={}){
+  const ctrl=new AbortController(); tab.abort=ctrl;
+  tab.loading=true; renderTabStrip(); setProgress(true);
+  const t0=performance.now();
+  const sess=getSession(tab.containerId);
+  try{
+    const opts={ method, headers:baseHeaders(tab.lastUrl||undefined), signal:ctrl.signal, redirect:"follow" };
+    if(body) opts.body=body;
+    if(state.settings.http!=="2") opts._libcurl_http_version=parseFloat(state.settings.http);
+    const resp=await sess.fetch(url, opts);
+    const finalUrl=(resp.url && /^https?:/i.test(resp.url)) ? resp.url : url;
+    const ms=Math.round(performance.now()-t0);
+    state.reqCount++; stCount.textContent=state.reqCount;
+    const ct=(resp.headers.get("content-type")||"").toLowerCase();
+    stLast.textContent=`${method} ${hostOf(finalUrl)} → ${resp.status} · ${fmtMs(ms)}`;
+    if(ct.includes("text/html") || ct.includes("xhtml")){
+      const text=await resp.text();
+      commitHistory(tab, finalUrl, null, push);
+      await renderHTML(tab, finalUrl, text);
+    }else{
+      commitHistory(tab, finalUrl, docName(finalUrl), push);
+      await renderBinary(tab, finalUrl, resp, ct);
+    }
+    tab.lastUrl=finalUrl;
+  }catch(err){
+    if(!ctrl.signal.aborted) renderErrorPage(tab, url, err);
+  }finally{
+    tab.loading=false; renderTabStrip(); setProgress(false); saveTabs();
+  }
+}
+
+/* ---------------- HTML rewriter & renderer ---------------- */
+function rewriteCSSUrls(css, base){
+  return String(css||"").replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (m,q,u)=>{
+    if(/^(data|blob):/i.test(u)) return m;
+    const abs=absURL(base,u);
+    return abs ? `url("${abs}")` : m;
+  });
+}
+/* image proxy queue — max 6 concurrent blob fetches */
+const imgQueue=[]; let imgActive=0; const IMG_MAX=6;
+function pumpImages(){
+  while(imgActive<IMG_MAX && imgQueue.length){
+    const job=imgQueue.shift(); imgActive++;
+    job.fn().catch(()=>{}).finally(()=>{ imgActive--; pumpImages(); job.res(); });
+  }
+}
+function enqueueImage(fn){ return new Promise(res=>{ imgQueue.push({fn,res}); pumpImages(); }); }
+function proxyImage(tab, imgEl, absUrl){
+  return enqueueImage(async()=>{
+    const sess=getSession(tab.containerId);
+    const r=await sess.fetch(absUrl,{headers:baseHeaders(tab.lastUrl||undefined)});
+    if(!r.ok) return;
+    const b=await r.blob();
+    imgEl.src=URL.createObjectURL(b);
+    state.reqCount++; stCount.textContent=state.reqCount;
+  });
+}
+async function inlineCSS(tab, doc, linkEl, cssUrl){
+  try{
+    const sess=getSession(tab.containerId);
+    const r=await sess.fetch(cssUrl,{headers:baseHeaders(tab.lastUrl||undefined)});
+    if(!r.ok) return;
+    let css=await r.text();
+    css=rewriteCSSUrls(css, cssUrl);
+    const st=doc.createElement("style");
+    st.textContent=css; st.setAttribute("data-lol-css", cssUrl);
+    linkEl.replaceWith(st);
+    state.reqCount++; stCount.textContent=state.reqCount;
+  }catch{}
+}
+async function renderHTML(tab, pageUrl, text){
+  const doc=new DOMParser().parseFromString(text,"text/html");
+  doc.querySelectorAll("meta[http-equiv]").forEach(m=>{
+    if((m.getAttribute("http-equiv")||"").toLowerCase()==="content-security-policy") m.remove();
+  });
+  doc.querySelectorAll("[integrity]").forEach(e=>e.removeAttribute("integrity"));
+  doc.querySelectorAll("base").forEach(b=>b.remove());
+  const base=doc.createElement("base"); base.setAttribute("href",pageUrl);
+  (doc.head||doc.documentElement).prepend(base);
+  if(state.settings.safe) doc.querySelectorAll("script,noscript").forEach(e=>e.remove());
+  /* anchors */
+  doc.querySelectorAll("a[href]").forEach(a=>{
+    const abs=absURL(pageUrl, a.getAttribute("href"));
+    if(abs){ a.setAttribute("data-lol-href",abs); a.setAttribute("href",abs); a.setAttribute("target","_self"); }
+    else a.removeAttribute("href");
+  });
+  /* images */
+  const imgTasks=[];
+  doc.querySelectorAll("img").forEach(img=>{
+    const abs=absURL(pageUrl, img.getAttribute("src")||img.getAttribute("data-src"));
+    if(abs){
+      img.setAttribute("src",abs); img.removeAttribute("srcset"); img.loading="lazy";
+      if(state.settings.img) imgTasks.push(proxyImage(tab,img,abs));
+    }else img.removeAttribute("src");
+  });
+  doc.querySelectorAll("picture source, video source, audio source").forEach(s=>{
+    const abs=absURL(pageUrl, s.getAttribute("src"));
+    if(abs) s.setAttribute("src",abs); else s.remove();
+    s.removeAttribute("srcset");
+  });
+  doc.querySelectorAll("video[src],audio[src]").forEach(m=>{
+    const abs=absURL(pageUrl,m.getAttribute("src")); if(abs) m.setAttribute("src",abs); else m.removeAttribute("src");
+  });
+  /* styles */
+  const cssTasks=[];
+  doc.querySelectorAll("link[rel~='stylesheet']").forEach(l=>{
+    const abs=absURL(pageUrl, l.getAttribute("href"));
+    if(abs) cssTasks.push(inlineCSS(tab,doc,l,abs)); else l.remove();
+  });
+  doc.querySelectorAll("style").forEach(s=>{ s.textContent=rewriteCSSUrls(s.textContent,pageUrl); });
+  doc.querySelectorAll("[style]").forEach(e=>{ e.setAttribute("style",rewriteCSSUrls(e.getAttribute("style"),pageUrl)); });
+  /* forms */
+  doc.querySelectorAll("form").forEach(f=>{
+    const action=absURL(pageUrl, f.getAttribute("action")||"");
+    if(action) f.setAttribute("data-lol-action",action);
+    f.setAttribute("action","#");
+  });
+  /* wait for styles (images stream in after mount) */
+  await Promise.allSettled(cssTasks);
+  const html="<!DOCTYPE html>"+doc.documentElement.outerHTML;
+  mountIframe(tab, html);
+}
+function mountIframe(tab, srcdocHtml){
+  tab.mode="page"; tab.el.innerHTML="";
+  const f=document.createElement("iframe");
+  f.setAttribute("sandbox","allow-scripts allow-same-origin allow-forms");
+  f.srcdoc=srcdocHtml;
+  tab.el.appendChild(f);
+  f.addEventListener("load", ()=>wireFrame(tab,f), {once:true});
+}
+function wireFrame(tab, f){
+  let d; try{ d=f.contentDocument; }catch{ d=null; }
+  if(!d) return;
+  if(d.title){ tab.title=d.title.slice(0,80); const e=tab.history[tab.hIdx]; if(e){ e.title=tab.title; } renderTabStrip(); saveTabs(); }
+  /* meta-refresh support */
+  const mr=d.querySelector("meta[http-equiv='refresh' i]");
+  if(mr){
+    const m=(mr.getAttribute("content")||"").match(/(\d*)\s*;?\s*url=(.+)/i);
+    if(m){
+      const secs=Math.min(parseFloat(m[1])||0,15);
+      const target=absURL(tab.url, m[2].trim().replace(/^["']|["']$/g,""));
+      if(target) setTimeout(()=>{ if(state.tabs.includes(tab)) navigate(tab,target,{push:false}); }, secs*1000);
+    }
+  }
+  d.addEventListener("click", e=>{
+    const a=e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if(!a) return;
+    e.preventDefault(); e.stopPropagation();
+    const href=a.getAttribute("data-lol-href")||absURL(tab.url, a.getAttribute("href"));
+    if(!href) return;
+    if(e.ctrlKey||e.metaKey||e.shiftKey||a.getAttribute("target")==="_blank"){
+      createTab({containerId:tab.containerId, url:href});
+    }else navigate(tab, href);
+  }, true);
+  d.addEventListener("auxclick", e=>{
+    if(e.button!==1) return;
+    const a=e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if(!a) return;
+    e.preventDefault();
+    const href=a.getAttribute("data-lol-href")||absURL(tab.url, a.getAttribute("href"));
+    if(href) createTab({containerId:tab.containerId, url:href});
+  }, true);
+  d.addEventListener("submit", e=>{
+    const f=e.target; if(!f || f.tagName!=="FORM") return;
+    e.preventDefault();
+    try{
+      const action=f.getAttribute("data-lol-action")||tab.url;
+      const method=(f.getAttribute("method")||"GET").toUpperCase();
+      const fd=new FormData(f);
+      const pairs=[]; let hasFile=false;
+      for(const [k,v] of fd){
+        if(typeof v==="string") pairs.push([k,v]); else if(v && v.size) hasFile=true;
+      }
+      if(hasFile){ toast("File uploads aren't supported yet.","err"); return; }
+      if(method==="GET"){
+        const q=new URLSearchParams(pairs).toString();
+        navigate(tab, action+(action.includes("?")?"&":"?")+q);
+      }else{
+        navigate(tab, action, {method:"POST", body:new URLSearchParams(pairs)});
+      }
+    }catch(err){ toast("Form failed: "+(err.message||err),"err"); }
+  }, true);
+}
+async function renderBinary(tab, pageUrl, resp, ct){
+  const blob=await resp.blob();
+  const u=URL.createObjectURL(blob);
+  const node=tplViewer.content.firstElementChild.cloneNode(true);
+  node.querySelector(".vTitle").textContent=docName(pageUrl);
+  node.querySelector(".vMeta").textContent=`${ct||"unknown type"} · ${(blob.size/1024).toFixed(1)} KB · proxied via wisp`;
+  const area=node.querySelector(".vArea"), dl=node.querySelector(".vDl");
+  dl.href=u; dl.setAttribute("download", docName(pageUrl));
+  if(ct.startsWith("image/")){
+    const im=document.createElement("img"); im.src=u;
+    im.style.cssText="max-width:100%;max-height:48vh;border-radius:10px";
+    area.appendChild(im);
+  }else if(ct.includes("pdf")){
+    const fe=document.createElement("iframe"); fe.src=u;
+    fe.style.cssText="width:100%;height:56vh;border:1px solid var(--line);border-radius:10px;background:#fff";
+    area.appendChild(fe);
+  }else if(ct.startsWith("text/")||ct.includes("json")||ct.includes("xml")){
+    const t=await blob.text();
+    const pe=document.createElement("pre"); pe.textContent=t.slice(0,20000);
+    pe.style.cssText="text-align:left;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:.72rem;overflow:auto;max-height:48vh";
+    area.appendChild(pe);
+  }
+  tab.el.innerHTML=""; tab.el.appendChild(node);
+}
+function renderErrorPage(tab, url, err){
+  const node=tplError.content.firstElementChild.cloneNode(true);
+  node.querySelector(".eUrl").textContent=url;
+  let msg=(err && (err.message||String(err))) || "Unknown error";
+  if(typeof libcurl.get_error_string==="function" && /^\s*\d+\s*$/.test(String((err&&err.code)??""))) {
+    try{ msg+=" — "+libcurl.get_error_string(Number(err.code)); }catch{}
+  }
+  if(!state.wispOK) msg+="\n\nThe wisp relay looks offline from here. Open the Server Finder (wisp chip, bottom-right) and pick a server with low latency.";
+  node.querySelector(".eMsg").textContent=msg;
+  node.querySelector(".eRetry").onclick=()=>navigate(tab,url,{push:false});
+  node.querySelector(".eServers").onclick=()=>openModal("mServers");
+  tab.el.innerHTML=""; tab.el.appendChild(node);
+}
+/* ================= UI wiring ================= */
+
+/* ---------- tab strip ---------- */
+function renderTabStrip(){
+  tabsEl.innerHTML="";
+  for(const tab of state.tabs){
+    const el=document.createElement("div");
+    el.className="tab"+(tab.id===state.active?" active":"");
+    const fav=document.createElement("div"); fav.className="fav";
+    if(isPriv(tab.containerId)){ fav.textContent="🕶"; fav.style.background="transparent"; }
+    else fav.textContent=(tab.title||"N")[0].toUpperCase();
+    const ttl=document.createElement("div"); ttl.className="ttl";
+    ttl.textContent=(tab.loading?"⟳ ":"")+(tab.title||"New Tab");
+    if(isPriv(tab.containerId)){
+      const p=document.createElement("span"); p.className="priv"; p.textContent="PVT";
+      ttl.after(p);
+    }
+    const x=document.createElement("div"); x.className="x"; x.textContent="✕"; x.title="Close tab";
+    x.onclick=e=>{ e.stopPropagation(); closeTab(tab); };
+    el.append(fav,ttl,x);
+    el.onclick=()=>setActiveTab(tab.id);
+    tabsEl.appendChild(el);
+  }
+  const add=document.createElement("div");
+  add.style.cssText="flex:1 0 20px"; 
+  tabsEl.appendChild(add);
+}
+
+/* ---------- modals ---------- */
+function openModal(id){ $("#"+id).classList.add("open"); }
+function closeModals(){ document.querySelectorAll(".backdrop.open").forEach(b=>b.classList.remove("open")); }
+document.querySelectorAll(".backdrop").forEach(b=>{
+  b.addEventListener("mousedown", e=>{ if(e.target===b) closeModals(); });
+});
+document.querySelectorAll(".mClose").forEach(b=>b.onclick=closeModals);
+
+/* ---------- toolbar ---------- */
+$("#backBtn").onclick=()=>{ const t=activeTab(); if(t) goHistory(t,-1); };
+$("#fwdBtn").onclick =()=>{ const t=activeTab(); if(t) goHistory(t,1); };
+$("#reloadBtn").onclick=()=>{ const t=activeTab(); if(!t) return; if(t.url) navigate(t,t.url,{push:false}); };
+$("#homeBtn").onclick=()=>{ const t=activeTab(); if(t){ t.history=t.history.slice(0,t.hIdx+1); showNTP(t); syncToolbar(t); } };
+$("#goBtn").onclick =()=>{ const t=activeTab(); if(t && addr.value.trim()) navigate(t,addr.value); };
+addr.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){ const t=activeTab(); if(t && addr.value.trim()) navigate(t,addr.value); }
+});
+addr.addEventListener("focus", ()=>addr.select());
+$("#wispChip").onclick=()=>{ renderServerRows(); openModal("mServers"); };
+$("#aboutBtn").onclick=()=>openModal("mAbout");
+$("#tabAdd").onclick=()=>createTab();
+$("#privBtn").onclick=()=>newPrivateTab();
+function newPrivateTab(){
+  const id="priv-"+Date.now().toString(36);
+  state.containers.push({id, name:"Private "+(state.containers.filter(c=>c.priv).length+1), priv:true});
+  createTab({containerId:id});
+  renderSessions(); renderContainerSel();
+  toast("Private tab opened — cookies stay in memory only.");
+}
+
+/* ---------- container selector ---------- */
+function renderContainerSel(){
+  const sel=$("#containerSel"); const cur=activeTab();
+  sel.innerHTML="";
+  for(const c of state.containers){
+    const o=document.createElement("option"); o.value=c.id;
+    o.textContent=(c.priv?"🕶 ":"🍪 ")+c.name;
+    sel.appendChild(o);
+  }
+  if(cur) sel.value=cur.containerId;
+}
+$("#containerSel").addEventListener("change", e=>{
+  const t=activeTab(); if(!t) return;
+  t.containerId=e.target.value;
+  refreshNTPCards(); renderTabStrip();
+  if(t.url) navigate(t,t.url,{push:false});
+  toast("Tab moved to session container: "+(state.containers.find(c=>c.id===t.containerId)||{}).name);
+});
+
+/* ---------- wisp server finder ---------- */
+function testWisp(url, tries=2){
+  return new Promise(resolve=>{
+    const results=[];
+    const one=()=>new Promise(res=>{
+      const t0=performance.now(); let settled=false, ws;
+      try{ ws=new WebSocket(url); }catch{ return res(null); }
+      const fin=ok=>{
+        if(settled) return; settled=true;
+        const ms=Math.round(performance.now()-t0);
+        try{ ws.close(); }catch{}
+        res(ok?ms:null);
+      };
+      ws.onopen=()=>fin(true); ws.onerror=()=>fin(false); ws.onclose=()=>fin(false);
+      setTimeout(()=>fin(false), 7000);
+    });
+    (async()=>{
+      for(let i=0;i<tries;i++) results.push(await one());
+      const ok=results.filter(x=>x!==null);
+      resolve(ok.length?{ok:true, ms:Math.min(...ok)}:{ok:false, ms:0});
+    })();
+  });
+}
+function renderServerRows(){
+  const tb=$("#srvRows"); tb.innerHTML="";
+  for(const s of state.servers){
+    const tr=document.createElement("tr");
+    if(s.url===state.settings.server) tr.className="current";
+    const td1=document.createElement("td");
+    const dot=document.createElement("span");
+    dot.className="srv-dot"+(s.testing?" testing":(s.ok===true?" ok":(s.ok===false?" bad":"")));
+    td1.appendChild(dot);
+    const td2=document.createElement("td");
+    td2.innerHTML=`<div style="font-weight:600;font-size:.78rem">${esc(hostOf(s.url))}</div>
+                   <div style="font-size:.66rem;color:var(--txt3)">${esc(s.note||"")}</div>`;
+    const td3=document.createElement("td");
+    const msSpan=document.createElement("span");
+    msSpan.className="ms"+(s.ok&&s.ms<150?" good":(s.ok?" mid":""));
+    msSpan.textContent = s.testing?"testing…" : (s.ok? fmtMs(s.ms) : (s.ok===false?"unreachable":"—"));
+    td3.appendChild(msSpan);
+    const td4=document.createElement("td");
+    const use=document.createElement("button");
+    use.className="useBtn"+(s.url===state.settings.server?" cur":"");
+    use.textContent = s.url===state.settings.server ? "in use" : "use";
+    use.onclick=async()=>{
+      closeModals();
+      const ok=await applyServer(s.url);
+      toast(ok?`Switched to ${hostOf(s.url)} (${fmtMs(s.ms)})`:`${hostOf(s.url)} failed — still on ${hostOf(state.settings.server)}`, ok?"ok":"err");
+      renderServerRows();
+    };
+    td4.appendChild(use);
+    const td5=document.createElement("td");
+    if(!s.builtin){
+      const del=document.createElement("button"); del.className="delBtn"; del.textContent="🗑"; del.title="Remove";
+      del.onclick=()=>{ state.servers=state.servers.filter(x=>x!==s); saveServers(); renderServerRows(); };
+      td5.appendChild(del);
+    }
+    tr.append(td1,td2,td3,td4,td5);
+    tb.appendChild(tr);
+  }
+}
+async function scanAllServers({silent=false}={}){
+  state.servers.forEach(s=>{ s.testing=true; s.ok=null; });
+  renderServerRows();
+  await Promise.all(state.servers.map(async s=>{
+    const r=await testWisp(s.url);
+    s.testing=false; s.ok=r.ok; s.ms=r.ms;
+  }));
+  state.servers.sort((a,b)=>(b.ok?1e9-b.ms:-1)-(a.ok?1e9-a.ms:-1));
+  renderServerRows();
+  if(!silent){
+    const good=state.servers.filter(s=>s.ok);
+    toast(good.length?`Scan done — ${good.length} relay(s) reachable, best ${fmtMs(good[0].ms)}`:"No relays reachable from this network.", good.length?"ok":"err");
+  }
+  return state.servers.filter(s=>s.ok);
+}
+$("#srvScanAll").onclick=()=>scanAllServers();
+$("#srvAuto").onclick=async()=>{
+  closeModals();
+  const good=await scanAllServers({silent:true});
+  if(good.length){
+    const best=good[0];
+    const ok=await applyServer(best.url);
+    toast(ok?`Auto-picked ${hostOf(best.url)} · ${fmtMs(best.ms)}`:"Switch failed", ok?"ok":"err");
+  }else{
+    toast("No reachable relay found — add your own wss:// URL below.","err");
+    openModal("mServers");
+  }
+  renderServerRows();
+};
+$("#srvAddCustom").onclick=()=>{
+  const single=normalizeWispUrl($("#srvCustom").value);
+  const bulk=$("#srvBulk").value.split(/\n+/).map(normalizeWispUrl).filter(Boolean);
+  const list=[...(single?[single]:[]), ...bulk].filter(u=>u && !state.servers.some(s=>s.url===u));
+  if(!list.length){ toast("Nothing new to add — enter a wss:// URL first."); return; }
+  for(const u of list) state.servers.push({url:u, note:"custom", builtin:false});
+  $("#srvCustom").value=""; $("#srvBulk").value="";
+  saveServers(); renderServerRows(); scanAllServers({silent:true});
+};
+
+/* ---------- sessions manager ---------- */
+function countTabsFor(cid){ return state.tabs.filter(t=>t.containerId===cid).length; }
+function renderSessions(){
+  const box=$("#sessRows"); box.innerHTML="";
+  for(const c of state.containers){
+    const row=document.createElement("div"); row.className="sessRow";
+    const ic=document.createElement("div"); ic.className="ic"; ic.textContent=c.priv?"🕶":"🍪";
+    const meta=document.createElement("div"); meta.className="meta";
+    const nm=document.createElement("div"); nm.className="nm";
+    nm.innerHTML=esc(c.name)+(c.id==="default"?'<span class="tag">primary</span>':"")+(c.priv?'<span class="tag">private</span>':"");
+    const cookies=(()=>{ try{ return (localStorage.getItem(LS.cookies(c.id))||"").split("\n").filter(x=>x.trim()).length; }catch{ return 0; } })();
+    const info=document.createElement("div"); info.className="info";
+    info.textContent=`${countTabsFor(c.id)} tab(s) · ${c.priv?"memory only":cookies+" saved cookie(s)"}`;
+    meta.append(nm,info);
+    const acts=document.createElement("div"); acts.className="acts";
+    const use=document.createElement("button"); use.className="btn ghost"; use.style.fontSize=".7rem"; use.textContent="Use on this tab";
+    use.onclick=()=>{
+      const t=activeTab(); if(!t) return;
+      t.containerId=c.id; renderContainerSel(); renderTabStrip(); refreshNTPCards(); closeModals();
+      if(t.url) navigate(t,t.url,{push:false});
+    };
+    acts.appendChild(use);
+    if(!c.priv){
+      const clr=document.createElement("button"); clr.className="btn ghost"; clr.style.fontSize=".7rem"; clr.textContent="Clear cookies";
+      clr.onclick=()=>{
+        destroySession(c.id); localStorage.removeItem(LS.cookies(c.id));
+        renderSessions(); toast("Cookies cleared for "+c.name);
+      };
+      acts.appendChild(clr);
+    }
+    if(c.id!=="default"){
+      const del=document.createElement("button"); del.className="btn danger"; del.style.fontSize=".7rem"; del.textContent="Delete";
+      del.onclick=()=>{
+        if(countTabsFor(c.id)){ toast("Move or close this container's tabs first.","err"); return; }
+        destroySession(c.id); localStorage.removeItem(LS.cookies(c.id));
+        state.containers=state.containers.filter(x=>x!==c);
+        saveContainers(); renderSessions(); renderContainerSel();
+      };
+      acts.appendChild(del);
+    }
+    row.append(ic,meta,acts);
+    box.appendChild(row);
+  }
+}
+$("#sessNew").onclick=()=>{
+  const name=prompt("Name for the new session container:","Work");
+  if(!name) return;
+  const id="c-"+Date.now().toString(36);
+  state.containers.push({id, name:name.slice(0,24), priv:false});
+  saveContainers(); renderSessions(); renderContainerSel();
+  toast(`Container "${name}" created — cookies are kept separately.`);
+};
+$("#sessPriv").onclick=()=>{ newPrivateTab(); closeModals(); };
+
+/* ---------- settings ---------- */
+function wireSettings(){
+  const s=state.settings;
+  $("#setEngine").value=s.engine;
+  $("#setHttp").value=s.http;
+  $("#setUA").checked=s.ua;
+  $("#setUAVal").value=s.uaVal===DEFAULT_UA?"":s.uaVal;
+  $("#uaField").style.display=s.ua?"block":"none";
+  $("#setImg").checked=s.img;
+  $("#setSafe").checked=s.safe;
+  $("#setRestore").checked=s.restore;
+
+  $("#setEngine").onchange=e=>{ s.engine=e.target.value; saveSettings(); };
+  $("#setHttp").onchange=e=>{ s.http=e.target.value; saveSettings(); toast("HTTP version applies to new requests."); };
+  $("#setUA").onchange=e=>{ s.ua=e.target.checked; $("#uaField").style.display=s.ua?"block":"none"; saveSettings(); };
+  $("#setUAVal").onchange=e=>{ s.uaVal=e.target.value.trim()||DEFAULT_UA; saveSettings(); };
+  $("#setImg").onchange=e=>{ s.img=e.target.checked; saveSettings(); };
+  $("#setSafe").onchange=e=>{ s.safe=e.target.checked; saveSettings(); toast("Safe mode applies on next page load."); };
+  $("#setRestore").onchange=e=>{ s.restore=e.target.checked; saveSettings(); };
+  $("#setClear").onclick=()=>{
+    if(!confirm("Wipe all sessions, cookies, saved servers, tabs and settings from this browser?")) return;
+    const kill=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith("lol.")) kill.push(k); }
+    kill.forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  };
+}
+
+/* ---------- keyboard shortcuts ---------- */
+window.addEventListener("keydown", e=>{
+  const mod=e.ctrlKey||e.metaKey;
+  if(e.key==="Escape"){ closeModals(); return; }
+  if(mod && e.shiftKey && e.key.toLowerCase()==="n"){ e.preventDefault(); newPrivateTab(); return; }
+  if(!mod){
+    if(e.altKey && e.key==="ArrowLeft"){ e.preventDefault(); const t=activeTab(); if(t) goHistory(t,-1); return; }
+    if(e.altKey && e.key==="ArrowRight"){ e.preventDefault(); const t=activeTab(); if(t) goHistory(t,1); return; }
+    if(e.key==="F5"){ e.preventDefault(); const t=activeTab(); if(t&&t.url) navigate(t,t.url,{push:false}); return; }
+    return;
+  }
+  const k=e.key.toLowerCase();
+  if(k==="t"){ e.preventDefault(); createTab(); }
+  else if(k==="w"){ e.preventDefault(); const t=activeTab(); if(t) closeTab(t); }
+  else if(k==="l"){ e.preventDefault(); addr.focus(); }
+  else if(k==="r"){ e.preventDefault(); const t=activeTab(); if(t&&t.url) navigate(t,t.url,{push:false}); }
+  else if(k===","){ e.preventDefault(); wireSettings(); openModal("mSettings"); }
+});
+
+/* ---------- boot ---------- */
+(async function boot(){
+  loadSettings(); loadServers(); loadContainers(); wireSettings();
+  renderTabStrip(); renderServerRows(); renderSessions(); renderContainerSel();
+  const saved=loadTabs();
+  if(saved && saved.tabs && saved.tabs.length && state.settings.restore){
+    for(const r of saved.tabs){
+      if(r.containerId && r.containerId!=="default" && !state.containers.some(c=>c.id===r.containerId))
+        state.containers.push({id:r.containerId, name:"Session", priv:false});
+    }
+    saved.tabs.forEach((r,i)=>{
+      createTab({restore:r, containerId:r.containerId||"default", auto: i===saved.activeIdx});
+    });
+    const idx=(typeof saved.activeIdx==="number" && saved.activeIdx>=0 && saved.activeIdx<state.tabs.length)
+      ? saved.activeIdx : state.tabs.length-1;
+    setActiveTab(state.tabs[idx].id);
+  }else{
+    createTab();
+  }
+  /* load libcurl + connect relay */
+  stVer.textContent="libcurl.js — loading wasm…";
+  try{
+    await waitCurlReady();
+    state.curlReady=true;
+    let v="unknown";
+    try{ v=libcurl.version && libcurl.version.lib ? libcurl.version.lib : LIBCURL_PIN; }catch{}
+    stVer.textContent=`libcurl.js v${v} · curl-wasm · transport: wisp`;
+    await applyServer(state.settings.server);
+  }catch(e){
+    state.wispOK=false;
+    updateWispChip("bad","libcurl failed");
+    toast("Failed to initialise libcurl.js: "+(e.message||e),"err");
+  }
+  refreshNTPCards(); saveTabs();
+})();
+
+</script>
+
+
 </body>
 </html>
