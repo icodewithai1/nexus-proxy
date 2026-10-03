@@ -3,71 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Scary Baboon — Boombox</title>
+<title>Scary Baboon</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
   body { font-family: 'Courier New', monospace; color: #fff; user-select: none; -webkit-user-select: none; touch-action: none; }
-  canvas { display: block; }
-  #crosshair { position: fixed; top: 50%; left: 50%; width: 6px; height: 6px;
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    width: 100vw; height: 100vh;
+  }
+  #crosshair {
+    position: fixed; top: 50%; left: 50%; width: 6px; height: 6px;
     background: rgba(255,255,255,0.7); border-radius: 50%;
     transform: translate(-50%, -50%); pointer-events: none; z-index: 5;
-    box-shadow: 0 0 4px #000; }
-  .overlay { position: fixed; inset: 0; z-index: 10; display: none;
-    align-items: center; justify-content: center;
-    pointer-events: none; background: rgba(0,0,0,0.85); }
+    box-shadow: 0 0 4px #000;
+  }
+  .overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: none; align-items: center; justify-content: center;
+    pointer-events: none; background: rgba(0,0,0,0.88);
+  }
   .overlay.active { display: flex; pointer-events: auto; }
-  .panel { padding: 32px 44px; border: 2px solid #fff; background: rgba(10,10,15,0.95);
-    text-align: center; cursor: pointer; max-width: 90vw; }
-  .panel h1 { font-size: 28px; letter-spacing: 6px; margin-bottom: 20px;
-    color: #ff2222; text-shadow: 0 0 24px #ff0000; }
+  .panel {
+    padding: 32px 44px; border: 2px solid #fff; background: rgba(10,10,15,0.96);
+    text-align: center; cursor: pointer; max-width: 90vw;
+  }
+  .panel h1 {
+    font-size: 26px; letter-spacing: 6px; margin-bottom: 20px;
+    color: #ff2222; text-shadow: 0 0 24px #ff0000;
+  }
   .panel p { font-size: 13px; margin: 7px 0; opacity: 0.9; line-height: 1.7; }
   .panel .key { color: #66ccff; font-weight: bold; }
   .panel .hint { margin-top: 22px; color: #888; font-size: 11px; letter-spacing: 2px; }
   .panel .safe { color: #44ff88; font-weight: bold; }
-  #gameover .panel { border-color: #ff0000; background: rgba(30,0,0,0.95); }
+  #gameover .panel { border-color: #ff0000; background: rgba(30,0,0,0.96); }
   #gameover .panel h1 { animation: pulse 1s infinite; }
   @keyframes pulse { 50% { opacity: 0.4; } }
-  #hud { position: fixed; top: 16px; left: 16px; z-index: 5;
+
+  #hud {
+    position: fixed; top: 16px; left: 16px; z-index: 5;
     font-size: 12px; letter-spacing: 2px; pointer-events: none;
-    text-shadow: 0 0 6px currentColor; line-height: 1.7; }
+    text-shadow: 0 0 6px currentColor; line-height: 1.7;
+  }
   #hud .label { color: #888; }
   #hud .danger { color: #ff4444; }
   #hud .warn { color: #ffaa22; }
   #hud .safe { color: #44ff88; }
-  #safe-banner { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -140px);
+
+  #safe-banner {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -140px);
     z-index: 6; font-size: 22px; letter-spacing: 8px; color: #44ff88;
     text-shadow: 0 0 18px #44ff88, 0 0 30px #00ff00;
-    opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; }
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    font-weight: bold;
+  }
   #safe-banner.show { opacity: 1; }
-  #audio-banner { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+
+  #audio-banner {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     z-index: 6; font-size: 12px; letter-spacing: 3px; color: #ffaa22;
     background: rgba(0,0,0,0.6); padding: 8px 16px; border: 1px solid #ffaa22;
-    opacity: 0.85; pointer-events: none; }
+    opacity: 0; transition: opacity 0.4s; pointer-events: none;
+  }
+  #audio-banner.show { opacity: 0.9; }
+
   #mobile-controls { display: none; }
   #mobile-controls.enabled { display: block; }
-  #joystick-base { position: fixed; bottom: 40px; left: 40px;
+  #joystick-base {
+    position: fixed; bottom: 40px; left: 40px;
     width: 130px; height: 130px; border-radius: 50%;
     background: rgba(255,255,255,0.05);
     border: 2px solid rgba(255,255,255,0.25);
-    z-index: 20; touch-action: none; }
-  #joystick-knob { position: absolute; top: 50%; left: 50%;
+    z-index: 20; touch-action: none;
+  }
+  #joystick-knob {
+    position: absolute; top: 50%; left: 50%;
     width: 55px; height: 55px; border-radius: 50%;
     background: rgba(255,255,255,0.35);
     border: 2px solid rgba(255,255,255,0.5);
-    transform: translate(-50%, -50%); }
-  #look-zone { position: fixed; top: 0; right: 0; width: 55%; height: 100%;
-    z-index: 15; touch-action: none; }
-  #sprint-btn { position: fixed; bottom: 60px; right: 40px;
+    transform: translate(-50%, -50%);
+  }
+  #look-zone {
+    position: fixed; top: 0; right: 0; width: 55%; height: 100%;
+    z-index: 15; touch-action: none;
+  }
+  #sprint-btn {
+    position: fixed; bottom: 60px; right: 40px;
     width: 80px; height: 80px; border-radius: 50%;
     background: rgba(255,255,255,0.1);
     border: 2px solid rgba(255,255,255,0.3);
     color: #fff; font-family: inherit; font-size: 12px; letter-spacing: 2px;
-    z-index: 20; touch-action: none; }
+    z-index: 20; touch-action: none;
+  }
   #sprint-btn.active { background: rgba(255,80,80,0.5); }
-  #loader { position: fixed; inset: 0; z-index: 100;
+  #loader {
+    position: fixed; inset: 0; z-index: 100;
     display: flex; align-items: center; justify-content: center;
-    background: #000; color: #fff; letter-spacing: 3px; }
+    background: #000; color: #fff; letter-spacing: 3px;
+  }
 </style>
 
 <script type="importmap">
@@ -101,7 +136,7 @@
     <p><span class="key">SHIFT</span> — Sprint</p>
     <p><span class="key">F</span> — Flashlight</p>
     <p class="hint">Find the <span class="safe">green SAFE ZONE</span> if he gets close.</p>
-    <p class="hint" style="margin-top:8px;">Click to enter the room &amp; start the boombox</p>
+    <p class="hint" style="margin-top:8px;">Click to enter &amp; start the boombox</p>
   </div>
 </div>
 
@@ -124,258 +159,362 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 // ============================================================
-// 0. UPLOADED AUDIO — paste your base64 MP3 string here
+// 0. UPLOADED AUDIO — paste your base64 MP3 here
 // ============================================================
-// Get this from your audio_player.html: everything after "data:audio/mpeg;base64,"
-// If left empty, a procedural retro loop is used instead.
+// From audio_player.html: everything after "data:audio/mpeg;base64,"
+// If left empty, a procedural retro synth loop is generated.
 const UPLOADED_AUDIO_B64 = "";
 
 // ============================================================
-// 1. RENDERER (WebGPU with WebGL fallback)
+// 1. RENDERER — WebGPU with 3s timeout, else WebGL
 // ============================================================
 const canvas = document.getElementById('game-canvas');
-let renderer;
+let renderer = null;
+
 async function createRenderer() {
   if (navigator.gpu) {
     try {
-      const { WebGPURenderer } = await import('three/addons/renderers/webgpu/WebGPURenderer.js');
-      const r = new WebGPURenderer({ canvas, antialias: true });
-      await r.init();
+      const initPromise = (async () => {
+        const { WebGPURenderer } = await import('three/addons/renderers/webgpu/WebGPURenderer.js');
+        const r = new WebGPURenderer({ canvas, antialias: false });
+        await r.init();
+        return r;
+      })();
+      const timeoutPromise = new Promise((_, rej) =>
+        setTimeout(() => rej(new Error('WebGPU init timeout')), 3000)
+      );
+      const r = await Promise.race([initPromise, timeoutPromise]);
       console.log('[Renderer] WebGPU');
       return r;
     } catch (e) {
-      console.warn('WebGPU failed, using WebGL:', e);
+      console.warn('[Renderer] WebGPU unavailable:', e.message || e);
     }
   }
   console.log('[Renderer] WebGL');
-  return new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  return new THREE.WebGLRenderer({
+    canvas, antialias: false, powerPreference: 'high-performance'
+  });
 }
+
 renderer = await createRenderer();
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(1); // true pixel look
 if (renderer.shadowMap) {
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 }
 if (renderer.toneMapping !== undefined) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.0;
 }
 document.getElementById('loader').style.display = 'none';
 
 // ============================================================
-// 2. SCENE / CAMERA / ROOM
+// 2. SCENE / CAMERA
 // ============================================================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0c0d12);
-scene.fog = new THREE.FogExp2(0x0c0d12, 0.045);
+scene.background = new THREE.Color(0x0a0b10);
+scene.fog = new THREE.FogExp2(0x0a0b10, 0.042);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.05, 120);
+const camera = new THREE.PerspectiveCamera(75, 1, 0.05, 120);
 camera.position.set(0, 1.65, 15);
 
 const ROOM_W = 40, ROOM_D = 40, ROOM_H = 4.5;
 const HALF_W = ROOM_W / 2, HALF_D = ROOM_D / 2;
 
 // ============================================================
-// 3. PIXEL-ART TEXTURE HELPER
+// 3. PIXEL TEXTURES — small canvases, NearestFilter
 // ============================================================
-// All textures are low-res with NEAREST filtering for a chunky pixel look
-function makePixelCanvas(w, h) {
+function newCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   return c;
 }
-function finalizePixelTexture(canvas) {
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.NearestFilter;
-  tex.generateMipmaps = false;
-  return tex;
+function pixelTex(canvas, repeat = null) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.magFilter = THREE.NearestFilter;
+  t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false;
+  if (repeat) {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeat[0], repeat[1]);
+  }
+  return t;
 }
 
-// --- Concrete wall — 64x64 pixel version ---
+// --- Concrete wall (64x64): pale gray with dense dark specks + light blotches ---
 function makeConcreteTexture() {
   const s = 64;
-  const c = makePixelCanvas(s, s);
+  const c = newCanvas(s, s);
   const ctx = c.getContext('2d');
-  ctx.fillStyle = '#a2a8ae';
+  ctx.fillStyle = '#a8acb0';
   ctx.fillRect(0, 0, s, s);
-  for (let i = 0; i < 200; i++) {
-    const x = (Math.random() * s) | 0, y = (Math.random() * s) | 0;
-    const r = 3 + Math.random() * 10;
-    const v = (140 + Math.random() * 40) | 0;
-    ctx.fillStyle = `rgba(${v},${v+4},${v+8},0.32)`;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+
+  // Big soft blotches
+  for (let i = 0; i < 18; i++) {
+    const x = Math.random() * s, y = Math.random() * s;
+    const r = 6 + Math.random() * 14;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const v = (150 + Math.random() * 30) | 0;
+    g.addColorStop(0, `rgba(${v},${v+4},${v+8},0.5)`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  for (let i = 0; i < 400; i++) {
-    const x = (Math.random() * s) | 0, y = (Math.random() * s) | 0;
-    const v = (60 + Math.random() * 40) | 0;
-    ctx.fillStyle = `rgb(${v},${v},${v+4})`;
+  // Very dark specks (concrete aggregate)
+  for (let i = 0; i < 320; i++) {
+    const x = (Math.random() * s) | 0;
+    const y = (Math.random() * s) | 0;
+    const v = (70 + Math.random() * 40) | 0;
+    ctx.fillStyle = `rgb(${v},${v},${v+3})`;
     ctx.fillRect(x, y, 1, 1);
   }
-  // Faint seams
-  ctx.strokeStyle = 'rgba(70,72,78,0.3)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(0, s/2); ctx.lineTo(s, s/2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(s/2, 0); ctx.lineTo(s/2, s); ctx.stroke();
-  const tex = finalizePixelTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  return tex;
-}
-
-// --- Floor tile — 32x32 pixel ---
-function makeFloorTexture() {
-  const s = 32;
-  const c = makePixelCanvas(s, s);
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#8b9298';
-  ctx.fillRect(0, 0, s, s);
-  const v = (138 + (Math.random() - 0.5) * 14) | 0;
-  ctx.fillStyle = `rgb(${v},${v+3},${v+6})`;
-  ctx.fillRect(2, 2, s - 4, s - 4);
-  ctx.strokeStyle = 'rgba(50,52,58,0.9)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, s, s);
-  for (let i = 0; i < 60; i++) {
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect((Math.random()*s)|0, (Math.random()*s)|0, 1, 1);
+  // Medium noise
+  for (let i = 0; i < 800; i++) {
+    const x = (Math.random() * s) | 0;
+    const y = (Math.random() * s) | 0;
+    const v = (120 + Math.random() * 60) | 0;
+    ctx.fillStyle = `rgba(${v},${v+2},${v+6},0.5)`;
+    ctx.fillRect(x, y, 1, 1);
   }
-  const tex = finalizePixelTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  return tex;
+  // Faint seam
+  ctx.fillStyle = 'rgba(60,62,68,0.25)';
+  ctx.fillRect(0, s/2, s, 1);
+  ctx.fillRect(s/2, 0, 1, s);
+
+  return c;
 }
 
-// --- Baboon body — with LAT on the chest ---
+// --- Floor (64x64): 2x2 tiles with dark grout, light gray tiles ---
+function makeFloorTexture() {
+  const s = 64;
+  const c = newCanvas(s, s);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#4a4e54';
+  ctx.fillRect(0, 0, s, s);
+  const t = s / 2;
+  for (let ty = 0; ty < 2; ty++) {
+    for (let tx = 0; tx < 2; tx++) {
+      const v = (140 + (Math.random() - 0.5) * 12) | 0;
+      ctx.fillStyle = `rgb(${v},${v+3},${v+7})`;
+      ctx.fillRect(tx * t + 2, ty * t + 2, t - 4, t - 4);
+    }
+  }
+  // Grout grid
+  ctx.strokeStyle = '#3a3e44';
+  ctx.lineWidth = 3;
+  for (let i = 0; i <= 2; i++) {
+    ctx.beginPath(); ctx.moveTo(i * t, 0); ctx.lineTo(i * t, s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * t); ctx.lineTo(s, i * t); ctx.stroke();
+  }
+  // Noise
+  for (let i = 0; i < 400; i++) {
+    const x = (Math.random() * s) | 0;
+    const y = (Math.random() * s) | 0;
+    const v = (120 + Math.random() * 60) | 0;
+    ctx.fillStyle = `rgba(${v},${v+2},${v+6},0.5)`;
+    ctx.fillRect(x, y, 1, 1);
+  }
+  return c;
+}
+
+// --- Baboon body (64x64) with LAT ---
 function makeBaboonTexture() {
-  const w = 64, h = 64;
-  const c = makePixelCanvas(w, h);
+  const s = 64;
+  const c = newCanvas(s, s);
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#7e848a';
-  ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < 1500; i++) {
-    const x = (Math.random() * w) | 0, y = (Math.random() * h) | 0;
-    const v = (80 + Math.random() * 90) | 0;
-    ctx.fillStyle = `rgba(${v},${v+4},${v+10},${0.12 + Math.random() * 0.28})`;
+  ctx.fillRect(0, 0, s, s);
+  // Mottled fur — dense dark specks
+  for (let i = 0; i < 3000; i++) {
+    const x = (Math.random() * s) | 0;
+    const y = (Math.random() * s) | 0;
+    const v = (70 + Math.random() * 100) | 0;
+    ctx.fillStyle = `rgb(${v},${v+3},${v+8})`;
     ctx.fillRect(x, y, 1, 1);
   }
-  // LAT text — chunky pixel font
+  // Lighter dust
+  for (let i = 0; i < 600; i++) {
+    const x = (Math.random() * s) | 0;
+    const y = (Math.random() * s) | 0;
+    const v = (150 + Math.random() * 60) | 0;
+    ctx.fillStyle = `rgba(${v},${v+3},${v+8},0.6)`;
+    ctx.fillRect(x, y, 1, 1);
+  }
+  // LAT text
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 22px Arial';
+  ctx.font = 'bold 15px "Arial Black", Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('LAT', w / 2, h / 2);
-  return finalizePixelTexture(c);
+  ctx.fillText('LAT', s / 2, s / 2);
+  return c;
 }
 
-// --- Skin (head, arms) — no LAT ---
+// --- Skin (head/arms) — mottled gray, no text ---
 function makeSkinTexture() {
-  const w = 32, h = 32;
-  const c = makePixelCanvas(w, h);
+  const s = 32;
+  const c = newCanvas(s, s);
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#8b9098';
-  ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < 500; i++) {
-    const x = (Math.random() * w) | 0, y = (Math.random() * h) | 0;
-    const v = (90 + Math.random() * 80) | 0;
-    ctx.fillStyle = `rgba(${v},${v+3},${v+8},${0.2 + Math.random() * 0.3})`;
+  ctx.fillRect(0, 0, s, s);
+  for (let i = 0; i < 1200; i++) {
+    const x = (Math.random() * s) | 0;
+    const y = (Math.random() * s) | 0;
+    const v = (80 + Math.random() * 90) | 0;
+    ctx.fillStyle = `rgb(${v},${v+3},${v+8})`;
     ctx.fillRect(x, y, 1, 1);
   }
-  return finalizePixelTexture(c);
+  return c;
 }
 
-// --- CRT screen — 128x96 pixels ---
+// --- CRT screen (64x48) blue with pixel text ---
 function makeCRTTexture(variant = 0) {
-  const w = 128, h = 96;
-  const c = makePixelCanvas(w, h);
+  const w = 64, h = 48;
+  const c = newCanvas(w, h);
   const ctx = c.getContext('2d');
-  ctx.fillStyle = variant === 0 ? '#0022a8' : '#001a7a';
+  ctx.fillStyle = '#0025bb';
   ctx.fillRect(0, 0, w, h);
-  // scanlines
+  // Scanlines
   for (let y = 0; y < h; y += 2) {
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.fillRect(0, y, w, 1);
   }
+  // Vignette
+  const grad = ctx.createRadialGradient(w/2, h/2, 4, w/2, h/2, w*0.7);
+  grad.addColorStop(0, 'rgba(120,180,255,0.20)');
+  grad.addColorStop(1, 'rgba(0,0,20,0.55)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
-  ctx.font = 'bold 8px "Courier New", monospace';
-  ctx.fillText('CHANGE PLAYER', w/2, 18);
-  ctx.fillText('NAME', w/2, 28);
-  ctx.font = 'bold 11px "Courier New", monospace';
-  ctx.fillText('LOGAN27X', w/2, 50);
-  ctx.textAlign = 'left';
   ctx.font = 'bold 6px "Courier New", monospace';
+  ctx.fillText('CHANGE PLAYER NAME', w / 2, 12);
+  ctx.font = 'bold 9px "Courier New", monospace';
+  ctx.fillText('LOGAN27X', w / 2, 26);
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 4px "Courier New", monospace';
   const lines = variant === 0
-    ? ['> FIND THE LOCK', '> SPAWN ANYMORE', '> IN SANDBOX']
-    : ['> TIPS', '> TRAP', '> KEEP AWAY'];
-  lines.forEach((l, i) => ctx.fillText(l, 6, 68 + i * 9));
-  // cursor
+    ? ['>FIND THE LOCK', '>SPAWN ANYMORE', '>IN SANDBOX']
+    : ['>TIPS', '>TRAP', '>KEEP AWAY'];
+  lines.forEach((l, i) => ctx.fillText(l, 2, 36 + i * 5));
+
+  // Blinking cursor
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(w - 14, h - 12, 6, 7);
-  return finalizePixelTexture(c);
+  ctx.fillRect(w - 8, h - 6, 4, 4);
+  return c;
 }
 
-// --- Poster "PLAYERS IN ROOM" ---
+// --- Wall poster "PLAYERS IN ROOM" (64x32) ---
 function makePosterTexture() {
-  const w = 96, h = 48;
-  const c = makePixelCanvas(w, h);
+  const w = 64, h = 32;
+  const c = newCanvas(w, h);
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#c8ccd0';
   ctx.fillRect(0, 0, w, h);
+  // Noise
+  for (let i = 0; i < 200; i++) {
+    const v = (170 + Math.random() * 40) | 0;
+    ctx.fillStyle = `rgba(${v},${v+2},${v+4},0.4)`;
+    ctx.fillRect((Math.random()*w)|0, (Math.random()*h)|0, 1, 1);
+  }
   ctx.strokeStyle = '#7a7f84';
   ctx.lineWidth = 1;
   ctx.strokeRect(2, 2, w - 4, h - 4);
   ctx.fillStyle = '#2a2e34';
   ctx.textAlign = 'center';
-  ctx.font = 'bold 5px "Courier New", monospace';
-  ctx.fillText('PLAYERS IN', w/2, 13);
-  ctx.fillText('ROOM:', w/2, 20);
-  ctx.font = 'bold 16px "Courier New", monospace';
-  ctx.fillText('3', w/2, 38);
-  return finalizePixelTexture(c);
+  ctx.font = 'bold 4px "Courier New", monospace';
+  ctx.fillText('PLAYERS IN ROOM:', w / 2, 10);
+  ctx.font = 'bold 12px "Courier New", monospace';
+  ctx.fillText('3', w / 2, 24);
+  return c;
 }
 
-// --- SNAP TURN sign ---
+// --- SNAP TURN sign (48x16) ---
 function makeSignTexture() {
-  const w = 64, h = 20;
-  const c = makePixelCanvas(w, h);
+  const w = 48, h = 16;
+  const c = newCanvas(w, h);
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = '#c8ff5a';
-  ctx.font = 'bold 9px "Courier New", monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('SNAP TURN', w/2, h/2);
-  return finalizePixelTexture(c);
-}
-
-// --- TIPS/TRAP sign ---
-function makeTipsTexture() {
-  const w = 48, h = 48;
-  const c = makePixelCanvas(w, h);
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#111';
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = '#88ff88';
   ctx.font = 'bold 8px "Courier New", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('TIPS', w/2, 8);
-  ctx.fillText('TRAP', w/2, 20);
-  ctx.fillText('KEEP', w/2, 32);
-  ctx.fillText('AWAY', w/2, 44);
-  return finalizePixelTexture(c);
+  ctx.fillText('SNAP TURN', w / 2, h / 2);
+  return c;
+}
+
+// --- TIPS / TRAP / KEEP / AWAY (32x32) ---
+function makeTipsTexture() {
+  const s = 32;
+  const c = newCanvas(s, s);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, s, s);
+  ctx.fillStyle = '#88ff88';
+  ctx.font = 'bold 7px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('TIPS', s / 2, 5);
+  ctx.fillText('TRAP', s / 2, 13);
+  ctx.fillText('KEEP', s / 2, 21);
+  ctx.fillText('AWAY', s / 2, 29);
+  return c;
+}
+
+// --- Boombox body (32x32) ---
+function makeBoomboxBodyTexture() {
+  const s = 32;
+  const c = newCanvas(s, s);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#22242a';
+  ctx.fillRect(0, 0, s, s);
+  for (let i = 0; i < 400; i++) {
+    const v = (28 + Math.random() * 30) | 0;
+    ctx.fillStyle = `rgb(${v},${v},${v+4})`;
+    ctx.fillRect((Math.random()*s)|0, (Math.random()*s)|0, 1, 1);
+  }
+  // Top highlight
+  ctx.fillStyle = '#4a4c52';
+  ctx.fillRect(0, 0, s, 1);
+  ctx.fillRect(0, 0, 1, s);
+  return c;
+}
+
+// --- Boombox grill (16x16) ---
+function makeBoomboxGrillTexture() {
+  const s = 16;
+  const c = newCanvas(s, s);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0a0a0e';
+  ctx.fillRect(0, 0, s, s);
+  ctx.fillStyle = '#3a3c44';
+  for (let y = 0; y < s; y += 2) {
+    for (let x = 0; x < s; x += 2) {
+      if ((x + y) % 4 !== 0) ctx.fillRect(x, y, 1, 1);
+    }
+  }
+  return c;
+}
+
+// --- Boombox accent (16x16) orange-red ---
+function makeBoomboxAccentTexture() {
+  const s = 16;
+  const c = newCanvas(s, s);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ff5522';
+  ctx.fillRect(0, 0, s, s);
+  ctx.fillStyle = '#ff8844';
+  ctx.fillRect(0, 0, s, 2);
+  return c;
 }
 
 // ============================================================
 // 4. BUILD ROOM
 // ============================================================
-const concreteTex = makeConcreteTexture();
-concreteTex.repeat.set(5, 2);
-const floorTex = makeFloorTexture();
-floorTex.repeat.set(20, 20);
-const ceilTex = makeConcreteTexture();
-ceilTex.repeat.set(8, 8);
+const concreteTex = pixelTex(makeConcreteTexture(), [6, 2]);
+const floorTex = pixelTex(makeFloorTexture(), [20, 20]);
+const ceilTex = pixelTex(makeConcreteTexture(), [8, 8]);
 
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(ROOM_W, ROOM_D),
@@ -387,7 +526,7 @@ scene.add(floor);
 
 const ceiling = new THREE.Mesh(
   new THREE.PlaneGeometry(ROOM_W, ROOM_D),
-  new THREE.MeshStandardMaterial({ map: ceilTex, color: 0x9096a0, roughness: 1 })
+  new THREE.MeshStandardMaterial({ map: ceilTex, color: 0x8a9098, roughness: 1 })
 );
 ceiling.rotation.x = Math.PI / 2;
 ceiling.position.y = ROOM_H;
@@ -396,7 +535,8 @@ scene.add(ceiling);
 const wallMat = new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 0.92 });
 function addWall(w, h, x, y, z, ry) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat);
-  m.position.set(x, y, z); m.rotation.y = ry;
+  m.position.set(x, y, z);
+  m.rotation.y = ry;
   m.receiveShadow = true;
   scene.add(m);
 }
@@ -419,11 +559,15 @@ for (let x = -HALF_W + 6; x <= HALF_W - 6; x += 8) {
   }
 }
 
-scene.add(new THREE.AmbientLight(0xb0b8c8, 0.45));
-scene.add(new THREE.HemisphereLight(0xd8e0f0, 0x2a2e36, 0.55));
-lightPositions.forEach(([x, z], i) => {
-  if (i % 3 !== 0) return;
-  const l = new THREE.PointLight(0xeef4ff, 0.7, 20, 1.8);
+// Lights — keep it lean: 1 ambient + 1 hemisphere + 4 point lights max
+scene.add(new THREE.AmbientLight(0xb0b8c8, 0.55));
+scene.add(new THREE.HemisphereLight(0xd8e0f0, 0x2a2e36, 0.6));
+
+const pointLightSpots = [
+  [-10, -10], [10, -10], [-10, 10], [10, 10]
+];
+pointLightSpots.forEach(([x, z]) => {
+  const l = new THREE.PointLight(0xeef4ff, 0.9, 24, 1.6);
   l.position.set(x, ROOM_H - 0.5, z);
   scene.add(l);
 });
@@ -464,7 +608,7 @@ function makeTable(x, z) {
 }
 makeTable(-8, -3);
 makeTable(-2, -3);
-const CENTER_TABLE = makeTable(4, -3);
+makeTable(4, -3);
 makeTable(-5, 6);
 makeTable(2, 6);
 makeTable(9, 6);
@@ -483,26 +627,49 @@ function makeTerminal(x, z, ry, variant = 0) {
     leg.position.set(lx, 0.42, lz);
     g.add(leg);
   }
-  const frameMat = new THREE.MeshStandardMaterial({ color: 0xd8d4c8, roughness: 0.85 });
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0xd0ccc0, roughness: 0.85 });
   const monBody = new THREE.Mesh(new THREE.BoxGeometry(1.55, 1.2, 0.62), frameMat);
   monBody.position.set(0, 1.58, -0.2);
   monBody.castShadow = true;
   g.add(monBody);
   const screen = new THREE.Mesh(
     new THREE.PlaneGeometry(1.28, 0.98),
-    new THREE.MeshBasicMaterial({ map: makeCRTTexture(variant) })
+    new THREE.MeshBasicMaterial({ map: pixelTex(makeCRTTexture(variant)) })
   );
   screen.position.set(0, 1.58, 0.115);
   g.add(screen);
   const stand = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.16, 0.4), frameMat);
   stand.position.set(0, 0.96, -0.2);
   g.add(stand);
+
+  // Keyboard with colored buttons row
   const kbBase = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 0.46), frameMat);
   kbBase.position.set(0, 0.92, 0.28);
   g.add(kbBase);
-  const glow = new THREE.PointLight(0x4a8fff, 0.55, 4.5, 1.6);
+
+  const keyMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.7 });
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 12; c++) {
+    const k = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.08), keyMat);
+    k.position.set(-0.55 + c * 0.1, 0.955, 0.12 + r * 0.09);
+    g.add(k);
+  }
+  const colors = [0xff3344, 0xffaa22, 0xffee22, 0x44ff66, 0x22aaff, 0x9944ff];
+  colors.forEach((col, i) => {
+    const b = new THREE.Mesh(
+      new THREE.BoxGeometry(0.09, 0.03, 0.09),
+      new THREE.MeshStandardMaterial({
+        color: col, roughness: 0.5, emissive: col, emissiveIntensity: 0.35
+      })
+    );
+    b.position.set(-0.55 + i * 0.22, 0.965, 0.42);
+    g.add(b);
+  });
+
+  // Blue glow on the screen
+  const glow = new THREE.PointLight(0x4a8fff, 0.4, 4, 1.6);
   glow.position.set(0, 1.58, 0.5);
   g.add(glow);
+
   g.position.set(x, 0, z);
   g.rotation.y = ry;
   scene.add(g);
@@ -510,26 +677,28 @@ function makeTerminal(x, z, ry, variant = 0) {
 makeTerminal(-15, -15, Math.PI * 0.1, 0);
 makeTerminal(14, 14, -Math.PI * 0.65, 1);
 
-// Wall poster + signs
-const poster = new THREE.Mesh(
-  new THREE.PlaneGeometry(3.6, 1.8),
-  new THREE.MeshStandardMaterial({ map: makePosterTexture(), roughness: 0.9 })
-);
+// Wall poster
+const posterMat = new THREE.MeshStandardMaterial({ map: pixelTex(makePosterTexture()), roughness: 0.9 });
+const poster = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), posterMat);
 poster.position.set(-10, 2.4, -HALF_D + 0.05);
 scene.add(poster);
 
-const sign1 = new THREE.Mesh(
-  new THREE.PlaneGeometry(2.2, 0.55),
-  new THREE.MeshStandardMaterial({ map: makeSignTexture(), roughness: 0.85, emissive: 0x222222 })
-);
+// SNAP TURN sign
+const signMat = new THREE.MeshStandardMaterial({
+  map: pixelTex(makeSignTexture()), roughness: 0.85,
+  emissive: 0x2a3a15, emissiveIntensity: 0.5
+});
+const sign1 = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.7), signMat);
 sign1.position.set(HALF_W - 0.06, 2.4, -6);
 sign1.rotation.y = -Math.PI / 2;
 scene.add(sign1);
 
-const tips = new THREE.Mesh(
-  new THREE.PlaneGeometry(2.4, 2.4),
-  new THREE.MeshStandardMaterial({ map: makeTipsTexture(), roughness: 0.85, emissive: 0x113311, emissiveIntensity: 0.3 })
-);
+// TIPS / TRAP sign
+const tipsMat = new THREE.MeshStandardMaterial({
+  map: pixelTex(makeTipsTexture()), roughness: 0.85,
+  emissive: 0x113311, emissiveIntensity: 0.5
+});
+const tips = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), tipsMat);
 tips.position.set(HALF_W - 0.06, 2.6, 8);
 tips.rotation.y = -Math.PI / 2;
 scene.add(tips);
@@ -541,95 +710,111 @@ const SAFE_CENTER = new THREE.Vector3(13, 0, 13);
 const SAFE_RADIUS = 5;
 
 const safeFloor = new THREE.Mesh(
-  new THREE.CircleGeometry(SAFE_RADIUS, 48),
-  new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.18, depthWrite: false })
+  new THREE.CircleGeometry(SAFE_RADIUS, 40),
+  new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.20, depthWrite: false })
 );
 safeFloor.rotation.x = -Math.PI / 2;
 safeFloor.position.set(SAFE_CENTER.x, 0.02, SAFE_CENTER.z);
 scene.add(safeFloor);
 
 const ringMat = new THREE.MeshBasicMaterial({
-  color: 0x44ff88, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false
+  color: 0x44ff88, transparent: true, opacity: 0.75,
+  side: THREE.DoubleSide, depthWrite: false
 });
-const ring = new THREE.Mesh(new THREE.RingGeometry(SAFE_RADIUS - 0.15, SAFE_RADIUS + 0.05, 64), ringMat);
+const ring = new THREE.Mesh(new THREE.RingGeometry(SAFE_RADIUS - 0.15, SAFE_RADIUS + 0.05, 48), ringMat);
 ring.rotation.x = -Math.PI / 2;
 ring.position.set(SAFE_CENTER.x, 0.03, SAFE_CENTER.z);
 scene.add(ring);
 
-const safeLight = new THREE.PointLight(0x44ff88, 1.4, SAFE_RADIUS * 2.4, 1.5);
+const safeLight = new THREE.PointLight(0x44ff88, 1.3, SAFE_RADIUS * 2.4, 1.5);
 safeLight.position.set(SAFE_CENTER.x, 2.5, SAFE_CENTER.z);
 scene.add(safeLight);
 
 // ============================================================
-// 8. THE BABOON
+// 8. THE BABOON — mottled pixel texture, LAT on chest
 // ============================================================
-const bodyMat = new THREE.MeshStandardMaterial({ map: makeBaboonTexture(), roughness: 0.95 });
-const skinMat = new THREE.MeshStandardMaterial({ map: makeSkinTexture(), roughness: 0.95 });
+const bodyMat = new THREE.MeshStandardMaterial({ map: pixelTex(makeBaboonTexture()), roughness: 0.95 });
+const skinMat = new THREE.MeshStandardMaterial({ map: pixelTex(makeSkinTexture()), roughness: 0.95 });
 const eyeBlack = new THREE.MeshBasicMaterial({ color: 0x000000 });
 const eyeWhite = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
 function createBaboon() {
   const g = new THREE.Group();
 
+  // Torso — box so LAT reads flat
   const torso = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.95, 0.6), bodyMat);
   torso.position.y = 1.6;
   torso.castShadow = true;
   g.add(torso);
 
+  // Shoulder caps
   for (const sx of [-1, 1]) {
-    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), skinMat);
-    shoulder.position.set(sx * 0.42, 1.95, 0);
-    shoulder.scale.set(1, 0.85, 0.9);
-    g.add(shoulder);
+    const sh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), skinMat);
+    sh.position.set(sx * 0.42, 1.95, 0);
+    sh.scale.set(1, 0.85, 0.9);
+    g.add(sh);
   }
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.52, 26, 20), skinMat);
+  // Head — bigger relative to torso
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.52, 22, 18), skinMat);
   head.scale.set(1, 0.92, 0.9);
   head.position.y = 2.35;
   head.castShadow = true;
   g.add(head);
 
+  // Ears — flat discs
   for (const ex of [-0.52, 0.52]) {
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), skinMat);
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), skinMat);
     ear.position.set(ex, 2.4, -0.05);
     ear.scale.set(0.35, 1, 0.75);
     g.add(ear);
+    const inner = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 10, 8),
+      new THREE.MeshStandardMaterial({ color: 0x4a4f55, roughness: 1 })
+    );
+    inner.position.set(ex, 2.4, -0.04);
+    inner.scale.set(0.35, 1, 0.75);
+    g.add(inner);
   }
 
+  // Big black eyes with two glints each
   for (const ex of [-0.18, 0.18]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 14), eyeBlack);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 14), eyeBlack);
     eye.position.set(ex, 2.38, 0.36);
     g.add(eye);
-    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), eyeWhite);
-    glint.position.set(ex - 0.045, 2.42, 0.45);
-    g.add(glint);
-    const glint2 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), eyeWhite);
-    glint2.position.set(ex + 0.03, 2.35, 0.47);
-    g.add(glint2);
+    const g1 = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), eyeWhite);
+    g1.position.set(ex - 0.045, 2.42, 0.45);
+    g.add(g1);
+    const g2 = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), eyeWhite);
+    g2.position.set(ex + 0.03, 2.35, 0.47);
+    g.add(g2);
   }
 
+  // Nose dots
   for (const nx of [-0.045, 0.045]) {
     const dot = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), eyeBlack);
     dot.position.set(nx, 2.22, 0.47);
     g.add(dot);
   }
 
+  // Mouth curve
   const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 12, Math.PI), eyeBlack);
   mouth.rotation.x = Math.PI;
   mouth.position.set(0, 2.13, 0.45);
   g.add(mouth);
 
+  // Very long arms reaching floor
   for (const side of [-1, 1]) {
-    const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.9, 14), skinMat);
-    upperArm.position.set(side * 0.55, 1.45, 0);
-    upperArm.rotation.z = side * 0.08;
-    upperArm.castShadow = true;
-    g.add(upperArm);
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.9, 12), skinMat);
+    upper.position.set(side * 0.55, 1.45, 0);
+    upper.rotation.z = side * 0.08;
+    upper.castShadow = true;
+    g.add(upper);
 
-    const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.95, 14), skinMat);
-    forearm.position.set(side * 0.62, 0.5, 0.02);
-    forearm.castShadow = true;
-    g.add(forearm);
+    const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.95, 12), skinMat);
+    fore.position.set(side * 0.62, 0.5, 0.02);
+    fore.castShadow = true;
+    g.add(fore);
 
     const hand = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), skinMat);
     hand.position.set(side * 0.63, -0.02, 0.05);
@@ -642,8 +827,13 @@ function createBaboon() {
       finger.rotation.x = 0.15;
       g.add(finger);
     }
+    const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.16, 6), skinMat);
+    thumb.position.set(side * 0.78, -0.06, 0.12);
+    thumb.rotation.z = side * -0.5;
+    g.add(thumb);
   }
 
+  // Hidden legs
   for (const side of [-1, 1]) {
     const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.55, 10), skinMat);
     leg.position.set(side * 0.22, 1.0, 0);
@@ -657,326 +847,246 @@ baboon.position.set(-14, 0, -14);
 scene.add(baboon);
 
 // ============================================================
-// 9. AUDIO SYSTEM — Positional audio + echo
+// 9. AUDIO — listener + positional source + echo
 // ============================================================
 const listener = new THREE.AudioListener();
 camera.add(listener);
 
-// Echo effect: input -> output (dry) AND input -> delay -> feedback-loop -> wet -> output
-class EchoEffect {
-  constructor(ctx) {
-    this.context = ctx;
-    this.input = ctx.createGain();
-    this.output = ctx.createGain();
-
-    // Dry path
-    this.input.connect(this.output);
-
-    // Wet path — delay + feedback loop
-    this.delay = ctx.createDelay(1.0);
-    this.delay.delayTime.value = 0.34;
-    this.feedback = ctx.createGain();
-    this.feedback.gain.value = 0.48;
-    this.wetGain = ctx.createGain();
-    this.wetGain.gain.value = 0.55;
-
-    this.input.connect(this.delay);
-    this.delay.connect(this.feedback);
-    this.feedback.connect(this.delay); // feedback loop
-    this.delay.connect(this.wetGain);
-    this.wetGain.connect(this.output);
+// Ensure AudioContext resumes on user interaction
+function ensureAudioCtx() {
+  const ctx = listener.context;
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
   }
-  getInput() { return this.input; }
-  getOutput() { return this.output; }
+  return ctx;
 }
 
-// Procedural retro synth loop (fallback if no uploaded MP3)
+// Positional audio at the boombox
+const BOOMBOX_POS = new THREE.Vector3(4, 0.83, -3);
+const boomAudio = new THREE.PositionalAudio(listener);
+boomAudio.setRefDistance(2.5);
+boomAudio.setDistanceModel('exponential');
+boomAudio.setRolloffFactor(1.4);
+boomAudio.setVolume(1.0);
+boomAudio.setMaxDistance(35);
+boomAudio.position.copy(BOOMBOX_POS);
+
+// --- Fast procedural retro loop (2s) ---
 function generateRetroLoop(ctx) {
-  const duration = 4;
-  const sampleRate = ctx.sampleRate;
-  const length = duration * sampleRate;
-  const buffer = ctx.createBuffer(2, length, sampleRate);
+  const duration = 2;
+  const sr = ctx.sampleRate;
+  const length = duration * sr;
+  const buffer = ctx.createBuffer(2, length, sr);
   const bpm = 128;
   const beat = 60 / bpm;
 
   for (let ch = 0; ch < 2; ch++) {
     const data = buffer.getChannelData(ch);
     for (let i = 0; i < length; i++) {
-      const t = i / sampleRate;
+      const t = i / sr;
       let s = 0;
 
-      // Kick (every beat)
-      const beatPhase = (t % beat) / beat;
-      if (beatPhase < 0.14) {
-        const env = Math.exp(-beatPhase * 32);
-        s += Math.sin(t * 2 * Math.PI * (58 - beatPhase * 30)) * env * 0.55;
+      // Kick
+      const bp = (t % beat) / beat;
+      if (bp < 0.15) {
+        s += Math.sin(t * 2 * Math.PI * (55 - bp * 25)) * Math.exp(-bp * 28) * 0.55;
       }
-
-      // Hi-hat (eighth notes)
-      const eighth = beat / 2;
-      const hp = (t % eighth) / eighth;
+      // Hat
+      const hp = (t % (beat * 0.5)) / (beat * 0.5);
       if (hp < 0.05) {
-        const env = Math.exp(-hp * 90);
-        s += (Math.random() * 2 - 1) * env * 0.14;
+        s += (Math.random() * 2 - 1) * Math.exp(-hp * 100) * 0.14;
       }
-
       // Bass line
       const notes = [55, 55, 82.41, 73.42];
-      const ni = Math.floor(t / beat) % 4;
-      const bp = (t % beat) / beat;
-      if (bp < 0.6) {
-        const env = Math.exp(-bp * 4.5) * 0.32;
-        s += Math.sin(t * 2 * Math.PI * notes[ni]) * env;
-        s += Math.sin(t * 2 * Math.PI * notes[ni] * 2) * env * 0.25;
+      const ni = (Math.floor(t / beat) % 4);
+      if (bp < 0.55) {
+        s += Math.sin(t * 2 * Math.PI * notes[ni]) * Math.exp(-bp * 4.5) * 0.32;
+        s += Math.sin(t * 2 * Math.PI * notes[ni] * 2) * Math.exp(-bp * 8) * 0.10;
       }
-
-      // Arp melody
+      // Arp
       const arp = [220, 277.18, 329.63, 440, 329.63, 277.18];
-      const ai = Math.floor(t / (beat / 2)) % arp.length;
-      const ap = (t % (beat / 2)) / (beat / 2);
-      if (ap < 0.4) {
-        const env = Math.exp(-ap * 10) * 0.12;
-        const sq = Math.sign(Math.sin(t * 2 * Math.PI * arp[ai]));
-        s += sq * env;
+      const ai = (Math.floor(t / (beat * 0.5)) % arp.length);
+      const ap = (t % (beat * 0.5)) / (beat * 0.5);
+      if (ap < 0.35) {
+        const sq = Math.sin(t * 2 * Math.PI * arp[ai]) > 0 ? 1 : -1;
+        s += sq * Math.exp(-ap * 12) * 0.11;
       }
-
-      data[i] = Math.max(-1, Math.min(1, s * 0.8));
+      data[i] = Math.max(-1, Math.min(1, s * 0.85));
     }
   }
   return buffer;
 }
 
-// Boombox position — on the center table (top surface y ≈ 0.82)
-const BOOMBOX_POS = new THREE.Vector3(4, 0.83, -3);
-
-// PositionalAudio setup
-const boomSound = new THREE.PositionalAudio(listener);
-boomSound.setRefDistance(2.5);
-boomSound.setDistanceModel('exponential');
-boomSound.setRolloffFactor(1.4);
-boomSound.setVolume(1.0);
-boomSound.setMaxDistance(35);
-boomSound.setFilter(new EchoEffect(listener.context));
-boomSound.position.copy(BOOMBOX_POS);
-
-// Also add a small additional echo effect to accentuate the room
-boomSound.setLoop ? boomSound.setLoop(true) : null;
-
-// Source: uploaded MP3 OR procedural loop
-let mediaEl = null;
+let boomboxStarted = false;
 function startBoombox() {
+  if (boomboxStarted) return;
+  boomboxStarted = true;
+
+  const ctx = ensureAudioCtx();
+
+  // Build echo chain: source -> [dry -> panner] AND [source -> delay -> feedback loop -> wet -> panner]
+  const delay = ctx.createDelay(1.0);
+  delay.delayTime.value = 0.34;
+  const feedback = ctx.createGain();
+  feedback.gain.value = 0.48;
+  const wet = ctx.createGain();
+  wet.gain.value = 0.55;
+
+  delay.connect(feedback);
+  feedback.connect(delay); // feedback loop
+  delay.connect(wet);
+
+  // Get source
+  let sourceNode;
+
   if (UPLOADED_AUDIO_B64) {
-    try {
-      mediaEl = new Audio('data:audio/mpeg;base64,' + UPLOADED_AUDIO_B64);
-      mediaEl.loop = true;
-      mediaEl.crossOrigin = 'anonymous';
-      boomSound.setMediaElementSource(mediaEl);
-      const p = mediaEl.play();
-      if (p && p.catch) p.catch(err => console.warn('Autoplay blocked:', err));
-      console.log('[Boombox] Playing uploaded MP3');
-    } catch (e) {
-      console.warn('Failed to play uploaded MP3, falling back:', e);
-      boomSound.setBuffer(generateRetroLoop(listener.context));
-      boomSound.setLoop(true);
-      boomSound.play();
-    }
+    // Use the uploaded MP3 via HTMLAudioElement
+    const el = new Audio('data:audio/mpeg;base64,' + UPLOADED_AUDIO_B64);
+    el.loop = true;
+    el.crossOrigin = 'anonymous';
+    sourceNode = ctx.createMediaElementSource(el);
+    const p = el.play();
+    if (p && p.catch) p.catch(err => console.warn('Autoplay blocked:', err));
+    console.log('[Boombox] Playing uploaded MP3');
   } else {
-    boomSound.setBuffer(generateRetroLoop(listener.context));
-    boomSound.setLoop(true);
-    boomSound.play();
-    console.log('[Boombox] Playing procedural retro loop (no upload)');
+    // Procedural fallback
+    const buffer = generateRetroLoop(ctx);
+    const bs = ctx.createBufferSource();
+    bs.buffer = buffer;
+    bs.loop = true;
+    bs.start();
+    sourceNode = bs;
+    console.log('[Boombox] Playing procedural retro loop');
   }
+
+  // Route: source -> panner (dry)
+  sourceNode.connect(boomAudio.panner);
+  // Route: source -> delay -> wet -> panner
+  sourceNode.connect(delay);
+  wet.connect(boomAudio.panner);
+
+  document.getElementById('audio-banner').classList.add('show');
 }
 
 // ============================================================
-// 10. BOOMBOX MODEL — blocky pixel-art
+// 10. BOOMBOX MODEL — pixel-art on the table
 // ============================================================
-function makeBoomboxTexture() {
-  const w = 32, h = 32;
-  const c = makePixelCanvas(w, h);
-  const ctx = c.getContext('2d');
-  // Dark grey plastic body
-  ctx.fillStyle = '#2a2a2e';
-  ctx.fillRect(0, 0, w, h);
-  // Noise
-  for (let i = 0; i < 400; i++) {
-    const v = (30 + Math.random() * 30) | 0;
-    ctx.fillStyle = `rgb(${v},${v},${v+4})`;
-    ctx.fillRect((Math.random()*w)|0, (Math.random()*h)|0, 1, 1);
-  }
-  // Highlights
-  ctx.fillStyle = '#4a4a52';
-  ctx.fillRect(0, 0, w, 1);
-  ctx.fillRect(0, 0, 1, h);
-  // Speaker grill dots
-  ctx.fillStyle = '#1a1a1e';
-  for (let y = 6; y < 26; y += 2) {
-    for (let x = 4; x < 14; x += 2) {
-      if ((x + y) % 3 !== 0) ctx.fillRect(x, y, 1, 1);
-    }
-    for (let x = 18; x < 28; x += 2) {
-      if ((x + y) % 3 !== 0) ctx.fillRect(x, y, 1, 1);
-    }
-  }
-  return finalizePixelTexture(c);
-}
-function makeBoomboxGrillTexture() {
-  const s = 16;
-  const c = makePixelCanvas(s, s);
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#0f0f12';
-  ctx.fillRect(0, 0, s, s);
-  ctx.fillStyle = '#3a3a42';
-  for (let y = 0; y < s; y += 2) {
-    for (let x = 0; x < s; x += 2) {
-      ctx.fillRect(x, y, 1, 1);
-    }
-  }
-  return finalizePixelTexture(c);
-}
-function makeBoomboxAccentTexture() {
-  const s = 16;
-  const c = makePixelCanvas(s, s);
-  const ctx = c.getContext('2d');
-  // Orange/red accent stripe
-  ctx.fillStyle = '#ff5522';
-  ctx.fillRect(0, 0, s, s);
-  ctx.fillStyle = '#ff8844';
-  ctx.fillRect(0, 0, s, 4);
-  return finalizePixelTexture(c);
-}
+const bodyBoomboxTex = pixelTex(makeBoomboxBodyTexture());
+const grillBoomboxTex = pixelTex(makeBoomboxGrillTexture());
+const accentBoomboxTex = pixelTex(makeBoomboxAccentTexture());
 
-const boomboxGroup = new THREE.Group();
-boomboxGroup.position.copy(BOOMBOX_POS);
+const bbBodyMat = new THREE.MeshStandardMaterial({ map: bodyBoomboxTex, roughness: 0.6, metalness: 0.25 });
+const bbGrillMat = new THREE.MeshStandardMaterial({ map: grillBoomboxTex, roughness: 0.9, metalness: 0.05 });
+const bbAccentMat = new THREE.MeshStandardMaterial({
+  map: accentBoomboxTex, roughness: 0.5, metalness: 0.3,
+  emissive: 0x552200, emissiveIntensity: 0.4
+});
+const bbMetal = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, roughness: 0.5, metalness: 0.7 });
+const bbChrome = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.25, metalness: 0.85 });
 
-const bodyTex = makeBoomboxTexture();
-const grillTex = makeBoomboxGrillTexture();
-const accentTex = makeBoomboxAccentTexture();
+const boombox = new THREE.Group();
+boombox.position.copy(BOOMBOX_POS);
 
-const boomboxBodyMat = new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.65, metalness: 0.25 });
-const boomboxGrillMat = new THREE.MeshStandardMaterial({ map: grillTex, roughness: 0.9, metalness: 0.05 });
-const boomboxAccentMat = new THREE.MeshStandardMaterial({ map: accentTex, roughness: 0.5, metalness: 0.4, emissive: 0x441100, emissiveIntensity: 0.4 });
-const metalMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, roughness: 0.5, metalness: 0.7 });
-const chromeMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.25, metalness: 0.85 });
+// Body
+const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.42, 0.32), bbBodyMat);
+body.position.y = 0.21;
+body.castShadow = true;
+body.receiveShadow = true;
+boombox.add(body);
 
-// Main body
-const boomboxBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.42, 0.32), boomboxBodyMat);
-boomboxBody.position.y = 0.21;
-boomboxBody.castShadow = true;
-boomboxBody.receiveShadow = true;
-boomboxGroup.add(boomboxBody);
-
-// Accent stripe across the middle
-const accent = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.05, 0.33), boomboxAccentMat);
+// Accent stripe
+const accent = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.05, 0.33), bbAccentMat);
 accent.position.y = 0.21;
-boomboxGroup.add(accent);
+boombox.add(accent);
 
-// Speakers — two chunky cylinders (flat cylinders, like disc grills)
-function makeSpeaker(x) {
-  // Ring (chrome frame)
-  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.04, 16), chromeMat);
+// Speakers
+function addSpeaker(x) {
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.04, 16), bbChrome);
   ring.rotation.z = Math.PI / 2;
   ring.position.set(x, 0.21, 0.16);
-  boomboxGroup.add(ring);
+  boombox.add(ring);
 
-  // Grill disc (dark, pixel texture)
-  const grill = new THREE.Mesh(new THREE.CircleGeometry(0.14, 16), boomboxGrillMat);
-  grill.position.set(x, 0.21, 0.185);
-  boomboxGroup.add(grill);
+  const grill = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20), bbGrillMat);
+  grill.position.set(x, 0.21, 0.181);
+  boombox.add(grill);
 
-  // Center cone
-  const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 10), metalMat);
+  const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.03, 10), bbMetal);
   cone.rotation.z = Math.PI / 2;
   cone.position.set(x, 0.21, 0.19);
-  boomboxGroup.add(cone);
+  boombox.add(cone);
 }
-makeSpeaker(-0.36);
-makeSpeaker(0.36);
+addSpeaker(-0.36);
+addSpeaker(0.36);
 
-// Cassette deck (small rectangle in center)
-const cassette = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.02), metalMat);
+// Cassette window
+const cassette = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.02), bbMetal);
 cassette.position.set(0, 0.21, 0.165);
-boomboxGroup.add(cassette);
-
-// Cassette window (lighter inset)
-const cassetteWindow = new THREE.Mesh(
+boombox.add(cassette);
+const cassetteWin = new THREE.Mesh(
   new THREE.PlaneGeometry(0.22, 0.12),
   new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.3, metalness: 0.5 })
 );
-cassetteWindow.position.set(0, 0.21, 0.176);
-boomboxGroup.add(cassetteWindow);
+cassetteWin.position.set(0, 0.21, 0.176);
+boombox.add(cassetteWin);
 
-// Two reels inside cassette
-for (const rx of [-0.06, 0.06]) {
-  const reel = new THREE.Mesh(new THREE.CircleGeometry(0.028, 10), chromeMat);
-  reel.position.set(rx, 0.21, 0.177);
-  boomboxGroup.add(reel);
-}
-
-// Handle on top
-const handleGeo = new THREE.TorusGeometry(0.22, 0.025, 8, 16, Math.PI);
-const handle = new THREE.Mesh(handleGeo, chromeMat);
+// Handle
+const handle = new THREE.Mesh(
+  new THREE.TorusGeometry(0.22, 0.025, 8, 16, Math.PI),
+  bbChrome
+);
 handle.rotation.x = Math.PI / 2;
-handle.rotation.z = 0;
 handle.position.set(0, 0.44, 0);
-handle.castShadow = true;
-boomboxGroup.add(handle);
-
-// Handle mounts
+boombox.add(handle);
 for (const hx of [-0.22, 0.22]) {
-  const mount = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), chromeMat);
+  const mount = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), bbChrome);
   mount.position.set(hx, 0.42, 0);
-  boomboxGroup.add(mount);
+  boombox.add(mount);
 }
 
-// Buttons row on top front
-const buttonColors = [0xff3344, 0xffaa22, 0x44ff66, 0x22aaff];
-buttonColors.forEach((col, i) => {
-  const btn = new THREE.Mesh(
+// Colored buttons
+const btnColors = [0xff3344, 0xffaa22, 0x44ff66, 0x22aaff];
+btnColors.forEach((col, i) => {
+  const b = new THREE.Mesh(
     new THREE.BoxGeometry(0.06, 0.04, 0.05),
-    new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, emissive: col, emissiveIntensity: 0.5 })
+    new THREE.MeshStandardMaterial({
+      color: col, roughness: 0.4, emissive: col, emissiveIntensity: 0.5
+    })
   );
-  btn.position.set(-0.18 + i * 0.12, 0.4, 0.12);
-  boomboxGroup.add(btn);
+  b.position.set(-0.18 + i * 0.12, 0.4, 0.12);
+  boombox.add(b);
 });
 
-// Small speaker-grill texture applied as a panel on the back (adds pixel detail)
-const backPanel = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.9, 0.3),
-  boomboxGrillMat
-);
-backPanel.rotation.y = Math.PI;
-backPanel.position.set(0, 0.21, -0.161);
-boomboxGroup.add(backPanel);
-
 // Volume knob
-const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 10), chromeMat);
+const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 10), bbChrome);
 knob.rotation.z = Math.PI / 2;
 knob.position.set(-0.48, 0.21, 0.16);
-boomboxGroup.add(knob);
+boombox.add(knob);
 
-// Antenna (tilted up)
-const antennaBase = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), chromeMat);
-antennaBase.position.set(0.48, 0.42, -0.05);
-boomboxGroup.add(antennaBase);
-const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.6, 6), chromeMat);
+// Antenna
+const antBase = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), bbChrome);
+antBase.position.set(0.48, 0.42, -0.05);
+boombox.add(antBase);
+const antenna = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.006, 0.006, 0.6, 6),
+  bbChrome
+);
 antenna.position.set(0.48, 0.72, -0.05);
 antenna.rotation.z = -0.2;
 antenna.rotation.x = -0.15;
-boomboxGroup.add(antenna);
-const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 5), chromeMat);
-antennaTip.position.set(0.42, 1.02, -0.11);
-boomboxGroup.add(antennaTip);
+boombox.add(antenna);
+const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 5), bbChrome);
+antTip.position.set(0.42, 1.02, -0.11);
+boombox.add(antTip);
 
-// Attach the audio to the boombox group
-boomboxGroup.add(boomSound);
+// Emissive glow
+const bbGlow = new THREE.PointLight(0xff5522, 0.5, 3, 1.8);
+bbGlow.position.set(0, 0.3, 0.2);
+boombox.add(bbGlow);
 
-// Small glow to sell the "it's playing" vibe
-const boomboxGlow = new THREE.PointLight(0xff5522, 0.5, 3, 1.8);
-boomboxGlow.position.set(0, 0.3, 0.2);
-boomboxGroup.add(boomboxGlow);
+// Attach audio
+boombox.add(boomAudio);
 
-scene.add(boomboxGroup);
+scene.add(boombox);
 
 // ============================================================
 // 11. FLASHLIGHT
@@ -1012,7 +1122,10 @@ document.addEventListener('keydown', (e) => {
   if (k === 's' || k === 'arrowdown') keys.s = true;
   if (k === 'd' || k === 'arrowright') keys.d = true;
   if (k === 'shift') keys.shift = true;
-  if (k === 'f') { flashlightOn = !flashlightOn; flashlight.intensity = flashlightOn ? 3.0 : 0; }
+  if (k === 'f') {
+    flashlightOn = !flashlightOn;
+    flashlight.intensity = flashlightOn ? 3.0 : 0;
+  }
 });
 document.addEventListener('keyup', (e) => {
   const k = e.key.toLowerCase();
@@ -1105,7 +1218,6 @@ const clock = new THREE.Clock();
 const hudDist = document.getElementById('hud-dist');
 const hudStatus = document.getElementById('hud-status');
 const safeBanner = document.getElementById('safe-banner');
-const audioBanner = document.getElementById('audio-banner');
 
 document.getElementById('start-panel').addEventListener('click', startGame);
 document.getElementById('restart-panel').addEventListener('click', startGame);
@@ -1126,14 +1238,8 @@ function startGame() {
 
   baboon.position.set(-HALF_W + 4, 0, -HALF_D + 4);
 
-  // Resume the audio context and start the boombox
-  if (listener.context.state === 'suspended') {
-    listener.context.resume();
-  }
-  if (!boomSound.isPlaying) {
-    startBoombox();
-  }
-  audioBanner.style.display = 'block';
+  ensureAudioCtx();
+  startBoombox();
 
   state = 'playing';
   if (!isMobile) controls.lock();
@@ -1149,14 +1255,21 @@ function triggerGameOver() {
 }
 
 // ============================================================
-// 14. RESIZE
+// 14. RESIZE — low internal res for pixel look
 // ============================================================
+const RENDER_SCALE = 0.4;
 function resize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  const rw = Math.max(320, Math.floor(w * RENDER_SCALE));
+  const rh = Math.max(240, Math.floor(h * RENDER_SCALE));
+  renderer.setSize(rw, rh, false);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
 }
 window.addEventListener('resize', resize);
+resize();
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function inSafeZone(x, z) {
@@ -1177,7 +1290,8 @@ function updatePlayer(dt) {
     euler.y += -lookDelta.x * sens;
     euler.x = clamp(euler.x + -lookDelta.y * sens, -Math.PI / 2 + 0.05, Math.PI / 2 - 0.05);
     camera.quaternion.setFromEuler(euler);
-    lookDelta.x = 0; lookDelta.y = 0;
+    lookDelta.x = 0;
+    lookDelta.y = 0;
   }
 
   let fwd = 0, side = 0;
@@ -1224,11 +1338,7 @@ function updatePlayer(dt) {
   const bobY = Math.sin(bobTime) * bobAmt;
   const bobX = Math.cos(bobTime * 0.5) * bobAmt * 0.6;
 
-  camera.position.set(
-    playerPos.x + bobX,
-    playerPos.y + bobY,
-    playerPos.z
-  );
+  camera.position.set(playerPos.x + bobX, playerPos.y + bobY, playerPos.z);
 }
 
 function updateBaboon(dt) {
@@ -1236,8 +1346,7 @@ function updateBaboon(dt) {
   if (graceTime > 0) graceTime = Math.max(0, graceTime - dt);
 
   const toPlayer = new THREE.Vector3(
-    camera.position.x - baboon.position.x,
-    0,
+    camera.position.x - baboon.position.x, 0,
     camera.position.z - baboon.position.z
   );
   const dist = toPlayer.length();
@@ -1253,6 +1362,7 @@ function updateBaboon(dt) {
     baboon.position.z += toPlayer.z * 0.4 * dt;
   }
 
+  // Push out of safe zone
   const dxS = baboon.position.x - SAFE_CENTER.x;
   const dzS = baboon.position.z - SAFE_CENTER.z;
   const dS = Math.hypot(dxS, dzS);
@@ -1264,6 +1374,7 @@ function updateBaboon(dt) {
     baboon.position.z = SAFE_CENTER.z + nz * keepOut;
   }
 
+  // Face player
   const targetAngle = Math.atan2(
     camera.position.x - baboon.position.x,
     camera.position.z - baboon.position.z
@@ -1318,10 +1429,9 @@ function updateHUD(dt) {
   }
 }
 
-// Subtle pulsing on the boombox glow + accent
 function animateBoombox(t) {
-  boomboxGlow.intensity = 0.4 + Math.sin(t * 6) * 0.15;
-  boomboxAccentMat.emissiveIntensity = 0.35 + Math.sin(t * 6) * 0.15;
+  bbGlow.intensity = 0.4 + Math.sin(t * 6) * 0.15;
+  bbAccentMat.emissiveIntensity = 0.35 + Math.sin(t * 6) * 0.15;
 }
 
 // ============================================================
