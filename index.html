@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Denied</title>
+    <title>HTML Runner & Downloader</title>
     <style>
         * {
             margin: 0;
@@ -13,34 +13,115 @@
         body, html {
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background-color: #333;
+            color: white;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        button, label {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+        }
+        button:hover, label:hover {
+            background-color: #0056b3;
+        }
+        input[type="file"] {
+            display: none;
         }
         iframe {
+            flex-grow: 1;
             width: 100%;
-            height: 100%;
             border: none;
-            display: block;
+            background-color: white;
         }
     </style>
 </head>
 <body>
+
+    <div class="controls">
+        <button id="downloadBtn">Download SCARY_BABOON.html</button>
+        
+        <label for="uploadInput">Upload & Run HTML</label>
+        <input type="file" id="uploadInput" accept=".html, .htm">
+    </div>
+
     <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
 
     <script>
-        document.title = "Access Denied";
+        // --- Download Functionality ---
+        const downloadBtn = document.getElementById('downloadBtn');
+        const fileUrl = "https://raw.githubusercontent.com/icodewithai1/html-gamerepo/refs/heads/main/SCARY_BABOON.html";
 
-        fetch("https://raw.githubusercontent.com/icodewithai1/html-gamerepo/refs/heads/main/SCARY_BABOON.html")
-            .then(res => res.text())
-            .then(html => {
-                const frame = document.getElementById('frame');
-                frame.srcdoc = html;
+        downloadBtn.addEventListener('click', async () => {
+            try {
+                downloadBtn.textContent = "Downloading...";
+                downloadBtn.disabled = true;
 
-                // Keeps the tab name as "Access Denied" once the content loads
-                frame.onload = () => {
-                    document.title = "Access Denied";
-                };
-            })
-            .catch(err => console.error("Error loading HTML:", err));
+                const response = await fetch(fileUrl);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'SCARY_BABOON.html';
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                downloadBtn.textContent = "Download SCARY_BABOON.html";
+                downloadBtn.disabled = false;
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Failed to download the file. Please check the console for details.');
+                downloadBtn.textContent = "Download SCARY_BABOON.html";
+                downloadBtn.disabled = false;
+            }
+        });
+
+        // --- Upload and Run Functionality ---
+        const uploadInput = document.getElementById('uploadInput');
+        const frame = document.getElementById('frame');
+
+        uploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const htmlContent = e.target.result;
+                // Use srcdoc to safely run the uploaded HTML
+                frame.srcdoc = htmlContent;
+            };
+            reader.readAsText(file);
+            
+            // Reset input so the same file can be uploaded again if needed
+            uploadInput.value = '';
+        });
     </script>
+
 </body>
 </html>
